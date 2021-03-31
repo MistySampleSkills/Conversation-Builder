@@ -1,0 +1,97 @@
+﻿@model ConversationBuilder.DataModels.Interaction
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Please confirm deletion of interaction @Html.DisplayFor(model => model.Name)?</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.InteractionFailedTimeout)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.InteractionFailedTimeout)
+		</dd>
+		
+		<dt>
+			@Html.DisplayNameFor(model => model.StartListening)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StartListening)
+		</dd>
+
+
+		<dt>
+			@Html.DisplayNameFor(model => model.AllowKeyPhraseRecognition)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.AllowKeyPhraseRecognition)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.AllowConversationTriggers)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.AllowConversationTriggers)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.AllowVoiceProcessingOverride)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.AllowVoiceProcessingOverride)
+		</dd>
+		
+		<dt>
+			@Html.DisplayNameFor(model => model.ListenTimeout)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ListenTimeout)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.SilenceTimeout)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.SilenceTimeout)
+		</dd>
+
+
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+
+	<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+		@Html.ActionLink("Back to List", "Index",  "ConversationGroups")
+	</form>
+</div>

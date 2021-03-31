@@ -1,0 +1,134 @@
+﻿@model ConversationBuilder.DataModels.HeadLocation
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Details for head location @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.FollowFace)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.FollowFace)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.FollowObject)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.FollowObject)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StartLookAroundOnLostObject)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StartLookAroundOnLostObject)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.DelayBetweenMovements)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.DelayBetweenMovements)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MovementDuration)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MovementDuration)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MinPitch)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MinPitch)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MinRoll)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MinRoll)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MinYaw)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MinYaw)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.MaxPitch)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MaxPitch)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.MaxRoll)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MaxRoll)
+		</dd>
+		<dd>
+			@Html.DisplayFor(model => model.MaxYaw)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MaxYaw)
+		</dt>
+	
+		<dt>
+			@Html.DisplayNameFor(model => model.MovementVelocity)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MovementVelocity)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RandomRange)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RandomRange)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "HeadLocations")
+</div>

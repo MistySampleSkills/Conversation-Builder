@@ -1,0 +1,9 @@
+{
+  "UniqueId": "b2b160af-6054-49c6-81a5-a19df9098fbe",
+  "Name": "SimpleConversationExample",
+  "StartupRules": [ "Manual" ],
+  "Language": "javascript",
+  "BroadcastMode": "verbose",
+  "TimeoutInSeconds": 6000,
+  "CleanupOnCancel": false
+}

@@ -1,0 +1,119 @@
+﻿@model ConversationBuilder.DataModels.TriggerDetail
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of trigger " + Model.Name + "?";
+	}
+	else
+	{
+		
+		msg = "Trigger " + Model.Name + " is in use and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+@if(@ViewBag.CanBeDeleted)
+{
+
+	<div>
+		<dl class="dl-horizontal">
+			<dt>
+				@Html.DisplayNameFor(model => model.Id)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Id)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Name)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Name)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.TriggerFilter)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TriggerFilter)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Trigger)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Trigger)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StartingTrigger)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StartingTrigger)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StartingTriggerFilter)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StartingTriggerFilter)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StartingTriggerDelay)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StartingTriggerDelay)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StoppingTrigger)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StoppingTrigger)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StoppingTriggerFilter)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StoppingTriggerFilter)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StoppingTriggerDelay)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StoppingTriggerDelay)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Updated)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Updated)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Created)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Created)
+			</dd>
+		</dl>
+
+		<form asp-action="Delete">
+			<input type="submit" value="Delete" class="btn btn-default" /> |
+		</form>
+	</div>
+}
+@Html.ActionLink("Back to List", "Index",  "Triggers")

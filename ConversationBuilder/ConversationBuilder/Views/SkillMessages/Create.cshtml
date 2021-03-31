@@ -1,0 +1,120 @@
+﻿@model ConversationBuilder.DataModels.SkillMessage
+
+@{
+	ViewData["Title"] = "Create";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+<h3>Create skill message</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Create">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="Description" class="control-label"></label>
+				<textarea asp-for="Description" class="form-control"></textarea>
+				<span asp-validation-for="Description" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="Skill" class="control-label"></label>
+				<input asp-for="Skill" class="form-control" />
+				<span asp-validation-for="Skill" class="text-danger"></span>
+			</div>
+			
+			<div class="form-group">
+				<label asp-for="EventName" class="control-label"></label>
+				<input asp-for="EventName" class="form-control" />
+				<span asp-validation-for="EventName" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="Payload" class="control-label"></label>
+				<textarea asp-for="Payload" class="form-control" ></textarea>
+				<span asp-validation-for="Payload" class="text-danger"></span>
+			</div>
+			
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="StartIfStopped" /> @Html.DisplayNameFor(model => model.StartIfStopped)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="StopIfRunning" /> @Html.DisplayNameFor(model => model.StopIfRunning)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="StopOnNextAnimation" /> @Html.DisplayNameFor(model => model.StopOnNextAnimation)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IncludeCharacterState" /> @Html.DisplayNameFor(model => model.IncludeCharacterState)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IncludeLatestTriggerMatch" /> @Html.DisplayNameFor(model => model.IncludeLatestTriggerMatch)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="StreamTriggerCheck" /> @Html.DisplayNameFor(model => model.StreamTriggerCheck)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private" selected>Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="RequestAccess"></label>
+				<select asp-for="RequestAccess" class="form-control">
+					<option value="None">None</option>
+					<option value="Authed">Authed</option>
+					<option value="Public" selected>Public</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Create" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "SkillMessages")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

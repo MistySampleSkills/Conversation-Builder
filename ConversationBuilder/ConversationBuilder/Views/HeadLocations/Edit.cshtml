@@ -1,0 +1,119 @@
+﻿@model ConversationBuilder.DataModels.HeadLocation
+
+@{
+	ViewData["Title"] = "Edit";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Editing head location @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Edit">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="FollowFace" /> @Html.DisplayNameFor(model => model.FollowFace)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="FollowObject" class="control-label"></label>
+				<input asp-for="FollowObject" class="form-control" />
+				<span asp-validation-for="FollowObject" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="StartLookAroundOnLostObject" class="control-label"></label>
+				<input asp-for="StartLookAroundOnLostObject" class="form-control" />
+				<span asp-validation-for="StartLookAroundOnLostObject" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MinPitch" class="control-label"></label>
+				<input asp-for="MinPitch" class="form-control" />
+				<span asp-validation-for="MinPitch" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MinRoll " class="control-label"></label>
+				<input asp-for="MinRoll" class="form-control" />
+				<span asp-validation-for="MinRoll" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MinYaw" class="control-label"></label>
+				<input asp-for="MinYaw" class="form-control" />
+				<span asp-validation-for="MinYaw" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MaxPitch" class="control-label"></label>
+				<input asp-for="MaxPitch" class="form-control" />
+				<span asp-validation-for="MaxPitch" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MaxRoll " class="control-label"></label>
+				<input asp-for="MaxRoll" class="form-control" />
+				<span asp-validation-for="MaxRoll" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MaxYaw" class="control-label"></label>
+				<input asp-for="MaxYaw" class="form-control" />
+				<span asp-validation-for="MaxYaw" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="DelayBetweenMovements " class="control-label"></label>
+				<input asp-for="DelayBetweenMovements" class="form-control" />
+				<span asp-validation-for="DelayBetweenMovements" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="MovementDuration " class="control-label"></label>
+				<input asp-for="MovementDuration" class="form-control" />
+				<span asp-validation-for="MovementDuration" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MovementVelocity" class="control-label"></label>
+				<input asp-for="MovementVelocity" class="form-control" />
+				<span asp-validation-for="MovementVelocity" class="text-danger"></span>
+			</div>
+			
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="RandomRange" /> @Html.DisplayNameFor(model => model.RandomRange)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private" selected>Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Save Changes" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "HeadLocations")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

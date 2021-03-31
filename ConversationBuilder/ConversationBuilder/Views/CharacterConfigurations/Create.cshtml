@@ -1,0 +1,143 @@
+﻿@model ConversationBuilder.DataModels.CharacterConfiguration
+
+@{
+	ViewData["Title"] = "Create";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Create character configuration</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Create">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="Character" class="control-label"></label>
+				<input asp-for="Character" class="form-control" />
+				<span asp-validation-for="Character" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeechConfiguration"></label>
+				<select asp-for="SpeechConfiguration" class="form-control">
+					<option value="" selected></option>
+					@foreach (KeyValuePair<string, string> item in @ViewBag.SpeechConfigurations)
+					{
+						<option value="@item.Key">@item.Value</option>
+					}
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="FacePitchOffset" class="control-label"></label>
+				<input asp-for="FacePitchOffset" class="form-control" />
+				<span asp-validation-for="FacePitchOffset" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="ObjectDetectionDebounce" class="control-label"></label>
+				<input asp-for="ObjectDetectionDebounce" class="form-control" />
+				<span asp-validation-for="ObjectDetectionDebounce" class="text-danger"></span>
+			</div>
+		
+			<div class="form-group">
+				<label asp-for="LogLevel"></label>
+				<select asp-for="LogLevel" class="form-control">
+					<option value="Verbose" >Verbose</option>
+					<option value="Info" selected>Info</option>
+					<option value="Warning" >Warning</option>
+					<option value="Error" >Error</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="StartVolume" class="control-label"></label>
+				<input asp-for="StartVolume" class="form-control" />
+				<span asp-validation-for="StartVolume" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="Payload" class="control-label"></label>
+				<textarea asp-for="Payload" class="form-control" > </textarea>
+				<span asp-validation-for="Payload" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="PersonConfidence" class="control-label"></label>
+				<input asp-for="PersonConfidence" class="form-control" />
+				<span asp-validation-for="PersonConfidence" class="text-danger"></span>
+			</div>
+				<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="LogInteraction" /> @Html.DisplayNameFor(model => model.LogInteraction)
+					</label>
+				</div>
+			</div>
+				<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="StreamInteraction" /> @Html.DisplayNameFor(model => model.StreamInteraction)
+					</label>
+				</div>
+			</div>	<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="HeardSpeechToScreen" /> @Html.DisplayNameFor(model => model.HeardSpeechToScreen)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="DisplaySpoken" /> @Html.DisplayNameFor(model => model.DisplaySpoken)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="LargePrint" /> @Html.DisplayNameFor(model => model.LargePrint)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="ShowListeningIndicator" /> @Html.DisplayNameFor(model => model.ShowListeningIndicator)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private" selected>Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="Skill" class="control-label"></label>
+				<input asp-for="Skill" class="form-control">8be20a90-1150-44ac-a756-ebe4de30689e</input>
+				<span asp-validation-for="Skill" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Create" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "CharacterConfigurations")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

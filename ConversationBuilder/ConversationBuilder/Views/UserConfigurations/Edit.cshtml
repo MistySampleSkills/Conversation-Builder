@@ -1,0 +1,43 @@
+﻿@model ConversationBuilder.DataModels.UserConfiguration
+
+@{
+	ViewData["Title"] = "Edit";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+<h3>Updating user configuration</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Edit">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="UserName" class="control-label"></label>
+				<input asp-for="UserName" class="form-control" />
+				<span asp-validation-for="UserName" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="OverrideCssFile" class="control-label"></label>
+				<input asp-for="OverrideCssFile" class="form-control" />
+				<span asp-validation-for="OverrideCssFile" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Save Changes" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Cancel", "Details",  "UserConfigurations")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,100 @@
+﻿@model ConversationBuilder.DataModels.LEDTransitionAction
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+<h3>Details for LED transition action @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Red)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Red)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Green)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Green)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Blue)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Blue)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Red2)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Red2)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Green2)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Green2)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Blue2)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Blue2)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Pattern)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Pattern)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.PatternTime)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.PatternTime)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "LEDTransitionActions")
+</div>

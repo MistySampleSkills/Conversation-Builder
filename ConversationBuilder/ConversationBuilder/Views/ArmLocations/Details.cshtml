@@ -1,0 +1,102 @@
+﻿@model ConversationBuilder.DataModels.ArmLocation
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Details for arm location @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MinLeftArm)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MinLeftArm)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MinRightArm)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MinRightArm)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MaxLeftArm)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MaxLeftArm)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MaxRightArm)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MaxRightArm)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.DelayBetweenMovements)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.DelayBetweenMovements)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.MovementDuration)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MovementDuration)
+		</dd>
+	
+		<dt>
+			@Html.DisplayNameFor(model => model.MovementVelocity)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.MovementVelocity)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RandomRange)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RandomRange)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "Animations")
+</div>

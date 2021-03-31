@@ -1,0 +1,66 @@
+﻿@model ConversationBuilder.DataModels.GenericDataStore
+
+@{
+	ViewData["Title"] = "Edit";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Editing generic data store @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Edit">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="Description" class="control-label"></label>
+				<textarea asp-for="Description" class="form-control"></textarea>
+				<span asp-validation-for="Description" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private" selected>Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="TreatKeyAsUtterance" /> @Html.DisplayNameFor(model => model.TreatKeyAsUtterance)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="ExactMatchesOnly" /> @Html.DisplayNameFor(model => model.ExactMatchesOnly)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Save Changes" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "GenericDataStores")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

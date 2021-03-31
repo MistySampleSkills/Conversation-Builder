@@ -1,0 +1,36 @@
+﻿@{
+	ViewData["Title"] = "Home Page";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<div class="text-center">
+	
+	@if(User.Identity.IsAuthenticated)
+	{
+		<h6><a class="nav-link" asp-action="index" asp-controller="conversations">Conversations</a></h6>
+		<h6><a class="nav-link" asp-action="index" asp-controller="conversationgroups">Conversation Groups</a></h6>		
+		<h6><a class="nav-link" asp-action="details" asp-controller="userconfigurations" title="User Configuration">User Configuration</a></h6>
+		<h6><a class="nav-link" asp-action="index" asp-controller="genericdatastores">User Lookup Data</a></h6>
+
+		if (User.IsInRole("MistyAdministrator"))
+		{
+			<h6><a class="nav-link" asp-area="" asp-controller="All options" asp-action="AdminPage">Home</a></h6>
+		}
+		else if(User.IsInRole("Customer"))
+		{
+			<h6><a class="nav-link" asp-area="" asp-controller="All options" asp-action="UserPage">Home</a></h6>
+		}
+
+		if (User.IsInRole("MistyAdministrator"))
+		{
+			<h6><a class="nav-link" asp-area="identity" asp-page="/account/register">Register a New User</a></h6>
+		}
+	}
+
+</div>
+<div class="text-center">
+	Version 0.0.1
+</div>

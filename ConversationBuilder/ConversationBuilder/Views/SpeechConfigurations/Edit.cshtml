@@ -1,0 +1,126 @@
+﻿@model ConversationBuilder.DataModels.SpeechConfiguration
+
+@{
+	ViewData["Title"] = "Edit";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+<h3>Editing speech configuration @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Edit">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeechRecognitionSubscriptionKey" class="control-label"></label>
+				<input asp-for="SpeechRecognitionSubscriptionKey" class="form-control" />
+				<span asp-validation-for="SpeechRecognitionSubscriptionKey" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="TextToSpeechSubscriptionKey" class="control-label"></label>
+				<input asp-for="TextToSpeechSubscriptionKey" class="form-control" />
+				<span asp-validation-for="TextToSpeechSubscriptionKey" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="TextToSpeechService"></label>
+				<select asp-for="TextToSpeechService" class="form-control">
+					<option value="Misty" selected>Misty</option>
+					<option value="Google">Google</option>
+					<option value="Azure" >Azure</option>
+				<!--	<option value="GoogleOnboard">Google Onboard</option>
+					<option value="AzureOnboard">Azure Onboard</option> -->
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeechRecognitionService"></label>
+				<select asp-for="SpeechRecognitionService" class="form-control">
+					<option value="Google">Google</option>
+					<option value="Azure" selected>Azure</option>
+					<option value="GoogleOnboard">Google Onboard</option>
+					<option value="AzureOnboard">Azure Onboard</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpokenLanguage" class="control-label"></label>
+				<input asp-for="SpokenLanguage" class="form-control" />
+				<span asp-validation-for="SpokenLanguage" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeakingVoice " class="control-label"></label>
+				<input asp-for="SpeakingVoice" class="form-control" />
+				<span asp-validation-for="SpeakingVoice" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private" selected>Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="TextToSpeechEndpoint" class="control-label"></label>
+				<input asp-for="TextToSpeechEndpoint" class="form-control" />
+				<span asp-validation-for="TextToSpeechEndpoint" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeechRecognitionEndpoint" class="control-label"></label>
+				<input asp-for="SpeechRecognitionEndpoint" class="form-control" />
+				<span asp-validation-for="SpeechRecognitionEndpoint" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeakingGender"></label>
+				<select asp-for="SpeakingGender" class="form-control">
+					<option value="Female">Female</option>
+					<option value="Male" >Male</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeechRecognitionRegion" class="control-label"></label>
+				<input asp-for="SpeechRecognitionRegion" class="form-control" />
+				<span asp-validation-for="SpeechRecognitionRegion" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="TextToSpeechRegion" class="control-label"></label>
+				<input asp-for="TextToSpeechRegion" class="form-control" />
+				<span asp-validation-for="TextToSpeechRegion" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="TranslatedLanguage" class="control-label"></label>
+				<input asp-for="TranslatedLanguage" class="form-control" />
+				<span asp-validation-for="TranslatedLanguage" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="ProfanitySetting"></label>
+				<select asp-for="ProfanitySetting" class="form-control">
+					<option value="Raw" selected>Raw</option>
+					<option value="Removed">Removed</option>
+					<option value="Masked">Masked</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Save Changes" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "SpeechConfigurations")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,16 @@
+﻿@model ErrorViewModel
+@{
+	ViewData["Title"] = "Error";
+}
+
+<h2 class="text-danger">@Model.Message</h2>
+<h2 class="text-danger">@Model.Exception</h2>
+
+@if (Model.ShowRequestId)
+{
+	<p>
+		<strong>Request ID:</strong> <code>@Model.RequestId</code>
+	</p>
+}
+
+@Html.ActionLink("Return to home", "Index",  "Home")

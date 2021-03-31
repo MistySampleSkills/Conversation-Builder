@@ -1,0 +1,117 @@
+﻿@model ConversationBuilder.ViewModels.ConversationGenericDataViewModel
+
+@{
+	ViewData["Title"] = "Manage";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Managing generic data for conversation @Model.ConversationName</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+
+@if(Model.GenericDataStores != null && Model.GenericDataStores.Count() == @ViewBag.GenericDataStores.Count)
+{
+	<h3>All the data stores have been added to this conversation.</h3>
+}
+else
+{
+	<div class="row">
+		<div class="col-md-4">
+			<form asp-action="Add">
+				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+				<div class="form-group">
+					Add handler
+					<select asp-for="Handler" class="form-control">
+						@foreach (KeyValuePair<string, string> item in @ViewBag.GenericDataStores)
+						{
+							if(Model.GenericDataStores == null || !Model.GenericDataStores.Any(x => x.Id == item.Key))
+							{
+								<option value="@item.Key">@item.Value</option>
+							}
+						}
+					</select>
+				</div>
+				<div class="form-group">
+					<input asp-for="ConversationId" class="form-control" value="@Model.ConversationId" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input asp-for="ConversationName" class="form-control" value="@Model.ConversationName" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input type="submit" value="Add" class="btn btn-default" />
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+
+@if(Model.GenericDataStores != null && Model.GenericDataStores.Count() > 0)
+{
+	<div class="row">
+		<div class="col-md-4">
+			<form asp-action="Remove">
+				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+				<div class="form-group">
+					Remove handler
+					<select asp-for="Handler" class="form-control">
+						@foreach (ConversationBuilder.DataModels.GenericDataStore item in Model.GenericDataStores)
+						{
+							<option value="@item.Id">@item.Name</option>
+						}
+					</select>
+				</div>
+				
+				<div class="form-group">
+					<input asp-for="ConversationId" class="form-control" value="@Model.ConversationId" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input asp-for="ConversationName" class="form-control" value="@Model.ConversationName" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input type="submit" value="Remove" class="btn btn-default" />
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+
+<h3>Current conversation data stores</h3>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>
+				Name
+			</th>
+			<th>
+				Description
+			</th>		
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+@foreach (var item in Model.GenericDataStores) {
+		<tr>
+			<td>
+				@Html.DisplayFor(modelItem => item.Name)
+			</td>
+			<td>
+				@Html.DisplayFor(modelItem => item.Description)
+			</td>		
+		</tr>
+}
+	</tbody>
+</table>
+
+<div>
+	@Html.ActionLink("Back to Conversation", "Details",  "Conversations", new { id = Model.ConversationId})		
+</div>

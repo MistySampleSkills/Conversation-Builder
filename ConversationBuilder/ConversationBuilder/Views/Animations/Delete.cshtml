@@ -1,0 +1,178 @@
+﻿@model ConversationBuilder.DataModels.Animation
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of animation " + Model.Name + "?";
+	}
+	else
+	{
+		
+		msg = "Animation " + Model.Name + " is in use and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+@if(@ViewBag.CanBeDeleted)
+{
+	<div>
+		<dl class="dl-horizontal">
+			<dt>
+				@Html.DisplayNameFor(model => model.Id)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Id)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Name)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Name)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Speak)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Speak)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.AudioFile)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.AudioFile)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Emotion)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Emotion)
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.AudioFile)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.AudioFile)
+			</dd>
+			<dd>
+				@Html.DisplayFor(model => model.AudioFile)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Silence)
+			</dt>
+			<dt>
+				@Html.DisplayNameFor(model => model.ImageFile)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ImageFile)
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.HeadLocation)
+			</dt>
+			<dd>
+				@ViewBag.HeadLocationName
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.ArmLocation)
+			</dt>
+			<dd>
+				@ViewBag.ArmLocationName
+			</dd>
+			
+			<dt>
+				@Html.DisplayNameFor(model => model.SetFlashlight)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SetFlashlight)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Volume)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Volume)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.LEDTransitionAction)
+			</dt>
+			<dd>
+				@ViewBag.LedTransitionActionName
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.LEDActionDelay)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.LEDActionDelay)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeechRate)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeechRate)
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.TrimAudioSilence)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TrimAudioSilence)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.OverrideVoice)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.OverrideVoice)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeakingStyle)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeakingStyle)
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.Updated)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Updated)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Created)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Created)
+			</dd>
+		</dl>
+
+		
+		<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+	
+		</form>
+	</div>
+}
+
+@Html.ActionLink("Back to List", "Index",  "Animations")
+	

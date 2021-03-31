@@ -1,0 +1,122 @@
+﻿@model ConversationBuilder.DataModels.LEDTransitionAction
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of LED transition action " + Model.Name + "?";
+	}
+	else
+	{
+		
+		msg = "LED transition action " + Model.Name + " is in use and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+@if(@ViewBag.CanBeDeleted)
+{
+	<div>
+		<dl class="dl-horizontal">
+			<dt>
+				@Html.DisplayNameFor(model => model.Id)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Id)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Name)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Name)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Red)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Red)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Green)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Green)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Blue)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Blue)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Red2)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Red2)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Green2)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Green2)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Blue2)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Blue2)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Pattern)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Pattern)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.PatternTime)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.PatternTime)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Updated)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Updated)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Created)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Created)
+			</dd>
+		</dl>
+
+		
+		<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+	
+		</form>
+	</div>
+}
+
+@Html.ActionLink("Back to List", "Index",  "LEDTransitionActions")
+	
