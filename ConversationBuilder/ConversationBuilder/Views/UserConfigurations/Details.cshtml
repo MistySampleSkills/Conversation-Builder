@@ -1,0 +1,34 @@
+﻿@model ConversationBuilder.DataModels.UserConfiguration
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+<h3>User Configuration</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.UserName)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.UserName)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.OverrideCssFile)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.OverrideCssFile)
+		</dd>	
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id })
+</div>

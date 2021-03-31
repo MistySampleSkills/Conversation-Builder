@@ -1,0 +1,166 @@
+﻿@model ConversationBuilder.DataModels.Animation
+
+@{
+	ViewData["Title"] = "Create";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+<h3>Create animation</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Create">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="Speak" class="control-label"></label>
+				<input asp-for="Speak" class="form-control" />
+				<span asp-validation-for="Speak" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="AudioFile " class="control-label"></label>
+				<input asp-for="AudioFile" class="form-control" />
+				<span asp-validation-for="AudioFile" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="Silence" /> @Html.DisplayNameFor(model => model.Silence)
+					</label>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="Emotion"></label>
+				<select asp-for="Emotion" class="form-control">
+					@foreach (KeyValuePair<string, string> item in @ViewBag.Emotions)
+					{
+						<option value="@item.Key">@item.Value</option>
+					}
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="HeadLocation"></label>
+				<select asp-for="HeadLocation" class="form-control">
+					<option value="" selected></option>
+					@foreach (KeyValuePair<string, string> item in @ViewBag.HeadLocations)
+					{
+						<option value="@item.Key">@item.Value</option>
+					}
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="HeadActionDelay" class="control-label"></label>
+				<input asp-for="HeadActionDelay" class="form-control" />
+				<span asp-validation-for="HeadActionDelay" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="ArmLocation"></label>
+				<select asp-for="ArmLocation" class="form-control">
+					<option value="" selected></option>
+					@foreach (KeyValuePair<string, string> item in @ViewBag.ArmLocations)
+					{
+						<option value="@item.Key">@item.Value</option>
+					}
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="ArmActionDelay" class="control-label"></label>
+				<input asp-for="ArmActionDelay" class="form-control" />
+				<span asp-validation-for="ArmActionDelay" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="ImageFile" class="control-label"></label>
+				<input asp-for="ImageFile" class="form-control" />
+				<span asp-validation-for="ImageFile" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SetFlashlight" /> @Html.DisplayNameFor(model => model.SetFlashlight)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="Volume" class="control-label"></label>
+				<input asp-for="Volume" class="form-control" />
+				<span asp-validation-for="Volume" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="LEDTransitionAction"></label>
+				<select asp-for="LEDTransitionAction" class="form-control">
+					<option value="" selected></option>
+					@foreach (KeyValuePair<string, string> item in @ViewBag.LEDTransitionActions)
+					{
+						<option value="@item.Key">@item.Value</option>
+					}
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="LEDActionDelay" class="control-label"></label>
+				<input asp-for="LEDActionDelay" class="form-control" />
+				<span asp-validation-for="LEDActionDelay" class="text-danger"></span>
+			</div>
+			
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private" selected>Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeechRate" class="control-label"></label>
+				<input asp-for="SpeechRate" class="form-control" />
+				<span asp-validation-for="SpeechRate" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="TrimAudioSilence " class="control-label"></label>
+				<input asp-for="TrimAudioSilence" class="form-control" />
+				<span asp-validation-for="TrimAudioSilence" class="text-danger"></span>
+			</div>
+			
+		
+			<div class="form-group">
+				<label asp-for="OverrideVoice" class="control-label"></label>
+				<input asp-for="OverrideVoice" class="form-control" />
+				<span asp-validation-for="OverrideVoice" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeakingStyle" class="control-label"></label>
+				<input asp-for="SpeakingStyle" class="form-control" />
+				<span asp-validation-for="SpeakingStyle" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<input type="submit" value="Create" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "Animations")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

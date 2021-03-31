@@ -1,0 +1,179 @@
+﻿@model ConversationBuilder.DataModels.ConversationGroup
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Details for conversation group @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Description)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Description)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RobotName)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RobotName)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StartupConversation)
+		</dt>		
+		@{
+			string name = "None selected";
+			if(@Model.StartupConversation != null)
+			{
+				KeyValuePair<string, string> nameKvp = ((IDictionary<string, string>)ViewBag.Conversations).FirstOrDefault(x => x.Key == @Model.StartupConversation);
+				name = @Model.StartupConversation;
+				if(nameKvp.Value != null)
+				{
+					name = nameKvp.Value;
+				}
+			}
+		}
+		<dd>
+			@name			
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.CharacterConfiguration)
+		</dt>		
+		@{
+			string cName = "None selected";
+			if(@Model.CharacterConfiguration != null)
+			{
+				KeyValuePair<string, string> nameKvp = ((IDictionary<string, string>)ViewBag.CharacterConfigurations).FirstOrDefault(x => x.Key == @Model.CharacterConfiguration);
+				cName = @Model.CharacterConfiguration;
+				if(nameKvp.Value != null)
+				{
+					cName = nameKvp.Value;
+				}
+			}
+		}
+		<dd>
+			@cName			
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RequestAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RequestAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.KeyPhraseRecognizedAudio)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.KeyPhraseRecognizedAudio)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id }) |
+	@Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "ConversationGroups")
+</div>
+
+@if(Model.ValidConfiguration)
+{
+	<hr />
+	@Html.ActionLink("Download Configuration", "Generate", new { id=Model.Id })
+	<br />	<br />
+
+
+	<h4>Start from the Skill Runner with the following fields.</h4>
+	<h4>ConversationGroupId : @Model.Id</h4>
+	<h4>Endpoint : the url of this page up until the first / (slash) after the domain name</h4>
+	<h5>Include authorization data as needed for non-public items.</h5>		
+	<br />
+	<hr />
+	<h4>If you are running the UI locally, you can start and stop from this page by entering in the robot's local IP.</h4>
+
+	<div>
+		<form asp-action="StartSkill">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+			<div class="form-group">
+				Start Skill
+				<div class="form-group">
+				Robot IP
+				<input asp-for="RobotIp" class="form-control" />
+				<span asp-validation-for="RobotIp" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Start Skill" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+
+	<hr />
+	<br />
+	<div>
+		<form asp-action="StopSkill">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+			<div class="form-group">
+				Stop Skill
+				<div class="form-group">
+				Robot IP
+				<input asp-for="RobotIp" class="form-control" />
+				<span asp-validation-for="RobotIp" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Stop Skill" class="btn btn-default" />
+			</div>
+		</form>
+		</div>
+}
+else
+{
+	<hr />
+	<h5>Cannot generate configuration or start conversation, missing required starting conversation or interaction.</h5>
+}
+

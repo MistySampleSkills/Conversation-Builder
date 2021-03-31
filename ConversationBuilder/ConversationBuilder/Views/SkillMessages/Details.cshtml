@@ -1,0 +1,121 @@
+﻿@model ConversationBuilder.DataModels.SkillMessage
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+<h3>Details for skill message @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Description)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Description)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Skill)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Skill)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.EventName)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.EventName)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StartIfStopped)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StartIfStopped)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StopIfRunning)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StopIfRunning)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StopOnNextAnimation)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StopOnNextAnimation)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IncludeCharacterState)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IncludeCharacterState)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IncludeLatestTriggerMatch)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IncludeLatestTriggerMatch)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StreamTriggerCheck)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StreamTriggerCheck)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RequestAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RequestAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+		
+		<dt>
+			@Html.DisplayNameFor(model => model.Payload)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Payload)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "SkillMessages")
+</div>

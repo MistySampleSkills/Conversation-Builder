@@ -1,0 +1,114 @@
+﻿@model ConversationBuilder.DataModels.ConversationGroup
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Please confirm deletion of conversation group @Html.DisplayFor(model => model.Name)?</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Description)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Description)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RobotName)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RobotName)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StartupConversation)
+		</dt>		
+		@{
+			string name = "None selected";
+			if(@Model.StartupConversation != null)
+			{
+				KeyValuePair<string, string> nameKvp = ((IDictionary<string, string>)ViewBag.Conversations).FirstOrDefault(x => x.Key == @Model.StartupConversation);
+				name = @Model.StartupConversation;
+				if(nameKvp.Value != null)
+				{
+					name = nameKvp.Value;
+				}
+			}
+		}
+		<dd>
+			@name			
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.CharacterConfiguration)
+		</dt>		
+		@{
+			string cName = "None selected";
+			if(@Model.CharacterConfiguration != null)
+			{
+				KeyValuePair<string, string> nameKvp = ((IDictionary<string, string>)ViewBag.CharacterConfigurations).FirstOrDefault(x => x.Key == @Model.CharacterConfiguration);
+				cName = @Model.CharacterConfiguration;
+				if(nameKvp.Value != null)
+				{
+					cName = nameKvp.Value;
+				}
+			}
+		}
+		<dd>
+			@cName			
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RequestAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RequestAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.KeyPhraseRecognizedAudio)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.KeyPhraseRecognizedAudio)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+
+	<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+		@Html.ActionLink("Back to List", "Index",  "ConversationGroups")
+	</form>
+</div>

@@ -1,0 +1,170 @@
+﻿@model ConversationBuilder.DataModels.Animation
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Details for animation @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.Speak)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Speak)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.AudioFile)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.AudioFile)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Silence)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Silence)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Emotion)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Emotion)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.AudioFile)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.AudioFile)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.ImageFile)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ImageFile)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.HeadLocation)
+		</dt>
+		<dd>
+			@ViewBag.HeadLocationName
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.HeadActionDelay)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.HeadActionDelay)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.ArmLocation)
+		</dt>
+		<dd>
+			@ViewBag.ArmLocationName
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ArmActionDelay)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ArmActionDelay)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.SetFlashlight)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.SetFlashlight)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Volume)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Volume)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.LEDTransitionAction)
+		</dt>
+		<dd>
+			@ViewBag.LedTransitionActionName
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.LEDActionDelay)
+		</dt>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dd>
+			@Html.DisplayFor(model => model.LEDActionDelay)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.SpeechRate)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.SpeechRate)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.TrimAudioSilence)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.TrimAudioSilence)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.OverrideVoice)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.OverrideVoice)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.SpeakingStyle)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.SpeakingStyle)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "Animations")
+</div>

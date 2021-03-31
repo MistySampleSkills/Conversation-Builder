@@ -1,0 +1,132 @@
+﻿@model ConversationBuilder.DataModels.CharacterConfiguration
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Details for configuration @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>		
+		<dt>
+			@Html.DisplayNameFor(model => model.Character)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Character)
+		</dd>		
+		<dt>
+			@Html.DisplayNameFor(model => model.SpeechConfiguration)
+		</dt>
+		<dd>
+			@ViewBag.SpeechConfigurationName
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.LogLevel)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.LogLevel)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.FacePitchOffset)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.FacePitchOffset)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.LogInteraction)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.LogInteraction)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StreamInteraction)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StreamInteraction)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StartVolume)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StartVolume)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Payload)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Payload)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.HeardSpeechToScreen)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.HeardSpeechToScreen)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.DisplaySpoken)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.DisplaySpoken)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Skill)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Skill)
+		</dd>	
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>	
+		<dt>
+			@Html.DisplayNameFor(model => model.LargePrint)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.LargePrint)
+		</dd>	
+		<dt>
+			@Html.DisplayNameFor(model => model.ShowListeningIndicator)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ShowListeningIndicator)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "CharacterConfigurations")
+</div>

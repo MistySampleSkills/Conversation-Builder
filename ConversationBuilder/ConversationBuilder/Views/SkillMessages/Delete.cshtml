@@ -1,0 +1,137 @@
+﻿@model ConversationBuilder.DataModels.SkillMessage
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of skill message " + Model.Name + "?";
+	}
+	else
+	{
+		
+		msg = "Skill message " + Model.Name + " is in use and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+@if(@ViewBag.CanBeDeleted)
+{
+
+	<div>
+		<dl class="dl-horizontal">
+			<dt>
+				@Html.DisplayNameFor(model => model.Id)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Id)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Name)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Name)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Description)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Description)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Skill)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Skill)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.EventName)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.EventName)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.IncludeCharacterState)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.IncludeCharacterState)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StartIfStopped)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StartIfStopped)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StopIfRunning)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StopIfRunning)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StopOnNextAnimation)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StopOnNextAnimation)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.IncludeCharacterState)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.IncludeCharacterState)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.IncludeLatestTriggerMatch)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.IncludeLatestTriggerMatch)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.StreamTriggerCheck)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.StreamTriggerCheck)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.RequestAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.RequestAccess)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Updated)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Updated)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Created)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Created)
+			</dd>
+		</dl>
+
+		<form asp-action="Delete">
+			<input type="submit" value="Delete" class="btn btn-default" /> |			
+		</form>
+	</div>
+}
+@Html.ActionLink("Back to List", "Index",  "SkillMessages")

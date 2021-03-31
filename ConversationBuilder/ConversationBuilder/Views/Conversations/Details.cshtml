@@ -1,0 +1,87 @@
+﻿@model ConversationBuilder.DataModels.Conversation
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Details for conversation @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Description)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Description)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StartupInteraction)
+		</dt>
+		<dd>
+			@ViewBag.StartupInteractionName
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.NoTriggerInteraction)
+		</dt>
+		<dd>
+			@ViewBag.NoTriggerInteractionName
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.StartingEmotion)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.StartingEmotion)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.InitiateSkillsAtConversationStart)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.InitiateSkillsAtConversationStart)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ManagementAccess)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ManagementAccess)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
+	@Html.ActionLink("Back to List", "Index", "Conversations") |
+	@Html.ActionLink("Manage Speech Handlers", "Index", "ConversationSpeechHandlers", new {conversationId = Model.Id }) |
+	@Html.ActionLink("Manage Interactions", "Index", "Interactions", new {conversationId = Model.Id }) |
+	@Html.ActionLink("Manage Conversation Trigger Handlers", "Manage", "Conversations", new {conversationId = Model.Id }) |
+	@Html.ActionLink("Manage User Data", "Index", "ConversationGenericDataStores", new {conversationId = Model.Id })
+</div>

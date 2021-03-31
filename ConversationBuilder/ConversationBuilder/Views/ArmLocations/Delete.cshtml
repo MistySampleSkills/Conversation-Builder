@@ -1,0 +1,123 @@
+﻿@model ConversationBuilder.DataModels.ArmLocation
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of arm location " + Model.Name + "?";
+	}
+	else
+	{
+		
+		msg = "Arm location " + Model.Name + " is in use and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+@if(@ViewBag.CanBeDeleted)
+{
+	<div>
+		<dl class="dl-horizontal">
+			<dt>
+				@Html.DisplayNameFor(model => model.Id)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Id)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Name)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Name)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.MinLeftArm)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.MinLeftArm)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.MinRightArm)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.MinRightArm)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.MaxLeftArm)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.MaxLeftArm)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.MaxRightArm)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.MaxRightArm)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.DelayBetweenMovements)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.DelayBetweenMovements)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.MovementDuration)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.MovementDuration)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.MovementVelocity)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.MovementVelocity)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.RandomRange)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.RandomRange)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Updated)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Updated)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Created)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Created)
+			</dd>
+		</dl>
+
+		
+		<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+	
+		</form>
+	</div>
+}
+
+@Html.ActionLink("Back to List", "Index",  "Animations")
+	

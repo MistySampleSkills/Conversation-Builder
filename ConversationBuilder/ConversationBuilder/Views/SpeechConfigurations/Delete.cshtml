@@ -1,0 +1,154 @@
+﻿@model ConversationBuilder.DataModels.SpeechConfiguration
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of speech configuration " + Model.Name + "?";
+	}
+	else
+	{
+		
+		msg = "Speech configuration " + Model.Name + " is in use and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+@if(@ViewBag.CanBeDeleted)
+{
+	<div>
+		<dl class="dl-horizontal">
+			<dt>
+				@Html.DisplayNameFor(model => model.Id)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Id)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Name)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Name)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeechRecognitionService)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeechRecognitionService)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.TextToSpeechService)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TextToSpeechService)
+			</dd
+			<dt>
+				@Html.DisplayNameFor(model => model.SpokenLanguage)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpokenLanguage)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeakingVoice)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeakingVoice)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeechRecognitionSubscriptionKey)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeechRecognitionSubscriptionKey)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.TextToSpeechSubscriptionKey)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TextToSpeechSubscriptionKey)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.TextToSpeechEndpoint)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TextToSpeechEndpoint)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeechRecognitionEndpoint)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeechRecognitionEndpoint)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeechRecognitionRegion)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeechRecognitionRegion)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.TextToSpeechRegion)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TextToSpeechRegion)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeakingGender)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeakingGender)
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.TranslatedLanguage)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TranslatedLanguage)
+			</dd>
+
+			<dt>
+				@Html.DisplayNameFor(model => model.ProfanitySetting)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ProfanitySetting)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Updated)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Updated)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.Created)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.Created)
+			</dd>
+		</dl>
+
+		
+		<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+	
+		</form>
+	</div>
+}
+
+@Html.ActionLink("Back to List", "Index",  "SpeechConfigurations")
+	

@@ -1,0 +1,90 @@
+﻿@model ConversationBuilder.DataModels.ArmLocation
+
+@{
+	ViewData["Title"] = "Edit";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+}
+
+
+<h3>Editing arm location @Html.DisplayFor(model => model.Name)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Edit">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MinRightArm" class="control-label"></label>
+				<input asp-for="MinRightArm" class="form-control" />
+				<span asp-validation-for="MinRightArm" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MinLeftArm " class="control-label"></label>
+				<input asp-for="MinLeftArm" class="form-control" />
+				<span asp-validation-for="MinLeftArm" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MaxRightArm" class="control-label"></label>
+				<input asp-for="MaxRightArm" class="form-control" />
+				<span asp-validation-for="MaxRightArm" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MaxLeftArm " class="control-label"></label>
+				<input asp-for="MaxLeftArm" class="form-control" />
+				<span asp-validation-for="MaxLeftArm" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="DelayBetweenMovements " class="control-label"></label>
+				<input asp-for="DelayBetweenMovements" class="form-control" />
+				<span asp-validation-for="DelayBetweenMovements" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MovementDuration " class="control-label"></label>
+				<input asp-for="MovementDuration" class="form-control" />
+				<span asp-validation-for="MovementDuration" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="MovementVelocity" class="control-label"></label>
+				<input asp-for="MovementVelocity" class="form-control" />
+				<span asp-validation-for="MovementVelocity" class="text-danger"></span>
+			</div>
+			
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="RandomRange" /> @Html.DisplayNameFor(model => model.RandomRange)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private" selected>Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Save Changes" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "Animations")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
