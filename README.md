@@ -12,35 +12,34 @@ Finally, if you do need more options, skill messages can be set up to call other
 
 The Conversation Builder consists of two main parts.  The UI and the Misty Conversation skill.
 
-The UI allows you to build and manage key parts of conversations, like what is said or displayed on the screen, how Misty moves, and what reactions and triggers is she looking for?   
+The UI allows you to build and manage key parts of conversations, like what is said or displayed on the screen, how Misty moves, and what reactions and triggers she expects.
 
-The skill takes the data created in the UI and orchestrates the conversation, starting and stopping helper skills for more capabilities as needed.
+The skill takes the data created in the UI and orchestrates the conversation, starting and stopping helper skills for more capabilities if needed.
 
 It is a work in progress, but hopefully what is presented here will help you get your Misty talking, and make it easy to create conversations that appeal to you.
 
 ## Repository Structure
-The repository is currently structured as follows:
+This repository is currently structured as follows:
 
 ### ConversationBuilder
 Contains the code for the conversation builder NET Core UI.
 
 ### Robot
-Contains the skills and libraries needed to run the conversation builder.
+Contains the skills and libraries needed to run the conversations.
 
 #### MistyConversation
-The main conversation skill that is ran by a user.
+The main conversation skill that is run by a user.
 
 #### MistyCharacter
 Library used by Misty Conversation skill to do most of the interaction work.
 
 #### MessageHandlers
-Optional helper skills that are used by adding Skill Messages to conversations.
-The skills in use here are based upon the extra functionality added to your conversation (if any).  In these examples, the skill uses the libraries in the ConversationLibraries folder for many of the requests.
-There are some other useful/fun libraries in here that aren't in the the example skill at this time.
+Optional helper skills that are used in our examples by adding Skill Messages to conversations.
+The skills in use here are based upon the extra functionality added to our conversations.
 The misty conversation skill starts and stops these helper skills as specified in the interactions.
 
 #### Managers
-Optional override managers that can be used by different Characters to override the built in conversation functionality for arm movement, head movement, and other basic conversation actions.
+Example of a manager overriding library.        
 This area is somewhat experimental at this time and may change.
 
 #### Characters
@@ -54,16 +53,16 @@ This area will change based upon the helper skills in use and the extra function
 
 ## To run the UI locally on Windows.
 
-You will need Azure Cosmos DB Emulator installed and running (https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator-release-notes).
+You will need the Azure Cosmos DB Emulator installed and running (https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator-release-notes).
 
 You will also need to install the NET Core 3.1 SDK from Microsoft (https://dotnet.microsoft.com/download/dotnet/3.1).
 
-Start Visual Studio Code (https://code.visualstudio.com/Download) and select to open a folder.  Select the top level ConversationBuilder folder.
+Install and start Visual Studio Code (https://code.visualstudio.com/Download) and select to open a folder.  Select the top level ConversationBuilder folder.
 
 On the first load, it may tell you that you need to restore references.  Allow it to do so.
 
 There is a default email and password setup for the administration in Startup.cs, you should probably change it in the code before creating a database.  
-The email in use now is not valid or monitored.  
+The email in use now is not valid or monitored and you can't do password recovery with it.  
 
 If you do not want to change it right now, to login, use:
 hello-misty@mistyrobotics.com
@@ -71,7 +70,7 @@ P@ssw0rd!
 
 If you want to set up forgot password, email verification and other emailing functionality, update the information in the appSettings files with an appropriately configured email account.
 
-You should be able to select the Run/Debug button (the arrow that looks like a Play button) which should  take you to the debug section where you can hit another arrow to run it (arrow says .NET Core Launch next to it) and the system should start up locally and attach to the database.
+You should be able to select the Run/Debug button (the arrow that looks like a Play button) which should take you to the debug section where you can hit another arrow to run it (arrow says .NET Core Launch next to it) and the system should start up locally and attach to the database.
 
 It will start your default Visual Studio Code browser and drop you on a warning page.  
 Continue on to the website and login.
