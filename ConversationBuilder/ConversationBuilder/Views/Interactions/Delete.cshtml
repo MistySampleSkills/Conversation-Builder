@@ -40,8 +40,6 @@
 		<dd>
 			@Html.DisplayFor(model => model.StartListening)
 		</dd>
-
-
 		<dt>
 			@Html.DisplayNameFor(model => model.AllowKeyPhraseRecognition)
 		</dt>
@@ -53,6 +51,12 @@
 		</dt>
 		<dd>
 			@Html.DisplayFor(model => model.AllowConversationTriggers)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ConversationEntryPoint)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ConversationEntryPoint)
 		</dd>
 		<dt>
 			@Html.DisplayNameFor(model => model.AllowVoiceProcessingOverride)
@@ -74,8 +78,6 @@
 		<dd>
 			@Html.DisplayFor(model => model.SilenceTimeout)
 		</dd>
-
-
 		<dt>
 			@Html.DisplayNameFor(model => model.Updated)
 		</dt>

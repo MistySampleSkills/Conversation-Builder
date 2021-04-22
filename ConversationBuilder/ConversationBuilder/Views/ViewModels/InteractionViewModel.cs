@@ -24,7 +24,7 @@ namespace ConversationBuilder.ViewModels
 
 		public Animation AnimationData { get; set; }
 		
-		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no intent response
+		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 
 		public DateTimeOffset Created { get; set; }
 		
@@ -58,5 +58,7 @@ namespace ConversationBuilder.ViewModels
 		public double ListenTimeout { get; set; } = 6;
 
 		public double SilenceTimeout { get; set; } = 6;
+
+		public bool ConversationEntryPoint { get; set; }
 	}
 }

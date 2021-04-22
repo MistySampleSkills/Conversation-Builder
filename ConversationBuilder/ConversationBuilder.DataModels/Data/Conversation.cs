@@ -75,7 +75,9 @@ namespace ConversationBuilder.DataModels
 		public IDictionary<string, IList<TriggerActionOption>> ConversationTriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 
 		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
-		
+
+		//list of trigger action option ids		
+		public IList<string> ConversationDeparturePoints { get; set; } = new List<string>();
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

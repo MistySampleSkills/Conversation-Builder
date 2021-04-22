@@ -56,7 +56,7 @@ namespace ConversationBuilder.DataModels
 		
 		
 		[Display(Name = "No trigger during interaction timeout in seconds")]
-		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no intent response
+		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 
 		
 		[Display(Name = "Listen to speaker timeout")]
@@ -101,11 +101,14 @@ namespace ConversationBuilder.DataModels
 		[JsonProperty(PropertyName = "AllowVoiceProcessingOverride")]		
 		/// <summary>
 		/// If true, will interrupt speech processing to throw timeout events when they happen
-		/// otherwise, will pause to see if voice processes a successful intent trigger before throwing timeout
+		/// otherwise, will pause to see if voice processes a successful trigger before throwing timeout
 		/// Currently experimental
 		/// </summary>
 		public bool AllowVoiceProcessingOverride { get; set; } = true;
 
+		public bool ConversationEntryPoint { get; set; }
+
+		
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

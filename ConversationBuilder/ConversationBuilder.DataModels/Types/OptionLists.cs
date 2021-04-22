@@ -174,10 +174,10 @@ namespace ConversationBuilder.DataModels
 		//Can be handled, not the same as Interaction timeout which ends conversation
 		public const string Timeout = "Timeout";
 
-		//User defined timer intent event
+		//User defined timer trigger event
 		public const string Timer = "Timer";
 
-		//Common intent types caused by interaction with robot
+		//Common trigger types caused by interaction with robot
 		public const string SpeechHeard = "SpeechHeard";
 		public const string FaceRecognized = "FaceRecognized";
 		public const string BumperPressed = "BumperPressed";
@@ -193,7 +193,7 @@ namespace ConversationBuilder.DataModels
 		//trigger due to external event call into robot skill
 		public const string ExternalEvent = "ExternalEvent";
 
-		//To immediately trigger a start or stop intent or go to next animation after Misty speaks plays audio
+		//To immediately trigger a start or stop trigger or go to next animation after Misty speaks plays audio
 		public const string AudioCompleted = "AudioCompleted";
 		
 		//TODO

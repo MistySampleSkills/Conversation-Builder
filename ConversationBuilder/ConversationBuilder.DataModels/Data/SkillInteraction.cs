@@ -56,9 +56,11 @@ namespace ConversationBuilder.DataModels
 
 		public double SilenceTimeout { get; set; } = 6;
 
-		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no intent response
+		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 
 		public string ConversationId { get; set; }
+
+		public bool ConversationEntryPoint { get; set; }
 
 		public IList<string> SkillMessages { get; set; } = new List<string>();
 	}

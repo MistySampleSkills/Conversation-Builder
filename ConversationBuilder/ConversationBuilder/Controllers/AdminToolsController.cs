@@ -66,7 +66,8 @@ namespace ConversationBuilder.Controllers
 		protected const string UserNotFoundMessage = "Sorry, I failed to find your user information.";
 		protected const string NoOrgAccessMessage = "Sorry, you can't access the requested page.";
 		protected const string FailedCreatingMessage = "Sorry, we encountered an error while creating.";
-		protected const string FailedUpdatingMessage = "Sorry, we encountered an error while updating.";
+		protected const string FailedUpdatingMessage = "Sorry, we encountered an error while updating.";		
+		protected const string ConversationDeparturePoint = "* Conversation Departure Point";
 
 		protected readonly ICosmosDbService _cosmosDbService;
 		protected readonly UserManager<ApplicationUser> _userManager;
@@ -197,6 +198,7 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.StartListening = interaction.StartListening;
 								skillInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 								skillInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
+								skillInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;								
 								skillInteraction.SilenceTimeout = interaction.SilenceTimeout;
 								skillInteraction.ListenTimeout = interaction.ListenTimeout;
 								skillInteraction.Animation = interaction.Animation;
@@ -804,10 +806,10 @@ namespace ConversationBuilder.Controllers
 		{
 			//Get conversations from this group
 			IDictionary<string, Dictionary<string, string>> conversationInteractions = new Dictionary<string, Dictionary<string, string>>();
-			IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync(1, 10000);
-			IList<ConversationGroup> filteredConversationGroups = conversationGroups.Where(x => x.Conversations.Contains(conversationId)).ToList();
-			if(filteredConversationGroups == null || !filteredConversationGroups.Any())
-			{
+			//IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync(1, 10000);
+			//IList<ConversationGroup> filteredConversationGroups = conversationGroups.Where(x => x.Conversations.Contains(conversationId)).ToList();
+			//if(filteredConversationGroups == null || !filteredConversationGroups.Any())
+			//{
 				Dictionary<string, string> interactionList = new Dictionary<string, string>();
 				IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId);
 				foreach(Interaction interaction in interactions)
@@ -817,9 +819,11 @@ namespace ConversationBuilder.Controllers
 						interactionList.Add(interaction.Id, interaction.Name);				
 					}							
 				}
+				interactionList.Add(ConversationDeparturePoint, ConversationDeparturePoint);				
 				conversationInteractions.Add(conversationId, interactionList);
-			}
-			else
+
+			//}
+			/*else
 			{
 				foreach(ConversationGroup conversationGroup in filteredConversationGroups)
 				{
@@ -845,10 +849,56 @@ namespace ConversationBuilder.Controllers
 						
 					}
 				}
-			}
+			}*/
 		
 			conversationInteractions.OrderByDescending(x => x.Key);
 			return conversationInteractions ?? new Dictionary<string, Dictionary<string, string>>();
+		}
+
+		protected async Task<IDictionary<string, Interaction>> ConversationGroupEntries(string conversationGroupId)
+		{
+			IDictionary<string, Interaction> data = new Dictionary<string, Interaction>();
+			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(conversationGroupId);
+			
+			foreach(string conversationId in conversationGroup.Conversations)
+			{
+				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
+				foreach(string interactionId in conversation.Interactions)
+				{	
+					Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interactionId);
+					if(interaction.ConversationEntryPoint)
+					{
+						data.Add(interactionId, interaction);
+					}	
+				}
+			}
+			return data;
+		}
+
+		protected async Task<IDictionary<string, TriggerActionOption>> ConversationGroupDepartures(string conversationGroupId)
+		{
+			IDictionary<string, TriggerActionOption> data = new Dictionary<string, TriggerActionOption>();
+			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(conversationGroupId);
+			
+			foreach(string conversationId in conversationGroup.Conversations)
+			{
+				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
+				foreach(string interactionId in conversation.Interactions)
+				{	
+					Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interactionId);
+					foreach(IList<TriggerActionOption> triggerActionOptions in interaction.TriggerMap.Values)
+					{
+						foreach(TriggerActionOption triggerActionOption in triggerActionOptions)
+						{
+							if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
+							{
+								data.Add(triggerActionOption.Id, triggerActionOption);
+							}
+						}
+					}
+				}
+			}
+			return data;
 		}
 
 		protected async Task<IDictionary<string, string>> AllInteractionList()

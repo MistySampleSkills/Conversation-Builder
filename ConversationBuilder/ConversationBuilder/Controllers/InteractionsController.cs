@@ -47,7 +47,7 @@ namespace ConversationBuilder.Controllers
 	[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
 	public class InteractionsController : AdminToolController
 	{
-		
+
 		public InteractionsController(ICosmosDbService cosmosDbService, UserManager<ApplicationUser> userManager)
 			: base(cosmosDbService, userManager) { }
 
@@ -165,6 +165,7 @@ namespace ConversationBuilder.Controllers
 					interactionViewModel.StartListening = interaction.StartListening;
 					interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;
 					interactionViewModel.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
+					interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;					
 					interactionViewModel.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 					interactionViewModel.ListenTimeout = interaction.ListenTimeout;
 					interactionViewModel.SilenceTimeout = interaction.SilenceTimeout;
@@ -350,30 +351,43 @@ namespace ConversationBuilder.Controllers
 				
 				if(interaction != null && conversation != null)
 				{
-					IList<TriggerActionOption> intentActions;
-					if(!interaction.TriggerMap.Remove(model.SelectedTrigger, out intentActions))
+					IList<TriggerActionOption> triggerActions;
+					if(!interaction.TriggerMap.Remove(model.SelectedTrigger, out triggerActions))
 					{
-						intentActions = new List<TriggerActionOption>();
+						triggerActions = new List<TriggerActionOption>();
 					}
 					
-					TriggerActionOption intentAction =  new TriggerActionOption();
-					intentAction.Id = Guid.NewGuid().ToString();
-					intentAction.GoToInteraction = model.GoToInteraction;
+					TriggerActionOption triggerAction =  new TriggerActionOption();
+					triggerAction.Id = Guid.NewGuid().ToString();
 
-					//TODO Make sure these are legit, a little hacky, do in UI
-					Interaction goTointeraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.GoToInteraction);									
-					intentAction.GoToConversation = goTointeraction.ConversationId;
+					Interaction goToInteraction = new Interaction();
+					if(model.GoToInteraction == ConversationDeparturePoint)
+					{
+						//map triggerAction id to conversation depature points
+						conversation.ConversationDeparturePoints.Add(triggerAction.Id);
+						triggerAction.GoToConversation = ConversationDeparturePoint; //??
+						triggerAction.GoToInteraction = ConversationDeparturePoint;//??
+					}
+					else
+					{
 
-					intentAction.InterruptCurrentAction = model.InterruptCurrentAction;
-					intentAction.Weight = model.Weight;
-					intentActions.Add(intentAction);
+						triggerAction.GoToInteraction = model.GoToInteraction;
 
-					interaction.TriggerMap.Add(model.SelectedTrigger, intentActions);
+						goToInteraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.GoToInteraction);									
+						triggerAction.GoToConversation = goToInteraction.ConversationId;
+
+					}
+
+					triggerAction.InterruptCurrentAction = model.InterruptCurrentAction;
+					triggerAction.Weight = model.Weight;
+					triggerActions.Add(triggerAction);
+
+					interaction.TriggerMap.Add(model.SelectedTrigger, triggerActions);
 
 					if(!string.IsNullOrWhiteSpace(model.Animation) && model.Animation != "Default Animation")
 					{
-						conversation.InteractionAnimations.Remove(intentAction.Id);
-						conversation.InteractionAnimations.Add(intentAction.Id, model.Animation);
+						conversation.InteractionAnimations.Remove(triggerAction.Id);
+						conversation.InteractionAnimations.Add(triggerAction.Id, model.Animation);
 
 						if(!conversation.Animations.Contains(model.Animation))
 						{
@@ -382,9 +396,9 @@ namespace ConversationBuilder.Controllers
 					}
 					else
 					{
-						if(!conversation.Animations.Contains(goTointeraction.Animation))
+						if(!conversation.Animations.Contains(goToInteraction.Animation))
 						{
-							conversation.Animations.Add(goTointeraction.Animation);
+							conversation.Animations.Add(goToInteraction.Animation);
 						}
 					}
 
@@ -422,7 +436,8 @@ namespace ConversationBuilder.Controllers
 						TriggerActionOption intentAction = triggerActions.FirstOrDefault(x => x.Id == removedTriggerAction);
 						if(intentAction != null)
 						{
-							triggerActions.Remove(intentAction);
+							triggerActions.Remove(intentAction);							
+							conversation.ConversationDeparturePoints.Remove(removedTriggerAction);
 						}
 						interaction.TriggerMap.Add(selectedTriggerId, triggerActions);
 					}
@@ -540,6 +555,7 @@ namespace ConversationBuilder.Controllers
 					newInteraction.StartListening = interaction.StartListening;
 					newInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 					newInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
+					newInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;					
 					newInteraction.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 					newInteraction.ListenTimeout = interaction.ListenTimeout;
 					newInteraction.SilenceTimeout = interaction.SilenceTimeout;
@@ -743,6 +759,7 @@ namespace ConversationBuilder.Controllers
 					loadedInteraction.StartListening = interaction.StartListening;
 					loadedInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
 					loadedInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
+					loadedInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;
 					loadedInteraction.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 					loadedInteraction.ListenTimeout = interaction.ListenTimeout;
 					loadedInteraction.SilenceTimeout = interaction.SilenceTimeout;					

@@ -92,8 +92,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				
-				TriggerDetail intent =  await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
-				if (intent == null)
+				TriggerDetail trigger =  await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
+				if (trigger == null)
 				{
 					return RedirectToAction(nameof(Index));
 				}
@@ -102,7 +102,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
 					ViewBag.Interactions = await InteractionList();
 					await SetViewBagData();
-					return View(intent);
+					return View(trigger);
 				}
 			}
 			catch (Exception ex)
@@ -121,15 +121,15 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 
-				TriggerDetailViewModel intent = new TriggerDetailViewModel {};
-				intent.Id = Guid.NewGuid().ToString();
+				TriggerDetailViewModel triggerViewModel = new TriggerDetailViewModel {};
+				triggerViewModel.Id = Guid.NewGuid().ToString();
 				ViewBag.Interactions = await InteractionList();
 				ViewBag.Triggers = (new Triggers()).AllItems.OrderByDescending(x => x.Value);
 				ViewBag.TriggerFilters = (new TriggerFilters()).AllItems.OrderByDescending(x => x.Value);
 				ViewBag.Emotions = (new DefaultEmotions()).AllItems.OrderByDescending(x => x.Value);
 
 				await SetViewBagData();
-				return View(intent);				
+				return View(triggerViewModel);				
 			}
 			catch (Exception ex)
 			{
@@ -354,8 +354,8 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 			
-				TriggerDetail intent = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
-				if (intent == null)
+				TriggerDetail trigger = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
+				if (trigger == null)
 				{
 					return RedirectToAction(nameof(Index));
 				}
@@ -365,7 +365,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
 					ViewBag.Interactions = await InteractionList();
 					await SetViewBagData();
-					return View(intent);
+					return View(trigger);
 				}
 			}
 			catch (Exception ex)
