@@ -76,11 +76,12 @@ namespace ConversationBuilder.DataModels
 
 		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
 
-		//list of trigger action option ids		
-		public IList<string> ConversationDeparturePoints { get; set; } = new List<string>();
+		//key is interaction id
+		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();
+
+		//key is trigger action option id
+		public IDictionary<string, DepartureMap> ConversationDeparturePoints { get; set; } = new Dictionary<string, DepartureMap>();
 		
-		//list of interaction ids		
-		public IList<KeyValuePair<string, string>> ConversationEntryPoints { get; set; } = new List<KeyValuePair<string, string>>();
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

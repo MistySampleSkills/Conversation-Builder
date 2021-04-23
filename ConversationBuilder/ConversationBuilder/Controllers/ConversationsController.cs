@@ -541,7 +541,8 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 
-				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.Id);			
+				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.Id);	
+				Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);			
 				
 				if(conversation != null)
 				{
@@ -557,7 +558,15 @@ namespace ConversationBuilder.Controllers
 					if(model.GoToInteraction == ConversationDeparturePoint)
 					{
 						//map triggerAction id to conversation depature points
-						conversation.ConversationDeparturePoints.Add(triggerActionOption.Id);
+						
+						DepartureMap departureMap = new DepartureMap();
+						departureMap.AnimationId = animation?.Id ?? "Default Animation";
+						departureMap.TriggerId = model.SelectedTrigger;
+						departureMap.ConversationId = conversation.Id;
+						departureMap.InteractionId = model.Id;
+						departureMap.TriggerOptionId = triggerActionOption.Id;
+
+						conversation.ConversationDeparturePoints.Add(triggerActionOption.Id, departureMap);
 						triggerActionOption.GoToConversation = ConversationDeparturePoint; //??
 						triggerActionOption.GoToInteraction = ConversationDeparturePoint;//??
 					}
@@ -565,12 +574,11 @@ namespace ConversationBuilder.Controllers
 					{
 
 						triggerActionOption.GoToInteraction = model.GoToInteraction;
-
 						goToInteraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.GoToInteraction);									
 						triggerActionOption.GoToConversation = goToInteraction.ConversationId;
 
 					}
-				
+
 					triggerActionOption.InterruptCurrentAction = model.InterruptCurrentAction;
 					triggerActionOption.Weight = model.Weight;
 					if(!string.IsNullOrWhiteSpace(model.Animation) && model.Animation != "Default Animation")
@@ -592,8 +600,8 @@ namespace ConversationBuilder.Controllers
 					}
 
 					TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.SelectedTrigger);	
-					Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);	
-					triggerActionOption.DisplayName = $"{conversation.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
+					
+					//triggerActionOption.DisplayName = $"{conversation.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
 					triggerActions.Add(triggerActionOption);
 				
 					conversation.ConversationTriggerMap.Add(model.SelectedTrigger, triggerActions);
@@ -607,51 +615,6 @@ namespace ConversationBuilder.Controllers
 			catch (Exception ex)
 			{
 				return RedirectToAction("Error", "Home", new { message = "Exception removing from the conversation response handler list.", exception = ex.Message });
-			}
-		}
-
-		public async Task<ActionResult> Import()
-		{
-			try
-			{
-				UserInformation userInfo = await GetUserInformation();
-				if (userInfo == null)
-				{
-					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
-				}
-
-				ImportViewModel viewModel = new ImportViewModel {};
-				await SetViewBagData();
-				return View(viewModel);			
-			}
-			catch (Exception ex)
-			{
-				return RedirectToAction("Error", "Home", new { message = "Exception importing conversations.", exception = ex.Message });
-			}
-		}
-
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<ActionResult> Import(ImportViewModel model)
-		{
-			try
-			{
-				UserInformation userInfo = await GetUserInformation();
-				if (userInfo == null)
-				{
-					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
-				}
-
-				if(!await ImportConversations(model.Config))
-				{
-					return RedirectToAction("Error", "Home", new { message = "Failed to successfully process configuration." });
-				}
-
-				return RedirectToAction(nameof(Index));			
-			}
-			catch (Exception ex)
-			{
-				return RedirectToAction("Error", "Home", new { message = "Exception importing conversations.", exception = ex.Message });
 			}
 		}
 
@@ -719,6 +682,7 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 
+					conversation.ConversationDeparturePoints.Remove(removedTriggerAction);
 					if(!conversationAnimations.Contains(animationId))
 					{
 						conversation.Animations.Remove(animationId);
@@ -735,5 +699,52 @@ namespace ConversationBuilder.Controllers
 				return RedirectToAction("Error", "Home", new { message = "Exception removing from the conversation response handler list.", exception = ex.Message });
 			}
 		}
+
+		
+		public async Task<ActionResult> Import()
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+
+				ImportViewModel viewModel = new ImportViewModel {};
+				await SetViewBagData();
+				return View(viewModel);			
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception importing conversations.", exception = ex.Message });
+			}
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<ActionResult> Import(ImportViewModel model)
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+
+				if(!await ImportConversations(model.Config))
+				{
+					return RedirectToAction("Error", "Home", new { message = "Failed to successfully process configuration." });
+				}
+
+				return RedirectToAction(nameof(Index));			
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception importing conversations.", exception = ex.Message });
+			}
+		}
+
 	}
 }

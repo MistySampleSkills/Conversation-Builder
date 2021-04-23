@@ -133,9 +133,11 @@ else
 
 				<div class="form-group">
 					Departure Point
-					<select asp-for="DeparturePoint" class="form-control">
-						@foreach (KeyValuePair<string, ConversationBuilder.DataModels.TriggerActionOption> item in @ViewBag.DeparturePoints)
+					<select asp-for="DepartureMap.TriggerOptionId" class="form-control">
+						
+						@foreach (KeyValuePair<string, ConversationBuilder.DataModels.DepartureMap> item in @ViewBag.DeparturePoints)
 						{
+
 							<option value="@item.Key">@item.Value.DisplayName</option>
 						}
 					</select>
@@ -143,10 +145,10 @@ else
 
 				<div class="form-group">
 					Entry Point
-					<select asp-for="EntryPoint" class="form-control">
-						@foreach (KeyValuePair<string, ConversationBuilder.ViewModels.InteractionViewModel> item in @ViewBag.EntryPoints)
+					<select asp-for="EntryMap.InteractionId" class="form-control">
+						@foreach (KeyValuePair<string, ConversationBuilder.DataModels.EntryMap> item in @ViewBag.EntryPoints)
 						{
-							<option value="@item.Key">@item.Value.ConversationName:@item.Value.Name</option>
+							<option value="@item.Key">@item.Value.DisplayName</option>
 						}
 					</select>
 				</div>
@@ -185,14 +187,11 @@ else
 			{
 				<tr>
 					<td>
-						@Html.DisplayFor(modelItem => item.Value.DeparturePointName)
+						@Html.DisplayFor(modelItem => item.Value.DepartureMap.DisplayName)
 					</td>
 					<td>
-						@Html.DisplayFor(modelItem => item.Value.EntryPointName)
+						@Html.DisplayFor(modelItem => item.Value.EntryMap.DisplayName)
 					</td>		
-					<div class="form-group">
-						<input asp-for="DeparturePoint" class="form-control" value="@item.Value.DeparturePoint" type="hidden"> </input>
-						<input asp-for="EntryPoint" class="form-control" value="@item.Value.EntryPoint" type="hidden"> </input>
 					<td>
 						@Html.ActionLink("Delete", "DeleteConversationInteractionMap", new { id=item.Key, conversationGroupId=Model.ConversationGroupId})
 					</td>								

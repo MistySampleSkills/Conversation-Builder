@@ -348,6 +348,7 @@ namespace ConversationBuilder.Controllers
 
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.ConversationId);				
 				Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.Id);				
+				Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);	
 				
 				if(interaction != null && conversation != null)
 				{
@@ -364,7 +365,14 @@ namespace ConversationBuilder.Controllers
 					if(model.GoToInteraction == ConversationDeparturePoint)
 					{
 						//map triggerAction id to conversation depature points
-						conversation.ConversationDeparturePoints.Add(triggerActionOption.Id);
+						DepartureMap departureMap = new DepartureMap();
+						departureMap.AnimationId = animation?.Id ?? "Default Animation";
+						departureMap.ConversationId = conversation.Id;
+						departureMap.TriggerId = model.SelectedTrigger;
+						departureMap.InteractionId = model.Id;
+						departureMap.TriggerOptionId = triggerActionOption.Id;
+
+						conversation.ConversationDeparturePoints.Add(triggerActionOption.Id, departureMap);
 						triggerActionOption.GoToConversation = ConversationDeparturePoint; //??
 						triggerActionOption.GoToInteraction = ConversationDeparturePoint;//??
 					}
@@ -397,8 +405,7 @@ namespace ConversationBuilder.Controllers
 					}
 
 					TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.SelectedTrigger);	
-					Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);	
-					triggerActionOption.DisplayName = $"{conversation.Name}:{model.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
+					//triggerActionOption.DisplayName = $"{conversation.Name}:{model.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
 					triggerActions.Add(triggerActionOption);
 					interaction.TriggerMap.Add(model.SelectedTrigger, triggerActions);
 
@@ -446,7 +453,7 @@ namespace ConversationBuilder.Controllers
 						IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync();
 						foreach(ConversationGroup conversationGroup in conversationGroups)
 						{
-							if(conversationGroup.ConversationMappings.Values.Any(x => x.DeparturePoint == removedTriggerAction))
+							if(conversationGroup.ConversationMappings.Values.Any(x => x.DepartureMap.TriggerOptionId == removedTriggerAction))
 							{
 								//used in a mapping, say it cannot be used at this time as other conversations depend on it
 								ViewBag.CanBeDeleted = false;
@@ -454,7 +461,6 @@ namespace ConversationBuilder.Controllers
 						}
 						
 					}
-
 					
 					string animationId;
 					if(conversation.InteractionAnimations.TryGetValue(removedTriggerAction, out animationId))
@@ -498,6 +504,7 @@ namespace ConversationBuilder.Controllers
 						conversation.Animations.Remove(animationId);
 					}
 						
+					conversation.ConversationDeparturePoints.Remove(removedTriggerAction);
 					await _cosmosDbService.ContainerManager.InteractionData.UpdateAsync(interaction);
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
 
@@ -700,8 +707,12 @@ namespace ConversationBuilder.Controllers
 					Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.ConversationId);					
 					if(model.ConversationEntryPoint)
 					{
-						conversation.ConversationEntryPoints.Add(new KeyValuePair<string, string>(model.Id, conversation.Id));
+						EntryMap entryMap = new EntryMap();
+						entryMap.ConversationId = model.ConversationId;
+						entryMap.InteractionId = model.Id;
+						conversation.ConversationEntryPoints.Add(model.Id, entryMap);
 					}
+					
 					if(!conversation.Interactions.Contains(model.Id))
 					{
 						conversation.Interactions.Add(model.Id);
@@ -782,11 +793,14 @@ namespace ConversationBuilder.Controllers
 				
 					if(interaction.ConversationEntryPoint)
 					{
-						conversation.ConversationEntryPoints.Add(new KeyValuePair<string, string>(interaction.Id, conversation.Id));
+						EntryMap entryMap = new EntryMap();
+						entryMap.ConversationId = interaction.ConversationId;
+						entryMap.InteractionId = interaction.Id;
+						conversation.ConversationEntryPoints.Add(interaction.Id, entryMap);
 					}
 					else
 					{
-						conversation.ConversationEntryPoints.Remove(new KeyValuePair<string, string>(interaction.Id, conversation.Id));
+						conversation.ConversationEntryPoints.Remove(interaction.Id);
 					}
 					
 					loadedInteraction.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
@@ -836,7 +850,7 @@ namespace ConversationBuilder.Controllers
 					IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync();
 					foreach(ConversationGroup conversationGroup in conversationGroups)
 					{
-						if(conversationGroup.ConversationMappings.Values.Any(x => x.EntryPoint == id))
+						if(conversationGroup.ConversationMappings.Values.Any(x => x.EntryMap.InteractionId == id))
 						{
 							//used in a mapping, say it cannot be used at this time as other conversations depend on it
 							ViewBag.CanBeDeleted = false;

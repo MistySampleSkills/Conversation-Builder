@@ -470,7 +470,7 @@ namespace ConversationBuilder.Controllers
 								newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
 								newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
 								newTriggerActionOption.Weight = triggerActionOption.Weight;
-								newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
+								//newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
 								newTriggerActionOption.Id = Guid.NewGuid().ToString();
 								newTriggerOptions.Add(newTriggerActionOption);
 
@@ -499,7 +499,7 @@ namespace ConversationBuilder.Controllers
 							newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
 							newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
 							newTriggerActionOption.Weight = triggerActionOption.Weight;
-							newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
+							//newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
 							newTriggerActionOption.Id = Guid.NewGuid().ToString();
 							newTriggerOptions.Add(newTriggerActionOption);
 						}

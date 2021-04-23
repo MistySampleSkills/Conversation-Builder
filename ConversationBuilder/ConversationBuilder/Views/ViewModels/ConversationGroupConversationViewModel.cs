@@ -11,10 +11,10 @@ namespace ConversationBuilder.ViewModels
 		public string ConversationGroupName { get; set; }
 
 		//TriggerActionOption Id
-		public string DeparturePoint { get; set; }
+		public DepartureMap DepartureMap { get; set; }
 		
 		//Interaction(ViewModel) Id
-		public string EntryPoint { get; set; }
+		public EntryMap EntryMap { get; set; }
 
 		//public IDictionary<string, string> ConversationMappings { get; set; } = new Dictionary<string, string>();
 	}

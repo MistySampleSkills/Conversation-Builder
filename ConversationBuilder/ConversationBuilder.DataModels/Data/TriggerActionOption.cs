@@ -38,7 +38,7 @@ namespace ConversationBuilder.DataModels
 {
 	public class TriggerActionOption //: IEditableData
 	{
-		public string DisplayName { get; set; }
+		//public string DisplayName { get; set; }
 		public string Id { get; set; }
 		public string ItemType { get; set; } = DataItemType.TriggerActionOption.ToString();
 		public int Weight { get; set; } = 1;

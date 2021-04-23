@@ -83,15 +83,31 @@ namespace ConversationBuilder.DataModels
 		
 		public DateTimeOffset Updated { get; set; }
 		public string CreatedBy { get; set; }
+
+		//Key is departure as there should only be one for these mappings
 		public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
 	}
 
 	public class ConversationMappingDetail
 	{
-		public string Id {get; set;}
-		public string EntryPointName {get; set;}
-		public string DeparturePointName {get; set;}
-		public string EntryPoint {get; set;}
-		public string DeparturePoint {get; set;}
+		public EntryMap EntryMap {get; set;}
+		public DepartureMap DepartureMap {get; set;}
+	}
+
+	public class EntryMap
+	{
+		public string DisplayName {get; set;}
+		public string ConversationId {get; set;}
+		public string InteractionId {get; set;}
+	}
+
+	public class DepartureMap
+	{
+		public string DisplayName {get; set;}
+		public string TriggerOptionId {get; set;}
+		public string TriggerId {get; set;}
+		public string ConversationId {get; set;}
+		public string InteractionId {get; set;}
+		public string AnimationId {get; set;}
 	}
 }
