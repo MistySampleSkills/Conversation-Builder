@@ -357,37 +357,31 @@ namespace ConversationBuilder.Controllers
 						triggerActions = new List<TriggerActionOption>();
 					}
 					
-					TriggerActionOption triggerAction =  new TriggerActionOption();
-					triggerAction.Id = Guid.NewGuid().ToString();
+					TriggerActionOption triggerActionOption =  new TriggerActionOption();
+					triggerActionOption.Id = Guid.NewGuid().ToString();
 
 					Interaction goToInteraction = new Interaction();
 					if(model.GoToInteraction == ConversationDeparturePoint)
 					{
 						//map triggerAction id to conversation depature points
-						conversation.ConversationDeparturePoints.Add(triggerAction.Id);
-						triggerAction.GoToConversation = ConversationDeparturePoint; //??
-						triggerAction.GoToInteraction = ConversationDeparturePoint;//??
+						conversation.ConversationDeparturePoints.Add(triggerActionOption.Id);
+						triggerActionOption.GoToConversation = ConversationDeparturePoint; //??
+						triggerActionOption.GoToInteraction = ConversationDeparturePoint;//??
 					}
 					else
 					{
-
-						triggerAction.GoToInteraction = model.GoToInteraction;
-
+						triggerActionOption.GoToInteraction = model.GoToInteraction;
 						goToInteraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.GoToInteraction);									
-						triggerAction.GoToConversation = goToInteraction.ConversationId;
-
+						triggerActionOption.GoToConversation = goToInteraction.ConversationId;
 					}
 
-					triggerAction.InterruptCurrentAction = model.InterruptCurrentAction;
-					triggerAction.Weight = model.Weight;
-					triggerActions.Add(triggerAction);
-
-					interaction.TriggerMap.Add(model.SelectedTrigger, triggerActions);
-
+					triggerActionOption.InterruptCurrentAction = model.InterruptCurrentAction;
+					triggerActionOption.Weight = model.Weight;
+					
 					if(!string.IsNullOrWhiteSpace(model.Animation) && model.Animation != "Default Animation")
 					{
-						conversation.InteractionAnimations.Remove(triggerAction.Id);
-						conversation.InteractionAnimations.Add(triggerAction.Id, model.Animation);
+						conversation.InteractionAnimations.Remove(triggerActionOption.Id);
+						conversation.InteractionAnimations.Add(triggerActionOption.Id, model.Animation);
 
 						if(!conversation.Animations.Contains(model.Animation))
 						{
@@ -401,6 +395,12 @@ namespace ConversationBuilder.Controllers
 							conversation.Animations.Add(goToInteraction.Animation);
 						}
 					}
+
+					TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.SelectedTrigger);	
+					Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);	
+					triggerActionOption.DisplayName = $"{conversation.Name}:{model.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
+					triggerActions.Add(triggerActionOption);
+					interaction.TriggerMap.Add(model.SelectedTrigger, triggerActions);
 
 					await _cosmosDbService.ContainerManager.InteractionData.UpdateAsync(interaction);
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
@@ -430,6 +430,7 @@ namespace ConversationBuilder.Controllers
 				
 				if(interaction != null && conversation != null)
 				{
+				
 					IList<TriggerActionOption> triggerActions;
 					if(interaction.TriggerMap.Remove(selectedTriggerId, out triggerActions))
 					{
@@ -440,8 +441,21 @@ namespace ConversationBuilder.Controllers
 							conversation.ConversationDeparturePoints.Remove(removedTriggerAction);
 						}
 						interaction.TriggerMap.Add(selectedTriggerId, triggerActions);
+
+						ViewBag.CanBeDeleted = true;
+						IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync();
+						foreach(ConversationGroup conversationGroup in conversationGroups)
+						{
+							if(conversationGroup.ConversationMappings.Values.Any(x => x.DeparturePoint == removedTriggerAction))
+							{
+								//used in a mapping, say it cannot be used at this time as other conversations depend on it
+								ViewBag.CanBeDeleted = false;
+							}
+						}
+						
 					}
 
+					
 					string animationId;
 					if(conversation.InteractionAnimations.TryGetValue(removedTriggerAction, out animationId))
 					{
@@ -683,8 +697,11 @@ namespace ConversationBuilder.Controllers
 					model.CreatedBy = userInfo.AccessId;
 					model.Created = dt;
 					model.Updated = dt;
-					
-					Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.ConversationId);
+					Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.ConversationId);					
+					if(model.ConversationEntryPoint)
+					{
+						conversation.ConversationEntryPoints.Add(new KeyValuePair<string, string>(model.Id, conversation.Id));
+					}
 					if(!conversation.Interactions.Contains(model.Id))
 					{
 						conversation.Interactions.Add(model.Id);
@@ -753,6 +770,8 @@ namespace ConversationBuilder.Controllers
 				if (ModelState.IsValid)
 				{
 					Interaction loadedInteraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interaction.Id);
+					Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(interaction.ConversationId);
+
 					loadedInteraction.Name = interaction.Name;
 					loadedInteraction.Animation = interaction.Animation;
 					loadedInteraction.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
@@ -760,13 +779,22 @@ namespace ConversationBuilder.Controllers
 					loadedInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
 					loadedInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 					loadedInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;
+				
+					if(interaction.ConversationEntryPoint)
+					{
+						conversation.ConversationEntryPoints.Add(new KeyValuePair<string, string>(interaction.Id, conversation.Id));
+					}
+					else
+					{
+						conversation.ConversationEntryPoints.Remove(new KeyValuePair<string, string>(interaction.Id, conversation.Id));
+					}
+					
 					loadedInteraction.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 					loadedInteraction.ListenTimeout = interaction.ListenTimeout;
 					loadedInteraction.SilenceTimeout = interaction.SilenceTimeout;					
 					loadedInteraction.Updated = DateTimeOffset.UtcNow;
 					await _cosmosDbService.ContainerManager.InteractionData.UpdateAsync(loadedInteraction);
 					
-					Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(interaction.ConversationId);
 					if(!conversation.Animations.Contains(interaction.Animation))
 					{
 						conversation.Animations.Add(interaction.Animation);
@@ -803,6 +831,18 @@ namespace ConversationBuilder.Controllers
 				}
 				else
 				{
+					
+					ViewBag.CanBeDeleted = true;
+					IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync();
+					foreach(ConversationGroup conversationGroup in conversationGroups)
+					{
+						if(conversationGroup.ConversationMappings.Values.Any(x => x.EntryPoint == id))
+						{
+							//used in a mapping, say it cannot be used at this time as other conversations depend on it
+							ViewBag.CanBeDeleted = false;
+						}
+					}
+					
 					ViewBag.Conversations = await ConversationList();
 					ViewBag.Animations = await AnimationList();
 					await SetViewBagData();

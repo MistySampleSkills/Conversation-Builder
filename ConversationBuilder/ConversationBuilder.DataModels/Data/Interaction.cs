@@ -51,11 +51,10 @@ namespace ConversationBuilder.DataModels
 		public string Animation { get; set; }
 
 		public IList<string> SkillMessages { get; set; } = new List<string>();
-		
 		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 		
 		
-		[Display(Name = "No trigger during interaction timeout in seconds")]
+		[Display(Name = "Interaction timeout (seconds)")]
 		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 
 		
@@ -106,9 +105,9 @@ namespace ConversationBuilder.DataModels
 		/// </summary>
 		public bool AllowVoiceProcessingOverride { get; set; } = true;
 
+		[Display(Name = "Conversation Entry Point")]
 		public bool ConversationEntryPoint { get; set; }
 
-		
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

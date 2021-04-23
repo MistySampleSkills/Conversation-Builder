@@ -59,6 +59,8 @@ namespace ConversationBuilder.ViewModels
 
 		public double SilenceTimeout { get; set; } = 6;
 
+		[Display(Name = "Conversation Entry Point")]
 		public bool ConversationEntryPoint { get; set; }
+		public string ConversationName { get; set; }
 	}
 }

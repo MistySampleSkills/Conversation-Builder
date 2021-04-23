@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using ConversationBuilder.Data.Cosmos;
 using ConversationBuilder.DataModels;
+using ConversationBuilder.ViewModels;
 using ConversationBuilder.Extensions;
 
 namespace ConversationBuilder.Controllers
@@ -469,6 +470,7 @@ namespace ConversationBuilder.Controllers
 								newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
 								newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
 								newTriggerActionOption.Weight = triggerActionOption.Weight;
+								newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
 								newTriggerActionOption.Id = Guid.NewGuid().ToString();
 								newTriggerOptions.Add(newTriggerActionOption);
 
@@ -497,6 +499,7 @@ namespace ConversationBuilder.Controllers
 							newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
 							newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
 							newTriggerActionOption.Weight = triggerActionOption.Weight;
+							newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
 							newTriggerActionOption.Id = Guid.NewGuid().ToString();
 							newTriggerOptions.Add(newTriggerActionOption);
 						}
@@ -855,20 +858,42 @@ namespace ConversationBuilder.Controllers
 			return conversationInteractions ?? new Dictionary<string, Dictionary<string, string>>();
 		}
 
-		protected async Task<IDictionary<string, Interaction>> ConversationGroupEntries(string conversationGroupId)
+		protected async Task<IDictionary<string, InteractionViewModel>> ConversationGroupEntries(string conversationGroupId)
 		{
-			IDictionary<string, Interaction> data = new Dictionary<string, Interaction>();
+			IDictionary<string, InteractionViewModel> data = new Dictionary<string, InteractionViewModel>();
 			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(conversationGroupId);
 			
-			foreach(string conversationId in conversationGroup.Conversations)
+			foreach(string conversationId in conversationGroup.Conversations.Where(x => x != null))
 			{
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
-				foreach(string interactionId in conversation.Interactions)
+				foreach(string interactionId in conversation.Interactions.Where(x => x != null))
 				{	
 					Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interactionId);
 					if(interaction.ConversationEntryPoint)
 					{
-						data.Add(interactionId, interaction);
+						InteractionViewModel interactionViewModel = new InteractionViewModel();
+						interactionViewModel.ConversationName = conversation.Name;
+						interactionViewModel.ConversationId = interaction.ConversationId;
+						interactionViewModel.Id = interaction.Id;
+						interactionViewModel.Created = interaction.Created;
+						interactionViewModel.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
+						interactionViewModel.ItemType = interaction.ItemType;
+						interactionViewModel.Name = interaction.Name;
+						interactionViewModel.Animation = interaction.Animation;
+
+						interactionViewModel.StartListening = interaction.StartListening;
+						interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;
+						interactionViewModel.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
+						interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;					
+						interactionViewModel.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
+						interactionViewModel.ListenTimeout = interaction.ListenTimeout;
+						interactionViewModel.SilenceTimeout = interaction.SilenceTimeout;
+						
+						//Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(interaction.Animation);
+						//interactionViewModel.AnimationData = animation;
+						//interactionViewModel.TriggerDetails = filteredTriggers.OrderBy(x => x.Name).ToList();
+
+						data.Add(interactionId, interactionViewModel);
 					}	
 				}
 			}
@@ -880,10 +905,21 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, TriggerActionOption> data = new Dictionary<string, TriggerActionOption>();
 			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(conversationGroupId);
 			
-			foreach(string conversationId in conversationGroup.Conversations)
+			foreach(string conversationId in conversationGroup.Conversations.Where(x => x != null))
 			{
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
-				foreach(string interactionId in conversation.Interactions)
+				foreach(IList<TriggerActionOption> triggerActionOptions in conversation.ConversationTriggerMap.Values)
+				{
+					foreach(TriggerActionOption triggerActionOption in triggerActionOptions)
+					{
+						if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
+						{
+							data.Add(triggerActionOption.Id, triggerActionOption);
+						}
+					}
+				}
+				
+				foreach(string interactionId in conversation.Interactions.Where(x => x != null))
 				{	
 					Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interactionId);
 					foreach(IList<TriggerActionOption> triggerActionOptions in interaction.TriggerMap.Values)

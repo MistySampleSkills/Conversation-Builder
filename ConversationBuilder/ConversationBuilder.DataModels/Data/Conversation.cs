@@ -78,6 +78,9 @@ namespace ConversationBuilder.DataModels
 
 		//list of trigger action option ids		
 		public IList<string> ConversationDeparturePoints { get; set; } = new List<string>();
+		
+		//list of interaction ids		
+		public IList<KeyValuePair<string, string>> ConversationEntryPoints { get; set; } = new List<KeyValuePair<string, string>>();
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

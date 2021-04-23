@@ -227,13 +227,6 @@
 				<td></td>
 				<td></td>
 				@{
-					/*KeyValuePair<string, string> goToConversation = ((IDictionary<string, string>)ViewBag.Conversations).FirstOrDefault(x => x.Key == intentAction.GoToConversation);
-					string goToConversationName = intentAction.GoToConversation;
-					if(goToConversation.Value != null)
-					{
-						goToConversationName = goToConversation.Value;
-					}*/
-				
 					KeyValuePair<string, string> goToInteraction = ((IDictionary<string, string>)ViewBag.AllInteractions).FirstOrDefault(x => x.Key == intentAction.GoToInteraction);
 					string goToInteractionName = intentAction.GoToInteraction;
 					if(goToInteraction.Value != null)

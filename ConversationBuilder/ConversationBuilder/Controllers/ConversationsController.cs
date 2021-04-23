@@ -545,29 +545,38 @@ namespace ConversationBuilder.Controllers
 				
 				if(conversation != null)
 				{
-					IList<TriggerActionOption> intentActions;
-					if(!conversation.ConversationTriggerMap.Remove(model.SelectedTrigger, out intentActions))
+					IList<TriggerActionOption> triggerActions;
+					if(!conversation.ConversationTriggerMap.Remove(model.SelectedTrigger, out triggerActions))
 					{
-						intentActions = new List<TriggerActionOption>();
+						triggerActions = new List<TriggerActionOption>();
 					}
 					
-					TriggerActionOption intentAction =  new TriggerActionOption();
-					intentAction.Id = Guid.NewGuid().ToString();
-					
-					intentAction.GoToInteraction = model.GoToInteraction;
-					//TODO update UI so Conversation selection reloads interactions, for now, actually ignoring their convo selection
-					Interaction goTointeraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.GoToInteraction);									
-					intentAction.GoToConversation = goTointeraction.ConversationId;
-					//intentAction.GoToConversation = model.GoToConversation;
+					TriggerActionOption triggerActionOption =  new TriggerActionOption();
+					triggerActionOption.Id = Guid.NewGuid().ToString();
+					Interaction goToInteraction = new Interaction();
+					if(model.GoToInteraction == ConversationDeparturePoint)
+					{
+						//map triggerAction id to conversation depature points
+						conversation.ConversationDeparturePoints.Add(triggerActionOption.Id);
+						triggerActionOption.GoToConversation = ConversationDeparturePoint; //??
+						triggerActionOption.GoToInteraction = ConversationDeparturePoint;//??
+					}
+					else
+					{
 
-					intentAction.InterruptCurrentAction = model.InterruptCurrentAction;
-					intentAction.Weight = model.Weight;
-					intentActions.Add(intentAction);
+						triggerActionOption.GoToInteraction = model.GoToInteraction;
 
+						goToInteraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.GoToInteraction);									
+						triggerActionOption.GoToConversation = goToInteraction.ConversationId;
+
+					}
+				
+					triggerActionOption.InterruptCurrentAction = model.InterruptCurrentAction;
+					triggerActionOption.Weight = model.Weight;
 					if(!string.IsNullOrWhiteSpace(model.Animation) && model.Animation != "Default Animation")
 					{
-						conversation.InteractionAnimations.Remove(intentAction.Id);
-						conversation.InteractionAnimations.Add(intentAction.Id, model.Animation);
+						conversation.InteractionAnimations.Remove(triggerActionOption.Id);
+						conversation.InteractionAnimations.Add(triggerActionOption.Id, model.Animation);
 
 						if(!conversation.Animations.Contains(model.Animation))
 						{
@@ -576,13 +585,18 @@ namespace ConversationBuilder.Controllers
 					}
 					else
 					{
-						if(!conversation.Animations.Contains(goTointeraction.Animation))
+						if(!conversation.Animations.Contains(goToInteraction.Animation))
 						{
-							conversation.Animations.Add(goTointeraction.Animation);
+							conversation.Animations.Add(goToInteraction.Animation);
 						}
 					}
 
-					conversation.ConversationTriggerMap.Add(model.SelectedTrigger, intentActions);
+					TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.SelectedTrigger);	
+					Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);	
+					triggerActionOption.DisplayName = $"{conversation.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
+					triggerActions.Add(triggerActionOption);
+				
+					conversation.ConversationTriggerMap.Add(model.SelectedTrigger, triggerActions);
 
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
 

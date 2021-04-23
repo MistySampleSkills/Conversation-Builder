@@ -91,16 +91,10 @@
 				Trigger Filter
 			</th>
 			<th>
-				Updated
-			</th>
-			<th>
-				Go to Conversation
-			</th>
-			<th>
 				Go to Interaction
 			</th>
 			<th>
-				Interrupt
+				Interrupt Audio
 			</th>
 			<th>
 				Animation
@@ -124,10 +118,6 @@
 				@Html.DisplayFor(modelItem => item.TriggerFilter)
 			</td>
 			<td>
-				@Html.DisplayFor(modelItem => item.Updated)
-			</td>
-			<td></td>
-			<td>
 				@Html.ActionLink("Create Interaction", "Create",  "Interactions", new {conversationId = Model.Id})
 			</td>
 			<td></td>	
@@ -139,20 +129,9 @@
 			<tr>
 				<td></td>
 				<td></td>
-				<td></td>
-				<td></td>
 				<form asp-action="AddResponseHandler">
 					<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 					<td>
-					<div class="form-group">
-						<select asp-for="GoToConversation" class="form-control">
-							@foreach (KeyValuePair<string, string> conversation in @ViewBag.LinkedConversations)
-							{
-								<option value="@conversation.Key">@conversation.Value</option>
-							}
-						</select>
-					</div>
-					
 					<div class="form-group">
 						<input asp-for="SelectedTrigger" class="form-control" value="@item.Id" type="hidden"> </input>
 					</div>
@@ -166,12 +145,12 @@
 						<select asp-for="GoToInteraction" class="form-control">
 							@foreach (KeyValuePair<string, Dictionary<string, string>> conversationInterations in @ViewBag.InteractionAndOptionList)
 							{
-								//TODO Make this dynamic based upon conversation selection
+								//TODO Cleanup for new conversation group mapping design
 								string conversation = conversationInterations.Key;
 								@foreach (KeyValuePair<string, string> interaction in conversationInterations.Value)
 								{
 									 KeyValuePair<string, string> conversationKvp = ((Dictionary<string, string>)@ViewBag.Conversations).FirstOrDefault(x => x.Key == conversation);
-									<option value="@interaction.Key">@conversationKvp.Value : @interaction.Value</option>
+									<option value="@interaction.Key">@interaction.Value</option>
 								}
 							}
 						</select>
@@ -219,15 +198,7 @@
 				<td></td>
 				<td></td>
 				<td></td>
-				<td></td>
 				@{
-					KeyValuePair<string, string> goToConversation = ((IDictionary<string, string>)ViewBag.Conversations).FirstOrDefault(x => x.Key == intentAction.GoToConversation);
-					string goToConversationName = intentAction.GoToConversation;
-					if(goToConversation.Value != null)
-					{
-						goToConversationName = goToConversation.Value;
-					}
-				
 					KeyValuePair<string, string> goToInteraction = ((IDictionary<string, string>)ViewBag.AllInteractions).FirstOrDefault(x => x.Key == intentAction.GoToInteraction);
 					string goToInteractionName = intentAction.GoToInteraction;
 					if(goToInteraction.Value != null)
@@ -249,7 +220,6 @@
 					}
 				}
 
-				<td>@goToConversationName</td>
 				<td>@goToInteractionName</td>
 				<td>@intentAction.InterruptCurrentAction</td>
 				<td>@animationName</td>
