@@ -76,7 +76,7 @@ namespace ConversationBuilder.Data.Cosmos
 
 		public async Task<IList<Interaction>> GetListAsync(int startItem = 1, int totalItems = 100, string conversationid = null)
 		{
-			return (await base.GetListAsync<Interaction>(startItem, totalItems, conversationid)).ToList();
+			return (await base.GetListAsync<Interaction>(startItem, totalItems, conversationid)).OrderByDescending(x => x.Name).ToList();
 		}
 
 		public async Task<IList<Interaction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string conversationid = null)

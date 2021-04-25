@@ -74,7 +74,7 @@ namespace ConversationBuilder.DataModels
 		/// </summary>
 		public double SilenceTimeout { get; set; } = 6;
 
-		[Display(Name = "Start Listening immediately after speech/audio in seconds")]
+		[Display(Name = "Start Listening immediately after initial speech/audio")]
 		[JsonProperty(PropertyName = "StartListening")]
 		/// <summary>
 		/// If Start Listening is set to true, starts capturing speech after she speaks/plays audio

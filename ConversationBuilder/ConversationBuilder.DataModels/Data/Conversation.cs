@@ -64,7 +64,7 @@ namespace ConversationBuilder.DataModels
 
 		public IList<string> Triggers { get; set; } = new List<string>();
 
-		public IList<string> SpeechHandlers = new List<string>();
+		//public IList<string> SpeechHandlers = new List<string>();
 
 		public IList<string> GenericDataStores = new List<string>();
 		

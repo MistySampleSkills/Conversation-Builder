@@ -33,40 +33,18 @@
 using System.Collections.Generic;
 
 namespace ConversationBuilder.DataModels
-{
-	public class SkillConversation
+{	
+
+	public class UtteranceData
 	{
 		public string Id { get; set; }
 
 		public string Name { get; set; }
+
 		public string Description { get; set; }
-		
-		public string StartupInteraction { get; set; }
 
-		public string NoTriggerInteraction { get; set; }
+		public bool ExactMatchesOnly { get; set; }
 
-		public string StartingEmotion { get; set; } = DefaultEmotions.Joy;
-
-		public bool InitiateSkillsAtConversationStart {get; set;}
-
-		public IList<SkillInteraction> Interactions { get; set; } = new List<SkillInteraction>();
-
-		public IList<Animation> Animations { get; set; } = new List<Animation> ();
-		
-		public IList<HeadLocation> HeadLocations { get; set; } = new List<HeadLocation> ();
-		public IList<ArmLocation> ArmLocations { get; set; } = new List<ArmLocation> ();
-		
-		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
-		public IList<SkillMessage> SkillMessages { get; set; } = new List<SkillMessage> ();
-
-		public IList<TriggerDetail> Triggers { get; set; } = new List<TriggerDetail>();
-		public IList<LEDTransitionAction> LEDTransitionActions { get; set; } = new List<LEDTransitionAction>();
-		public IDictionary<string, IList<TriggerActionOption>> ConversationTriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
-
-		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();
-
-		//key is trigger action option id
-		public IDictionary<string, DepartureMap> ConversationDeparturePoints { get; set; } = new Dictionary<string, DepartureMap>();
-		
+		public IList<string> Utterances { get; set; } = new List<string>();
 	}
 }

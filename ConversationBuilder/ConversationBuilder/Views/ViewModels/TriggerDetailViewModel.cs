@@ -25,17 +25,23 @@ namespace ConversationBuilder.ViewModels
 		public string Name { get; set; }
 
 		public string TriggerFilter { get; set; }
-		public string UserDefinedTrigger { get; set; }
+
+		[Display(Name = "User Defined Filter")]
+		public string UserDefinedTriggerFilter { get; set; }
 		public string Trigger { get; set; }
 		
 		public string StartingTrigger { get; set; }
 		public string StartingTriggerFilter { get; set; }
-		public string UserDefinedStartingTrigger { get; set; }
+		
+		[Display(Name = "User Defined Staring Filter")]
+		public string UserDefinedStartingTriggerFilter { get; set; }
 		public int StartingTriggerDelay { get; set; }
 
 		public string StoppingTrigger { get; set; }
 		public string StoppingTriggerFilter { get; set; }
-		public string UserDefinedStoppingTrigger { get; set; }
+		
+		[Display(Name = "User Defined Stopping Filter")]
+		public string UserDefinedStoppingTriggerFilter { get; set; }
 		public int StoppingTriggerDelay { get; set; }
 		public string ManagementAccess { get; set; } = "Shared";
 		public DateTimeOffset Created { get; set; }

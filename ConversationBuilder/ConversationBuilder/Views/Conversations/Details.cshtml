@@ -80,7 +80,7 @@
 <div>
 	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
 	@Html.ActionLink("Back to List", "Index", "Conversations") |
-	@Html.ActionLink("Manage Speech Handlers", "Index", "ConversationSpeechHandlers", new {conversationId = Model.Id }) |
+	<!-- @Html.ActionLink("Manage Speech Handlers", "Index", "ConversationSpeechHandlers", new {conversationId = Model.Id }) |-->
 	@Html.ActionLink("Manage Interactions", "Index", "Interactions", new {conversationId = Model.Id }) |
 	@Html.ActionLink("Manage Conversation Trigger Handlers", "Manage", "Conversations", new {conversationId = Model.Id }) |
 	@Html.ActionLink("Manage User Data", "Index", "ConversationGenericDataStores", new {conversationId = Model.Id })

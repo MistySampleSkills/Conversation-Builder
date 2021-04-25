@@ -158,6 +158,7 @@ namespace ConversationBuilder.Controllers
 					loadedUserConfiguration.Id = userConfiguration.Id;
 					loadedUserConfiguration.Updated = DateTimeOffset.UtcNow;
 					loadedUserConfiguration.OverrideCssFile = userConfiguration.OverrideCssFile;
+					loadedUserConfiguration.ShowBetaItems = userConfiguration.ShowBetaItems;
 					loadedUserConfiguration.UserName = userConfiguration.UserName;
 					loadedUserConfiguration.Updated = DateTimeOffset.UtcNow;
 					

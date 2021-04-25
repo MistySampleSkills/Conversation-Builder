@@ -58,6 +58,9 @@ namespace ConversationBuilder.DataModels
 			
 		public IList<SkillConversation> Conversations { get; set; } = new List<SkillConversation>();
 
-		public IDictionary<string, KeyValuePair<bool, IList<string>>> IntentUtterances = new Dictionary<string, KeyValuePair<bool, IList<string>>>();
+		public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
+		
+		public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
 	}
+
 }

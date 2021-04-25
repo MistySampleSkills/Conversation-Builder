@@ -73,26 +73,30 @@
 			<dd>
 				@Html.DisplayFor(model => model.ConversationEntryPoint)
 			</dd>
-			<dt>
-				@Html.DisplayNameFor(model => model.AllowVoiceProcessingOverride)
-			</dt>
-			<dd>
-				@Html.DisplayFor(model => model.AllowVoiceProcessingOverride)
-			</dd>
-			
-			<dt>
-				@Html.DisplayNameFor(model => model.ListenTimeout)
-			</dt>
-			<dd>
-				@Html.DisplayFor(model => model.ListenTimeout)
-			</dd>
 
-			<dt>
-				@Html.DisplayNameFor(model => model.SilenceTimeout)
-			</dt>
-			<dd>
-				@Html.DisplayFor(model => model.SilenceTimeout)
-			</dd>
+			@if(ViewBag.ShowBetaItems)
+			{
+				<dt>
+					@Html.DisplayNameFor(model => model.AllowVoiceProcessingOverride)
+				</dt>
+				<dd>
+					@Html.DisplayFor(model => model.AllowVoiceProcessingOverride)
+				</dd>
+				
+				<dt>
+					@Html.DisplayNameFor(model => model.ListenTimeout)
+				</dt>
+				<dd>
+					@Html.DisplayFor(model => model.ListenTimeout)
+				</dd>
+
+				<dt>
+					@Html.DisplayNameFor(model => model.SilenceTimeout)
+				</dt>
+				<dd>
+					@Html.DisplayFor(model => model.SilenceTimeout)
+				</dd>
+			}
 			<dt>
 				@Html.DisplayNameFor(model => model.Updated)
 			</dt>

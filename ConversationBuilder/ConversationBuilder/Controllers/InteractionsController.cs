@@ -98,34 +98,34 @@ namespace ConversationBuilder.Controllers
 						if(filterList.Any(x => x.Value ==trigger.TriggerFilter))
 						{
 							triggerDetailViewModel.TriggerFilter = trigger.TriggerFilter;
-							triggerDetailViewModel.UserDefinedTrigger = "";
+							triggerDetailViewModel.UserDefinedTriggerFilter = "";
 						}
 						else
 						{
 							triggerDetailViewModel.TriggerFilter = "";
-							triggerDetailViewModel.UserDefinedTrigger = trigger.TriggerFilter;
+							triggerDetailViewModel.UserDefinedTriggerFilter = trigger.TriggerFilter;
 						}
 
 						if(filterList.Any(x => x.Value ==trigger.StartingTriggerFilter))
 						{
 							triggerDetailViewModel.StartingTriggerFilter = trigger.StartingTriggerFilter;
-							triggerDetailViewModel.UserDefinedStartingTrigger = "";
+							triggerDetailViewModel.UserDefinedStartingTriggerFilter = "";
 						}
 						else
 						{
 							triggerDetailViewModel.StartingTriggerFilter = "";
-							triggerDetailViewModel.UserDefinedStartingTrigger = trigger.StartingTriggerFilter;
+							triggerDetailViewModel.UserDefinedStartingTriggerFilter = trigger.StartingTriggerFilter;
 						}
 
 						if(filterList.Any(x => x.Value ==trigger.StoppingTriggerFilter))
 						{
 							triggerDetailViewModel.StoppingTriggerFilter = trigger.StoppingTriggerFilter;
-							triggerDetailViewModel.UserDefinedStoppingTrigger = "";
+							triggerDetailViewModel.UserDefinedStoppingTriggerFilter = "";
 						}
 						else
 						{
 							triggerDetailViewModel.StoppingTriggerFilter = "";
-							triggerDetailViewModel.UserDefinedStoppingTrigger = trigger.StoppingTriggerFilter;
+							triggerDetailViewModel.UserDefinedStoppingTriggerFilter = trigger.StoppingTriggerFilter;
 						}
 
 						triggerDetailViewModel.StartingTriggerDelay = trigger.StartingTriggerDelay;
@@ -147,7 +147,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.LinkedConversations = await LinkedConversationList(interaction.ConversationId);
 					ViewBag.SpeechHandlers = await SpeechHandlers();
 					ViewBag.SkillMessages = await SkillMessages();
-					ViewBag.TriggerDetails = (await TriggerDetailList()).ToList();
+					ViewBag.TriggerDetails = await TriggerDetailList();
 					ViewBag.Emotions =  new DefaultEmotions().AllItems;
 					ViewBag.Interactions = await InteractionList();
 					ViewBag.InteractionAndOptionList = await FullInteractionAndOptionList(interaction.ConversationId);

@@ -88,26 +88,4 @@ namespace ConversationBuilder.DataModels
 		public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
 	}
 
-	public class ConversationMappingDetail
-	{
-		public EntryMap EntryMap {get; set;}
-		public DepartureMap DepartureMap {get; set;}
-	}
-
-	public class EntryMap
-	{
-		public string DisplayName {get; set;}
-		public string ConversationId {get; set;}
-		public string InteractionId {get; set;}
-	}
-
-	public class DepartureMap
-	{
-		public string DisplayName {get; set;}
-		public string TriggerOptionId {get; set;}
-		public string TriggerId {get; set;}
-		public string ConversationId {get; set;}
-		public string InteractionId {get; set;}
-		public string AnimationId {get; set;}
-	}
 }

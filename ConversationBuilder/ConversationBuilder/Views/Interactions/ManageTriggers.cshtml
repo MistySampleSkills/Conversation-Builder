@@ -10,14 +10,12 @@
 
 <h3>Managing triggers for interaction @Model.Name</h3>
 <hr />
-<h5>Interaction Failed Timeout: @Model.InteractionFailedTimeout</h5>
-<h5>Start Listening: @Model.StartListening</h5>
-<h5>Allow Conversation Triggers: @Model.AllowConversationTriggers</h5>
-<h5>Allow Key Phrase Recognition: @Model.AllowKeyPhraseRecognition</h5>
-<h5>Allow Voice Processing Override: @Model.AllowVoiceProcessingOverride</h5>
-<h5>Listen Timeout: @Model.ListenTimeout</h5>
-<h5>Silence Timeout: @Model.SilenceTimeout</h5>
-<h5>Entry Point: @Model.ConversationEntryPoint</h5>
+<p>Interaction Timeout: @Model.InteractionFailedTimeout</p>
+<p>Start Listening: @Model.StartListening</p>
+<p>Allow Conversation Triggers: @Model.AllowConversationTriggers</p>
+<p>Allow Key Phrase Recognition: @Model.AllowKeyPhraseRecognition</p>
+<p>Allow Voice Processing Override: @Model.AllowVoiceProcessingOverride</p>
+<p>Entry Point: @Model.ConversationEntryPoint</p>
 
 <hr />
 <h3 style="color:red">@ViewBag.Message</h3>
@@ -278,7 +276,7 @@
 
 @if(Model.SkillMessages != null && Model.SkillMessages.Count() == @ViewBag.SkillMessages.Count)
 {
-	<h5>All the existing skill messages have been added to this interaction.  Good luck.</h5>
+	<p>All the existing skill messages have been added to this interaction.  Good luck.</p>
 }
 else
 {
