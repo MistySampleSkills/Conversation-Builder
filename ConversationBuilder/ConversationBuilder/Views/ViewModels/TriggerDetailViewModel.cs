@@ -33,7 +33,7 @@ namespace ConversationBuilder.ViewModels
 		public string StartingTrigger { get; set; }
 		public string StartingTriggerFilter { get; set; }
 		
-		[Display(Name = "User Defined Staring Filter")]
+		[Display(Name = "User Defined Starting Filter")]
 		public string UserDefinedStartingTriggerFilter { get; set; }
 		public int StartingTriggerDelay { get; set; }
 
