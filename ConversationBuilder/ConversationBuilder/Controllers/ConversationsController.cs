@@ -558,7 +558,6 @@ namespace ConversationBuilder.Controllers
 					if(model.GoToInteraction == ConversationDeparturePoint)
 					{
 						//map triggerAction id to conversation depature points
-						
 						DepartureMap departureMap = new DepartureMap();
 						departureMap.AnimationId = animation?.Id ?? "Default Animation";
 						departureMap.TriggerId = model.SelectedTrigger;
@@ -572,11 +571,9 @@ namespace ConversationBuilder.Controllers
 					}
 					else
 					{
-
 						triggerActionOption.GoToInteraction = model.GoToInteraction;
 						goToInteraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.GoToInteraction);									
 						triggerActionOption.GoToConversation = goToInteraction.ConversationId;
-
 					}
 
 					triggerActionOption.InterruptCurrentAction = model.InterruptCurrentAction;
@@ -601,7 +598,6 @@ namespace ConversationBuilder.Controllers
 
 					TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.SelectedTrigger);	
 					
-					//triggerActionOption.DisplayName = $"{conversation.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
 					triggerActions.Add(triggerActionOption);
 				
 					conversation.ConversationTriggerMap.Add(model.SelectedTrigger, triggerActions);

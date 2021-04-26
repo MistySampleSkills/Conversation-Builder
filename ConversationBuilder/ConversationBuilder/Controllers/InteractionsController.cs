@@ -406,7 +406,6 @@ namespace ConversationBuilder.Controllers
 					}
 
 					TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.SelectedTrigger);	
-					//triggerActionOption.DisplayName = $"{conversation.Name}:{model.Name}:{(triggerDetail.Name ?? "Trigger")}:{(animation.Name ?? "Animation")}";
 					triggerActions.Add(triggerActionOption);
 					interaction.TriggerMap.Add(model.SelectedTrigger, triggerActions);
 

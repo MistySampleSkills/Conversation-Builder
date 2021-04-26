@@ -463,10 +463,8 @@ namespace ConversationBuilder.Controllers
 						filteredConversations.Add(selectedConversation);
 					}
 
-					//Go through and return new detailed data here and methods to build names for  entry and departure points
-					IDictionary<string, EntryMap> conversationEntryPoints = selectedConversation.ConversationEntryPoints;
-
-					
+					//Go through and return new detailed data here and methods to build names for entry and departure points
+					IDictionary<string, EntryMap> conversationEntryPoints = selectedConversation.ConversationEntryPoints;					
 					foreach(KeyValuePair<string, EntryMap> entry in conversationEntryPoints)
 					{
 							EntryMap entryMap = new EntryMap();
@@ -561,31 +559,11 @@ namespace ConversationBuilder.Controllers
 				}
 
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
-				
-
 				ViewBag.Conversations = await ConversationList();
 				ViewBag.CharacterConfigurations = await CharacterConfigurationsList();
-
-				//Update for new data
-
-
-				ViewBag.EntryPoints = finalconversationEntryPoints;//await ConversationGroupEntries(id);
+				ViewBag.EntryPoints = finalconversationEntryPoints;
 				ViewBag.DeparturePoints = finalconversationDeparturePoints;
-
-				//var conversationMappings = conversationGroup.ConversationMappings;
 				ViewBag.ConversationMappings = existingMappingsList;
-/*				
-				var allDeparturePoints = await ConversationGroupDepartures(id);
-				var availableDeparturePoints = new Dictionary<string, TriggerActionOption>();
-				foreach(TriggerActionOption triggerActionOption in allDeparturePoints.Values)
-				{
-					if(!conversationMappings.ContainsKey(triggerActionOption.Id))
-					{
-						availableDeparturePoints.Add(triggerActionOption.Id, triggerActionOption);
-					}
-				}
-
-				*/
 
 				ConversationGroupConversationViewModel conversationGroupConversationViewModel = new ConversationGroupConversationViewModel();
 				conversationGroupConversationViewModel.ConversationGroupId = id;
@@ -790,17 +768,12 @@ namespace ConversationBuilder.Controllers
 				ConversationMappingDetail conversationMappingDetail = new ConversationMappingDetail();
 				if(conversationGroup != null)  
 				{
-					//Map the exit to the entry
-					//TODO Clean this up with pre-saved mapping... this is all discombobulated...
-
-
 					//look up using these and populate saved data
 					string departureId = model.DepartureMap.TriggerOptionId;
 					string entry = model.EntryMap.InteractionId;
 					foreach(var conversationId in conversationGroup.Conversations.Where(x => x != null))
 					{
 						Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
-
 						if(conversation.ConversationDeparturePoints.TryGetValue(departureId, out DepartureMap departureMap))
 						{
 							conversationMappingDetail.DepartureMap = departureMap;

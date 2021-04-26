@@ -111,16 +111,6 @@ namespace ConversationBuilder.Controllers
 						continue;
 					}
 
-					// //Add all the speech handlers from the conversations
-					// foreach(string speechHandlerId in conversation.SpeechHandlers)
-					// {
-					// 	SpeechHandler speechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(speechHandlerId);
-					// 	if(speechHandler != null)
-					// 	{
-					// 		skillConversationGroup.IntentUtterances.TryAdd(speechHandler.Name, new KeyValuePair<bool, IList<string>>(speechHandler.ExactMatchesOnly, speechHandler.Utterances));
-					// 	}
-					// }
-
 					foreach(string genericDataStoreId in conversation.GenericDataStores)
 					{
 						if(genericDataStoreId != null && !skillConversationGroup.GenericDataStores.Any(x => x.Id == genericDataStoreId))
@@ -227,25 +217,6 @@ namespace ConversationBuilder.Controllers
 							}
 						}
 					}
-
-					
-					// //Add all the speech handlers from the triggers
-					// foreach(string triggerId in skillConversation.Triggers.Where( x => x != null))
-					// {
-					// 	TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(triggerId);
-					// 	if(triggerDetail.Trigger == "SpeechHeard" && !string.IsNullOrWhiteSpace(triggerDetail.TriggerFilter))
-					// 	{
-					// 		if(Guid.TryParse(triggerDetail.TriggerFilter, out Guid guid))
-					// 		{
-					// 			SpeechHandler speechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(triggerDetail.TriggerFilter);
-					// 			if(speechHandler?.Name != null && !skillConversationGroup.IntentUtterances.ContainsKey(speechHandler.Name))
-					// 			{
-					// 				skillConversationGroup.IntentUtterances.TryAdd(speechHandler.Name, new KeyValuePair<bool, IList<string>>(speechHandler.ExactMatchesOnly, speechHandler.Utterances));
-					// 			}
-					// 		}
-					// 	}
-					// }
-
 
 					foreach(string interactionId in conversation.Interactions)
 					{
@@ -390,10 +361,8 @@ namespace ConversationBuilder.Controllers
 					}
 				}
 				
-				
 				IDictionary<string, string> conversationGuidMap = new Dictionary<string, string>();
 				IDictionary<string, string> interactionGuidMap = new Dictionary<string, string>();
-
 				foreach(SkillConversation conversation in skillConversationGroup.Conversations)
 				{
 					conversationGuidMap.Add(conversation.Id, Guid.NewGuid().ToString());
@@ -523,8 +492,8 @@ namespace ConversationBuilder.Controllers
 						newInteraction.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
 						newInteraction.Name = interaction.Name;
 						newInteraction.Animation = interaction.Animation;
-						newInteraction.ConversationId = newConversation.Id;
 						newInteraction.SkillMessages = interaction.SkillMessages;
+						newInteraction.ConversationId = newConversation.Id;
 						newInteraction.Updated = now;
 						newInteraction.Created = now;
 
@@ -537,10 +506,17 @@ namespace ConversationBuilder.Controllers
 							{
 								TriggerActionOption newTriggerActionOption = new TriggerActionOption();
 								newTriggerActionOption.InterruptCurrentAction = triggerActionOption.InterruptCurrentAction;
-								newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
-								newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
+								if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
+								{	
+									newTriggerActionOption.GoToConversation = ConversationDeparturePoint;
+									newTriggerActionOption.GoToInteraction = ConversationDeparturePoint;
+								}
+								else
+								{
+									newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
+									newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
+								}
 								newTriggerActionOption.Weight = triggerActionOption.Weight;
-								//newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
 								newTriggerActionOption.Id = Guid.NewGuid().ToString();
 								newTriggerOptions.Add(newTriggerActionOption);
 
@@ -554,8 +530,8 @@ namespace ConversationBuilder.Controllers
 						
 						await _cosmosDbService.ContainerManager.InteractionData.AddAsync(newInteraction);
 
-						newConversation.StartupInteraction = interactionGuidMap[conversation.StartupInteraction];
-						newConversation.NoTriggerInteraction = interactionGuidMap[conversation.NoTriggerInteraction];
+						newConversation.StartupInteraction = conversation.StartupInteraction == null ? null : interactionGuidMap[conversation.StartupInteraction];
+						newConversation.NoTriggerInteraction = conversation.NoTriggerInteraction == null ? null : interactionGuidMap[conversation.NoTriggerInteraction];
 						newConversation.Interactions.Add(newInteraction.Id);
 					}
 
@@ -566,10 +542,18 @@ namespace ConversationBuilder.Controllers
 						{
 							TriggerActionOption newTriggerActionOption = new TriggerActionOption();
 							newTriggerActionOption.InterruptCurrentAction = triggerActionOption.InterruptCurrentAction;
-							newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
-							newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
+							if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
+							{
+								newTriggerActionOption.GoToConversation = ConversationDeparturePoint;
+								newTriggerActionOption.GoToInteraction = ConversationDeparturePoint;							
+							}
+							else
+							{
+								newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
+								newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];	
+							}
+							
 							newTriggerActionOption.Weight = triggerActionOption.Weight;
-							//newTriggerActionOption.DisplayName = triggerActionOption.DisplayName;
 							newTriggerActionOption.Id = Guid.NewGuid().ToString();
 							newTriggerOptions.Add(newTriggerActionOption);
 						}
@@ -581,7 +565,7 @@ namespace ConversationBuilder.Controllers
 				}
 				return true;
 			}
-			catch
+			catch (Exception ex)
 			{
 				return false;
 			}
@@ -880,51 +864,19 @@ namespace ConversationBuilder.Controllers
 		{
 			//Get conversations from this group
 			IDictionary<string, Dictionary<string, string>> conversationInteractions = new Dictionary<string, Dictionary<string, string>>();
-			//IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync(1, 10000);
-			//IList<ConversationGroup> filteredConversationGroups = conversationGroups.Where(x => x.Conversations.Contains(conversationId)).ToList();
-			//if(filteredConversationGroups == null || !filteredConversationGroups.Any())
-			//{
-				Dictionary<string, string> interactionList = new Dictionary<string, string>();
-				IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId);
-				foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
-				{
-					if(interaction?.Id != null && !interactionList.ContainsKey(interaction.Id))
-					{
-						interactionList.Add(interaction.Id, interaction.Name);				
-					}							
-				}
-				interactionList.Add(ConversationDeparturePoint, ConversationDeparturePoint);				
-				conversationInteractions.Add(conversationId, interactionList);
-
-			//}
-			/*else
+	
+			Dictionary<string, string> interactionList = new Dictionary<string, string>();
+			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId);
+			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
-				foreach(ConversationGroup conversationGroup in filteredConversationGroups)
+				if(interaction?.Id != null && !interactionList.ContainsKey(interaction.Id))
 				{
-					foreach(string otherConversationId in conversationGroup.Conversations)
-					{
-						if(!string.IsNullOrWhiteSpace(otherConversationId) && !conversationInteractions.ContainsKey(otherConversationId))
-						{
-							Dictionary<string, string> interactionList = new Dictionary<string, string>();
-							IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, otherConversationId);
-							foreach(Interaction interaction in interactions)
-							{
-								if(interaction?.Id != null && !interactionList.ContainsKey(interaction.Id))
-								{
-									interactionList.Add(interaction.Id, interaction.Name);				
-								}							
-							}
-							
-							if(interactionList != null && !conversationInteractions.ContainsKey(otherConversationId))
-							{
-								conversationInteractions.Add(otherConversationId, interactionList);
-							}
-						}
-						
-					}
-				}
-			}*/
-		
+					interactionList.Add(interaction.Id, interaction.Name);				
+				}							
+			}
+			interactionList.Add(ConversationDeparturePoint, ConversationDeparturePoint);				
+			conversationInteractions.Add(conversationId, interactionList);
+
 			conversationInteractions.OrderByDescending(x => x.Key);
 			return conversationInteractions ?? new Dictionary<string, Dictionary<string, string>>();
 		}
@@ -959,10 +911,6 @@ namespace ConversationBuilder.Controllers
 						interactionViewModel.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 						interactionViewModel.ListenTimeout = interaction.ListenTimeout;
 						interactionViewModel.SilenceTimeout = interaction.SilenceTimeout;
-						
-						//Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(interaction.Animation);
-						//interactionViewModel.AnimationData = animation;
-						//interactionViewModel.TriggerDetails = filteredTriggers.OrderBy(x => x.Name).ToList();
 
 						data.Add(interactionId, interactionViewModel);
 					}	
@@ -1125,7 +1073,6 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 					return true;
-					//return !conversations6.Any(x => x.SpeechHandlers.Contains(itemId));				
 			}
 
 			return true;
