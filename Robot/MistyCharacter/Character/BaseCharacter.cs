@@ -156,14 +156,15 @@ namespace MistyCharacter
 				PopulateEmotionDefaults();
 
 				Misty.UnregisterAllEvents(null);
-				Misty.UnregisterEvent("BumpSensor", null);
+                await Task.Delay(1000);
+				/*Misty.UnregisterEvent("BumpSensor", null);
 				Misty.UnregisterEvent("CapTouch", null);
 				Misty.UnregisterEvent("Battery", null);
 				Misty.UnregisterEvent("ArTag", null);
 				Misty.UnregisterEvent("QrTag", null);
 				Misty.UnregisterEvent("SerialMessage", null);
 				Misty.UnregisterEvent("FaceRecognition", null);
-				Misty.UnregisterEvent("ExternalEvent", null);
+				Misty.UnregisterEvent("ExternalEvent", null);*/
 
 				AssetWrapper = new AssetWrapper(Misty);
 				_ = RefreshAssetLists();
@@ -1206,7 +1207,7 @@ namespace MistyCharacter
 			{
 				if (ProcessAndVerifyTrigger(triggerData))
 				{
-					StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Intent | {triggerData.Trigger} - {triggerData.TriggerFilter} - {triggerData.Text}.");
+					StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Trigger | {triggerData.Trigger} - {triggerData.TriggerFilter} - {triggerData.Text}.");
 					return true;
 				}
 			}
@@ -1264,9 +1265,21 @@ namespace MistyCharacter
 			{
 				string interaction = selectedAction.GoToInteraction;
 				string conversation = selectedAction.GoToConversation;
-				
-				//if coming from an internal redirect, may not have an Id
-				if (selectedAction.Id == null || (_currentConversationData.InteractionAnimations == null || !_currentConversationData.InteractionAnimations.TryGetValue(selectedAction.Id, out string overrideAnimation)))
+
+                //Is this a conversation departure?  TODO Clean this up, use empty guid?
+                if(interaction == "* Conversation Departure Point")
+                {
+                    //Look up where the departure goes
+                    KeyValuePair<string, ConversationMappingDetail> detail = _conversationGroup.ConversationMappings.FirstOrDefault(x => x.Value.DepartureMap.TriggerOptionId == selectedAction.Id);
+                    if(detail.Value != null)
+                    {
+                        interaction = detail.Value.EntryMap.InteractionId;
+                        conversation = detail.Value.EntryMap.ConversationId;
+                    }
+                }
+
+                //if coming from an internal redirect, may not have an Id
+                if (selectedAction.Id == null || (_currentConversationData.InteractionAnimations == null || !_currentConversationData.InteractionAnimations.TryGetValue(selectedAction.Id, out string overrideAnimation)))
 				{
 					overrideAnimation = null;
 				}
@@ -1554,7 +1567,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
 			{
-				Misty.SkillLogger.Log("Failed to manage intent trigger.", ex);
+				Misty.SkillLogger.Log("Failed to manage trigger.", ex);
 			}
 		}
 		
@@ -1570,13 +1583,25 @@ namespace MistyCharacter
 			{
 				Misty.DisplayText(speechIntent.Text, "SpeechText", null);
 			}
-			
-			if (!SendManagedResponseEvent(new TriggerData(speechIntent.Text, speechIntent.TriggerFilter, Triggers.SpeechHeard)))
-			{
-                SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
-			}
-			SpeechIntentEvent?.Invoke(this, speechIntent);
-		}
+
+            //New data formats
+            if (!SendManagedResponseEvent(new TriggerData(speechIntent.Text, speechIntent.TriggerFilter, Triggers.SpeechHeard)))
+            {
+                //old
+                //Look up name by id in case this conversation uses old data
+                bool triggerSuccessful = false;
+                if(_conversationGroup.IntentUtterances.TryGetValue(speechIntent.TriggerFilter, out UtteranceData utteranceData))
+                {
+                    triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, utteranceData.Name, Triggers.SpeechHeard));                    
+                }
+
+                if (!triggerSuccessful)
+                {
+                    SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
+                }
+            }
+            SpeechIntentEvent?.Invoke(this, speechIntent);
+        }
 		
 		//More intent events registered in this class
 		private void ArTagCallback(IArTagDetectionEvent arTagEvent)

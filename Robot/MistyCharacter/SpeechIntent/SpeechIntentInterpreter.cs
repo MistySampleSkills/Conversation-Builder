@@ -39,11 +39,11 @@ namespace MistyCharacter.SpeechIntent
 {	
 	internal class SpeechIntentInterpreter
 	{
-		private IDictionary<string, KeyValuePair<bool, IList<string>>> _utteranceLists { get; set; }
+		private IDictionary<string, UtteranceData> _utteranceLists { get; set; }
 		private IList<GenericDataStore> _userData;
-		public SpeechIntentInterpreter(IDictionary<string, KeyValuePair<bool, IList<string>>> utteranceLists, IList<GenericDataStore> userData = null)
+		public SpeechIntentInterpreter(IDictionary<string, UtteranceData> utteranceLists, IList<GenericDataStore> userData = null)
 		{
-			_utteranceLists = utteranceLists ?? new Dictionary<string, KeyValuePair<bool, IList<string>>>();
+			_utteranceLists = utteranceLists ?? new Dictionary<string, UtteranceData>();
 			_userData = userData ?? new List<GenericDataStore>();
 		}
         
@@ -59,19 +59,26 @@ namespace MistyCharacter.SpeechIntent
 					return genericData;
 				}
 
-				IList<KeyValuePair<string, KeyValuePair<bool, IList<string>>>> filteredUtteranceLists = new List<KeyValuePair<string, KeyValuePair<bool, IList<string>>>>();
+				IList<KeyValuePair<string, UtteranceData>> filteredUtteranceLists = new List<KeyValuePair<string, UtteranceData>>();
 				GenericDataStore genericDataStore = _userData.FirstOrDefault(x => x.Name == name);
 				if (genericDataStore?.Name != null)
 				{
 					foreach(KeyValuePair<string, GenericData> data in genericDataStore.Data)
 					{
 						IList<string> utterances = data.Value.Key.Split(',').ToList();
-						filteredUtteranceLists.Add(new KeyValuePair<string, KeyValuePair<bool, IList<string>>>(data.Value.Key, new KeyValuePair<bool, IList<string>>(genericDataStore.ExactMatchesOnly, utterances)));
+
+                        UtteranceData utteranceData = new UtteranceData();
+                        utteranceData.Name = data.Value.Key;
+                        utteranceData.Id = data.Value.Key;
+                        utteranceData.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+                        utteranceData.Utterances = utterances;
+                        
+                        filteredUtteranceLists.Add(new KeyValuePair<string, UtteranceData>(data.Value.Key, utteranceData));
 					}					
 				}
 
-				string userDataKey = GetIntentExperimentThree(text, filteredUtteranceLists);
-				KeyValuePair<string, GenericData> returnData = genericDataStore.Data.FirstOrDefault(x => x.Value.Key == userDataKey);
+                SpeechMatchData userDataKey = GetIntentExperimentThree(text, filteredUtteranceLists);
+				KeyValuePair<string, GenericData> returnData = genericDataStore.Data.FirstOrDefault(x => x.Value.Key == userDataKey.Name);
 				if(returnData.Value != null)
 				{
 					genericData = returnData.Value;
@@ -93,16 +100,19 @@ namespace MistyCharacter.SpeechIntent
 		/// <param name="text"></param>
 		/// <param name="intentOptions"></param>
 		/// <returns></returns>
-		public string GetIntent(string text, IList<string> intentOptions = null)
+		public SpeechMatchData GetIntent(string text, IList<string> intentOptions = null)
 		{
 			try
 			{
 				if (string.IsNullOrWhiteSpace(text))
 				{
-					return ConversationConstants.HeardNothingTrigger;
-				}
+                    SpeechMatchData speechMatchData = new SpeechMatchData();
+                    speechMatchData.Name = ConversationConstants.HeardNothingTrigger;
+                    speechMatchData.Id = ConversationConstants.HeardNothingTrigger;
+                    return speechMatchData;
+                }
 
-				IEnumerable<KeyValuePair<string, KeyValuePair<bool, IList<string>>>> filteredUtteranceLists = null;
+				IEnumerable<KeyValuePair<string, UtteranceData>> filteredUtteranceLists = null;
 				intentOptions = intentOptions ?? new List<string>();
 				if(intentOptions == null || intentOptions.Count() == 0)
 				{
@@ -110,137 +120,41 @@ namespace MistyCharacter.SpeechIntent
 				}
 				else
 				{
-					filteredUtteranceLists = _utteranceLists.Where(x => intentOptions.Contains(x.Key));
+					filteredUtteranceLists = _utteranceLists.Where(x => intentOptions.Contains(x.Key) || intentOptions.Contains(x.Value.Name) /*legacy*/);
 				}
 
 				return GetIntentExperimentThree(text, filteredUtteranceLists.ToList());
 			}
 			catch
 			{
-				return ConversationConstants.HeardUnknownTrigger;
-			}
+                SpeechMatchData speechMatchData = new SpeechMatchData();
+                speechMatchData.Name = ConversationConstants.HeardUnknownTrigger;
+                speechMatchData.Id = ConversationConstants.HeardUnknownTrigger;
+                return speechMatchData;
+            }
 		}
 		
-		private string GetIntentExperimentOne(string text, IList<KeyValuePair<string, KeyValuePair<bool, IList<string>>>> filteredUtteranceLists)
+		private SpeechMatchData GetIntentExperimentThree(string text, IList<KeyValuePair<string, UtteranceData>> filteredUtteranceLists)
 		{
 			try
-			{
-				IList<TextComparisonObject> textComparisonObjects = new List<TextComparisonObject>();
-
-				//In each Voice Intent Group
-				foreach (KeyValuePair<string, KeyValuePair<bool, IList<string>>> utteranceList in filteredUtteranceLists)
-				{
-					string currentIntent = utteranceList.Key;
-					bool exactMatchOnly = utteranceList.Value.Key;
-					TextComparisonObject textComparisonObject = new TextComparisonObject { Intent = currentIntent, HitCountAverage = 0, MaxHitCount = 0 };
-
-					foreach (string utterance in utteranceList.Value.Value)
-					{
-						//For each utterance string...
-						int currentHitCount = 0;
-
-						//if an exact match, we are done
-						if (utterance.Trim().ToLower() == text.Trim().ToLower())
-						{
-							return currentIntent;
-						}
-
-						string adjustedText = text.
-							Replace("?", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(".", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(",", " ", StringComparison.OrdinalIgnoreCase).
-							Replace("!", " ", StringComparison.OrdinalIgnoreCase).
-							Trim().ToLower();
-
-						//if an exact match without punctuation, call it good
-						if (utterance.Trim().ToLower().
-							Replace("?", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(".", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(",", " ", StringComparison.OrdinalIgnoreCase).
-							Replace("!", " ", StringComparison.OrdinalIgnoreCase) == adjustedText)
-						{
-							return currentIntent;
-						}
-
-						if (exactMatchOnly)
-						{
-							return ConversationConstants.HeardUnknownTrigger;
-						}
-
-						//else check by word count for this utterance
-						string[] words = adjustedText.Split(" ");
-						IList<string> utteranceWords = utterance.Trim().ToLower().Split(" ").ToList();
-
-						foreach (string word in words)
-						{
-							if (string.IsNullOrWhiteSpace(word))
-							{
-								continue;
-							}
-							string updatedWord = word.Trim().ToLower();
-							if (updatedWord == "the" || updatedWord == "an" || updatedWord == "a" || updatedWord == "um" || updatedWord == "uh")
-							{
-								continue;
-							}
-
-							if (utteranceWords.Contains(updatedWord))
-							{
-								currentHitCount++;
-							}
-						}
-
-						if (currentHitCount > 0)
-						{
-							if (currentHitCount > textComparisonObject.MaxHitCount)
-							{
-								textComparisonObject.MaxHitCount = currentHitCount;
-								textComparisonObject.HitCountAverage = currentHitCount / words.Length;
-							}
-							if (currentHitCount == textComparisonObject.MaxHitCount)
-							{
-								if (currentHitCount / words.Length > textComparisonObject.MaxHitCount / textComparisonObject.HitCountAverage)
-								{
-									//same matches, less words
-									textComparisonObject.HitCountAverage = currentHitCount / words.Length;
-								}
-							}
-						}
-
-						textComparisonObjects.Add(textComparisonObject);
-					}
-				}
-
-				if (textComparisonObjects.Count > 0)
-				{
-					//Checked them all, now get the intent
-					int maxHitCount = textComparisonObjects.Max(x => x.MaxHitCount);
-					if (maxHitCount > 0)
-					{
-						return textComparisonObjects.Where(x => x.MaxHitCount == maxHitCount).OrderByDescending(x => x.HitCountAverage).First().Intent;
-					}
-				}
-				return ConversationConstants.HeardUnknownTrigger;
-			}
-			catch
-			{
-				return ConversationConstants.HeardUnknownTrigger;
-			}
-		}
-
-		private string GetIntentExperimentTwo(string text, IList<KeyValuePair<string, KeyValuePair<bool, IList<string>>>> filteredUtteranceLists)
-		{
-			try
-			{
-				IList<TextComparisonObject> textComparisonObjects = new List<TextComparisonObject>();
+            {
+                SpeechMatchData speechMatchData = new SpeechMatchData();
+                IList<TextComparisonObject> textComparisonObjects = new List<TextComparisonObject>();
 
 				///In each Voice Intent Group
-				foreach (KeyValuePair<string, KeyValuePair<bool, IList<string>>> utteranceList in filteredUtteranceLists)
+				foreach (KeyValuePair<string, UtteranceData> utteranceList in filteredUtteranceLists)
 				{
-					string currentIntent = utteranceList.Key;
-					bool exactMatchOnly = utteranceList.Value.Key;
-					TextComparisonObject textComparisonObject = new TextComparisonObject { Intent = currentIntent, HitCountAverage = 0, MaxHitCount = 0 };
+                    //string currentIntent = utteranceList.Key;
+                    /*if (!Guid.TryParse(utteranceList.Key, out Guid newDataGuid))
+                    {
+                        //old data, use name
+                    //    currentIntent = utteranceList.Value.Name;
+                    }*/
 
-					foreach (string utterance in utteranceList.Value.Value)
+                    bool exactMatchOnly = utteranceList.Value.ExactMatchesOnly;
+					TextComparisonObject textComparisonObject = new TextComparisonObject { Id = utteranceList.Key, Intent = utteranceList.Value.Name, HitCountAverage = 0, MaxHitCount = 0 };
+
+					foreach (string utterance in utteranceList.Value.Utterances)
 					{
 						//For each utterance string...
 						int currentHitCount = 0;
@@ -248,7 +162,9 @@ namespace MistyCharacter.SpeechIntent
 						//if an exact match, we are done
 						if (utterance.Trim().ToLower() == text.Trim().ToLower())
 						{
-							return currentIntent;
+                            speechMatchData.Name = utteranceList.Value.Name;
+                            speechMatchData.Id = utteranceList.Key;
+                            return speechMatchData;
 						}
 
 						string adjustedText = text.
@@ -265,130 +181,17 @@ namespace MistyCharacter.SpeechIntent
 							Replace(",", " ", StringComparison.OrdinalIgnoreCase).
 							Replace("!", " ", StringComparison.OrdinalIgnoreCase) == adjustedText)
 						{
-							return currentIntent;
-						}
+                            speechMatchData.Name = utteranceList.Value.Name;
+                            speechMatchData.Id = utteranceList.Key;
+                            return speechMatchData;
+                        }
 
 						if (exactMatchOnly)
 						{
-							return ConversationConstants.HeardUnknownTrigger;
-						}
-
-						//else check by word count for this utterance
-						string[] spokenWords = adjustedText.Split(" ");
-						IList<string> utteranceWords = utterance.Trim().ToLower().Split(" ").ToList();
-
-						foreach (string spokenWord in spokenWords)
-						{
-							if (string.IsNullOrWhiteSpace(spokenWord))
-							{
-								continue;
-							}
-							string updatedWord = spokenWord.Trim().ToLower();
-							if (updatedWord == "the" || updatedWord == "an" || updatedWord == "a" || updatedWord == "um" || updatedWord == "uh")
-							{
-								continue;
-							}
-
-							if (utteranceWords.Contains(updatedWord))
-							{
-								currentHitCount++;
-							}
-							else
-							{
-								foreach(string utteranceWord in utteranceWords)
-								{
-									if (spokenWord.Contains(utteranceWord))
-									{
-										currentHitCount++;
-										break;
-									}
-								}
-							}
-						}
-
-						if (currentHitCount > 0)
-						{
-							if (currentHitCount > textComparisonObject.MaxHitCount)
-							{
-								textComparisonObject.MaxHitCount = currentHitCount;
-								textComparisonObject.HitCountAverage = currentHitCount / spokenWords.Length;
-							}
-							if (currentHitCount == textComparisonObject.MaxHitCount)
-							{
-								if (currentHitCount / spokenWords.Length > textComparisonObject.MaxHitCount / textComparisonObject.HitCountAverage)
-								{
-									//same matches, less words
-									textComparisonObject.HitCountAverage = currentHitCount / spokenWords.Length;
-								}
-							}
-						}
-
-						textComparisonObjects.Add(textComparisonObject);
-					}
-				}
-
-				if (textComparisonObjects.Count > 0)
-				{
-					//Checked them all, now get the intent
-					int maxHitCount = textComparisonObjects.Max(x => x.MaxHitCount);
-					if (maxHitCount > 0)
-					{
-						return textComparisonObjects.Where(x => x.MaxHitCount == maxHitCount).OrderByDescending(x => x.HitCountAverage).First().Intent;
-					}
-				}
-				return ConversationConstants.HeardUnknownTrigger;
-			}
-			catch
-			{
-				return ConversationConstants.HeardUnknownTrigger;
-			}
-		}
-
-		private string GetIntentExperimentThree(string text, IList<KeyValuePair<string, KeyValuePair<bool, IList<string>>>> filteredUtteranceLists)
-		{
-			try
-			{
-				IList<TextComparisonObject> textComparisonObjects = new List<TextComparisonObject>();
-
-				///In each Voice Intent Group
-				foreach (KeyValuePair<string, KeyValuePair<bool, IList<string>>> utteranceList in filteredUtteranceLists)
-				{
-					string currentIntent = utteranceList.Key;
-					bool exactMatchOnly = utteranceList.Value.Key;
-					TextComparisonObject textComparisonObject = new TextComparisonObject { Intent = currentIntent, HitCountAverage = 0, MaxHitCount = 0 };
-
-					foreach (string utterance in utteranceList.Value.Value)
-					{
-						//For each utterance string...
-						int currentHitCount = 0;
-
-						//if an exact match, we are done
-						if (utterance.Trim().ToLower() == text.Trim().ToLower())
-						{
-							return currentIntent;
-						}
-
-						string adjustedText = text.
-							Replace("?", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(".", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(",", " ", StringComparison.OrdinalIgnoreCase).
-							Replace("!", " ", StringComparison.OrdinalIgnoreCase).
-							Trim().ToLower();
-
-						//if an exact match without punctuation, call it good
-						if (utterance.Trim().ToLower().
-							Replace("?", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(".", " ", StringComparison.OrdinalIgnoreCase).
-							Replace(",", " ", StringComparison.OrdinalIgnoreCase).
-							Replace("!", " ", StringComparison.OrdinalIgnoreCase) == adjustedText)
-						{
-							return currentIntent;
-						}
-
-						if (exactMatchOnly)
-						{
-							return ConversationConstants.HeardUnknownTrigger;
-						}
+                            speechMatchData.Name = ConversationConstants.HeardUnknownTrigger;
+                            speechMatchData.Id = ConversationConstants.HeardUnknownTrigger;
+                            return speechMatchData;
+                        }
 
 						//else check by word count for this utterance
 						string[] spokenWords = adjustedText.Split(" ");
@@ -479,15 +282,33 @@ namespace MistyCharacter.SpeechIntent
 					int maxHitCount = textComparisonObjects.Max(x => x.MaxHitCount);
 					if (maxHitCount > 0)
 					{
-						return textComparisonObjects.Where(x => x.MaxHitCount == maxHitCount).OrderByDescending(x => x.HitCountAverage).First().Intent;
+                        
+                        TextComparisonObject closest = textComparisonObjects.Where(x => x.MaxHitCount == maxHitCount).OrderByDescending(x => x.HitCountAverage).First();
+
+                        speechMatchData.Name = closest.Intent;
+                        speechMatchData.Id = closest.Id;
+                        return speechMatchData;
+
+                        //return textComparisonObjects.Where(x => x.MaxHitCount == maxHitCount).OrderByDescending(x => x.HitCountAverage).First().Intent;
 					}
 				}
-				return ConversationConstants.HeardUnknownTrigger;
-			}
+                speechMatchData.Name = ConversationConstants.HeardUnknownTrigger;
+                speechMatchData.Id = ConversationConstants.HeardUnknownTrigger;
+                return speechMatchData;
+            }
 			catch
-			{
-				return ConversationConstants.HeardUnknownTrigger;
-			}
+            {
+                SpeechMatchData speechMatchData = new SpeechMatchData();
+                speechMatchData.Name = ConversationConstants.HeardUnknownTrigger;
+                speechMatchData.Id = ConversationConstants.HeardUnknownTrigger;
+                return speechMatchData;
+            }
 		}
 	}
+
+    public class SpeechMatchData
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+    }
 }

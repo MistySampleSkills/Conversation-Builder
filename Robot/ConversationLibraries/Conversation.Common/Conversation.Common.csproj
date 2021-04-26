@@ -121,12 +121,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConversationConstants.cs" />
+    <Compile Include="Conversations\ConversationMappingDetail.cs" />
+    <Compile Include="Conversations\DepartureMap.cs" />
+    <Compile Include="Conversations\EntryMap.cs" />
     <Compile Include="Conversations\GenericDataStore.cs" />
     <Compile Include="Conversations\Interaction.cs" />
     <Compile Include="Conversations\ConversationData.cs" />
     <Compile Include="Conversations\TriggerActionOption.cs" />
     <Compile Include="Conversations\SkillMessage.cs" />
     <Compile Include="Conversations\TriggerDetail.cs" />
+    <Compile Include="Conversations\UtteranceData.cs" />
     <Compile Include="Data\SpeechConfiguration.cs" />
     <Compile Include="Data\AzureSpeechParameters.cs" />
     <Compile Include="Data\CharacterParameters.cs" />

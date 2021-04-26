@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using Conversation.Common;
+using MistyCharacter.SpeechIntent;
 using System.Collections.Generic;
 
 namespace MistyCharacter
@@ -40,13 +41,13 @@ namespace MistyCharacter
 	/// </summary>
 	public interface ISpeechIntentManager
 	{
-		/// <summary>
-		/// Get the intent of the speech/text
-		/// </summary>
-		/// <param name="text"></param>
-		/// <param name="allowedIntents"></param>
-		/// <returns></returns>
-		string GetIntent(string text, IList<string> allowedIntents = null);
+        /// <summary>
+        /// Get the intent of the speech/text
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="allowedIntents"></param>
+        /// <returns></returns>
+        SpeechMatchData GetIntent(string text, IList<string> allowedIntents = null);
 
 		/// <summary>
 		/// Looks up keys using speech/text intent algorithm where specified in the data
