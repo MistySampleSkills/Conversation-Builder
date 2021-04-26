@@ -107,18 +107,19 @@
 		<dt>
 			@Html.DisplayNameFor(model => model.LEDActionDelay)
 		</dt>
+	
+		<dd>
+			@Html.DisplayFor(model => model.LEDActionDelay)
+		</dd>
 		<dt>
 			@Html.DisplayNameFor(model => model.ManagementAccess)
 		</dt>
 		<dd>
 			@Html.DisplayFor(model => model.ManagementAccess)
 		</dd>
-		<dd>
-			@Html.DisplayFor(model => model.LEDActionDelay)
-		</dd>
-
+		
 		@if(ViewBag.ShowBetaItems)
-			{
+		{
 			<dt>
 				@Html.DisplayNameFor(model => model.SpeechRate)
 			</dt>

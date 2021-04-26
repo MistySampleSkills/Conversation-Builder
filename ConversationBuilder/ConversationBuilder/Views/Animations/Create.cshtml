@@ -130,18 +130,16 @@
 				<input asp-for="LEDActionDelay" class="form-control" />
 				<span asp-validation-for="LEDActionDelay" class="text-danger"></span>
 			</div>
-			
+			<div class="form-group">
+				<label asp-for="ManagementAccess"></label>
+				<select asp-for="ManagementAccess" class="form-control">
+					<option value="Private">Private</option>
+					<option value="Shared">Shared</option>
+					<option value="Public" >Public</option>
+				</select>
+			</div>
 			@if(ViewBag.ShowBetaItems)
 			{
-				<div class="form-group">
-					<label asp-for="ManagementAccess"></label>
-					<select asp-for="ManagementAccess" class="form-control">
-						<option value="Private" selected>Private</option>
-						<option value="Shared">Shared</option>
-						<option value="Public" >Public</option>
-					</select>
-				</div>
-				
 				<div class="form-group">
 					<label asp-for="SpeechRate" class="control-label"></label>
 					<input asp-for="SpeechRate" class="form-control" />

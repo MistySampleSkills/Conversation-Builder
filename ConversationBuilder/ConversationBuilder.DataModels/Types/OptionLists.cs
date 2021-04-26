@@ -265,7 +265,6 @@ namespace ConversationBuilder.DataModels
 			}
 			return list ?? new Dictionary<string, string>();
 		}
-
 	}
 	
 	public enum ObjectFilter

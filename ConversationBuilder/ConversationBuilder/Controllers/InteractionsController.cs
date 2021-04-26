@@ -51,7 +51,7 @@ namespace ConversationBuilder.Controllers
 		public InteractionsController(ICosmosDbService cosmosDbService, UserManager<ApplicationUser> userManager)
 			: base(cosmosDbService, userManager) { }
 
-		public async Task<ActionResult> ManageTriggers(string interactionId, int startItem = 1, int totalItems = 1000)
+		public async Task<ActionResult> ManageTriggers(string interactionId, string message, int startItem = 1, int totalItems = 1000)
 		{
 			try
 			{
@@ -200,6 +200,7 @@ namespace ConversationBuilder.Controllers
 
 					//Lotso slow code in here...
 					ViewBag.AllInteractions = await AllInteractionList();
+					ViewBag.Message = message;
 					return View(interactionViewModel);
 				}
 			}
@@ -437,29 +438,26 @@ namespace ConversationBuilder.Controllers
 				
 				if(interaction != null && conversation != null)
 				{
-				
-					IList<TriggerActionOption> triggerActions;
-					if(interaction.TriggerMap.Remove(selectedTriggerId, out triggerActions))
+					IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync();
+					foreach(ConversationGroup conversationGroup in conversationGroups)
 					{
-						TriggerActionOption intentAction = triggerActions.FirstOrDefault(x => x.Id == removedTriggerAction);
-						if(intentAction != null)
+						if(conversationGroup.ConversationMappings.Values.Any(x => x.DepartureMap.TriggerOptionId == removedTriggerAction))
 						{
-							triggerActions.Remove(intentAction);							
+							//used in a mapping, say it cannot be used at this time as other conversations depend on it
+							return RedirectToAction("ManageTriggers", new {interactionId = interactionId, message = "This option is a mapped departure point in conversation groups and cannot be removed at this time."});
+						}
+					}
+
+					IList<TriggerActionOption> triggerActionOptions;
+					if(interaction.TriggerMap.Remove(selectedTriggerId, out triggerActionOptions))
+					{
+						TriggerActionOption triggerActionOption = triggerActionOptions.FirstOrDefault(x => x.Id == removedTriggerAction);
+						if(triggerActionOption != null)
+						{
+							triggerActionOptions.Remove(triggerActionOption);							
 							conversation.ConversationDeparturePoints.Remove(removedTriggerAction);
 						}
-						interaction.TriggerMap.Add(selectedTriggerId, triggerActions);
-
-						ViewBag.CanBeDeleted = true;
-						IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync();
-						foreach(ConversationGroup conversationGroup in conversationGroups)
-						{
-							if(conversationGroup.ConversationMappings.Values.Any(x => x.DepartureMap.TriggerOptionId == removedTriggerAction))
-							{
-								//used in a mapping, say it cannot be used at this time as other conversations depend on it
-								ViewBag.CanBeDeleted = false;
-							}
-						}
-						
+						interaction.TriggerMap.Add(selectedTriggerId, triggerActionOptions);
 					}
 					
 					string animationId;
@@ -755,6 +753,17 @@ namespace ConversationBuilder.Controllers
 				}
 				else
 				{
+
+					ViewBag.ReadOnlyEntryPoint = false;
+					IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync(1, 1000);//TODO	
+					foreach(ConversationGroup conversationGroup in conversationGroups)
+					{
+						if(conversationGroup.ConversationMappings.Any(x => x.Value.EntryMap.InteractionId == id))
+						{
+							ViewBag.ReadOnlyEntryPoint = true;
+						}
+					}
+
 					ViewBag.Animations = await AnimationList();
 					await SetViewBagData();
 					return View(interaction);
@@ -791,14 +800,14 @@ namespace ConversationBuilder.Controllers
 					loadedInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 					loadedInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;
 				
-					if(interaction.ConversationEntryPoint)
+					if (interaction.ConversationEntryPoint && !conversation.ConversationEntryPoints.ContainsKey(interaction.Id))
 					{
 						EntryMap entryMap = new EntryMap();
 						entryMap.ConversationId = interaction.ConversationId;
 						entryMap.InteractionId = interaction.Id;
 						conversation.ConversationEntryPoints.Add(interaction.Id, entryMap);
 					}
-					else
+					else if (conversation.ConversationEntryPoints.ContainsKey(interaction.Id))
 					{
 						conversation.ConversationEntryPoints.Remove(interaction.Id);
 					}
@@ -852,7 +861,7 @@ namespace ConversationBuilder.Controllers
 					{
 						if(conversationGroup.ConversationMappings.Values.Any(x => x.EntryMap.InteractionId == id))
 						{
-							//used in a mapping, say it cannot be used at this time as other conversations depend on it
+							//used in a mapping, say it cannot be deleted at this time as other conversations depend on it
 							ViewBag.CanBeDeleted = false;
 						}
 					}

@@ -63,14 +63,26 @@
 					</label>
 				</div>
 			</div>
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="ConversationEntryPoint" /> @Html.DisplayNameFor(model => model.ConversationEntryPoint)
-					</label>
+			
+			@if(ViewBag.ReadOnlyEntryPoint)
+			{
+				<div class="form-group">
+					<input asp-for="ConversationEntryPoint" class="form-control" value="@Model.ConversationEntryPoint" type="hidden"> </input>
+					<label asp-for="ConversationEntryPoint" /> @Html.DisplayNameFor(model => model.ConversationEntryPoint)						
+					<label title="Cannot change. Entry point is in use in conversation group at this time.">ℹ️</label>
 				</div>
-			</div>
-
+			}
+			else
+			{
+				<div class="form-group">
+					<div class="checkbox">
+						<label>
+							<input asp-for="ConversationEntryPoint" /> @Html.DisplayNameFor(model => model.ConversationEntryPoint)
+						</label>
+					</div>
+				</div>
+			}
+			
 			@if(ViewBag.ShowBetaItems)
 			{
 				<div class="form-group">

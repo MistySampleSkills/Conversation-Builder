@@ -651,7 +651,8 @@ namespace ConversationBuilder.Controllers
 					{
 						conversationGroup.StartupConversation = null;
 					}
-
+					
+					conversationGroup.ConversationMappings = conversationGroup.ConversationMappings.Where(x => x.Value.EntryMap.ConversationId != conversation.Id && x.Value.DepartureMap.ConversationId != conversation.Id).ToDictionary(x => x.Key, x => x.Value);				
 					await _cosmosDbService.ContainerManager.ConversationGroupData.UpdateAsync(conversationGroup);
 
 					return RedirectToAction("Manage", new {id = conversationGroup.Id});
