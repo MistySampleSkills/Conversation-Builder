@@ -580,7 +580,7 @@ namespace ConversationBuilder.Controllers
 			}
 
 			UserConfiguration userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
-			ViewBag.ShowBetaItems = userConfiguration.ShowBetaItems;
+			ViewBag.ShowBetaItems = userConfiguration?.ShowBetaItems ?? false;
 			if(!string.IsNullOrWhiteSpace(userConfiguration?.OverrideCssFile))
 			{
 				ViewBag.CssFile = userConfiguration.OverrideCssFile + (userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");				
