@@ -91,19 +91,13 @@
 				Trigger Filter
 			</th>
 			<th>
-				Updated
-			</th>
-			<th>
-				Go to Conversation
-			</th>
-			<th>
 				Go to Interaction
 			</th>
 			<th>
-				Interrupt
+				Interrupt Audio
 			</th>
 			<th>
-				Override Animation
+				Animation
 			</th>
 			<th>
 				Weight
@@ -124,10 +118,6 @@
 				@Html.DisplayFor(modelItem => item.TriggerFilter)
 			</td>
 			<td>
-				@Html.DisplayFor(modelItem => item.Updated)
-			</td>
-			<td></td>
-			<td>
 				@Html.ActionLink("Create Interaction", "Create",  "Interactions", new {conversationId = Model.Id})
 			</td>
 			<td></td>	
@@ -139,22 +129,14 @@
 			<tr>
 				<td></td>
 				<td></td>
-				<td></td>
-				<td></td>
 				<form asp-action="AddResponseHandler">
 					<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 					<td>
 					<div class="form-group">
-						<select asp-for="GoToConversation" class="form-control">
-							@foreach (KeyValuePair<string, string> conversation in @ViewBag.LinkedConversations)
-							{
-								<option value="@conversation.Key">@conversation.Value</option>
-							}
-						</select>
-					</div>
-					
-					<div class="form-group">
 						<input asp-for="SelectedTrigger" class="form-control" value="@item.Id" type="hidden"> </input>
+					</div>
+					<div class="form-group">
+						<input asp-for="Name" class="form-control" value="@Model.Name" type="hidden"> </input>
 					</div>
 					<div class="form-group">
 						<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
@@ -166,12 +148,12 @@
 						<select asp-for="GoToInteraction" class="form-control">
 							@foreach (KeyValuePair<string, Dictionary<string, string>> conversationInterations in @ViewBag.InteractionAndOptionList)
 							{
-								//TODO Make this dynamic based upon conversation selection
+								//TODO Cleanup for new conversation group mapping design
 								string conversation = conversationInterations.Key;
 								@foreach (KeyValuePair<string, string> interaction in conversationInterations.Value)
 								{
 									 KeyValuePair<string, string> conversationKvp = ((Dictionary<string, string>)@ViewBag.Conversations).FirstOrDefault(x => x.Key == conversation);
-									<option value="@interaction.Key">@conversationKvp.Value : @interaction.Value</option>
+									<option value="@interaction.Key">@interaction.Value</option>
 								}
 							}
 						</select>
@@ -219,15 +201,7 @@
 				<td></td>
 				<td></td>
 				<td></td>
-				<td></td>
 				@{
-					KeyValuePair<string, string> goToConversation = ((IDictionary<string, string>)ViewBag.Conversations).FirstOrDefault(x => x.Key == intentAction.GoToConversation);
-					string goToConversationName = intentAction.GoToConversation;
-					if(goToConversation.Value != null)
-					{
-						goToConversationName = goToConversation.Value;
-					}
-				
 					KeyValuePair<string, string> goToInteraction = ((IDictionary<string, string>)ViewBag.AllInteractions).FirstOrDefault(x => x.Key == intentAction.GoToInteraction);
 					string goToInteractionName = intentAction.GoToInteraction;
 					if(goToInteraction.Value != null)
@@ -249,7 +223,6 @@
 					}
 				}
 
-				<td>@goToConversationName</td>
 				<td>@goToInteractionName</td>
 				<td>@intentAction.InterruptCurrentAction</td>
 				<td>@animationName</td>
@@ -269,118 +242,3 @@
 	@Html.ActionLink("Animations", "Index",  "Animations") | 
 	@Html.ActionLink("Back to Conversation", "Details",  "Conversations", new { id = Model.Id})	
 </div>
-<br />
-<hr />
-<br />
-<h4>Skill Integration.  Thar be Monsters here.</h4>
-
-@if(Model.SkillMessages != null && Model.SkillMessages.Count() == @ViewBag.SkillMessages.Count)
-{
-	<h5>All the existing skill messages have been added to this interaction.  Good luck.</h5>
-}
-else
-{
-	<div class="row">
-		<div class="col-md-4">
-			<form asp-action="AddSkillMessage">
-				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-				<div class="form-group">
-					Add skill message
-					<select asp-for="Handler" class="form-control">
-						@foreach (KeyValuePair<string, string> item in @ViewBag.SkillMessages)
-						{
-							if(Model.TriggerDetails == null || !Model.TriggerDetails.Any(x => x.Id == item.Key))
-							{
-								<option value="@item.Key">@item.Value</option>
-							}
-						}
-					</select>
-				</div>
-				
-				<div class="form-group">
-					<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
-				</div>
-				<div class="form-group">
-					<input asp-for="Name" class="form-control" value="@Model.Name" type="hidden"> </input>
-				</div>
-				<div class="form-group">
-					<input type="submit" value="Add" class="btn btn-default" />
-				</div>
-			</form>
-		</div>
-	</div>
-}
-
-
-@if(Model.SkillMessages != null && Model.SkillMessages.Count() > 0)
-{
-	<div class="row">
-		<div class="col-md-4">
-			<form asp-action="RemoveSkillMessage">
-				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-				<div class="form-group">
-					Remove skill message
-					<select asp-for="Handler" class="form-control">
-						@foreach (ConversationBuilder.DataModels.SkillMessage item in Model.SkillMessages)
-						{
-							<option value="@item.Id">@item.Name</option>
-						}
-					</select>
-				</div>
-				
-				<div class="form-group">
-					<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
-				</div>
-				<div class="form-group">
-					<input asp-for="Name" class="form-control" value="@Model.Name" type="hidden"> </input>
-				</div>
-				
-				<div class="form-group">
-					<input type="submit" value="Remove" class="btn btn-default" />
-				</div>
-			</form>
-		</div>
-	</div>
-}
-
-
-<h3>Current interaction skills</h3>
-
-@if(Model.SkillMessages != null)
-{
-	<table class="table">
-	<thead>
-		<tr>
-			<th>
-				Name
-			</th>
-			<th>
-				Skill
-			</th>
-			<th>
-				EventName
-			</th>
-		</tr>
-	</thead>
-	<tbody>	
-@foreach (var item in Model.SkillMessages) {
-		<tr>
-			<td>
-				@Html.DisplayFor(modelItem => item.Name)
-			</td>			
-			<td>
-				@Html.DisplayFor(modelItem => item.Skill)
-			</td>
-			<td>
-				@Html.DisplayFor(modelItem => item.EventName)
-			</td>	
-		</tr>
-			}
-	</tbody>
-</table>
-}
-
-
-@Html.ActionLink("Skill Messages", "Index",  "SkillMessages") | 

@@ -62,9 +62,20 @@ namespace ConversationBuilder.Controllers
 
 				await SetViewBagData();
 				int totalCount = await _cosmosDbService.ContainerManager.TriggerDetailData.GetCountAsync();
-				IList<TriggerDetail> intents = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync(startItem, totalItems);
+				IList<TriggerDetail> triggers = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync(startItem, totalItems);
+				foreach(TriggerDetail trigger in triggers.Where(x => x.Trigger == "SpeechHeard" && !string.IsNullOrWhiteSpace(x.TriggerFilter)))
+				{
+					//TODO performance
+					//get the speech name for display
+					SpeechHandler speechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(trigger.TriggerFilter);
+					if(speechHandler != null) //legacy data will not match
+					{
+						trigger.TriggerFilter = speechHandler.Name;
+					}
+				}
+
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
-				if (intents == null)
+				if (triggers == null)
 				{
 					return View();
 				}
@@ -72,7 +83,7 @@ namespace ConversationBuilder.Controllers
 				{
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
 					ViewBag.Interactions = await InteractionList();
-					return View(intents.OrderBy(x => x.Name));
+					return View(triggers.OrderBy(x => x.Name));
 				}
 			}
 			catch (Exception ex)
@@ -92,8 +103,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				
-				TriggerDetail intent =  await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
-				if (intent == null)
+				TriggerDetail trigger =  await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
+				if (trigger == null)
 				{
 					return RedirectToAction(nameof(Index));
 				}
@@ -102,7 +113,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
 					ViewBag.Interactions = await InteractionList();
 					await SetViewBagData();
-					return View(intent);
+					return View(trigger);
 				}
 			}
 			catch (Exception ex)
@@ -121,15 +132,23 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 
-				TriggerDetailViewModel intent = new TriggerDetailViewModel {};
-				intent.Id = Guid.NewGuid().ToString();
+				TriggerDetailViewModel triggerViewModel = new TriggerDetailViewModel {};
+				triggerViewModel.Id = Guid.NewGuid().ToString();
 				ViewBag.Interactions = await InteractionList();
-				ViewBag.Triggers = (new Triggers()).AllItems.OrderByDescending(x => x.Value);
-				ViewBag.TriggerFilters = (new TriggerFilters()).AllItems.OrderByDescending(x => x.Value);
+				ViewBag.Triggers = (new Triggers()).AllItems.OrderBy(x => x.Value);
+				var triggerFilters = (new TriggerFilters()).AllItems.OrderBy(x => x.Value).ToList();
+				
+				IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000);//TODO
+				foreach(var speechHandler in speechHandlers)
+				{
+					triggerFilters.Add(new KeyValuePair<string, string>(speechHandler.Id, "SpeechHeard: " + speechHandler.Name));
+				}
+
+				ViewBag.TriggerFilters = triggerFilters;
 				ViewBag.Emotions = (new DefaultEmotions()).AllItems.OrderByDescending(x => x.Value);
 
 				await SetViewBagData();
-				return View(intent);				
+				return View(triggerViewModel);				
 			}
 			catch (Exception ex)
 			{
@@ -144,9 +163,9 @@ namespace ConversationBuilder.Controllers
 			intentDetail.Trigger = model.Trigger;
 			intentDetail.ItemType = model.ItemType;
 
-			if(!string.IsNullOrWhiteSpace(model.UserDefinedTrigger))
+			if(!string.IsNullOrWhiteSpace(model.UserDefinedTriggerFilter))
 			{
-				intentDetail.TriggerFilter = model.UserDefinedTrigger;
+				intentDetail.TriggerFilter = model.UserDefinedTriggerFilter;
 			}
 			else
 			{
@@ -160,9 +179,9 @@ namespace ConversationBuilder.Controllers
 				}
 			}
 
-			if(!string.IsNullOrWhiteSpace(model.UserDefinedStartingTrigger))
+			if(!string.IsNullOrWhiteSpace(model.UserDefinedStartingTriggerFilter))
 			{
-				intentDetail.StartingTriggerFilter = model.UserDefinedStartingTrigger;
+				intentDetail.StartingTriggerFilter = model.UserDefinedStartingTriggerFilter;
 			}
 			else
 			{
@@ -176,9 +195,9 @@ namespace ConversationBuilder.Controllers
 				}
 			}
 
-			if(!string.IsNullOrWhiteSpace(model.UserDefinedStoppingTrigger))
+			if(!string.IsNullOrWhiteSpace(model.UserDefinedStoppingTriggerFilter))
 			{
-				intentDetail.StoppingTriggerFilter = model.UserDefinedStoppingTrigger;
+				intentDetail.StoppingTriggerFilter = model.UserDefinedStoppingTriggerFilter;
 			}
 			else
 			{
@@ -261,35 +280,54 @@ namespace ConversationBuilder.Controllers
 					triggerDetailViewModel.ItemType = triggerDetail.ItemType;
 
 					IDictionary<string, string> triggerList = (new TriggerFilters()).AllItems;
+	
+					var triggerFilters = (new TriggerFilters()).AllItems.OrderBy(x => x.Value).ToList();
+					
+					IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000);//TODO
+					string replaceName = "";
+					foreach(var speechHandler in speechHandlers)
+					{
+						if(speechHandler.Id == triggerDetail.TriggerFilter)
+						{
+							replaceName = speechHandler.Name;
+						}
+						triggerFilters.Add(new KeyValuePair<string, string>(speechHandler.Id, "SpeechHeard: " + speechHandler.Name));
+					}
 
-					if(triggerList.Any(x => x.Value ==triggerDetail.TriggerFilter))
+					if(triggerDetail.Trigger == "SpeechHeard")
+					{
+						//Replace id with name
+						triggerDetailViewModel.TriggerFilter = "SpeechHeard: " + replaceName;
+						triggerDetailViewModel.UserDefinedTriggerFilter = "";
+					}
+					else if(triggerList.Any(x => x.Value ==triggerDetail.TriggerFilter))
 					{
 						triggerDetailViewModel.TriggerFilter = triggerDetail.TriggerFilter;
-						triggerDetailViewModel.UserDefinedTrigger = "";
+						triggerDetailViewModel.UserDefinedTriggerFilter = "";
 					}
 					else
 					{
-						triggerDetailViewModel.UserDefinedTrigger = triggerDetail.TriggerFilter;
+						triggerDetailViewModel.UserDefinedTriggerFilter = triggerDetail.TriggerFilter;
 					}
 
 					if(triggerList.Any(x => x.Value ==triggerDetail.StartingTriggerFilter))
 					{
 						triggerDetailViewModel.StartingTriggerFilter = triggerDetail.StartingTriggerFilter;
-						triggerDetailViewModel.UserDefinedStartingTrigger = "";
+						triggerDetailViewModel.UserDefinedStartingTriggerFilter = "";
 					}
 					else
 					{
-						triggerDetailViewModel.UserDefinedStartingTrigger = triggerDetail.StartingTriggerFilter;
+						triggerDetailViewModel.UserDefinedStartingTriggerFilter = triggerDetail.StartingTriggerFilter;
 					}
 
 					if(triggerList.Any(x => x.Value ==triggerDetail.StoppingTriggerFilter))
 					{
 						triggerDetailViewModel.StoppingTriggerFilter = triggerDetail.StoppingTriggerFilter;
-						triggerDetailViewModel.UserDefinedStoppingTrigger = "";
+						triggerDetailViewModel.UserDefinedStoppingTriggerFilter = "";
 					}
 					else
 					{
-						triggerDetailViewModel.UserDefinedStoppingTrigger = triggerDetail.StoppingTriggerFilter;
+						triggerDetailViewModel.UserDefinedStoppingTriggerFilter = triggerDetail.StoppingTriggerFilter;
 					}
 
 					triggerDetailViewModel.StartingTriggerDelay = triggerDetail.StartingTriggerDelay;
@@ -300,8 +338,9 @@ namespace ConversationBuilder.Controllers
 					triggerDetailViewModel.Created = triggerDetail.Created;
 				
 					ViewBag.Interactions = await InteractionList();					
-					ViewBag.Triggers = (new Triggers()).AllItems.OrderByDescending(x => x.Value);
-					ViewBag.TriggerFilters = (new TriggerFilters()).AllItems.OrderByDescending(x => x.Value);
+					ViewBag.Triggers = (new Triggers()).AllItems.OrderBy(x => x.Value);
+			
+					ViewBag.TriggerFilters = triggerFilters;
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems.OrderByDescending(x => x.Value);
 
 					await SetViewBagData();
@@ -354,8 +393,8 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 			
-				TriggerDetail intent = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
-				if (intent == null)
+				TriggerDetail trigger = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
+				if (trigger == null)
 				{
 					return RedirectToAction(nameof(Index));
 				}
@@ -365,7 +404,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
 					ViewBag.Interactions = await InteractionList();
 					await SetViewBagData();
-					return View(intent);
+					return View(trigger);
 				}
 			}
 			catch (Exception ex)

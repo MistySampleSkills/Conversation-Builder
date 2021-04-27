@@ -58,25 +58,27 @@
 			<div class="form-group">
 				<label asp-for="ManagementAccess"></label>
 				<select asp-for="ManagementAccess" class="form-control">
-					<option value="Private" selected>Private</option>
+					<option value="Private">Private</option>
 					<option value="Shared">Shared</option>
 					<option value="Public" >Public</option>
 				</select>
 			</div>
-			<div class="form-group">
-				<label asp-for="RequestAccess"></label>
-				<select asp-for="RequestAccess" class="form-control">
-					<option value="None">None</option>
-					<option value="Authed">Authed</option>
-					<option value="Public" selected>Public</option>
-				</select>
-			</div>
-			<div class="form-group">
-				<label asp-for="KeyPhraseRecognizedAudio" class="control-label"></label>
-				<input asp-for="KeyPhraseRecognizedAudio" class="form-control" />
-				<span asp-validation-for="KeyPhraseRecognizedAudio" class="text-danger"></span>
-			</div>
-
+			@if(ViewBag.ShowBetaItems)
+			{
+				<div class="form-group">
+					<label asp-for="RequestAccess"></label>
+					<select asp-for="RequestAccess" class="form-control">
+						<option value="None">None</option>
+						<option value="Authed">Authed</option>
+						<option value="Public" selected>Public</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label asp-for="KeyPhraseRecognizedAudio" class="control-label"></label>
+					<input asp-for="KeyPhraseRecognizedAudio" class="form-control" />
+					<span asp-validation-for="KeyPhraseRecognizedAudio" class="text-danger"></span>
+				</div>
+			}
 			<div class="form-group">
 				<input type="submit" value="Create" class="btn btn-default" />
 			</div>

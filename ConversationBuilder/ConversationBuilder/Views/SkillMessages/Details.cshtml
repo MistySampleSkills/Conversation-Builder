@@ -86,12 +86,15 @@
 		<dd>
 			@Html.DisplayFor(model => model.ManagementAccess)
 		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.RequestAccess)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.RequestAccess)
-		</dd>
+		@if(ViewBag.ShowBetaItems)
+		{
+			<dt>
+				@Html.DisplayNameFor(model => model.RequestAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.RequestAccess)
+			</dd>
+		}
 		<dt>
 			@Html.DisplayNameFor(model => model.Updated)
 		</dt>

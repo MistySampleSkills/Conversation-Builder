@@ -51,12 +51,11 @@ namespace ConversationBuilder.DataModels
 		public string Animation { get; set; }
 
 		public IList<string> SkillMessages { get; set; } = new List<string>();
-		
 		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 		
 		
-		[Display(Name = "No trigger during interaction timeout in seconds")]
-		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no intent response
+		[Display(Name = "Interaction timeout (seconds)")]
+		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 
 		
 		[Display(Name = "Listen to speaker timeout")]
@@ -75,7 +74,7 @@ namespace ConversationBuilder.DataModels
 		/// </summary>
 		public double SilenceTimeout { get; set; } = 6;
 
-		[Display(Name = "Start Listening immediately after speech/audio in seconds")]
+		[Display(Name = "Start Listening immediately after initial speech/audio")]
 		[JsonProperty(PropertyName = "StartListening")]
 		/// <summary>
 		/// If Start Listening is set to true, starts capturing speech after she speaks/plays audio
@@ -101,10 +100,13 @@ namespace ConversationBuilder.DataModels
 		[JsonProperty(PropertyName = "AllowVoiceProcessingOverride")]		
 		/// <summary>
 		/// If true, will interrupt speech processing to throw timeout events when they happen
-		/// otherwise, will pause to see if voice processes a successful intent trigger before throwing timeout
+		/// otherwise, will pause to see if voice processes a successful trigger before throwing timeout
 		/// Currently experimental
 		/// </summary>
 		public bool AllowVoiceProcessingOverride { get; set; } = true;
+
+		[Display(Name = "Conversation Entry Point")]
+		public bool ConversationEntryPoint { get; set; }
 
 		public DateTimeOffset Created { get; set; }
 		

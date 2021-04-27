@@ -443,37 +443,134 @@ namespace ConversationBuilder.Controllers
 
 				await SetViewBagData();
 				int totalCount = await _cosmosDbService.ContainerManager.ConversationData.GetCountAsync();
-				IList<Conversation> conversations = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync(startItem, 1000);//TODO
 				IList<Conversation> filteredConversations = new List<Conversation>();
 				ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(id);				
 
-
-				foreach(var conversation in conversationGroup.Conversations)
+				if (conversationGroup.Conversations == null || conversationGroup.Conversations.Count == 0)
 				{
-					Conversation selectedConversation  = conversations.FirstOrDefault(x => x.Id == conversation);
+					return View();
+				}
+
+				IDictionary<string, DepartureMap> finalconversationDeparturePoints = new Dictionary<string, DepartureMap>();
+				IDictionary<string, EntryMap> finalconversationEntryPoints = new Dictionary<string, EntryMap>();
+				IDictionary<string, ConversationMappingDetail> existingMappingsList = new Dictionary<string, ConversationMappingDetail>();
+				
+				foreach(var conversationId in conversationGroup.Conversations.Where(x => x != null))
+				{
+					Conversation selectedConversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
 					if(selectedConversation != null && !filteredConversations.Contains(selectedConversation))
 					{
 						filteredConversations.Add(selectedConversation);
 					}
+
+					//Go through and return new detailed data here and methods to build names for entry and departure points
+					IDictionary<string, EntryMap> conversationEntryPoints = selectedConversation.ConversationEntryPoints;					
+					foreach(KeyValuePair<string, EntryMap> entry in conversationEntryPoints)
+					{
+							EntryMap entryMap = new EntryMap();
+							
+							//build name from current data...slow...........
+							Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(entry.Value.InteractionId);
+
+							string conversationName = selectedConversation.Name ?? "";
+							string interactionName = interaction?.Name ?? "";
+
+							entryMap.DisplayName = $"{conversationName} -> {interactionName}";
+
+							entryMap.ConversationId = conversationId;
+							entryMap.InteractionId = entry.Value.InteractionId;
+							finalconversationEntryPoints.Add(entry.Value.InteractionId, entryMap);					
+					}
+				}
+				
+				foreach(var conversationId in conversationGroup.Conversations.Where(x => x != null))
+				{
+					Conversation selectedConversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+					IDictionary<string, DepartureMap> conversationDeparturePoints = selectedConversation.ConversationDeparturePoints;
+					foreach(KeyValuePair<string, DepartureMap> departure in conversationDeparturePoints)
+					{
+						//filter out used departure points						
+						KeyValuePair<string, ConversationMappingDetail> data = conversationGroup.ConversationMappings.FirstOrDefault(x => x.Value.DepartureMap.TriggerOptionId == departure.Value.TriggerOptionId);
+						if(data.Value?.EntryMap == null)
+						{
+							DepartureMap departureMap = new DepartureMap();
+							
+							//build name from current data...slow...........
+							Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(departure.Value.InteractionId);
+
+							string conversationName = selectedConversation.Name ?? "";
+							string interactionName = interaction?.Name ?? "";
+
+							TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(departure.Value.TriggerId);
+
+							string triggerName = triggerDetail?.Name ?? "";
+
+							Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(departure.Value.AnimationId);
+							string animationName = animation?.Name ?? "";
+
+							departureMap.DisplayName = $"{conversationName} -> {interactionName} -> {triggerName} -> {animationName}";
+
+							departureMap.TriggerOptionId = departure.Value.TriggerOptionId;
+							departureMap.InteractionId = departure.Value.InteractionId;
+							departureMap.ConversationId = conversationId;
+							departureMap.AnimationId = departure.Value.AnimationId;
+							departureMap.TriggerId = departure.Value.TriggerId;
+							finalconversationDeparturePoints.Add(departure.Value.TriggerOptionId, departureMap);
+						}
+						else
+						{
+
+							//Departure is mapped to Entry Map already, add to list...
+
+								DepartureMap departureMap = data.Value.DepartureMap;
+								EntryMap entryMap = data.Value.EntryMap;
+
+								//build name from current data...slow...........
+								Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(departure.Value.InteractionId);
+								string conversationName = selectedConversation.Name ?? "";
+								string interactionName = interaction?.Name ?? "";
+
+								TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(departure.Value.TriggerId);
+
+								string triggerName = triggerDetail?.Name ?? "";
+
+								Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(departure.Value.AnimationId);
+								string animationName = animation?.Name ?? "";
+
+								departureMap.DisplayName = $"{conversationName} -> {interactionName} -> {triggerName} -> {animationName}";
+
+
+								Conversation entryConversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(entryMap.ConversationId);
+								Interaction entryInteraction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(entryMap.InteractionId);
+									
+								string entryConversationName = entryConversation?.Name ?? "";
+								string entryInteractionName = entryInteraction?.Name ?? "";
+
+								entryMap.DisplayName = $"{entryConversationName} -> {entryInteractionName}";
+
+								ConversationMappingDetail conversationMappingDetail = new ConversationMappingDetail
+								{
+									EntryMap = entryMap,
+									DepartureMap = departureMap
+								};
+								existingMappingsList.Add(conversationMappingDetail.DepartureMap.TriggerOptionId, conversationMappingDetail);
+						}
+					}
 				}
 
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
-				if (conversations == null)
-				{
-					return View();
-				}
-				else
-				{
-					ViewBag.Conversations = await ConversationList();
-					ViewBag.CharacterConfigurations = await CharacterConfigurationsList();
+				ViewBag.Conversations = await ConversationList();
+				ViewBag.CharacterConfigurations = await CharacterConfigurationsList();
+				ViewBag.EntryPoints = finalconversationEntryPoints;
+				ViewBag.DeparturePoints = finalconversationDeparturePoints;
+				ViewBag.ConversationMappings = existingMappingsList;
 
-					ConversationGroupConversationViewModel conversationGroupConversationViewModel = new ConversationGroupConversationViewModel();
-					conversationGroupConversationViewModel.ConversationGroupId = id;
-					conversationGroupConversationViewModel.ConversationGroupName = conversationGroup.Name;
-					conversationGroupConversationViewModel.Conversations = filteredConversations.OrderBy(x => x.Name).ToList();
+				ConversationGroupConversationViewModel conversationGroupConversationViewModel = new ConversationGroupConversationViewModel();
+				conversationGroupConversationViewModel.ConversationGroupId = id;
+				conversationGroupConversationViewModel.ConversationGroupName = conversationGroup.Name;
+				conversationGroupConversationViewModel.Conversations = filteredConversations.OrderBy(x => x.Name).ToList();
 
-					return View(conversationGroupConversationViewModel);
-				}
+				return View(conversationGroupConversationViewModel);
 			}
 			catch (Exception ex)
 			{
@@ -532,7 +629,8 @@ namespace ConversationBuilder.Controllers
 					{
 						conversationGroup.StartupConversation = null;
 					}
-
+					
+					conversationGroup.ConversationMappings = conversationGroup.ConversationMappings.Where(x => x.Value.EntryMap.ConversationId != conversation.Id && x.Value.DepartureMap.ConversationId != conversation.Id).ToDictionary(x => x.Key, x => x.Value);				
 					await _cosmosDbService.ContainerManager.ConversationGroupData.UpdateAsync(conversationGroup);
 
 					return RedirectToAction("Manage", new {id = conversationGroup.Id});
@@ -656,5 +754,76 @@ namespace ConversationBuilder.Controllers
 			}
 		}
 
+		public async Task<ActionResult> MapConversationInteractions(ConversationGroupConversationViewModel model)
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+			
+				ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(model.ConversationGroupId);	
+				ConversationMappingDetail conversationMappingDetail = new ConversationMappingDetail();
+				if(conversationGroup != null)  
+				{
+					//look up using these and populate saved data
+					string departureId = model.DepartureMap.TriggerOptionId;
+					string entry = model.EntryMap.InteractionId;
+					foreach(var conversationId in conversationGroup.Conversations.Where(x => x != null))
+					{
+						Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
+						if(conversation.ConversationDeparturePoints.TryGetValue(departureId, out DepartureMap departureMap))
+						{
+							conversationMappingDetail.DepartureMap = departureMap;
+						}
+
+						if(conversation.ConversationEntryPoints.TryGetValue(entry, out EntryMap entryMap))
+						{
+							conversationMappingDetail.EntryMap = entryMap;
+						}
+					}
+					conversationGroup.ConversationMappings.Add(departureId, conversationMappingDetail);
+					await _cosmosDbService.ContainerManager.ConversationGroupData.UpdateAsync(conversationGroup);
+
+					return RedirectToAction("Manage", new {id = conversationGroup.Id});
+				}
+
+				return RedirectToAction("Error", "Home", new { message = "Exception adding a conversation mapping."});
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception adding a conversation mapping.", exception = ex.Message });
+			}
+		}
+
+		public async Task<ActionResult> DeleteConversationInteractionMap(string id, string conversationGroupId)
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+			
+				ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(conversationGroupId);
+				if(conversationGroup != null)
+				{
+					//Map the exit to the entry
+					conversationGroup.ConversationMappings.Remove(id);
+					await _cosmosDbService.ContainerManager.ConversationGroupData.UpdateAsync(conversationGroup);
+
+					return RedirectToAction("Manage", new {id = conversationGroup.Id});
+				}
+
+				return RedirectToAction("Error", "Home", new { message = "Exception removing a conversation mapping."});
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception removing a conversation mapping.", exception = ex.Message });
+			}
+		}
 	}
 }

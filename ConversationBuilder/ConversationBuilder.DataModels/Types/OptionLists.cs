@@ -174,10 +174,10 @@ namespace ConversationBuilder.DataModels
 		//Can be handled, not the same as Interaction timeout which ends conversation
 		public const string Timeout = "Timeout";
 
-		//User defined timer intent event
+		//User defined timer trigger event
 		public const string Timer = "Timer";
 
-		//Common intent types caused by interaction with robot
+		//Common trigger types caused by interaction with robot
 		public const string SpeechHeard = "SpeechHeard";
 		public const string FaceRecognized = "FaceRecognized";
 		public const string BumperPressed = "BumperPressed";
@@ -193,7 +193,7 @@ namespace ConversationBuilder.DataModels
 		//trigger due to external event call into robot skill
 		public const string ExternalEvent = "ExternalEvent";
 
-		//To immediately trigger a start or stop intent or go to next animation after Misty speaks plays audio
+		//To immediately trigger a start or stop trigger or go to next animation after Misty speaks plays audio
 		public const string AudioCompleted = "AudioCompleted";
 		
 		//TODO
@@ -205,24 +205,24 @@ namespace ConversationBuilder.DataModels
 		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();
 		public TriggerFilters()
 		{
-			AllItems.TryAdd(Chin, Chin);
-			AllItems.TryAdd(Scruff, Scruff);
-			AllItems.TryAdd(Right, "Right Cap");
-			AllItems.TryAdd(Left, "Left Cap");
-			AllItems.TryAdd(Front, "Front Cap");
-			AllItems.TryAdd(Back, "Back Cap");
+			AllItems.TryAdd(Chin, "Cap: Chin");
+			AllItems.TryAdd(Scruff, "Cap: Scruff");
+			AllItems.TryAdd(Right, "Cap: Right");
+			AllItems.TryAdd(Left, "Cap: Left");
+			AllItems.TryAdd(Front, "Cap: Front");
+			AllItems.TryAdd(Back, "Cap: Back");
 
-			AllItems.TryAdd(FrontRight, "Front Right Bumper");
-			AllItems.TryAdd(FrontLeft, "Front Left Bumper");
-			AllItems.TryAdd(BackRight, "Back Right Bumper");
-			AllItems.TryAdd(BackLeft, "Back Left Bumper");
+			AllItems.TryAdd(FrontRight, "Bumper: Front Right");
+			AllItems.TryAdd(FrontLeft, "Bumper: Front Left");
+			AllItems.TryAdd(BackRight, "Bumper: Back Right");
+			AllItems.TryAdd(BackLeft, "Bumper: Back Left");
 			
-			AllItems.TryAdd(HeardNothing, "Heard Nothing");
-			AllItems.TryAdd(HeardUnknownSpeech, "Heard Unknown Speech");
+			AllItems.TryAdd(HeardNothing, "SpeechHeard: Heard Nothing");
+			AllItems.TryAdd(HeardUnknownSpeech, "SpeechHeard: Heard Unknown Speech");
 			
-			AllItems.TryAdd(SeenUnknownFace, "See Unknown Face");
-			AllItems.TryAdd(SeenKnownFace, "See Known Face");
-			AllItems.TryAdd(SeenNewFace, "See New Known Face");
+			AllItems.TryAdd(SeenUnknownFace, "FaceRecognized: See Unknown Face");
+			AllItems.TryAdd(SeenKnownFace, "FaceRecognized: See Known Face");
+			AllItems.TryAdd(SeenNewFace, "FaceRecognized: See New Known Face");
 
 			IDictionary<string, string> objects = new Objects().GetObjectList();
 			foreach(KeyValuePair<string, string> objectData in objects)
@@ -261,11 +261,10 @@ namespace ConversationBuilder.DataModels
 			foreach(ObjectFilter objectName in Enum.GetValues(typeof(ObjectFilter)))
 			{
 				string pertyName = objectName.ToString().Replace("_", " ");
-				list.Add(pertyName, $"object: {pertyName}");
+				list.Add(pertyName, $"ObjectSeen: {pertyName}");
 			}
 			return list ?? new Dictionary<string, string>();
 		}
-
 	}
 	
 	public enum ObjectFilter

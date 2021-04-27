@@ -68,26 +68,35 @@
 			@Html.DisplayFor(model => model.AllowConversationTriggers)
 		</dd>
 		<dt>
-			@Html.DisplayNameFor(model => model.AllowVoiceProcessingOverride)
+			@Html.DisplayNameFor(model => model.ConversationEntryPoint)
 		</dt>
 		<dd>
-			@Html.DisplayFor(model => model.AllowVoiceProcessingOverride)
+			@Html.DisplayFor(model => model.ConversationEntryPoint)
 		</dd>
+		
+		@if(ViewBag.ShowBetaItems)
+		{
+			<dt>
+				@Html.DisplayNameFor(model => model.AllowVoiceProcessingOverride)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.AllowVoiceProcessingOverride)
+			</dd>
 
-		<dt>
-			@Html.DisplayNameFor(model => model.ListenTimeout)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.ListenTimeout)
-		</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.ListenTimeout)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ListenTimeout)
+			</dd>
 
-		<dt>
-			@Html.DisplayNameFor(model => model.SilenceTimeout)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.SilenceTimeout)
-		</dd>
-
+			<dt>
+				@Html.DisplayNameFor(model => model.SilenceTimeout)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SilenceTimeout)
+			</dd>
+		}
 		<dt>
 			@Html.DisplayNameFor(model => model.Updated)
 		</dt>

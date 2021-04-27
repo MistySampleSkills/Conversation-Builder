@@ -16,7 +16,7 @@
 <hr />
 @if(Model.Conversations != null && Model.Conversations.Count() == @ViewBag.Conversations.Count)
 {
-	<h5>All the existing triggers have been added to this interaction.</h5>
+	<h5>All the existing conversations have been added to this group.</h5>
 }
 else
 {
@@ -85,7 +85,6 @@ else
 	</div>
 }
 
-
 <h3>Current conversations</h3>
 
 @if(Model.Conversations != null)
@@ -121,3 +120,84 @@ else
 <div>	
 	@Html.ActionLink("Back to Conversation Group", "Details",  "ConversationGroups", new { id = Model.ConversationGroupId})		
 </div>
+
+@if((@ViewBag.DeparturePoints != null && @ViewBag.DeparturePoints.Count > 0) ||
+	(@ViewBag.EntryPoints != null && @ViewBag.EntryPoints.Count > 0))
+{
+	<hr />
+	<h3>Map Conversation Entry and Departure Points</h3>
+	<div class="row" style="width:200%">
+		<div class="col-md-4">
+			<form asp-action="MapConversationInteractions">
+				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+				<div class="form-group">
+					Departure Point
+					<select asp-for="DepartureMap.TriggerOptionId" class="form-control">
+						
+						@foreach (KeyValuePair<string, ConversationBuilder.DataModels.DepartureMap> item in @ViewBag.DeparturePoints)
+						{
+
+							<option value="@item.Key">@item.Value.DisplayName</option>
+						}
+					</select>
+				</div>
+
+				<div class="form-group">
+					Entry Point
+					<select asp-for="EntryMap.InteractionId" class="form-control">
+						@foreach (KeyValuePair<string, ConversationBuilder.DataModels.EntryMap> item in @ViewBag.EntryPoints)
+						{
+							<option value="@item.Key">@item.Value.DisplayName</option>
+						}
+					</select>
+				</div>
+				
+				<div class="form-group">
+					<input asp-for="ConversationGroupName" class="form-control" value="@Model.ConversationGroupName" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input asp-for="ConversationGroupId" class="form-control" value="@Model.ConversationGroupId" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input type="submit" value="Map" class="btn btn-default" />
+				</div>
+			</form>
+		</div>
+	</div>
+
+
+	@if(ViewBag.ConversationMappings != null && ViewBag.ConversationMappings.Count > 0)
+	{	
+		<table class="table">
+			<thead>
+				<tr>
+					<th>
+						Departure Point
+					</th>
+					<th>
+						Entry Point
+					</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>	
+					
+			@foreach(KeyValuePair<string, ConversationBuilder.DataModels.ConversationMappingDetail> item in ViewBag.ConversationMappings)
+			{
+				<tr>
+					<td>
+						@Html.DisplayFor(modelItem => item.Value.DepartureMap.DisplayName)
+					</td>
+					<td>
+						@Html.DisplayFor(modelItem => item.Value.EntryMap.DisplayName)
+					</td>		
+					<td>
+						@Html.ActionLink("Delete", "DeleteConversationInteractionMap", new { id=item.Key, conversationGroupId=Model.ConversationGroupId})
+					</td>								
+				</tr>
+			}
+		</tbody>
+		</table>
+	}
+}

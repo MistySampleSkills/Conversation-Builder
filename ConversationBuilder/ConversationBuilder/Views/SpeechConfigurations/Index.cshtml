@@ -33,9 +33,6 @@
 			<th>
 				@Html.DisplayNameFor(model => model.SpeakingVoice)
 			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Updated)
-			</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -57,9 +54,6 @@
 			<td>
 				@Html.DisplayFor(modelItem => item.SpeakingVoice)
 			</td>			
-			<td>
-				@Html.DisplayFor(modelItem => item.Updated)
-			</td>
 			<td>
 				@Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
 				@Html.ActionLink("Details", "Details", new { id=item.Id }) |

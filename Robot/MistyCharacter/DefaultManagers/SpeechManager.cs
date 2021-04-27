@@ -36,6 +36,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
+using MistyCharacter.SpeechIntent;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
@@ -69,7 +70,7 @@ namespace MistyCharacter
 		private AzureSpeechParameters _azureSpeechParameters;
 		private GoogleSpeechParameters _googleSpeechParameters;
 		private TimeManager _timeManager;
-		private IDictionary<string, KeyValuePair<bool, IList<string>>> _intentUtterances = new Dictionary<string, KeyValuePair<bool, IList<string>>>();
+		private IDictionary<string, UtteranceData> _intentUtterances = new Dictionary<string, UtteranceData>();
 		private IList<string> _listeningCallbacks = new List<string>();
 		private object _lockListenerData = new object();
 		private bool _listenAborted;
@@ -611,9 +612,11 @@ namespace MistyCharacter
 		{
 			if (!string.IsNullOrWhiteSpace(text))
 			{
-				string intent = _speechIntentManager.GetIntent(text, null);
+                SpeechMatchData intent = _speechIntentManager.GetIntent(text, null);
 
-				SpeechIntent?.Invoke(this, new TriggerData(text, intent, Triggers.SpeechHeard));
+                //Old conversations trigger on name, new ones on id
+
+				SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
 				Robot.SkillLogger.Log($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent}");
 			}
 			else

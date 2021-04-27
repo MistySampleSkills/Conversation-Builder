@@ -36,7 +36,7 @@ using Newtonsoft.Json;
 
 namespace ConversationBuilder.DataModels
 {
-	public class TriggerActionOption //: IEditableData
+	public class TriggerActionOption
 	{
 		public string Id { get; set; }
 		public string ItemType { get; set; } = DataItemType.TriggerActionOption.ToString();

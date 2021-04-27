@@ -26,10 +26,10 @@
 				@Html.DisplayNameFor(model => model.Description)
 			</th>
 			<th>
-				@Html.DisplayNameFor(model => model.StartingEmotion)
+				Entry Points
 			</th>
 			<th>
-				@Html.DisplayNameFor(model => model.Updated)
+				Departure Points
 			</th>
 			<th></th>
 		</tr>
@@ -44,10 +44,10 @@
 				@Html.DisplayFor(modelItem => item.Description)
 			</td>
 			<td>
-				@Html.DisplayFor(modelItem => item.StartingEmotion)
+				@Html.DisplayFor(modelItem => item.ConversationEntryPoints.Count)
 			</td>
 			<td>
-				@Html.DisplayFor(modelItem => item.Updated)
+				@Html.DisplayFor(modelItem => item.ConversationDeparturePoints.Count)
 			</td>
 			<td>
 				@Html.ActionLink("Edit", "Edit", new { id=item.Id }) |

@@ -45,6 +45,10 @@ namespace ConversationBuilder.DataModels
 
 		[Display(Name = "Override CSS file")]		
 		public string OverrideCssFile { get; set; }
+
+
+		[Display(Name = "Show Beta Items")]	
+		public bool ShowBetaItems { get; set; }
 	
 		public DateTimeOffset Created { get; set; }	
 		public DateTimeOffset Updated { get; set; }

@@ -26,16 +26,10 @@
 				@Html.DisplayNameFor(model => model.RobotName)
 			</th>
 			<th>
-				@Html.DisplayNameFor(model => model.RequestAccess)
+				@Html.DisplayNameFor(model => model.Description)
 			</th>
 			<th>
-				@Html.DisplayNameFor(model => model.ManagementAccess)
-			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.KeyPhraseRecognizedAudio)
-			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Updated)
+				@Html.DisplayNameFor(model => model.ValidConfiguration)
 			</th>
 			<th></th>
 		</tr>
@@ -50,16 +44,10 @@
 				@Html.DisplayFor(modelItem => item.RobotName)
 			</td>
 			<td>
-				@Html.DisplayFor(modelItem => item.RequestAccess)
+				@Html.DisplayFor(modelItem => item.Description)
 			</td>
 			<td>
-				@Html.DisplayFor(modelItem => item.ManagementAccess)
-			</td>
-			<td>
-				@Html.DisplayFor(modelItem => item.KeyPhraseRecognizedAudio)
-			</td>
-			<td>
-				@Html.DisplayFor(modelItem => item.Updated)
+				@Html.DisplayFor(modelItem => item.ValidConfiguration)
 			</td>
 			<td>
 				@Html.ActionLink("Edit", "Edit", new { id=item.Id }) |

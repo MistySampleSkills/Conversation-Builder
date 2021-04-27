@@ -125,7 +125,7 @@ namespace ConversationBuilder.DataModels
 		public string SpeakingStyle { get; set; }
 
 		[Required]
-		[Display(Name = "Emotion of the animation (beta)")]
+		[Display(Name = "Emotion of the animation")]
 		[JsonProperty(PropertyName = "Emotion")]
 		/// <summary>
 		/// Emotional action to perform
@@ -161,7 +161,7 @@ namespace ConversationBuilder.DataModels
 		/// </summary>
 		public string AudioFile { get; set; }
 
-		[Display(Name = "Silence - override emotion default audio")]
+		[Display(Name = "Silence")]
 		[JsonProperty(PropertyName = "Silence")]
 		/// <summary>
 		/// No sounds or speaking, including stopping speaking if misty is currently doing so

@@ -62,5 +62,11 @@ namespace ConversationBuilder.DataModels
 		public IList<TriggerDetail> Triggers { get; set; } = new List<TriggerDetail>();
 		public IList<LEDTransitionAction> LEDTransitionActions { get; set; } = new List<LEDTransitionAction>();
 		public IDictionary<string, IList<TriggerActionOption>> ConversationTriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
+
+		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();
+
+		//key is trigger action option id
+		public IDictionary<string, DepartureMap> ConversationDeparturePoints { get; set; } = new Dictionary<string, DepartureMap>();
+		
 	}
 }

@@ -42,13 +42,13 @@ namespace MistyCharacter
 		private IRobotMessenger _misty;
 		private SpeechIntentInterpreter _intentInterpreter;
 		
-		public SpeechIntentManager(IRobotMessenger robot, IDictionary<string, KeyValuePair<bool, IList<string>>> utteranceLists, IList<GenericDataStore> userData = null)
+		public SpeechIntentManager(IRobotMessenger robot, IDictionary<string, UtteranceData> utteranceLists, IList<GenericDataStore> userData = null)
 		{
 			_misty = robot;			
 			_intentInterpreter = new SpeechIntentInterpreter(utteranceLists, userData);
 		}
 		
-		public string GetIntent(string text, IList<string> allowedIntents = null)
+		public SpeechMatchData GetIntent(string text, IList<string> allowedIntents = null)
 		{
 			return _intentInterpreter.GetIntent(text, allowedIntents);
 		}

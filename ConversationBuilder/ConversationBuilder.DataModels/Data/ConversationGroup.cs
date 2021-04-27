@@ -83,5 +83,9 @@ namespace ConversationBuilder.DataModels
 		
 		public DateTimeOffset Updated { get; set; }
 		public string CreatedBy { get; set; }
+
+		//Key is departure as there should only be one for these mappings
+		public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
 	}
+
 }

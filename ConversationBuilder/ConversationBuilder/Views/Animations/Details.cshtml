@@ -52,14 +52,6 @@
 		<dd>
 			@Html.DisplayFor(model => model.Emotion)
 		</dd>
-
-		<dt>
-			@Html.DisplayNameFor(model => model.AudioFile)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.AudioFile)
-		</dd>
-
 		<dt>
 			@Html.DisplayNameFor(model => model.ImageFile)
 		</dt>
@@ -115,41 +107,45 @@
 		<dt>
 			@Html.DisplayNameFor(model => model.LEDActionDelay)
 		</dt>
+	
+		<dd>
+			@Html.DisplayFor(model => model.LEDActionDelay)
+		</dd>
 		<dt>
 			@Html.DisplayNameFor(model => model.ManagementAccess)
 		</dt>
 		<dd>
 			@Html.DisplayFor(model => model.ManagementAccess)
 		</dd>
-		<dd>
-			@Html.DisplayFor(model => model.LEDActionDelay)
-		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.SpeechRate)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.SpeechRate)
-		</dd>
+		
+		@if(ViewBag.ShowBetaItems)
+		{
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeechRate)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeechRate)
+			</dd>
 
-		<dt>
-			@Html.DisplayNameFor(model => model.TrimAudioSilence)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.TrimAudioSilence)
-		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.OverrideVoice)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.OverrideVoice)
-		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.SpeakingStyle)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.SpeakingStyle)
-		</dd>
-
+			<dt>
+				@Html.DisplayNameFor(model => model.TrimAudioSilence)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.TrimAudioSilence)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.OverrideVoice)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.OverrideVoice)
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.SpeakingStyle)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.SpeakingStyle)
+			</dd>
+		}
 		<dt>
 			@Html.DisplayNameFor(model => model.Updated)
 		</dt>

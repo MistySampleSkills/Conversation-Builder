@@ -64,7 +64,7 @@ namespace ConversationBuilder.DataModels
 
 		public IList<string> Triggers { get; set; } = new List<string>();
 
-		public IList<string> SpeechHandlers = new List<string>();
+		//public IList<string> SpeechHandlers = new List<string>();
 
 		public IList<string> GenericDataStores = new List<string>();
 		
@@ -75,6 +75,12 @@ namespace ConversationBuilder.DataModels
 		public IDictionary<string, IList<TriggerActionOption>> ConversationTriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 
 		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
+
+		//key is interaction id
+		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();
+
+		//key is trigger action option id
+		public IDictionary<string, DepartureMap> ConversationDeparturePoints { get; set; } = new Dictionary<string, DepartureMap>();
 		
 		public DateTimeOffset Created { get; set; }
 		

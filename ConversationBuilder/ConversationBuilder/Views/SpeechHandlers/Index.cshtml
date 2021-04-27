@@ -27,9 +27,6 @@
 			<th>
 				@Html.DisplayNameFor(model => model.ExactMatchesOnly)
 			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Updated)
-			</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -44,9 +41,6 @@
 			</td>
 			<td>
 				@Html.DisplayFor(modelItem => item.ExactMatchesOnly)
-			</td>
-			<td>
-				@Html.DisplayFor(modelItem => item.Updated)
 			</td>
 			<td>
 				@Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
