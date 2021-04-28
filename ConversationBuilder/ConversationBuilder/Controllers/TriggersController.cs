@@ -125,27 +125,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.TriggerFilterName = await GetTriggerFilterDisplayName(trigger.Trigger, trigger.TriggerFilter, triggerFilters);
 					ViewBag.StartingTriggerFilterName = await GetTriggerFilterDisplayName(trigger.StartingTrigger, trigger.StartingTriggerFilter, triggerFilters);
 					ViewBag.StoppingTriggerFilterName = await GetTriggerFilterDisplayName(trigger.StoppingTrigger, trigger.StoppingTriggerFilter, triggerFilters);
-					
-					/*if(trigger.Trigger == "SpeechHeard" && !string.IsNullOrWhiteSpace(trigger.TriggerFilter))
-					{
-						if(Guid.TryParse(trigger.TriggerFilter, out Guid result))
-						{
-							SpeechHandler speechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(trigger.TriggerFilter);
-							if(speechHandler != null)
-							{
-								ViewBag.TriggerFilterName = speechHandler.Name;
-							}
-						}
-						else
-						{
-							ViewBag.TriggerFilterName = trigger.TriggerFilter;
-						}
-					}
-					else
-					{
-						ViewBag.TriggerFilterName = trigger.TriggerFilter;
-					}*/
-
+				
 					await SetViewBagData();
 					return View(trigger);
 				}
@@ -178,7 +158,7 @@ namespace ConversationBuilder.Controllers
 					triggerFilters.Add(new KeyValuePair<string, string>(speechHandler.Id, "SpeechHeard: " + speechHandler.Name));
 				}
 
-				ViewBag.TriggerFilters = triggerFilters;
+				ViewBag.TriggerFilters = triggerFilters.OrderBy(x => x.Value);
 				ViewBag.Emotions = (new DefaultEmotions()).AllItems.OrderByDescending(x => x.Value);
 
 				await SetViewBagData();
@@ -366,7 +346,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.Interactions = await InteractionList();					
 					ViewBag.Triggers = (new Triggers()).AllItems.OrderBy(x => x.Value);
 			
-					ViewBag.TriggerFilters = triggerFilters;
+					ViewBag.TriggerFilters = triggerFilters.OrderBy(x => x.Value);
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems.OrderByDescending(x => x.Value);
 
 					await SetViewBagData();

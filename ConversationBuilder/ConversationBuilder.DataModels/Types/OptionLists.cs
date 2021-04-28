@@ -70,6 +70,20 @@ namespace ConversationBuilder.DataModels
 		public const string Avoidance = "Avoidance";
 	}
 
+	public class Themes
+	{
+		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();
+		public Themes()
+		{
+			AllItems.TryAdd("dark", "dark");
+			AllItems.TryAdd("lite", "lite");
+			AllItems.TryAdd("blue", "blue");
+			AllItems.TryAdd("bright", "bright");
+			AllItems.TryAdd("natural", "natural");
+		}
+	}
+
+
 	public class LEDPatterns
 	{
 		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();

@@ -611,7 +611,7 @@ namespace ConversationBuilder.Controllers
 			}
 			else
 			{
-				ViewBag.CssFile = "lite-theme.css";
+				ViewBag.CssFile = "lite.css";
 			}
 			
 			ViewBag.Message = message ?? "";

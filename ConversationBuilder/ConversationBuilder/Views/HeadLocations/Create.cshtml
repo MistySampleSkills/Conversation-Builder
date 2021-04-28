@@ -6,7 +6,7 @@
 	TempData.Keep("Message");
 }
 @section Styles {
-	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
 }
 
 
@@ -32,8 +32,13 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="FollowObject" class="control-label"></label>
-				<input asp-for="FollowObject" class="form-control" />
-				<span asp-validation-for="FollowObject" class="text-danger"></span>
+				<select asp-for="FollowObject" class="form-control">					
+					<option value="" selected></option>
+					@foreach (KeyValuePair<string, string> item in @ViewBag.ObjectList)
+					{
+						<option value="@item.Key">@item.Value</option>
+					}
+				</select>
 			</div>
 			<div class="form-group">
 				<label asp-for="StartLookAroundOnLostObject" class="control-label"></label>

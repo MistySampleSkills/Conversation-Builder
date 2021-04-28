@@ -1,11 +1,11 @@
-﻿@model ConversationBuilder.DataModels.LEDTransitionAction
+﻿@model ConversationBuilder.ViewModels.LEDTransitionViewModel
 
 @{
 	ViewData["Title"] = "Details";
 	Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @section Styles {
-	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
 }
 
 <h3>Details for LED transition action @Html.DisplayFor(model => model.Name)</h3>
@@ -27,40 +27,19 @@
 			@Html.DisplayFor(model => model.Name)
 		</dd>
 		<dt>
-			@Html.DisplayNameFor(model => model.Red)
+			@Html.DisplayNameFor(model => model.StartingRGB)
 		</dt>
 		<dd>
-			@Html.DisplayFor(model => model.Red)
-		</dd>
+			<input asp-for="StartingRGB" class="form-control" disabled=true data-jscolor="{alphaChannel: false, position:'bottom', height:80, backgroundColor:'#333',
+						palette:'rgba(0,0,0) #fff #808080 #000 #996e36 #f55525 #ffe438 #88dd20 #22e0cd #269aff #bb1cd4',
+						paletteCols:11, hideOnPaletteClick:true}">
 		<dt>
-			@Html.DisplayNameFor(model => model.Green)
+			@Html.DisplayNameFor(model => model.EndingRGB)
 		</dt>
 		<dd>
-			@Html.DisplayFor(model => model.Green)
-		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.Blue)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.Blue)
-		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.Red2)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.Red2)
-		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.Green2)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.Green2)
-		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.Blue2)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.Blue2)
+			<input asp-for="EndingRGB" class="form-control" disabled=true data-jscolor="{alphaChannel: false, position:'bottom', height:80, backgroundColor:'#333',
+						palette:'rgba(0,0,0) #fff #808080 #000 #996e36 #f55525 #ffe438 #88dd20 #22e0cd #269aff #bb1cd4',
+						paletteCols:11, hideOnPaletteClick:true}">
 		</dd>
 		<dt>
 			@Html.DisplayNameFor(model => model.Pattern)
@@ -98,3 +77,6 @@
 	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
 	@Html.ActionLink("Back to List", "Index", "LEDTransitionActions")
 </div>
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ColorPicker");}
+}

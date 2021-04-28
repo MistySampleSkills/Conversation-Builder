@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ConversationBuilder.Data.Cosmos;
 using ConversationBuilder.DataModels;
+using ConversationBuilder.ViewModels;
 using ConversationBuilder.Extensions;
 
 namespace ConversationBuilder.Controllers
@@ -96,8 +97,20 @@ namespace ConversationBuilder.Controllers
 				}
 				else
 				{				
+					LEDTransitionViewModel lEDTransitionViewModel = new LEDTransitionViewModel();
+					lEDTransitionViewModel.Id = lEDTransitionAction.Id;
+					lEDTransitionViewModel.Name = lEDTransitionAction.Name;
+					lEDTransitionViewModel.Pattern = lEDTransitionAction.Pattern;
+					lEDTransitionViewModel.PatternTime = lEDTransitionAction.PatternTime;
+					lEDTransitionViewModel.Updated = lEDTransitionAction.Updated;
+					lEDTransitionViewModel.Created = lEDTransitionAction.Created;
+					lEDTransitionViewModel.ManagementAccess = lEDTransitionAction.ManagementAccess;
+					lEDTransitionViewModel.Updated = DateTimeOffset.UtcNow;
+					lEDTransitionViewModel.StartingRGB = $"rgba({lEDTransitionAction.Red},{lEDTransitionAction.Green},{lEDTransitionAction.Blue})";
+					lEDTransitionViewModel.EndingRGB = $"rgba({lEDTransitionAction.Red2},{lEDTransitionAction.Green2},{lEDTransitionAction.Blue2})";
+
 					await SetViewBagData();
-					return View(lEDTransitionAction);
+					return View(lEDTransitionViewModel);
 				}
 			}
 			catch (Exception ex)
@@ -117,7 +130,7 @@ namespace ConversationBuilder.Controllers
 				}
 
 				ViewBag.Emotions = (new DefaultEmotions()).AllItems;
-				LEDTransitionAction lEDTransitionAction = new LEDTransitionAction {};
+				LEDTransitionViewModel lEDTransitionAction = new LEDTransitionViewModel {};
 				await SetViewBagData();
 				return View(lEDTransitionAction);				
 			}
@@ -129,7 +142,7 @@ namespace ConversationBuilder.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<ActionResult> Create(LEDTransitionAction model)
+		public async Task<ActionResult> Create(LEDTransitionViewModel model)
 		{
 			try
 			{
@@ -141,13 +154,34 @@ namespace ConversationBuilder.Controllers
 				
 				if (ModelState.IsValid)
 				{
-					model.Id = Guid.NewGuid().ToString();
-					DateTimeOffset dt = DateTimeOffset.UtcNow;
-					model.CreatedBy = userInfo.AccessId;
-					model.Created = dt;
-					model.Updated = dt;
+					LEDTransitionAction ledTransitionAction = new LEDTransitionAction();
 
-					await _cosmosDbService.ContainerManager.LEDTransitionActionData.AddAsync(model);
+					string startRgbString = model.StartingRGB ?? "rgba(0,0,0,1)";
+					startRgbString = startRgbString.Split("(")[1].Split(")")[0];
+					var rgbArray = startRgbString.Split(","); 
+
+					ledTransitionAction.Red = Convert.ToByte(rgbArray[0]);
+					ledTransitionAction.Green = Convert.ToByte(rgbArray[1]);
+					ledTransitionAction.Blue = Convert.ToByte(rgbArray[2]);
+
+					string endRgbString = model.EndingRGB ?? "rgba(0,0,0,1)";
+					endRgbString = endRgbString.Split("(")[1].Split(")")[0];
+					var endRgbArray = endRgbString.Split(","); 
+
+					ledTransitionAction.Red2 = Convert.ToByte(endRgbArray[0]);
+					ledTransitionAction.Green2 = Convert.ToByte(endRgbArray[1]);
+					ledTransitionAction.Blue2 = Convert.ToByte(endRgbArray[2]);
+
+					ledTransitionAction.Id = Guid.NewGuid().ToString();
+					DateTimeOffset dt = DateTimeOffset.UtcNow;
+					ledTransitionAction.Name = model.Name;
+					ledTransitionAction.Pattern = model.Pattern;
+					ledTransitionAction.PatternTime = model.PatternTime;
+					ledTransitionAction.CreatedBy = userInfo.AccessId;
+					ledTransitionAction.Created = dt;
+					ledTransitionAction.Updated = dt;
+
+					await _cosmosDbService.ContainerManager.LEDTransitionActionData.AddAsync(ledTransitionAction);
 					return RedirectToAction(nameof(Index));
 				}
 				else
@@ -172,15 +206,28 @@ namespace ConversationBuilder.Controllers
 				}
 				
 				LEDTransitionAction lEDTransitionAction = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetAsync(id);
+				
 				if (lEDTransitionAction == null)
 				{
 					return RedirectToAction(nameof(Index));
 				}
 				else
 				{
+					LEDTransitionViewModel lEDTransitionViewModel = new LEDTransitionViewModel();
+					lEDTransitionViewModel.Id = lEDTransitionAction.Id;
+					lEDTransitionViewModel.Name = lEDTransitionAction.Name;
+					lEDTransitionViewModel.Pattern = lEDTransitionAction.Pattern;
+					lEDTransitionViewModel.PatternTime = lEDTransitionAction.PatternTime;
+					lEDTransitionViewModel.Updated = lEDTransitionAction.Updated;
+					lEDTransitionViewModel.Created = lEDTransitionAction.Created;
+					lEDTransitionViewModel.ManagementAccess = lEDTransitionAction.ManagementAccess;
+					lEDTransitionViewModel.Updated = DateTimeOffset.UtcNow;
+					lEDTransitionViewModel.StartingRGB = $"rgba({lEDTransitionAction.Red},{lEDTransitionAction.Green},{lEDTransitionAction.Blue})";
+					lEDTransitionViewModel.EndingRGB = $"rgba({lEDTransitionAction.Red2},{lEDTransitionAction.Green2},{lEDTransitionAction.Blue2})";
+
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
 					await SetViewBagData();
-					return View(lEDTransitionAction);
+					return View(lEDTransitionViewModel);
 				}
 			}
 			catch (Exception ex)
@@ -191,7 +238,7 @@ namespace ConversationBuilder.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<ActionResult> Edit(LEDTransitionAction lEDTransitionAction)
+		public async Task<ActionResult> Edit(LEDTransitionViewModel lEDTransitionAction)
 		{
 			try
 			{
@@ -205,14 +252,25 @@ namespace ConversationBuilder.Controllers
 				{
 					LEDTransitionAction loadedLEDTransitionAction = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetAsync(lEDTransitionAction.Id);
 					loadedLEDTransitionAction.Name = lEDTransitionAction.Name;
-					loadedLEDTransitionAction.Green = lEDTransitionAction.Green;
-					loadedLEDTransitionAction.Green2 = lEDTransitionAction.Green2;
 					loadedLEDTransitionAction.Pattern = lEDTransitionAction.Pattern;
-					loadedLEDTransitionAction.Red = lEDTransitionAction.Red;
-					loadedLEDTransitionAction.Red2= lEDTransitionAction.Red2;
-					loadedLEDTransitionAction.Blue = lEDTransitionAction.Blue;
-					loadedLEDTransitionAction.Blue2= lEDTransitionAction.Blue2;
 					loadedLEDTransitionAction.PatternTime= lEDTransitionAction.PatternTime;
+					
+					string startRgbString = lEDTransitionAction.StartingRGB ?? "rgba(0,0,0,1)";
+					startRgbString = startRgbString.Split("(")[1].Split(")")[0];
+					var rgbArray = startRgbString.Split(","); 
+
+					loadedLEDTransitionAction.Red = Convert.ToByte(rgbArray[0]);
+					loadedLEDTransitionAction.Green = Convert.ToByte(rgbArray[1]);
+					loadedLEDTransitionAction.Blue = Convert.ToByte(rgbArray[2]);
+
+					string endRgbString = lEDTransitionAction.EndingRGB ?? "rgba(0,0,0,1)";
+					endRgbString = endRgbString.Split("(")[1].Split(")")[0];
+					var endRgbArray = endRgbString.Split(","); 
+
+					loadedLEDTransitionAction.Red2 = Convert.ToByte(endRgbArray[0]);
+					loadedLEDTransitionAction.Green2 = Convert.ToByte(endRgbArray[1]);
+					loadedLEDTransitionAction.Blue2 = Convert.ToByte(endRgbArray[2]);
+
 					loadedLEDTransitionAction.ManagementAccess = lEDTransitionAction.ManagementAccess;
 					loadedLEDTransitionAction.Updated = DateTimeOffset.UtcNow;			
 					await _cosmosDbService.ContainerManager.LEDTransitionActionData.UpdateAsync(loadedLEDTransitionAction);
@@ -249,7 +307,19 @@ namespace ConversationBuilder.Controllers
 				{
 					ViewBag.CanBeDeleted = await CanBeDeleted(id, DeleteItem.LedTransitionAction);
 					await SetViewBagData();
-					return View(lEDTransitionAction);
+					LEDTransitionViewModel lEDTransitionViewModel = new LEDTransitionViewModel();
+					lEDTransitionViewModel.Id = lEDTransitionAction.Id;
+					lEDTransitionViewModel.Name = lEDTransitionAction.Name;
+					lEDTransitionViewModel.Pattern = lEDTransitionAction.Pattern;
+					lEDTransitionViewModel.PatternTime = lEDTransitionAction.PatternTime;
+					lEDTransitionViewModel.Updated = lEDTransitionAction.Updated;
+					lEDTransitionViewModel.Created = lEDTransitionAction.Created;
+					lEDTransitionViewModel.ManagementAccess = lEDTransitionAction.ManagementAccess;
+					lEDTransitionViewModel.Updated = DateTimeOffset.UtcNow;
+					lEDTransitionViewModel.StartingRGB = $"rgba({lEDTransitionAction.Red},{lEDTransitionAction.Green},{lEDTransitionAction.Blue}";
+					lEDTransitionViewModel.EndingRGB = $"rgba({lEDTransitionAction.Red2},{lEDTransitionAction.Green2},{lEDTransitionAction.Blue2}";
+
+					return View(lEDTransitionViewModel);
 				}
 			}
 			catch (Exception ex)

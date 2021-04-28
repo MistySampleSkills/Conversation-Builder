@@ -40,6 +40,8 @@ namespace ConversationBuilder.DataModels
 	/// </summary>
 	public class LEDTransitionAction : IEditableData
 	{
+
+		[Required]
 		public string Name { get; set; }
 
 		public string Id { get; set; }
