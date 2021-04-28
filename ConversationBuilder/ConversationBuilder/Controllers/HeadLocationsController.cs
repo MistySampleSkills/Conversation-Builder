@@ -75,7 +75,7 @@ namespace ConversationBuilder.Controllers
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception accessing headLocation list.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception accessing head location list.", exception = ex.Message });
 			}
 		}
 
@@ -103,7 +103,7 @@ namespace ConversationBuilder.Controllers
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception accessing headLocation details.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception accessing head location details.", exception = ex.Message });
 			}
 		}
 
@@ -117,12 +117,14 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 				HeadLocation headLocation = new HeadLocation {};
+				
+				ViewBag.ObjectList = new Objects().GetObjectList().OrderBy( x=> x.Value);
 				await SetViewBagData();
 				return View(headLocation);				
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception creating headLocation.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception creating head location.", exception = ex.Message });
 			}
 		}
 
@@ -156,7 +158,7 @@ namespace ConversationBuilder.Controllers
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception creating headLocation.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception creating head location.", exception = ex.Message });
 			}
 		}
 
@@ -177,14 +179,14 @@ namespace ConversationBuilder.Controllers
 				}
 				else
 				{
-					
+					ViewBag.ObjectList = new Objects().GetObjectList().OrderBy( x=> x.Value);
 					await SetViewBagData();
 					return View(headLocation);
 				}
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception editing headLocation.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception editing head location.", exception = ex.Message });
 			}
 		}
 
@@ -232,7 +234,7 @@ namespace ConversationBuilder.Controllers
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception editing headLocation.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception editing head location.", exception = ex.Message });
 			}
 		}
 
@@ -260,7 +262,7 @@ namespace ConversationBuilder.Controllers
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception deleting headLocation.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception deleting head location.", exception = ex.Message });
 			}
 		}
 
@@ -281,7 +283,7 @@ namespace ConversationBuilder.Controllers
 			}
 			catch (Exception ex)
 			{
-				return RedirectToAction("Error", "Home", new { message = "Exception deleting headLocation.", exception = ex.Message });
+				return RedirectToAction("Error", "Home", new { message = "Exception deleting head location.", exception = ex.Message });
 			}
 		}
 	}

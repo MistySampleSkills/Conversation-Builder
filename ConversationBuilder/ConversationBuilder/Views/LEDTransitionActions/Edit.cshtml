@@ -1,4 +1,4 @@
-﻿@model ConversationBuilder.DataModels.LEDTransitionAction
+﻿@model ConversationBuilder.ViewModels.LEDTransitionViewModel
 
 @{
 	ViewData["Title"] = "Edit";
@@ -6,7 +6,7 @@
 	TempData.Keep("Message");
 }
 @section Styles {
-	<link rel="stylesheet" href="~/css/@ViewBag.CssFile" />	
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
 }
 
 <h3>Editing LED transition action @Html.DisplayFor(model => model.Name)</h3>
@@ -22,35 +22,20 @@
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
-			<div class="form-group">
-				<label asp-for="Red" class="control-label"></label>
-				<input asp-for="Red" class="form-control" />
-				<span asp-validation-for="Red" class="text-danger"></span>
+				<div class="form-group">
+				Starting Color
+			 	<input asp-for="StartingRGB" class="form-control" data-jscolor="{alphaChannel: false, value:'@Model.StartingRGB', position:'bottom', height:80, backgroundColor:'#333',
+                          palette:'@Model.EndingRGB #fff #808080 #000 #996e36 #f55525 #ffe438 #88dd20 #22e0cd #269aff #bb1cd4',
+                          paletteCols:11, hideOnPaletteClick:true}">
+				<span asp-validation-for="StartingRGB" class="text-danger"></span>
 			</div>
+			
 			<div class="form-group">
-				<label asp-for="Green" class="control-label"></label>
-				<input asp-for="Green" class="form-control" />
-				<span asp-validation-for="Green" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="Blue" class="control-label"></label>
-				<input asp-for="Blue" class="form-control" />
-				<span asp-validation-for="Blue" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="Red2" class="control-label"></label>
-				<input asp-for="Red2" class="form-control" />
-				<span asp-validation-for="Red" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="Green2" class="control-label"></label>
-				<input asp-for="Green2" class="form-control" />
-				<span asp-validation-for="Green" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="Blue2" class="control-label"></label>
-				<input asp-for="Blue2" class="form-control" />
-				<span asp-validation-for="Blue" class="text-danger"></span>
+				Ending Color
+			 	<input asp-for="EndingRGB" class="form-control" data-jscolor="{alphaChannel: false, value:'@Model.EndingRGB', position:'bottom', height:80, backgroundColor:'#333',
+                          palette:'@Model.EndingRGB #fff #808080 #000 #996e36 #f55525 #ffe438 #88dd20 #22e0cd #269aff #bb1cd4',
+                          paletteCols:11, hideOnPaletteClick:true}">
+				<span asp-validation-for="EndingRGB" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="Pattern" class="control-label"></label>
@@ -83,4 +68,5 @@
 
 @section Scripts {
 	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+	@{await Html.RenderPartialAsync("_ColorPicker");}
 }

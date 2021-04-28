@@ -63,7 +63,7 @@ namespace ConversationBuilder.Controllers
 					userConfiguration = new UserConfiguration();
 					//first time viewing profile, create it
 					userConfiguration.Id = userInfo.AccessId;
-					userConfiguration.OverrideCssFile = "lite-theme.css";
+					userConfiguration.OverrideCssFile = "lite";
 					DateTimeOffset dt = DateTimeOffset.UtcNow;
 					userConfiguration.CreatedBy = userInfo.AccessId;
 					userConfiguration.Created = dt;
@@ -95,6 +95,7 @@ namespace ConversationBuilder.Controllers
 				}
 
 				UserConfiguration userConfiguration = new UserConfiguration {};
+				ViewBag.Themes = new Themes().AllItems;
 				await SetViewBagData();
 				return View(userConfiguration);				
 			}
@@ -122,6 +123,8 @@ namespace ConversationBuilder.Controllers
 					userConfiguration.CreatedBy = userInfo.AccessId;
 					userConfiguration.Created = dt;
 					userConfiguration.Updated = dt;
+					
+					ViewBag.Themes = new Themes().AllItems;
 
 					await _cosmosDbService.ContainerManager.UserConfigurationData.AddAsync(userConfiguration);
 
@@ -130,6 +133,8 @@ namespace ConversationBuilder.Controllers
 				else
 				{
 					ViewBag.SpeechConfigurations = await SpeechConfigurationList();
+					
+					ViewBag.Themes = new Themes().AllItems;
 					await SetViewBagData();
 					return View(userConfiguration);
 				}

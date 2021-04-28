@@ -32,26 +32,45 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using ConversationBuilder.DataModels;
 
-namespace ConversationBuilder.DataModels
+namespace ConversationBuilder.ViewModels
 {
-	public class UserConfiguration : IEditableData
+	/// <summary>
+	/// Holds override RGB Color Values for LED
+	/// </summary>
+	public class LEDTransitionViewModel
 	{
+		[Required]
+		public string Name { get; set; }
+
 		public string Id { get; set; }
-		public string ItemType { get; set; } = DataItemType.UserConfiguration.ToString();
 
-		[Display(Name = "User name")]		
-		public string UserName { get; set; }
-
-		[Display(Name = "Theme")]		
-		public string OverrideCssFile { get; set; }
+		[Display(Name = "Starting Color")]
+		public string StartingRGB { get; set; }
 
 
-		[Display(Name = "Show Beta Items")]	
-		public bool ShowBetaItems { get; set; }
-	
-		public DateTimeOffset Created { get; set; }	
+		[Display(Name = "Ending Color")]
+		public string EndingRGB { get; set; }
+
+		/// <summary>
+		/// LED transition type
+		/// </summary>
+		[Display(Name = "Transition Pattern")]
+		public string Pattern { get; set; } = LEDPatterns.None;
+
+		/// <summary>
+		/// Time for transition or between actions
+		/// </summary>
+		[Display(Name = "Pattern Time in Seconds")]
+		public double PatternTime { get; set; }		
+
+		public DateTimeOffset Created { get; set; }
+		
 		public DateTimeOffset Updated { get; set; }
+		
+		[Display(Name = "Management Access (beta)")]
+		public string ManagementAccess { get; set; } = "Shared";
 		public string CreatedBy { get; set; }
 	}
 }

@@ -47,6 +47,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using ConversationBuilder.Data.Cosmos;
@@ -188,7 +189,12 @@ namespace ConversationBuilder
 
 			app.UseSession();
 			app.UseHttpsRedirection();
-			app.UseStaticFiles();
+			app.UseStaticFiles();/*new StaticFileOptions()
+			{
+				FileProvider = new PhysicalFileProvider(
+					System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), @"MyStaticFiles")),
+				RequestPath = new PathString("/StaticFiles")
+			});*/
 			app.UseCookiePolicy();
 			app.UseRouting();
 

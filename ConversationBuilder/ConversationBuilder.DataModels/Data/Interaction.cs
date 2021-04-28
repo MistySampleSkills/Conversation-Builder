@@ -45,6 +45,8 @@ namespace ConversationBuilder.DataModels
 
 		public string ItemType { get; set; } = DataItemType.Interaction.ToString();
 
+
+		[Required]
 		public string Name { get; set; }
 
 		[Display(Name = "Default Animation")]
