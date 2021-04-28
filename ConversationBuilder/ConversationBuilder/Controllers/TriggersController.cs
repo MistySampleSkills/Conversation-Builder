@@ -112,6 +112,40 @@ namespace ConversationBuilder.Controllers
 				{			
 					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
 					ViewBag.Interactions = await InteractionList();
+					
+					IDictionary<string, string> triggerFilters = (new TriggerFilters()).AllItems.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+					
+					//Deal with legacy mappings of speech handlers
+					IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000);//TODO
+					foreach(var speechHandler in speechHandlers)
+					{
+						triggerFilters.Add(new KeyValuePair<string, string>(speechHandler.Id, "SpeechHeard: " + speechHandler.Name));
+					}
+
+					ViewBag.TriggerFilterName = await GetTriggerFilterDisplayName(trigger.Trigger, trigger.TriggerFilter, triggerFilters);
+					ViewBag.StartingTriggerFilterName = await GetTriggerFilterDisplayName(trigger.StartingTrigger, trigger.StartingTriggerFilter, triggerFilters);
+					ViewBag.StoppingTriggerFilterName = await GetTriggerFilterDisplayName(trigger.StoppingTrigger, trigger.StoppingTriggerFilter, triggerFilters);
+					
+					/*if(trigger.Trigger == "SpeechHeard" && !string.IsNullOrWhiteSpace(trigger.TriggerFilter))
+					{
+						if(Guid.TryParse(trigger.TriggerFilter, out Guid result))
+						{
+							SpeechHandler speechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(trigger.TriggerFilter);
+							if(speechHandler != null)
+							{
+								ViewBag.TriggerFilterName = speechHandler.Name;
+							}
+						}
+						else
+						{
+							ViewBag.TriggerFilterName = trigger.TriggerFilter;
+						}
+					}
+					else
+					{
+						ViewBag.TriggerFilterName = trigger.TriggerFilter;
+					}*/
+
 					await SetViewBagData();
 					return View(trigger);
 				}
@@ -279,28 +313,18 @@ namespace ConversationBuilder.Controllers
 					triggerDetailViewModel.ManagementAccess = triggerDetail.ManagementAccess;
 					triggerDetailViewModel.ItemType = triggerDetail.ItemType;
 
-					IDictionary<string, string> triggerList = (new TriggerFilters()).AllItems;
-	
-					var triggerFilters = (new TriggerFilters()).AllItems.OrderBy(x => x.Value).ToList();
+					IDictionary<string, string> triggerFilters = (new TriggerFilters()).AllItems.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
 					
+					//Deal with legacy mappings of speech handlers
 					IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000);//TODO
-					string replaceName = "";
 					foreach(var speechHandler in speechHandlers)
 					{
-						if(speechHandler.Id == triggerDetail.TriggerFilter)
-						{
-							replaceName = speechHandler.Name;
-						}
 						triggerFilters.Add(new KeyValuePair<string, string>(speechHandler.Id, "SpeechHeard: " + speechHandler.Name));
 					}
 
-					if(triggerDetail.Trigger == "SpeechHeard")
-					{
-						//Replace id with name
-						triggerDetailViewModel.TriggerFilter = "SpeechHeard: " + replaceName;
-						triggerDetailViewModel.UserDefinedTriggerFilter = "";
-					}
-					else if(triggerList.Any(x => x.Value ==triggerDetail.TriggerFilter))
+					string displayName = await GetTriggerFilterDisplayName(triggerDetail.Trigger, triggerDetail.TriggerFilter, triggerFilters);
+					
+					if(triggerFilters.Any(x => x.Value == displayName))
 					{
 						triggerDetailViewModel.TriggerFilter = triggerDetail.TriggerFilter;
 						triggerDetailViewModel.UserDefinedTriggerFilter = "";
@@ -310,7 +334,8 @@ namespace ConversationBuilder.Controllers
 						triggerDetailViewModel.UserDefinedTriggerFilter = triggerDetail.TriggerFilter;
 					}
 
-					if(triggerList.Any(x => x.Value ==triggerDetail.StartingTriggerFilter))
+					string startingDisplayName = await GetTriggerFilterDisplayName(triggerDetail.StartingTrigger, triggerDetail.StartingTriggerFilter, triggerFilters);
+					if(triggerFilters.Any(x => x.Value == startingDisplayName))
 					{
 						triggerDetailViewModel.StartingTriggerFilter = triggerDetail.StartingTriggerFilter;
 						triggerDetailViewModel.UserDefinedStartingTriggerFilter = "";
@@ -320,7 +345,8 @@ namespace ConversationBuilder.Controllers
 						triggerDetailViewModel.UserDefinedStartingTriggerFilter = triggerDetail.StartingTriggerFilter;
 					}
 
-					if(triggerList.Any(x => x.Value ==triggerDetail.StoppingTriggerFilter))
+					string stoppingDisplayName = await GetTriggerFilterDisplayName(triggerDetail.StoppingTrigger, triggerDetail.StoppingTriggerFilter, triggerFilters);
+					if(triggerFilters.Any(x => x.Value == stoppingDisplayName))
 					{
 						triggerDetailViewModel.StoppingTriggerFilter = triggerDetail.StoppingTriggerFilter;
 						triggerDetailViewModel.UserDefinedStoppingTriggerFilter = "";
@@ -367,7 +393,12 @@ namespace ConversationBuilder.Controllers
 			
 				if (ModelState.IsValid)
 				{
-					TriggerDetail intentDetail = ManageTriggerView(model);					
+					TriggerDetail intentDetail = ManageTriggerView(model);	
+					intentDetail.Created = model.Created;
+					intentDetail.ManagementAccess = model.ManagementAccess;
+					intentDetail.Name = model.Name;
+					
+					intentDetail.Updated = DateTimeOffset.UtcNow;
 					await _cosmosDbService.ContainerManager.TriggerDetailData.UpdateAsync(intentDetail);
 
 					return RedirectToAction(nameof(Index));

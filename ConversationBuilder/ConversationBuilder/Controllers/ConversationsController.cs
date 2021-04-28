@@ -358,7 +358,7 @@ namespace ConversationBuilder.Controllers
 						triggerDetailViewModel.Trigger = trigger.Trigger;
 						triggerDetailViewModel.ItemType = trigger.ItemType;
 
-						IDictionary<string, string> filterList = new TriggerFilters().AllItems;
+						/*IDictionary<string, string> filterList = new TriggerFilters().AllItems;
 
 						if(filterList.Any(x => x.Value ==trigger.TriggerFilter))
 						{
@@ -369,9 +369,29 @@ namespace ConversationBuilder.Controllers
 						{
 							triggerDetailViewModel.TriggerFilter = "";
 							triggerDetailViewModel.UserDefinedTriggerFilter = trigger.TriggerFilter;
+						}*/
+						IDictionary<string, string> filterList = (new TriggerFilters()).AllItems.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);					
+						
+						//Deal with legacy mappings of speech handlers
+						IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000);//TODO
+						foreach(var speechHandler in speechHandlers)
+						{
+							filterList.Add(new KeyValuePair<string, string>(speechHandler.Id, "SpeechHeard: " + speechHandler.Name));
 						}
 
-						if(filterList.Any(x => x.Value ==trigger.StartingTriggerFilter))
+						string displayName = await GetTriggerFilterDisplayName(trigger.Trigger, trigger.TriggerFilter, filterList);
+						if(filterList.Any(x => x.Value == displayName))
+						{
+							triggerDetailViewModel.TriggerFilter = trigger.TriggerFilter;
+							triggerDetailViewModel.UserDefinedTriggerFilter = "";
+						}
+						else
+						{
+							triggerDetailViewModel.UserDefinedTriggerFilter = trigger.TriggerFilter;
+						}
+
+						string startingDisplayName = await GetTriggerFilterDisplayName(trigger.StartingTrigger, trigger.StartingTriggerFilter, filterList);
+						if(filterList.Any(x => x.Value == startingDisplayName))
 						{
 							triggerDetailViewModel.StartingTriggerFilter = trigger.StartingTriggerFilter;
 							triggerDetailViewModel.UserDefinedStartingTriggerFilter = "";
@@ -382,7 +402,8 @@ namespace ConversationBuilder.Controllers
 							triggerDetailViewModel.UserDefinedStartingTriggerFilter = trigger.StartingTriggerFilter;
 						}
 
-						if(filterList.Any(x => x.Value ==trigger.StoppingTriggerFilter))
+						string stoppingDisplayName = await GetTriggerFilterDisplayName(trigger.StoppingTrigger, trigger.StoppingTriggerFilter, filterList);
+						if(filterList.Any(x => x.Value == stoppingDisplayName))
 						{
 							triggerDetailViewModel.StoppingTriggerFilter = trigger.StoppingTriggerFilter;
 							triggerDetailViewModel.UserDefinedStoppingTriggerFilter = "";
@@ -456,7 +477,7 @@ namespace ConversationBuilder.Controllers
 					conversationViewModel.ConversationTriggerMap = triggerMap;
 
 					//Lotso slow code in here...
-					ViewBag.AllInteractions = await AllInteractionList();
+					ViewBag.AllInteractions = await AllInteractionList(conversationId);
 					return View(conversationViewModel);
 				}
 			}
