@@ -238,19 +238,31 @@ namespace MistyCharacter
 				{
 					_ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
 					{
-						Wrap = true,
+                        /*Wrap = true,
 						Visible = true,
 						Weight = 25,
 						Size = 25,
-						HorizontalAlignment = ImageHorizontalAlignment.Right,
+						HorizontalAlignment = ImageHorizontalAlignment.Center,
 						VerticalAlignment = ImageVerticalAlignment.Bottom,
 						Red = 240,
 						Green = 240,
 						Blue = 240,
 						PlaceOnTop = true,
 						FontFamily = "Courier New",
-						Height = 50
-					});
+						Height = 50*/
+                        Wrap = true,
+                        Visible = true,
+                        Weight = 25,
+                        Size = 25,
+                        HorizontalAlignment = ImageHorizontalAlignment.Center,
+                        VerticalAlignment = ImageVerticalAlignment.Bottom,
+                        Red = 240,
+                        Green = 240,
+                        Blue = 240,
+                        PlaceOnTop = true,
+                        FontFamily = "Courier New",
+                        Height = 30
+                    });
 				}
 
 				if (CharacterParameters.DisplaySpoken)
@@ -335,15 +347,17 @@ namespace MistyCharacter
 
 		private void SpeechManager_StartedProcessingVoice(object sender, IVoiceRecordEvent e)
 		{
-			StartedProcessingVoice?.Invoke(this, e);
-			_processingVoice = true;
-		}
+			StartedProcessingVoice?.Invoke(this, e);            
+            _processingVoice = true;
+            ManageListeningDisplay(ListeningState.ProcessingSpeech);
+        }
 
 		private void SpeechManager_CompletedProcessingVoice(object sender, IVoiceRecordEvent e)
 		{
 			_processingVoice = false;
 			CompletedProcessingVoice?.Invoke(this, e);
-		}
+            ManageListeningDisplay(ListeningState.Waiting);
+        }
 
 		public void RestartTriggerHandling()
 		{
@@ -1078,7 +1092,7 @@ namespace MistyCharacter
 
 			if(e || (!e && !CurrentInteraction.StartListening))
 			{
-				ManageListeningDisplay(e ? ListeningState.WaitingForKeyPhrase : ListeningState.Waiting);
+				//ManageListeningDisplay(e ? ListeningState.WaitingForKeyPhrase : ListeningState.Waiting);
 			}
 		}
 
@@ -1122,19 +1136,40 @@ namespace MistyCharacter
 					switch (listeningState)
 					{
 						//TODO Allow people to choose own listening display
-						case ListeningState.Waiting:
-							Misty.DisplayText("🛑", "Listening", null);
-							break;
-						case ListeningState.Speaking:
-							Misty.DisplayText("📋", "Listening", null);
-							break;
-						case ListeningState.WaitingForKeyPhrase:
-							Misty.DisplayText("📢", "Listening", null);
-							break;
+						//case ListeningState.Waiting:
+						//	Misty.DisplayText("🛑", "Listening", null);
+						//	break;
+						//case ListeningState.Speaking:
+						//	Misty.DisplayText("📋", "Listening", null);
+						//	break;
+						//case ListeningState.WaitingForKeyPhrase:
+						//	Misty.DisplayText("📢", "Listening", null);
+						//	break;
 						case ListeningState.Recording:
-							Misty.DisplayText("🌟", "Listening", null);
+                            //Misty.DisplayText("🌟", "Listening", null);
+                            Misty.DisplayText("LISTENING...", "Listening", null);
+                            //Misty.DisplayText("🌟", "SPEAK NOW", null);
+                            _ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
+                            {
+                                Visible = true
+                            });
 							break;
-					}
+                        case ListeningState.ProcessingSpeech:
+                            Misty.DisplayText("PROCESSING SPEECH...", "Listening", null);
+                           // Misty.DisplayText("🌟", "Listening", null);
+                            _ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
+                            {
+                                Visible = true
+                            });
+                            break;
+                        default:
+                            _ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
+                            {
+                                Visible = false
+                            });
+                            break;
+
+                    }
 
 					_listeningState = listeningState;
 				}

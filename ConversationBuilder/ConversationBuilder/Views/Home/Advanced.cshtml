@@ -1,0 +1,18 @@
+@{
+	ViewData["Title"] = "Admin Home";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<div class="text-center">	
+		
+	<h4>Advanced</h4>
+	<h5>Skill messages to plug in optional skills and user data for inline speech animations</h5>
+	<hr/>	
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="skillmessages">Skill Messages</a></h6>
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="genericdatastores">User Lookup Data</a></h6>
+	
+</div>

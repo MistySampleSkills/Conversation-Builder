@@ -11,7 +11,7 @@
 
 <h3>Details for interaction @Html.DisplayFor(model => model.Name)</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <div>
 	<dl class="dl-horizontal">
@@ -113,6 +113,9 @@
 </div>
 <div>
 	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
-	@Html.ActionLink("Manage Interaction Handlers", "ManageTriggers", "Interactions", new {interactionId = Model.Id }) |
 	@Html.ActionLink("Back to List", "Index", "ConversationGroups") 
+</div>
+<hr />
+<div>
+	<h5>@Html.ActionLink("Manage Trigger Handlers", "ManageTriggers", "Interactions", new {interactionId = Model.Id })</h5>
 </div>

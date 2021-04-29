@@ -11,7 +11,7 @@
 
 <h3>Conversation groups</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 <p>
 	@Html.ActionLink("Create New", "Create",  "ConversationGroups")
 </p>
@@ -51,7 +51,7 @@
 			</td>
 			<td>
 				@Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
-				@Html.ActionLink("Details", "Details", new { id=item.Id }) |
+				@Html.ActionLink("Manage", "Details", new { id=item.Id }) |
 				@Html.ActionLink("Delete", "Delete", new { id=item.Id })
 			</td>
 		</tr>

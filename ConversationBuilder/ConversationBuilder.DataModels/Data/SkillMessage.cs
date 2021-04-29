@@ -83,7 +83,7 @@ namespace ConversationBuilder.DataModels
 		
 		[Required]
 		[Display(Name = "Management Access (beta)")]
-		public string ManagementAccess { get; set; } = "Shared";
+		public string ManagementAccess { get; set; } = "Public";
 		public string RequestAccess { get; set; } = "Public";
 		
 		public IList<SkillAuthorization> SkillAuthorizations { get; set; } = new List<SkillAuthorization>();

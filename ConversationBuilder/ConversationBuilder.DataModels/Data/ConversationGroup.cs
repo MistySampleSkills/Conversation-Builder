@@ -71,7 +71,7 @@ namespace ConversationBuilder.DataModels
 		
 		[Required]
 		[Display(Name = "Management Access (beta)")]	
-		public string ManagementAccess { get; set; } = "Shared";
+		public string ManagementAccess { get; set; } = "Public";
 
 		[Required]
 		[Display(Name = "Configuration Request Access (beta)")]	

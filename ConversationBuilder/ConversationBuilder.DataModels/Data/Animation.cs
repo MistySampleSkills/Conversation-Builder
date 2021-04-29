@@ -176,7 +176,7 @@ namespace ConversationBuilder.DataModels
 		/// </summary>
 		public string ImageFile { get; set; }
 
-		[Display(Name = "Turn On Flashlight")]
+		[Display(Name = "Flashlight On")]
 		[JsonProperty(PropertyName = "SetFlashlight")]
 		/// <summary>
 		/// Set to true to turn on and false to turn off with the request
@@ -232,6 +232,6 @@ namespace ConversationBuilder.DataModels
 		[JsonProperty(PropertyName = "Updated")]
 		public DateTimeOffset Updated { get; set; }
 
-		public string ManagementAccess { get; set; } = "Shared";
+		public string ManagementAccess { get; set; } = "Public";
 	}
 }

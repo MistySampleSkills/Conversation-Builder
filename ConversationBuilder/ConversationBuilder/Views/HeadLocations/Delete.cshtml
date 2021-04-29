@@ -25,7 +25,7 @@
 <h3>@msg</h3>
 
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 @if(@ViewBag.CanBeDeleted)
 {
@@ -121,12 +121,15 @@
 			<dt>
 				@Html.DisplayNameFor(model => model.RandomRange)
 			</dt>
-			<dt>
-				@Html.DisplayNameFor(model => model.ManagementAccess)
-			</dt>
-			<dd>
-				@Html.DisplayFor(model => model.ManagementAccess)
-			</dd>
+			@if(ViewBag.ShowBetaItems)
+			{
+				<dt>
+					@Html.DisplayNameFor(model => model.ManagementAccess)
+				</dt>
+				<dd>
+					@Html.DisplayFor(model => model.ManagementAccess)
+				</dd>
+			}
 			<dd>
 				@Html.DisplayFor(model => model.RandomRange)
 			</dd>

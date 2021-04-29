@@ -189,12 +189,7 @@ namespace ConversationBuilder
 
 			app.UseSession();
 			app.UseHttpsRedirection();
-			app.UseStaticFiles();/*new StaticFileOptions()
-			{
-				FileProvider = new PhysicalFileProvider(
-					System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), @"MyStaticFiles")),
-				RequestPath = new PathString("/StaticFiles")
-			});*/
+			app.UseStaticFiles();
 			app.UseCookiePolicy();
 			app.UseRouting();
 

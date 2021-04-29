@@ -61,7 +61,7 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Duration of movement in seconds - use this or Velocity")]
 		public double? MovementDuration { get; set; }
 
-		[Display(Name = "Velocity (0 - 100) - use this or Duration")]
+		[Display(Name = "Velocity (1 - 100) - use this or Duration")]
 		public int? MovementVelocity { get; set; }
 		
 		[Display(Name = "Move randomly within range.")]
@@ -72,7 +72,7 @@ namespace ConversationBuilder.DataModels
 		
 		[Required]
 		[Display(Name = "Management Access (beta)")]		
-		public string ManagementAccess { get; set; } = "Shared";
+		public string ManagementAccess { get; set; } = "Public";
 		
 		public string CreatedBy { get; set; }
 	}
