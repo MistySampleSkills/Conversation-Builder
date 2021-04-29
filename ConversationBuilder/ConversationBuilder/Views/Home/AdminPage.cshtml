@@ -5,37 +5,21 @@
 	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
 }
 
-<h4>Triggers and Actions</h4>
-<ul>
-	<li><a class="nav-link" asp-action="index" asp-controller="armlocations">Arm Movements</a></li>
-	
-	<li><a class="nav-link" asp-action="index" asp-controller="headlocations">Head Movements</a></li>
 
-	<li><a class="nav-link" asp-action="index" asp-controller="ledtransitionactions">LED Transition Actions</a></li>
-	
-	<li><a class="nav-link" asp-action="index" asp-controller="triggers">Triggers</a></li>
+<div class="text-center">
+		
+	<h6><a class="nav-link" asp-area="" asp-controller="Home" asp-action="AnimationConstruction">Create Robot Movement and Speech</a></h6>
 
-	<li><a class="nav-link" asp-action="index" asp-controller="animations">Animations</a></li>	
-</ul>
-<h4>Speech</h4>
-<ul>
-	<li><a class="nav-link" asp-action="index" asp-controller="speechhandlers">Speech Handlers</a></li>	
+	<h6><a class="nav-link" asp-area="" asp-controller="Home" asp-action="TriggerConstruction">Create Robot Triggers</a></h6>
 
-	<li><a class="nav-link" asp-action="index" asp-controller="speechconfigurations">SpeechConfigurations</a></li>
-</ul>
-<h4>Conversation Configuration</h4>
-<ul>	
-	<li><a class="nav-link" asp-action="index" asp-controller="conversations">Create and Map Conversations</a></li>
+	<h6><a class="nav-link" asp-action="index" asp-controller="conversations">Create and Map Conversations</a></h6>
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="conversationgroups">Create and Export Conversation Groups</a></h6>
 	
-	<li><a class="nav-link" asp-action="index" asp-controller="characterconfigurations">Character Configurations</a></li>
-	
-	<li><a class="nav-link" asp-action="index" asp-controller="conversationgroups">Create and Export Conversation Groups</a></li>
-</ul>
-<h4>Skills</h4>
-<ul>
-	<li><a class="nav-link" asp-action="index" asp-controller="skillmessages">Skill Messages</a></li>
-</ul>
-<h4>User Data</h4>
-<ul>
-	<li><a class="nav-link" asp-action="index" asp-controller="genericdatastores">User Lookup Data</a></li>
-</ul>
+	<hr />
+
+	<h6><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Advanced">Advanced Features</a></h6>
+
+	<h6><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Administrative">Administrative</a></h6>
+
+</div>

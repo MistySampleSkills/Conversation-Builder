@@ -1,0 +1,20 @@
+@{
+	ViewData["Title"] = "Admin Home";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<div class="text-center">
+	<h4>Manage Animations</h4>
+	<h5>Robot movement, speech and audio, and personality</h5>
+	<hr/>	
+	<h6><a class="nav-link" asp-action="index" asp-controller="armlocations">Arm Movements</a></h6>
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="headlocations">Head Movements</a></h6>
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="ledtransitionactions">LED Transition Actions</a></h6>
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="animations">Animations</a></h6>	
+	
+</div>

@@ -12,49 +12,57 @@
 
 <h3>Editing arm location @Html.DisplayFor(model => model.Name)</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
 	<div class="col-md-4">
 		<form asp-action="Edit">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
-				<label asp-for="Name" class="control-label"></label>
+				<label asp-for="Name" class="control-label"></label>				
+				<label title="Try to keep your names descriptive and unique as you will use them in animation creation.">ℹ️</label>
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MinRightArm" class="control-label"></label>
+				<label title="The minimum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
 				<input asp-for="MinRightArm" class="form-control" />
 				<span asp-validation-for="MinRightArm" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MinLeftArm " class="control-label"></label>
+				<label title="The minimum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
 				<input asp-for="MinLeftArm" class="form-control" />
 				<span asp-validation-for="MinLeftArm" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MaxRightArm" class="control-label"></label>
+				<label title="The maximum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
 				<input asp-for="MaxRightArm" class="form-control" />
 				<span asp-validation-for="MaxRightArm" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MaxLeftArm " class="control-label"></label>
+				<label title="The maximum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
 				<input asp-for="MaxLeftArm" class="form-control" />
 				<span asp-validation-for="MaxLeftArm" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="DelayBetweenMovements " class="control-label"></label>
+				<label title="The delay in seconds between starting movements if different max and minimum ranges are selected.">ℹ️</label>
 				<input asp-for="DelayBetweenMovements" class="form-control" />
 				<span asp-validation-for="DelayBetweenMovements" class="text-danger"></span>
 			</div>
 			<div class="form-group">
-				<label asp-for="MovementDuration " class="control-label"></label>
+				<label asp-for="MovementDuration" class="control-label"></label>
+				<label title="How long the movement should take to reach it's goal. Use this OR Velocity.">ℹ️</label>
 				<input asp-for="MovementDuration" class="form-control" />
 				<span asp-validation-for="MovementDuration" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MovementVelocity" class="control-label"></label>
+				<label title="How fast the movement should be performed, from 1 to 100. Use this OR Duration.">ℹ️</label>
 				<input asp-for="MovementVelocity" class="form-control" />
 				<span asp-validation-for="MovementVelocity" class="text-danger"></span>
 			</div>
@@ -63,17 +71,21 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="RandomRange" /> @Html.DisplayNameFor(model => model.RandomRange)
+						<label title="If selected, will pick a random location within the range.  If not selected, will attempt to move to the specific ranges specified.">ℹ️</label>
 					</label>
 				</div>
 			</div>
-			<div class="form-group">
-				<label asp-for="ManagementAccess"></label>
-				<select asp-for="ManagementAccess" class="form-control">
-					<option value="Private">Private</option>
-					<option value="Shared">Shared</option>
-					<option value="Public" >Public</option>
-				</select>
-			</div>
+			@if(ViewBag.ShowBetaItems)
+			{
+				<div class="form-group">
+					<label asp-for="ManagementAccess"></label>
+					<select asp-for="ManagementAccess" class="form-control">
+						<option value="Private">Private</option>
+						<option value="Shared">Shared</option>
+						<option value="Public" >Public</option>
+					</select>
+				</div>
+			}
 			<div class="form-group">
 				<input type="submit" value="Save Changes" class="btn btn-default" />
 			</div>

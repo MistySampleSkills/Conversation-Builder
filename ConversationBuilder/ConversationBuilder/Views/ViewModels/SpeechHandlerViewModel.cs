@@ -32,7 +32,7 @@ namespace ConversationBuilder.ViewModels
 		public string UtteranceString { get; set; }
 		
 		public bool ExactMatchesOnly { get; set; }
-		public string ManagementAccess { get; set; } = "Shared";
+		public string ManagementAccess { get; set; } = "Public";
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

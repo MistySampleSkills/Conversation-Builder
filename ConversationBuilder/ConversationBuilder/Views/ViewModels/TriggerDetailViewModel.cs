@@ -43,7 +43,7 @@ namespace ConversationBuilder.ViewModels
 		[Display(Name = "User Defined Stopping Filter")]
 		public string UserDefinedStoppingTriggerFilter { get; set; }
 		public int StoppingTriggerDelay { get; set; }
-		public string ManagementAccess { get; set; } = "Shared";
+		public string ManagementAccess { get; set; } = "Public";
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

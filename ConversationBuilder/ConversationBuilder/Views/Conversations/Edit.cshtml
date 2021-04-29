@@ -12,7 +12,7 @@
 
 <h3>Editing conversation @Html.DisplayFor(model => model.Name)</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
 	<div class="col-md-4">
@@ -65,14 +65,18 @@
 					</label>
 				</div>
 			</div>
-			<div class="form-group">
-				<label asp-for="ManagementAccess"></label>
-				<select asp-for="ManagementAccess" class="form-control">
-					<option value="Private">Private</option>
-					<option value="Shared">Shared</option>
-					<option value="Public" >Public</option>
-				</select>
-			</div>
+			@if(ViewBag.ShowBetaItems)
+			{
+			
+				<div class="form-group">
+					<label asp-for="ManagementAccess"></label>
+					<select asp-for="ManagementAccess" class="form-control">
+						<option value="Private">Private</option>
+						<option value="Shared">Shared</option>
+						<option value="Public" >Public</option>
+					</select>
+				</div>
+			}
 			<div class="form-group">
 				<input type="submit" value="Save" class="btn btn-default" />
 			</div>

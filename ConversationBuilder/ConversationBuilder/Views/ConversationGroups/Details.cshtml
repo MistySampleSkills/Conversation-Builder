@@ -11,7 +11,7 @@
 
 <h3>Details for conversation group @Html.DisplayFor(model => model.Name)</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <div>
 	<dl class="dl-horizontal">
@@ -75,14 +75,15 @@
 		<dd>
 			@cName			
 		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.ManagementAccess)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.ManagementAccess)
-		</dd>
 		@if(ViewBag.ShowBetaItems)
 		{
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+			
 			<dt>
 				@Html.DisplayNameFor(model => model.RequestAccess)
 			</dt>
@@ -112,9 +113,20 @@
 </div>
 <div>
 	@Html.ActionLink("Edit", "Edit", new { id=Model.Id }) |
-	@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id }) |
-	@Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id }) |
+	
+	
 	@Html.ActionLink("Back to List", "Index", "ConversationGroups")
+</div>
+<hr />
+<div>
+	@if(ViewBag.ShowBetaItems)
+	{
+		<h5>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id }) | @Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id })</h5>
+	}
+	else
+	{
+		<h5>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id })</h5>
+	}
 </div>
 
 @if(Model.ValidConfiguration)
@@ -126,53 +138,57 @@
 
 	<h4>Start from the Skill Runner with the following fields.</h4>
 	<h4>ConversationGroupId : @Model.Id</h4>
-	<h4>Endpoint : the url of this page up until the first / (slash) after the domain name</h4>
-	<h5>Include authorization data as needed for non-public items.</h5>		
-	<br />
-	<hr />
-	<h4>If you are running the UI locally, you can start and stop from this page by entering in the robot's local IP.</h4>
+	<h4>Endpoint : @ViewBag.Endpoint</h4>
+	
+	@if(ViewBag.ShowBetaItems)
+	{
+		<h5>Include authorization data as needed for non-public items.</h5>		
+		<br />
+		<hr />
+		<h4>If you are running the conversation builder service locally on your computer, you can start and stop from this page by entering in the robot's local IP.</h4>
 
-	<div>
-		<form asp-action="StartSkill">
-			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+		<div>
+			<form asp-action="StartSkill">
+				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-			<div class="form-group">
-				Start Skill
 				<div class="form-group">
-				Robot IP
-				<input asp-for="RobotIp" class="form-control" />
-				<span asp-validation-for="RobotIp" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
-			</div>
-			<div class="form-group">
-				<input type="submit" value="Start Skill" class="btn btn-default" />
-			</div>
-		</form>
-	</div>
-
-	<hr />
-	<br />
-	<div>
-		<form asp-action="StopSkill">
-			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-			<div class="form-group">
-				Stop Skill
+					Start Skill
+					<div class="form-group">
+					Robot IP
+					<input asp-for="RobotIp" class="form-control" />
+					<span asp-validation-for="RobotIp" class="text-danger"></span>
+				</div>
 				<div class="form-group">
-				Robot IP
-				<input asp-for="RobotIp" class="form-control" />
-				<span asp-validation-for="RobotIp" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
-			</div>
-			<div class="form-group">
-				<input type="submit" value="Stop Skill" class="btn btn-default" />
-			</div>
-		</form>
+					<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input type="submit" value="Start Skill" class="btn btn-default" />
+				</div>
+			</form>
 		</div>
+
+		<hr />
+		<br />
+		<div>
+			<form asp-action="StopSkill">
+				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+				<div class="form-group">
+					Stop Skill
+					<div class="form-group">
+					Robot IP
+					<input asp-for="RobotIp" class="form-control" />
+					<span asp-validation-for="RobotIp" class="text-danger"></span>
+				</div>
+				<div class="form-group">
+					<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
+				</div>
+				<div class="form-group">
+					<input type="submit" value="Stop Skill" class="btn btn-default" />
+				</div>
+			</form>
+			</div>
+	}
 }
 else
 {

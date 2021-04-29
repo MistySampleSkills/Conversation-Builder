@@ -1,0 +1,20 @@
+@{
+	ViewData["Title"] = "Admin Home";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<div class="text-center">
+	<h4>Administrative</h4>
+	<h5>Contains system data for conversations</h5>
+	<hr/>	
+	<h6><a class="nav-link" asp-action="index" asp-controller="speechconfigurations">Speech Configurations</a></h6>
+		
+	<h6><a class="nav-link" asp-action="index" asp-controller="characterconfigurations">Character Configurations</a></h6>
+	
+	@if (User.IsInRole("MistyAdministrator"))
+	{
+		<h6><a class="nav-link" asp-area="identity" asp-page="/account/register">Register a New User</a></h6>
+	}
+</div>

@@ -11,7 +11,7 @@
 
 <h3>Create speech configuration</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
 	<div class="col-md-4">
@@ -61,14 +61,17 @@
 				<input asp-for="SpeakingVoice" class="form-control" />
 				<span asp-validation-for="SpeakingVoice" class="text-danger"></span>
 			</div>
-			<div class="form-group">
-				<label asp-for="ManagementAccess"></label>
-				<select asp-for="ManagementAccess" class="form-control">
-					<option value="Private">Private</option>
-					<option value="Shared">Shared</option>
-					<option value="Public" >Public</option>
-				</select>
-			</div>
+			@if(ViewBag.ShowBetaItems)
+			{
+				<div class="form-group">
+					<label asp-for="ManagementAccess"></label>
+					<select asp-for="ManagementAccess" class="form-control">
+						<option value="Private">Private</option>
+						<option value="Shared">Shared</option>
+						<option value="Public" >Public</option>
+					</select>
+				</div>
+			}
 			<div class="form-group">
 				<label asp-for="TextToSpeechEndpoint" class="control-label"></label>
 				<input asp-for="TextToSpeechEndpoint" class="form-control" />

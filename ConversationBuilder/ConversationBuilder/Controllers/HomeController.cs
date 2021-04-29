@@ -73,6 +73,34 @@ namespace ConversationBuilder.Controllers
 			return View();
 		}
 
+		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
+		public async Task<IActionResult> Advanced()
+		{
+			await SetViewBagData();
+			return View();
+		}
+
+		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
+		public async Task<IActionResult> AnimationConstruction()
+		{
+			await SetViewBagData();
+			return View();
+		}
+
+		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
+		public async Task<IActionResult> TriggerConstruction()
+		{
+			await SetViewBagData();
+			return View();
+		}
+
+		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
+		public async Task<IActionResult> Administrative()
+		{
+			await SetViewBagData();
+			return View();
+		}
+
 		[AllowAnonymous]
 		public async Task<IActionResult> About()
 		{

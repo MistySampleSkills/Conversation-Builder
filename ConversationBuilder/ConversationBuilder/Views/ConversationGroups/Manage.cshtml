@@ -11,7 +11,7 @@
 
 <h3>Managing conversation for group @Model.ConversationGroupName</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <hr />
 @if(Model.Conversations != null && Model.Conversations.Count() == @ViewBag.Conversations.Count)
@@ -26,7 +26,7 @@ else
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
 				<div class="form-group">
-					Add conversation
+					Add conversation to group to allow mapping of departure and entry points
 					<select asp-for="Handler" class="form-control">
 						@foreach (KeyValuePair<string, string> item in @ViewBag.Conversations)
 						{
@@ -61,7 +61,7 @@ else
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
 				<div class="form-group">
-					Remove conversation
+					Remove conversation from group
 					<select asp-for="Handler" class="form-control">
 						@foreach (ConversationBuilder.DataModels.Conversation item in Model.Conversations)
 						{

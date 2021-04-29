@@ -12,7 +12,7 @@
 
 <h3>Create character configuration</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
 	<div class="col-md-4">
@@ -114,14 +114,17 @@
 					</label>
 				</div>
 			</div>
-			<div class="form-group">
-				<label asp-for="ManagementAccess"></label>
-				<select asp-for="ManagementAccess" class="form-control">
-					<option value="Private">Private</option>
-					<option value="Shared">Shared</option>
-					<option value="Public" >Public</option>
-				</select>
-			</div>
+			@if(ViewBag.ShowBetaItems)
+			{
+				<div class="form-group">
+					<label asp-for="ManagementAccess"></label>
+					<select asp-for="ManagementAccess" class="form-control">
+						<option value="Private">Private</option>
+						<option value="Shared">Shared</option>
+						<option value="Public" >Public</option>
+					</select>
+				</div>
+			}
 			<div class="form-group">
 				<label asp-for="Skill" class="control-label"></label>
 				<input asp-for="Skill" class="form-control">8be20a90-1150-44ac-a756-ebe4de30689e</input>

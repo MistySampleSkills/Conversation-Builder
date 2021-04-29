@@ -1,0 +1,18 @@
+@{
+	ViewData["Title"] = "Admin Home";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<div class="text-center">
+		
+	<h4>Manage Triggers</h4>
+	<h5>Robot and speech triggers to get Misty's attention</h5>
+	<hr/>	
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="speechhandlers">Speech Handlers</a></h6>	
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="triggers">Triggers</a></h6>
+	
+</div>

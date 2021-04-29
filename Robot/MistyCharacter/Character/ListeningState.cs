@@ -37,6 +37,7 @@ namespace MistyCharacter
 		Waiting,
 		Speaking,
 		Recording,
-		WaitingForKeyPhrase
+		//WaitingForKeyPhrase,
+        ProcessingSpeech
 	}
 }

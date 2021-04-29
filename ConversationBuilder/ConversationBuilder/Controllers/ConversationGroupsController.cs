@@ -38,6 +38,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using ConversationBuilder.Data.Cosmos;
 using ConversationBuilder.DataModels;
 using ConversationBuilder.ViewModels;
@@ -48,8 +49,13 @@ namespace ConversationBuilder.Controllers
 	[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
 	public class ConversationGroupsController : AdminToolController
 	{
-		public ConversationGroupsController(ICosmosDbService cosmosDbService, UserManager<ApplicationUser> userManager)
-			: base(cosmosDbService, userManager) { }
+		private IConfiguration _configuration;
+
+		public ConversationGroupsController(ICosmosDbService cosmosDbService, UserManager<ApplicationUser> userManager, IConfiguration configuration)
+			: base(cosmosDbService, userManager) 
+			{				
+   				_configuration = configuration; 
+			 }
 
 		public async Task<ActionResult> Index(int startItem = 1, int totalItems = 100)
 		{
@@ -99,8 +105,8 @@ namespace ConversationBuilder.Controllers
 				else
 				{				
 					ViewBag.Conversations = await ConversationList();
-					ViewBag.CharacterConfigurations = await CharacterConfigurationsList();
-
+					ViewBag.CharacterConfigurations = await CharacterConfigurationsList();					
+					ViewBag.Endpoint = _configuration.GetSection("DomainSpecificData").GetSection("Endpoint").Value ?? "The url of this page up until the first / (slash) after the domain name";  
 					await SetViewBagData();
 					return View(conversationGroup);
 				}

@@ -10,7 +10,7 @@
 
 <h3>Details for LED transition action @Html.DisplayFor(model => model.Name)</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 <div>
 	<dl class="dl-horizontal">
@@ -53,12 +53,15 @@
 		<dd>
 			@Html.DisplayFor(model => model.PatternTime)
 		</dd>
-		<dt>
-			@Html.DisplayNameFor(model => model.ManagementAccess)
-		</dt>
-		<dd>
-			@Html.DisplayFor(model => model.ManagementAccess)
-		</dd>
+		@if(ViewBag.ShowBetaItems)
+		{
+			<dt>
+				@Html.DisplayNameFor(model => model.ManagementAccess)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.ManagementAccess)
+			</dd>
+		}
 		<dt>
 			@Html.DisplayNameFor(model => model.Updated)
 		</dt>

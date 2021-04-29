@@ -11,7 +11,7 @@
 
 <h3>Managing generic data for conversation @Model.ConversationName</h3>
 <hr />
-<h3 style="color:red">@ViewBag.Message</h3>
+<h5 style="color:red">@ViewBag.Message</h5>
 
 
 @if(Model.GenericDataStores != null && Model.GenericDataStores.Count() == @ViewBag.GenericDataStores.Count)
@@ -26,7 +26,7 @@ else
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
 				<div class="form-group">
-					Add handler
+					Add user data to conversation
 					<select asp-for="Handler" class="form-control">
 						@foreach (KeyValuePair<string, string> item in @ViewBag.GenericDataStores)
 						{
@@ -60,7 +60,7 @@ else
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
 				<div class="form-group">
-					Remove handler
+					Remove user data from conversation
 					<select asp-for="Handler" class="form-control">
 						@foreach (ConversationBuilder.DataModels.GenericDataStore item in Model.GenericDataStores)
 						{

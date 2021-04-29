@@ -77,7 +77,7 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Delay in seconds between repeated movements")]
 		public double DelayBetweenMovements { get; set; }
 		
-		[Display(Name = "Velocity (0 - 100) - use this or Duration")]
+		[Display(Name = "Velocity (1 - 100) - use this or Duration")]
 		public int? MovementVelocity { get; set; }
 		
 		[Display(Name = "Look randomly within range if not following.")]
@@ -87,7 +87,7 @@ namespace ConversationBuilder.DataModels
 		public DateTimeOffset Updated { get; set; }
 
 		[Display(Name = "Management Access (beta)")]
-		public string ManagementAccess { get; set; } = "Shared";
+		public string ManagementAccess { get; set; } = "Public";
 
 		public string CreatedBy { get; set; }
 	}
