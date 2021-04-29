@@ -19,11 +19,13 @@
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
 				<label asp-for="Name" class="control-label"></label>
+				<label title="Try to keep your names descriptive and unique as you will use them in animation creation.">ℹ️</label>
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				Starting Color
+				<label title="The starting LED color for the transition.">ℹ️</label>
 			 	<input asp-for="StartingRGB" class="form-control" data-jscolor="{alphaChannel: false, value:'rgba(51,153,255)', position:'bottom', height:80, backgroundColor:'#333',
                           palette:'rgba(0,0,0) #fff #808080 #000 #996e36 #f55525 #ffe438 #88dd20 #22e0cd #269aff #bb1cd4',
                           paletteCols:11, hideOnPaletteClick:true}">
@@ -32,6 +34,7 @@
 			
 			<div class="form-group">
 				Ending Color
+				<label title="The ending LED color for the transition.">ℹ️</label>
 			 	<input asp-for="EndingRGB" class="form-control" data-jscolor="{alphaChannel: false, value:'rgba(51,153,255)', position:'bottom', height:80, backgroundColor:'#333',
                           palette:'rgba(0,0,0) #fff #808080 #000 #996e36 #f55525 #ffe438 #88dd20 #22e0cd #269aff #bb1cd4',
                           paletteCols:11, hideOnPaletteClick:true}">
@@ -39,6 +42,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="Pattern"></label>
+				<label title="The LED color transition pattern.">ℹ️</label>
 				<select asp-for="Pattern" class="form-control">
 					<option value="None" selected>None</option>
 					<option value="Blink">Blink</option>
@@ -48,6 +52,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="PatternTime " class="control-label"></label>
+				<label title="How long one transition of the pattern should take.">ℹ️</label>
 				<input asp-for="PatternTime" class="form-control" />
 				<span asp-validation-for="PatternTime" class="text-danger"></span>
 			</div>
