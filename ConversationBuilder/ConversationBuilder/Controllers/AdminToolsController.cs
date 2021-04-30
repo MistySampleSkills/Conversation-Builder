@@ -185,6 +185,7 @@ namespace ConversationBuilder.Controllers
 											utteranceData.Name = speechHandler.Name;
 											utteranceData.Description = speechHandler.Description;
 											utteranceData.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+											utteranceData.WordMatchRule = speechHandler.WordMatchRule;
 											utteranceData.Id = speechHandler.Id;
 											utteranceData.Utterances = speechHandler.Utterances;
 											skillConversationGroup.IntentUtterances.TryAdd(speechHandler.Id, utteranceData);
@@ -204,7 +205,8 @@ namespace ConversationBuilder.Controllers
 												UtteranceData utteranceData = new UtteranceData();
 												utteranceData.Name = speechHandler.Name;
 												utteranceData.Description = speechHandler.Description;
-												utteranceData.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+												utteranceData.ExactMatchesOnly = speechHandler.ExactMatchesOnly;												
+												utteranceData.WordMatchRule = speechHandler.WordMatchRule;
 												utteranceData.Id = speechHandler.Id;
 												utteranceData.Utterances = speechHandler.Utterances;
 												skillConversationGroup.IntentUtterances.TryAdd(speechHandler.Id, utteranceData);
@@ -356,7 +358,8 @@ namespace ConversationBuilder.Controllers
 							speechHandler.Updated = now;
 							speechHandler.Created = now;
 							speechHandler.ManagementAccess = "Public";
-							speechHandler.ExactMatchesOnly = utterance.Value.ExactMatchesOnly;
+							speechHandler.ExactMatchesOnly = utterance.Value.ExactMatchesOnly;							
+							speechHandler.WordMatchRule = utterance.Value.WordMatchRule;
 							speechHandler.Utterances = utterance.Value.Utterances;
 							speechHandler.CreatedBy = _userInformation?.AccessId;
 							await _cosmosDbService.ContainerManager.SpeechHandlerData.AddAsync(speechHandler);

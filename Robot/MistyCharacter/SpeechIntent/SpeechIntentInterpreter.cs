@@ -48,8 +48,8 @@ namespace MistyCharacter.SpeechIntent
 		private IDictionary<string, UtteranceData> _utteranceLists { get; set; }
 		private IList<GenericDataStore> _userData;
 
-		private const int WordMatchPoints = 5;
-		private const int WordMatchAndPlacementPoints = 7;
+		private const int WordMatchPoints = 10;
+		private const int WordMatchAndPlacementPoints = 15;
 		private const int WordPluralPoints = 1;
 		
 		public SpeechIntentInterpreter(IDictionary<string, UtteranceData> utteranceLists, IList<GenericDataStore> userData = null)
@@ -82,7 +82,8 @@ namespace MistyCharacter.SpeechIntent
                         utteranceData.Name = data.Value.Key;
                         utteranceData.Id = data.Value.Key;
                         utteranceData.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
-                        utteranceData.Utterances = utterances;
+						utteranceData.WordMatchRule = genericDataStore.WordMatchRule;
+						utteranceData.Utterances = utterances;
                         
                         filteredUtteranceLists.Add(new KeyValuePair<string, UtteranceData>(data.Value.Key, utteranceData));
 					}					
@@ -328,6 +329,7 @@ namespace MistyCharacter.SpeechIntent
 			switch (word.ToLower().Trim())
 			{
 				case "the":
+				case "of":
 				case "an":
 				case "a":
 				case "um":
@@ -356,7 +358,8 @@ namespace MistyCharacter.SpeechIntent
 				
 				foreach (KeyValuePair<string, UtteranceData> utteranceList in filteredUtteranceLists)
 				{
-					bool exactMatchOnly = utteranceList.Value.ExactMatchesOnly;
+					bool exactMatchOnly = utteranceList.Value.ExactMatchesOnly;					
+					string wordMatchRule = utteranceList.Value.WordMatchRule;
 					TextComparisonObject textComparisonObject = new TextComparisonObject { Id = utteranceList.Key, Intent = utteranceList.Value.Name, HitCountAverage = 0, MaxHitCount = 0 };
 
 					foreach (string utterance in utteranceList.Value.Utterances)
@@ -399,8 +402,8 @@ namespace MistyCharacter.SpeechIntent
 							return speechMatchData;
 						}
 						
-						IList<string> spokenWords = adjustedText.Split(" ").Where(x => !IsIgnoredWord(x)).ToList();
-						IList<string> matchWords = utterance.Trim().ToLower().Split(" ").Where(x => !IsIgnoredWord(x)).ToList();
+						IList<string> spokenWords = adjustedText.Split(" ").Where(x => !IsIgnoredWord(x)).Select(x => x.ToLower().Trim()).ToList();
+						IList<string> matchWords = utterance.Trim().ToLower().Split(" ").Where(x => !IsIgnoredWord(x)).Select(x => x.ToLower().Trim()).ToList();
 						
 						foreach (string matchWord in matchWords)
 						{
@@ -415,30 +418,107 @@ namespace MistyCharacter.SpeechIntent
 									currentHitCount += WordMatchPoints;
 								}
 							}
-							else
+							else if(wordMatchRule != "exact")
 							{
-								foreach (string spokenWord in spokenWords)
+								switch (wordMatchRule)
 								{
-									//Hack attempt for catching most English plurals
-									int wordLength = spokenWord.Length;
-									if (wordLength > 3)
-									{	
-										if (matchWord.Contains(spokenWord.Substring(0, wordLength-1)))
+									case "startswith":
+										foreach (string spokenWord in spokenWords)
 										{
-											currentHitCount += WordPluralPoints;
-											break;
+											if (matchWord.StartsWith(spokenWord))
+											{
+												currentHitCount += WordPluralPoints;
+												break;
+											}
 										}
-									}
-
-									if (wordLength > 4)
-									{
-
-										if (matchWord.Contains(spokenWord.Substring(0, wordLength - 2)))
+										break;
+									case "endswith":
+										foreach (string spokenWord in spokenWords)
 										{
-											currentHitCount += WordPluralPoints;
-											break;
+											if (matchWord.EndsWith(spokenWord))
+											{
+												currentHitCount += WordPluralPoints;
+												break;
+											}
 										}
-									}
+										break;
+									case "contains":
+										foreach (string spokenWord in spokenWords)
+										{
+											if (matchWords.Contains(spokenWord))
+											{
+												currentHitCount = currentHitCount + 2;
+											}
+											else
+											{
+												foreach (string utteranceWord in matchWords)
+												{
+													if (utteranceWord.Contains(spokenWord))
+													{
+														currentHitCount++;
+														break;
+													}
+												}
+											}
+										}
+
+										foreach (string utteranceWord in matchWords)
+										{
+											if (spokenWords.Contains(matchWord))
+											{
+												currentHitCount += WordPluralPoints;
+											}
+											else
+											{
+												foreach (string spokenWord in spokenWords)
+												{
+													if (spokenWord.Contains(utteranceWord))
+													{
+														currentHitCount += WordPluralPoints;
+														break;
+													}
+												}
+											}
+										}
+										break;
+									case "plurals.v1":
+									//Hack attempt for catching some English plurals, prolly too greedy
+										foreach (string spokenWord in spokenWords)
+										{
+											int wordLength = spokenWord.Length;
+											if (wordLength > 5)
+											{
+												if (matchWord.Contains(spokenWord.Substring(0, wordLength - 1)))
+												{
+													currentHitCount += WordPluralPoints;
+													break;
+												}
+											}
+
+											if (wordLength > 6)
+											{
+												if (matchWord.Contains(spokenWord.Substring(0, wordLength - 2)))
+												{
+													currentHitCount += WordPluralPoints;
+													break;
+												}
+											}
+
+											if (wordLength > 7)
+											{
+												if (matchWord.Contains(spokenWord.Substring(0, wordLength - 3)))
+												{
+													currentHitCount += WordPluralPoints;
+													break;
+												}
+											}
+										}
+										break;
+									case "exact":
+									default:
+										//do nothing  else...
+										break;
+
 								}
 							}
 						}

@@ -44,6 +44,8 @@ namespace Conversation.Common
 		public string Description { get; set; }
 
 		public bool ExactMatchesOnly { get; set; }
+		
+		public string WordMatchRule { get; set; } = "Exact";
 
 		public IList<string> Utterances { get; set; } = new List<string>();
 	}

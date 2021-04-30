@@ -23,29 +23,33 @@
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
-			<div class="form-group">
-				<label asp-for="MinRightArm" class="control-label"></label>
-				<label title="The minimum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
-				<input asp-for="MinRightArm" class="form-control" />
-				<span asp-validation-for="MinRightArm" class="text-danger"></span>
+			<div class="row">
+				<div class="form-group col-md-4">				
+					<label asp-for="MinLeftArm " class="control-label"></label>
+					<label title="The minimum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
+					<input asp-for="MinLeftArm" class="form-control" />
+					<span asp-validation-for="MinLeftArm" class="text-danger"></span>
+				</div>
+				<div class="form-group col-md-4">
+					<label asp-for="MaxLeftArm " class="control-label"></label>
+					<label title="The maximum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
+					<input asp-for="MaxLeftArm" class="form-control" />
+					<span asp-validation-for="MaxLeftArm" class="text-danger"></span>
+				</div>
 			</div>
-			<div class="form-group">
-				<label asp-for="MinLeftArm " class="control-label"></label>
-				<label title="The minimum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
-				<input asp-for="MinLeftArm" class="form-control" />
-				<span asp-validation-for="MinLeftArm" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="MaxRightArm" class="control-label"></label>
-				<label title="The maximum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
-				<input asp-for="MaxRightArm" class="form-control" />
-				<span asp-validation-for="MaxRightArm" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="MaxLeftArm " class="control-label"></label>
-				<label title="The maximum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
-				<input asp-for="MaxLeftArm" class="form-control" />
-				<span asp-validation-for="MaxLeftArm" class="text-danger"></span>
+			<div class="row">
+				<div class="form-group col-md-4">				
+					<label asp-for="MinRightArm" class="control-label"></label>
+					<label title="The minimum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
+					<input asp-for="MinRightArm" class="form-control" />
+					<span asp-validation-for="MinRightArm" class="text-danger"></span>
+				</div>
+				<div class="form-group col-md-4">
+					<label asp-for="MaxRightArm" class="control-label"></label>
+					<label title="The maximum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
+					<input asp-for="MaxRightArm" class="form-control" />
+					<span asp-validation-for="MaxRightArm" class="text-danger"></span>
+				</div>
 			</div>
 			<div class="form-group">
 				<label asp-for="DelayBetweenMovements " class="control-label"></label>

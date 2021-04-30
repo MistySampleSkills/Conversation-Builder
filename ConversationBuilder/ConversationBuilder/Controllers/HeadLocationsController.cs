@@ -215,9 +215,9 @@ namespace ConversationBuilder.Controllers
 					loadedHeadLocation.FollowFace = headLocation.FollowFace;
 					loadedHeadLocation.FollowObject = headLocation.FollowObject;
 					loadedHeadLocation.StartLookAroundOnLostObject = headLocation.StartLookAroundOnLostObject;
-					loadedHeadLocation.ManagementAccess = headLocation.ManagementAccess;
-					
+					loadedHeadLocation.ManagementAccess = headLocation.ManagementAccess;					
 					loadedHeadLocation.MovementDuration= headLocation.MovementDuration;
+					loadedHeadLocation.FollowRefresh= headLocation.FollowRefresh;					
 					loadedHeadLocation.DelayBetweenMovements= headLocation.DelayBetweenMovements;				
 					loadedHeadLocation.RandomRange = headLocation.RandomRange;		
 					loadedHeadLocation.MovementVelocity = headLocation.MovementVelocity;		

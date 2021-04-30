@@ -84,6 +84,19 @@ namespace ConversationBuilder.DataModels
 	}
 
 
+	public class WordMatchRules
+	{
+		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();
+		public WordMatchRules()
+		{
+			AllItems.TryAdd("exact", "exact");
+			AllItems.TryAdd("startswith", "starts with");
+			AllItems.TryAdd("endswith", "ends with");
+			AllItems.TryAdd("contains", "contains");
+			AllItems.TryAdd("plurals.v1", "plurals.v1");
+		}
+	}
+
 	public class LEDPatterns
 	{
 		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();

@@ -35,6 +35,9 @@ namespace ConversationBuilder.ViewModels
 		public string Image { get; set; }
 		public string ScreenText { get; set; }
 		public bool TreatKeyAsUtterance { get; set; }
+		
+		[Display(Name = "Word Match Rule")]
+		public string WordMatchRule { get; set; } = "Exact";
 		public bool ExactMatchesOnly { get; set; }
 
 		public DateTimeOffset Created { get; set; }

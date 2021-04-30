@@ -68,6 +68,12 @@
 				@Html.DisplayFor(model => model.DelayBetweenMovements)
 			</dd>
 			<dt>
+				@Html.DisplayNameFor(model => model.FollowRefresh)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.FollowRefresh)
+			</dd>
+			<dt>
 				@Html.DisplayNameFor(model => model.MovementDuration)
 			</dt>
 			<dd>
@@ -121,6 +127,9 @@
 			<dt>
 				@Html.DisplayNameFor(model => model.RandomRange)
 			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.RandomRange)
+			</dd>
 			@if(ViewBag.ShowBetaItems)
 			{
 				<dt>
@@ -130,9 +139,6 @@
 					@Html.DisplayFor(model => model.ManagementAccess)
 				</dd>
 			}
-			<dd>
-				@Html.DisplayFor(model => model.RandomRange)
-			</dd>
 			<dt>
 				@Html.DisplayNameFor(model => model.Updated)
 			</dt>

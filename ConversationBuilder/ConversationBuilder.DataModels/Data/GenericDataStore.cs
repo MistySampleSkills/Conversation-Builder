@@ -51,9 +51,11 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Treat Key as utterance")]		
 		public bool TreatKeyAsUtterance { get; set; }
 		
-		[Display(Name = "Exact Matches Only (utterance)")]		
+		[Display(Name = "Exact Phrase Matches Only (utterance)")]		
 		public bool ExactMatchesOnly { get; set; }
-
+		
+		[Display(Name = "Word Match Rule")]
+		public string WordMatchRule { get; set; } = "Exact";
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

@@ -61,8 +61,9 @@ namespace MistyCharacter
 		private object _findFaceLock = new object();
 		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
 		private DateTime _followedObjectLastSeen = DateTime.Now;
+		private DateTime _lastMovementCommand = DateTime.Now;
 		private bool _tick = false;
-		private int _lookAroundThrottle = 0;
+		//private int _lookAroundThrottle = 0;
 		
 		public HeadManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 			: base(misty, parameters, characterParameters)
@@ -158,27 +159,33 @@ namespace MistyCharacter
 
 						if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
 						{
+							_lastMovementCommand = DateTime.Now;
 							Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
 						}
 						else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
 						{
+							_lastMovementCommand = DateTime.Now;
 							Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
 						}
-
 					}
 					else
 					{
 						if (_currentHeadRequest.FollowFace || !string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject))
 						{
 							_headMovingContinuously = true;
-                            lock (_timerLock)
-                            {
-                                _moveHeadTimer?.Dispose();
-                                if (!_isDisposed)
-                                {
-                                    _moveHeadTimer = new Timer(MoveHeadCallback, null, (int)Math.Abs(_currentHeadRequest.DelayBetweenMovements * 1000), (int)Math.Abs(_currentHeadRequest.DelayBetweenMovements * 1000));
-                                }
-                            }
+							lock (_timerLock)
+							{
+								_moveHeadTimer?.Dispose();
+								if (!_isDisposed)
+								{
+									//Dealing with ye-olde options
+									double? headDelay = _currentHeadRequest.FollowRefresh != null && _currentHeadRequest.FollowRefresh > 0 ? _currentHeadRequest.FollowRefresh : (_currentHeadRequest.DelayBetweenMovements);
+									if (headDelay != null && headDelay != 0)
+									{
+										_moveHeadTimer = new Timer(MoveHeadCallback, null, (int)Math.Abs((double)headDelay * 1000), (int)Math.Abs((double)headDelay * 1000));
+									}
+								}
+							}
 						}
 					}
 				}
@@ -231,7 +238,8 @@ namespace MistyCharacter
 					else if(_currentHeadRequest.StartLookAroundOnLostObject != null && _currentHeadRequest.StartLookAroundOnLostObject > 0)
 					{
 						//Look around if lost it for too long
-						if(_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject))
+						if(_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject) &&
+							_lastMovementCommand < DateTime.Now.AddSeconds(-_currentHeadRequest.DelayBetweenMovements))
 						{
 							_lookAroundFailover = true;
 						}
@@ -247,7 +255,8 @@ namespace MistyCharacter
 					else if (_currentHeadRequest.StartLookAroundOnLostObject != null && _currentHeadRequest.StartLookAroundOnLostObject > 0)
 					{
 						//Look around if lost it for too long
-						if (_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject))
+						if (_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject) &&
+							_lastMovementCommand < DateTime.Now.AddSeconds(-_currentHeadRequest.DelayBetweenMovements))
 						{
 							_lookAroundFailover = true;
 						}
@@ -256,16 +265,7 @@ namespace MistyCharacter
 				
 				//Else, look around using ranges provided
 				if (_lookAroundFailover ||(!_currentHeadRequest.FollowFace && string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject)))
-				{
-					//Ew, stinky code
-					//Improve following object/face and lost face movement
-					if(_lookAroundFailover && _lookAroundThrottle < 2)
-					{
-						_lookAroundThrottle++;
-						return;
-					}
-					_lookAroundThrottle = 0;
-                    
+				{   
 					//if the Min and Max of a movement match or one of them is null, go to that point exactly
 					//if both are null, don't move that axis
 					//if different, 
@@ -357,10 +357,12 @@ namespace MistyCharacter
 
 					if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
 					{
+						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(newPitch, newRoll, newYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
 					}
 					else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
 					{
+						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(newPitch, newRoll, newYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
 					}
 				}
@@ -422,7 +424,7 @@ namespace MistyCharacter
 					yaw = RobotConstants.MaximumYawDegreesExclusive - 1;
 				}
 
-
+				_lastMovementCommand = DateTime.Now;
 				Robot.MoveHead(pitch, null, yaw, null, _currentHeadRequest.MovementDuration, AngularUnit.Degrees, null);
 
 				_lastYaw = yaw;
@@ -515,10 +517,12 @@ namespace MistyCharacter
 				{
 					if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
 					{
+						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(pitch, null, yaw, null, _currentHeadRequest.MovementDuration, AngularUnit.Degrees, null);
 					}
 					else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
 					{
+						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(pitch, null, yaw, Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
 					}
 				}

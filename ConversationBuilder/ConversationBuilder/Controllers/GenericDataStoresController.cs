@@ -118,7 +118,8 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 
-				ViewBag.Emotions = (new DefaultEmotions()).AllItems;
+				ViewBag.Emotions = (new DefaultEmotions()).AllItems;					
+				ViewBag.WordMatchRules = new WordMatchRules().AllItems.OrderBy(x => x.Value);
 				GenericDataStore genericDataStore = new GenericDataStore {};
 				await SetViewBagData();
 				return View(genericDataStore);				
@@ -180,7 +181,8 @@ namespace ConversationBuilder.Controllers
 				}
 				else
 				{
-					ViewBag.Emotions = (new DefaultEmotions()).AllItems;
+					ViewBag.Emotions = (new DefaultEmotions()).AllItems;					
+					ViewBag.WordMatchRules = new WordMatchRules().AllItems.OrderBy(x => x.Value);
 					await SetViewBagData();
 					return View(genericDataStore);
 				}
@@ -211,8 +213,8 @@ namespace ConversationBuilder.Controllers
 					loadedGenericDataStore.ManagementAccess = genericDataStore.ManagementAccess;
 					loadedGenericDataStore.TreatKeyAsUtterance = genericDataStore.TreatKeyAsUtterance;
 					loadedGenericDataStore.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+					loadedGenericDataStore.WordMatchRule = genericDataStore.WordMatchRule;
 					loadedGenericDataStore.Updated = DateTimeOffset.UtcNow;
-					
 					await _cosmosDbService.ContainerManager.GenericDataStoreData.UpdateAsync(loadedGenericDataStore);
 
 					return RedirectToAction(nameof(Index));
@@ -303,6 +305,7 @@ namespace ConversationBuilder.Controllers
 					genericDataViewModel.Description = genericDataStore.Description;
 					genericDataViewModel.TreatKeyAsUtterance = genericDataStore.TreatKeyAsUtterance;
 					genericDataViewModel.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+					genericDataViewModel.WordMatchRule = genericDataStore.WordMatchRule;
 					genericDataViewModel.Name = genericDataStore.Name;
 					genericDataViewModel.Id = genericDataStore.Id;
 					return View(genericDataViewModel);
