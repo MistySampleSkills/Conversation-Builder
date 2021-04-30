@@ -75,14 +75,28 @@ namespace ConversationBuilder.DataModels
 		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();
 		public Themes()
 		{
-			AllItems.TryAdd("dark", "dark");
-			AllItems.TryAdd("lite", "lite");
-			AllItems.TryAdd("blue", "blue");
-			AllItems.TryAdd("bright", "bright");
-			AllItems.TryAdd("natural", "natural");
+			AllItems.TryAdd("dark", "Dark");
+			AllItems.TryAdd("lite", "Lite");
+			AllItems.TryAdd("blue", "Blue");
+			AllItems.TryAdd("bright", "Bright");
+			AllItems.TryAdd("natural", "Natural");
+			AllItems.TryAdd("misty", "Misty");
 		}
 	}
 
+
+	public class WordMatchRules
+	{
+		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();
+		public WordMatchRules()
+		{
+			AllItems.TryAdd("exact", "exact");
+			AllItems.TryAdd("startswith", "starts with");
+			AllItems.TryAdd("endswith", "ends with");
+			AllItems.TryAdd("contains", "contains");
+			AllItems.TryAdd("plurals.v1", "plurals.v1");
+		}
+	}
 
 	public class LEDPatterns
 	{

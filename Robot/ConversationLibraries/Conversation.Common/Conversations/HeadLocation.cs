@@ -48,6 +48,7 @@ namespace Conversation.Common
 			MaxYaw = maxYaw;
 			MovementVelocity = movementVelocity;
 			MovementDuration = movementDuration;
+
 		}
 
 		public double? MinPitch { get; set; }
@@ -63,5 +64,6 @@ namespace Conversation.Common
 		public int? MovementVelocity { get; set; }
 		public double? StartLookAroundOnLostObject { get; set; }
 		public bool RandomRange { get; set; }
+		public double? FollowRefresh { get; set; }
 	}
 }

@@ -97,6 +97,7 @@ namespace ConversationBuilder.Controllers
 				speechHandlerViewModel.Id = speechHandler.Id;
 				speechHandlerViewModel.Name = speechHandler.Name;
 				speechHandlerViewModel.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+				speechHandlerViewModel.WordMatchRule = speechHandler.WordMatchRule;
 				speechHandlerViewModel.ItemType = speechHandler.ItemType;
 				speechHandlerViewModel.Updated = speechHandler.Updated;
 				speechHandlerViewModel.Utterances = speechHandler.Utterances;
@@ -129,7 +130,8 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 
-				SpeechHandlerViewModel speechHandlerViewModel = new SpeechHandlerViewModel {};		
+				SpeechHandlerViewModel speechHandlerViewModel = new SpeechHandlerViewModel {};						
+				ViewBag.WordMatchRules = new WordMatchRules().AllItems.OrderBy(x => x.Value);	
 				await SetViewBagData();
 				return View(speechHandlerViewModel);				
 			}
@@ -176,6 +178,7 @@ namespace ConversationBuilder.Controllers
 					}
 					speechHandler.Name = model.Name;
 					speechHandler.ExactMatchesOnly = model.ExactMatchesOnly;
+					speechHandler.WordMatchRule = model.WordMatchRule;
 					speechHandler.Description = model.Description;
 
 					await _cosmosDbService.ContainerManager.SpeechHandlerData.AddAsync(speechHandler);
@@ -216,12 +219,14 @@ namespace ConversationBuilder.Controllers
 					speechHandlerViewModel.Name = speechHandler.Name;
 					speechHandlerViewModel.ManagementAccess = speechHandler.ManagementAccess;
 					speechHandlerViewModel.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+					speechHandler.WordMatchRule = speechHandler.WordMatchRule;
 					speechHandlerViewModel.ItemType = speechHandler.ItemType;
 					speechHandlerViewModel.Updated = speechHandler.Updated;
 					speechHandlerViewModel.Utterances = speechHandler.Utterances;
 					//TODO More cleanup and better UI
 					speechHandlerViewModel.UtteranceString = String.Join(",", speechHandler.Utterances);
-					speechHandlerViewModel.Created = speechHandler.Created;
+					speechHandlerViewModel.Created = speechHandler.Created;					
+					ViewBag.WordMatchRules = new WordMatchRules().AllItems.OrderBy(x => x.Value);
 					await SetViewBagData();
 					return View(speechHandlerViewModel);
 				}
@@ -250,6 +255,7 @@ namespace ConversationBuilder.Controllers
 					loadedSpeechHandler.Name = speechHandler.Name;
 					loadedSpeechHandler.Description = speechHandler.Description;
 					loadedSpeechHandler.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+					loadedSpeechHandler.WordMatchRule = speechHandler.WordMatchRule;
 					//TODO More cleanup and better UI
 					loadedSpeechHandler.Utterances = speechHandler.UtteranceString.Split(',').ToList();
 					loadedSpeechHandler.Updated = DateTimeOffset.UtcNow;

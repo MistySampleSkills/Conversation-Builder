@@ -51,7 +51,9 @@ namespace Conversation.Common
 		public string Description { get; set; }
 		public bool TreatKeyAsUtterance { get; set; }
 		public bool ExactMatchesOnly { get; set; }
-        
+
+		public string WordMatchRule { get; set; } = "Exact";
+
 		public IDictionary<string, GenericData> Data { get; set; } = new Dictionary<string, GenericData>();
 
 		public DateTimeOffset Created { get; set; }

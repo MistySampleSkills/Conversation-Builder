@@ -68,10 +68,13 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Name of object to follow")]
 		public string FollowObject { get; set; }
 		
-		[Display(Name = "Delay in seconds of not seeing an expected face/object, before looking around")]
+		[Display(Name = "Lost Object Look Around Delay")]
 		public double? StartLookAroundOnLostObject { get; set; }
+
+		[Display(Name = "Follow Refresh")]
+		public double? FollowRefresh { get; set; } = 0.333;
 		
-		[Display(Name = "Duration of movement in seconds - use this or Velocity")]
+		[Display(Name = "Duration of range movement in seconds - use this or Velocity")]
 		public double? MovementDuration { get; set; }
 		
 		[Display(Name = "Delay in seconds between repeated movements")]

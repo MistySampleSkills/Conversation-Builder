@@ -45,6 +45,8 @@ namespace ConversationBuilder.DataModels
 
 		public bool ExactMatchesOnly { get; set; }
 
+		public string WordMatchRule { get; set; }
+
 		public IList<string> Utterances { get; set; } = new List<string>();
 	}
 }

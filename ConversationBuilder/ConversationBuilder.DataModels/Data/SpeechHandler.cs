@@ -49,9 +49,12 @@ namespace ConversationBuilder.DataModels
 		public string Description { get; set; }
 
 		[Required]
-		[Display(Name = "Exact Matches Only")]
+		[Display(Name = "Exact Phrase Matches Only")]
 		public bool ExactMatchesOnly { get; set; }
 
+		[Required]
+		[Display(Name = "Word Match Rule")]
+		public string WordMatchRule { get; set; } = "Exact";
 
 		[Required]
 		public IList<string> Utterances { get; set; } = new List<string>();

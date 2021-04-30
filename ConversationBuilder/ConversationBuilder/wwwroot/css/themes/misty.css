@@ -43,44 +43,44 @@ a.navbar-brand {
 
 /* Provide sufficient contrast against dark background */
 a {
-  color: #f012ad;
+  color: #f5f1f4;
 }
 
 a:hover {
-  color: rgb(62, 202, 116);
+  color: #6f42c1;
 }
 
 p {
-  color: #f38a13;
+  color: #6f42c1;
 }
 
 h2 {
-  color: #063b70;
+  color: #f5f1f4;
 }
 
 h3 {
-  color: #e515f8;
+  color: #f5f1f4;;
 }
 
 h4 {
-  color: #075241;
+  color: #f5f1f4;
 }
 
 h5 {
-  color: #0c437a;
+  color: #f5f1f4;
 }
 
 div {
-  color: #485a07;
+  color: #f8f9fa;
 }
 
 tr {
-  background-color:rgb(194, 226, 245);
-  color: #aa3709;
+  background-color:#343a40;
+  color: #f5f1f4;
 }
 
 dl {
-  color: #414e05;
+  color: #f8f9fa;
 }
 
 .btn-primary {
@@ -97,53 +97,53 @@ dl {
 
 /* Clean this up */
 .control-label {
-  color: #f12929;
+  color: #f8f9fa;
 }
 
 .form-control {
-  color: #93b909;
+  color: #000000;
 }
 
 .form-group {
-  color: #02376d;
+  color: #f8f9fa;
 }
 
 .btn-default {
-  color: #fa4d18;
-  background-color:rgb(255, 255, 255);
+  color: #f8f9fa;
+  background-color:#6f42c1;
 }
 
 .btn-default:hover {
-  color: #74b5fc;
-  background-color:rgb(62, 202, 116);
+  color: #6f42c1;
+  background-color:#f8f9fa;
 }
 
 .btn-link {
-  color: rgb(228, 138, 3);
+  color: #6f42c1;
 }
 
 .btn-link:hover {
-  color: rgb(62, 202, 116);
+  color: #dc3545;
 }
 
 /* Sticky footer styles
 -------------------------------------------------- */
 html {
   font-size: 14px;
-  background-color:rgb(165, 248, 165);
+  background-color:#000000;
 }
 @media (min-width: 768px) {
   html {
     font-size: 16px;
-    background-color:rgb(165, 248, 165);
+    background-color:#000000;
   }
 }
 
 .border-top {
-  border-top: 1px solid #dd1717;
+  border-top: 1px solid #6f42c1;
 }
 .border-bottom {
-  border-bottom: 1px solid #e712b2;
+  border-bottom: 1px solid #6f42c1;
 }
 
 .box-shadow {
@@ -159,17 +159,17 @@ button.accept-policy {
 -------------------------------------------------- */
 html {
   position: relative;
-  background-color:rgb(165, 248, 165);
+  background-color:#000000;
   min-height: 100%;
 }
 
 body {
   /* Margin bottom by footer height */
-    background-color:rgb(165, 248, 165);
+    background-color:#000000;
   margin-bottom: 60px;
 }
 .footer {
-  background-color:rgb(213, 238, 99);
+  background-color:#000000;
   position: absolute;
   bottom: 0;
   width: 100%;

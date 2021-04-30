@@ -692,15 +692,16 @@ namespace MistyCharacter
 									{
 										newData = userDataName;
 									}
+									
 									//try looking up the user data by name now
-
 									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.ToLower().Trim());
 									if (dataStore != null)
 									{
 										//found a match for the name, now look up the key 2nd position
-										//TODO CLEANUP
+
 										string dataKey = dataArray[1].Trim().ToLower();
 										string newKey = dataKey;
+										
 										if (_replacementValues.Contains(dataKey))
 										{
 											newKey = GetBuiltInReplacement(dataKey);
@@ -710,7 +711,25 @@ namespace MistyCharacter
 											newKey = dataKey;
 										}
 
-										if(dataStore.TreatKeyAsUtterance)
+										if (dataKey == "random")
+										{
+											//grab a random user data item from this group
+											//{{Greetings:random}}
+											GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+											if(genericDataStore != null)
+											{
+												int dataCount = genericDataStore.Data.Count();
+												int randomItem = _random.Next(optionCount, dataCount);
+												GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
+												if (genericData?.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData, out newImage);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+												}
+											}
+										}
+										else if (dataStore.TreatKeyAsUtterance)
 										{
 											GenericData genericData = SpeechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
 											if (genericData.Value != null)

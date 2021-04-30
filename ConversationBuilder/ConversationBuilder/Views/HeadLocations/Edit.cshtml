@@ -49,41 +49,49 @@
 				<input asp-for="StartLookAroundOnLostObject" class="form-control" />
 				<span asp-validation-for="StartLookAroundOnLostObject" class="text-danger"></span>
 			</div>
-			<div class="form-group">
-				<label asp-for="MinPitch" class="control-label"></label>
-				<label title="The minimum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
-				<input asp-for="MinPitch" class="form-control" />
-				<span asp-validation-for="MinPitch" class="text-danger"></span>
+			<div class="row">
+				<div class="form-group col-md-4">				
+					<label asp-for="MinPitch" class="control-label"></label>
+					<label title="The minimum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<input asp-for="MinPitch" class="form-control" />
+					<span asp-validation-for="MinPitch" class="text-danger"></span>
+				</div>
+				<div class="form-group col-md-4">
+					<label asp-for="MaxPitch" class="control-label"></label>
+					<label title="The maximum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<input asp-for="MaxPitch" class="form-control" />
+					<span asp-validation-for="MaxPitch" class="text-danger"></span>
+				</div>
 			</div>
-			<div class="form-group">
-				<label asp-for="MinRoll " class="control-label"></label>
-				<label title="The minimum roll, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
-				<input asp-for="MinRoll" class="form-control" />
-				<span asp-validation-for="MinRoll" class="text-danger"></span>
+			
+			<div class="row">
+				<div class="form-group col-md-4">				
+					<label asp-for="MinRoll " class="control-label"></label>
+					<label title="The minimum roll, in degrees, where the head will attempt to move.">ℹ️</label>
+					<input asp-for="MinRoll" class="form-control" />
+					<span asp-validation-for="MinRoll" class="text-danger"></span>
+				</div>
+				<div class="form-group col-md-4">
+					<label asp-for="MaxRoll " class="control-label"></label>
+					<label title="The maximum roll, in degrees, where the head will attempt to move.">ℹ️</label>
+					<input asp-for="MaxRoll" class="form-control" />
+					<span asp-validation-for="MaxRoll" class="text-danger"></span>
+				</div>
 			</div>
-			<div class="form-group">
-				<label asp-for="MinYaw" class="control-label"></label>
-				<label title="The minimum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
-				<input asp-for="MinYaw" class="form-control" />
-				<span asp-validation-for="MinYaw" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="MaxPitch" class="control-label"></label>
-				<label title="The maximum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
-				<input asp-for="MaxPitch" class="form-control" />
-				<span asp-validation-for="MaxPitch" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="MaxRoll " class="control-label"></label>
-				<label title="The maximum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
-				<input asp-for="MaxRoll" class="form-control" />
-				<span asp-validation-for="MaxRoll" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="MaxYaw" class="control-label"></label>
-				<label title="The maximum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
-				<input asp-for="MaxYaw" class="form-control" />
-				<span asp-validation-for="MaxYaw" class="text-danger"></span>
+
+			<div class="row">
+				<div class="form-group col-md-4">				
+					<label asp-for="MinYaw" class="control-label"></label>
+					<label title="The minimum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<input asp-for="MinYaw" class="form-control" />
+					<span asp-validation-for="MinYaw" class="text-danger"></span>
+				</div>
+				<div class="form-group col-md-4">
+					<label asp-for="MaxYaw" class="control-label"></label>
+					<label title="The maximum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<input asp-for="MaxYaw" class="form-control" />
+					<span asp-validation-for="MaxYaw" class="text-danger"></span>
+				</div>
 			</div>
 			<div class="form-group">
 				<label asp-for="DelayBetweenMovements " class="control-label"></label>
@@ -103,6 +111,12 @@
 				<label title="How fast the movement should be performed, from 1 to 100. Use this OR Duration.">ℹ️</label>
 				<input asp-for="MovementVelocity" class="form-control" />
 				<span asp-validation-for="MovementVelocity" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="FollowRefresh " class="control-label"></label>
+				<label title="How often to change direction for face and object following.">ℹ️</label>
+				<input asp-for="FollowRefresh" class="form-control" />
+				<span asp-validation-for="FollowRefresh" class="text-danger"></span>
 			</div>
 			
 			<div class="form-group">
