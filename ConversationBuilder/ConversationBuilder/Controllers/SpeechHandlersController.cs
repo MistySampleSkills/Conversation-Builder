@@ -219,7 +219,7 @@ namespace ConversationBuilder.Controllers
 					speechHandlerViewModel.Name = speechHandler.Name;
 					speechHandlerViewModel.ManagementAccess = speechHandler.ManagementAccess;
 					speechHandlerViewModel.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
-					speechHandler.WordMatchRule = speechHandler.WordMatchRule;
+					speechHandlerViewModel.WordMatchRule = speechHandler.WordMatchRule;
 					speechHandlerViewModel.ItemType = speechHandler.ItemType;
 					speechHandlerViewModel.Updated = speechHandler.Updated;
 					speechHandlerViewModel.Utterances = speechHandler.Utterances;
