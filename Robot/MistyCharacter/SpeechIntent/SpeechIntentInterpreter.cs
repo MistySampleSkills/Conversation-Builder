@@ -482,11 +482,11 @@ namespace MistyCharacter.SpeechIntent
 										}
 										break;
 									case "plurals.v1":
-									//Hack attempt for catching some English plurals, prolly too greedy
+										//Hack attempt for catching some English plurals, prolly too greedy
 										foreach (string spokenWord in spokenWords)
 										{
 											int wordLength = spokenWord.Length;
-											if (wordLength > 5)
+											if (wordLength > 4)
 											{
 												if (matchWord.Contains(spokenWord.Substring(0, wordLength - 1)))
 												{
@@ -495,7 +495,7 @@ namespace MistyCharacter.SpeechIntent
 												}
 											}
 
-											if (wordLength > 6)
+											if (wordLength > 5)
 											{
 												if (matchWord.Contains(spokenWord.Substring(0, wordLength - 2)))
 												{
@@ -504,7 +504,7 @@ namespace MistyCharacter.SpeechIntent
 												}
 											}
 
-											if (wordLength > 7)
+											if (wordLength > 6)
 											{
 												if (matchWord.Contains(spokenWord.Substring(0, wordLength - 3)))
 												{
