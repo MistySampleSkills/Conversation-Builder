@@ -46,6 +46,7 @@ using MistyRobotics.SDK.Responses;
 using MistyRobotics.SDK;
 using MistyRobotics.Common.Data;
 using SkillTools.AssetTools;
+using MistyCharacter.SpeechIntent;
 
 namespace MistyCharacter
 {
@@ -107,6 +108,7 @@ namespace MistyCharacter
 		private ISpeechManager SpeechManager;
 		private IArmManager ArmManager;
 		private IHeadManager HeadManager;
+		private IAnimationManager AnimationManager;
 		private ITimeManager TimeManager;
 		private IEmotionManager EmotionManager;
 		private ISpeechIntentManager SpeechIntentManager;
@@ -182,7 +184,10 @@ namespace MistyCharacter
 				
 				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Misty, OriginalParameters, CharacterParameters, SpeechIntentManager);
 				await SpeechManager.Initialize();
-				
+
+				//TODO Pass in?
+				AnimationManager = new AnimationManager(Misty, OriginalParameters, CharacterParameters);
+
 				IgnoreEvents();
 
 				SpeechManager.SpeechIntent += SpeechManager_SpeechIntent;
@@ -321,7 +326,10 @@ namespace MistyCharacter
 			}
 
 			CharacterState.KeyPhraseRecognized = (KeyPhraseRecognizedEvent)keyPhraseEvent;			
-			SendManagedResponseEvent(new TriggerData(keyPhraseEvent?.Confidence.ToString(), "", Triggers.KeyPhraseRecognized));			
+			if(!SendManagedResponseEvent(new TriggerData(keyPhraseEvent?.Confidence.ToString(), "", Triggers.KeyPhraseRecognized)))
+			{
+				SendManagedResponseEvent(new TriggerData(keyPhraseEvent?.Confidence.ToString(), "", Triggers.KeyPhraseRecognized), true);
+			}
 			KeyPhraseRecognized?.Invoke(this, keyPhraseEvent);
 		}
 
@@ -424,7 +432,10 @@ namespace MistyCharacter
 		public void SimulateTrigger(TriggerData triggerData, bool setAsOverrideEvent = true)
 		{
 			triggerData.OverrideIntent = setAsOverrideEvent;
-			SendManagedResponseEvent(triggerData);
+			if(!SendManagedResponseEvent(triggerData))
+			{
+				SendManagedResponseEvent(triggerData, true);
+			}
 		}
 
 		public void ChangeVolume(int volume)
@@ -1030,9 +1041,9 @@ namespace MistyCharacter
 					Size = 30,
 					HorizontalAlignment = ImageHorizontalAlignment.Center,
 					VerticalAlignment = ImageVerticalAlignment.Bottom,
-					Red = 180,
-					Green = 180,
-					Blue = 180,
+					Red = 255,
+					Green = 255,
+					Blue = 255,
 					PlaceOnTop = true,
 					FontFamily = "Courier New",
 					Height = 50
@@ -1249,7 +1260,7 @@ namespace MistyCharacter
 			}
 		}
 		
-		private bool SendManagedResponseEvent(TriggerData triggerData)
+		private bool SendManagedResponseEvent(TriggerData triggerData, bool conversationTriggerCheck = false)
 		{
 			if (triggerData.OverrideIntent ||
 				LiveTriggers.Contains(triggerData.Trigger) ||
@@ -1259,7 +1270,7 @@ namespace MistyCharacter
 				triggerData.Trigger == Triggers.KeyPhraseRecognized
 			)
 			{
-				if (ProcessAndVerifyTrigger(triggerData))
+				if (ProcessAndVerifyTrigger(triggerData, conversationTriggerCheck))
 				{
 					StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Trigger | {triggerData.Trigger} - {triggerData.TriggerFilter} - {triggerData.Text}.");
 					return true;
@@ -1267,7 +1278,7 @@ namespace MistyCharacter
 			}
 			return false;
 		}
-
+		
 		private async Task GoToNextAnimation(IList<TriggerActionOption> possibleActions)
 		{
 			if (possibleActions == null || possibleActions.Count == 0)
@@ -1373,6 +1384,7 @@ namespace MistyCharacter
 					{
 						Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Going to interaction {interaction} in the same conversation...");
 						Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == interaction);
+						interactionRequest.Retrigger = selectedAction.Retrigger;
 						if (overrideAnimation != null)
 						{
 							interactionRequest.Animation = overrideAnimation;
@@ -1386,7 +1398,8 @@ namespace MistyCharacter
 						_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
 
 						Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == _currentConversationData.StartupInteraction);
-						if(overrideAnimation != null)
+						interactionRequest.Retrigger = selectedAction.Retrigger;
+						if (overrideAnimation != null)
 						{
 							interactionRequest.Animation = overrideAnimation;
 						}
@@ -1399,6 +1412,7 @@ namespace MistyCharacter
 						_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
 
 						Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == interaction);
+						interactionRequest.Retrigger = selectedAction.Retrigger;
 						if (overrideAnimation != null)
 						{
 							interactionRequest.Animation = overrideAnimation;
@@ -1410,7 +1424,8 @@ namespace MistyCharacter
 			}
 		}
 
-		private bool ProcessAndVerifyTrigger(TriggerData triggerData)
+		//Fixing order of checking, conversation should not be checked until ALL local are checked, needs cleanup
+		private bool ProcessAndVerifyTrigger(TriggerData triggerData, bool conversationTriggerCheck)
 		{
 			_processingTriggersSemaphore.Wait();
 			IDictionary<string, IList<TriggerActionOption>> allowedTriggers = new Dictionary<string, IList<TriggerActionOption>>();
@@ -1426,50 +1441,18 @@ namespace MistyCharacter
 					string triggerDetailString;
 					IList<TriggerActionOption> triggerDetailMap = new List<TriggerActionOption>();
 					TriggerDetail triggerDetail = null;
-					foreach (KeyValuePair<string, IList<TriggerActionOption>> possibleIntent in allowedTriggers)
-					{
-						triggerDetailString = possibleIntent.Key;
-						triggerDetailMap = possibleIntent.Value;
 
-						triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Id == triggerDetailString);
-						if (triggerDetail != null && (string.Compare(triggerData.Trigger?.Trim(), triggerDetail.Trigger?.Trim(), true) == 0))
-						{
-							//Not all intents need a matching text
-							if (triggerData.Trigger == Triggers.Timeout ||
-								triggerData.Trigger == Triggers.AudioCompleted ||
-								triggerData.Trigger == Triggers.KeyPhraseRecognized ||
-								triggerData.Trigger == Triggers.Timer)
-							{
-								match = true;
-								break;
-							}
-							else if (!string.IsNullOrWhiteSpace(triggerDetail.TriggerFilter))
-							{
-								match = string.Compare(triggerData.TriggerFilter?.Trim(), triggerDetail.TriggerFilter?.Trim(), true) == 0;
-								if (match)
-								{
-									break;
-								}
-							}
-							else
-							{
-								match = true;
-								break;
-							}
-						}
-					}
-
-					//If no match, and allowed, check for conversation triggers to handle this
-					if (!match && CurrentInteraction.AllowConversationTriggers && _currentConversationData.ConversationTriggerMap != null && _currentConversationData.ConversationTriggerMap.Count() > 0)
+					if(!conversationTriggerCheck)
 					{
-						foreach (KeyValuePair<string, IList<TriggerActionOption>> possibleConversationTrigger in _currentConversationData.ConversationTriggerMap)
+						foreach (KeyValuePair<string, IList<TriggerActionOption>> possibleIntent in allowedTriggers)
 						{
-							triggerDetailString = possibleConversationTrigger.Key;
-							triggerDetailMap = possibleConversationTrigger.Value;
+							triggerDetailString = possibleIntent.Key;
+							triggerDetailMap = possibleIntent.Value;
 
 							triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Id == triggerDetailString);
 							if (triggerDetail != null && (string.Compare(triggerData.Trigger?.Trim(), triggerDetail.Trigger?.Trim(), true) == 0))
 							{
+								//Not all intents need a matching text
 								if (triggerData.Trigger == Triggers.Timeout ||
 									triggerData.Trigger == Triggers.AudioCompleted ||
 									triggerData.Trigger == Triggers.KeyPhraseRecognized ||
@@ -1494,6 +1477,47 @@ namespace MistyCharacter
 							}
 						}
 					}
+					else
+					{
+						//TOO SOON, should do this after all local checked first
+
+						//If no match, and allowed, check for conversation triggers to handle this
+						if (!match && CurrentInteraction.AllowConversationTriggers && _currentConversationData.ConversationTriggerMap != null && _currentConversationData.ConversationTriggerMap.Count() > 0)
+						{
+							foreach (KeyValuePair<string, IList<TriggerActionOption>> possibleConversationTrigger in _currentConversationData.ConversationTriggerMap)
+							{
+								triggerDetailString = possibleConversationTrigger.Key;
+								triggerDetailMap = possibleConversationTrigger.Value;
+
+								triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Id == triggerDetailString);
+								if (triggerDetail != null && (string.Compare(triggerData.Trigger?.Trim(), triggerDetail.Trigger?.Trim(), true) == 0))
+								{
+									if (triggerData.Trigger == Triggers.Timeout ||
+										triggerData.Trigger == Triggers.AudioCompleted ||
+										triggerData.Trigger == Triggers.KeyPhraseRecognized ||
+										triggerData.Trigger == Triggers.Timer)
+									{
+										match = true;
+										break;
+									}
+									else if (!string.IsNullOrWhiteSpace(triggerDetail.TriggerFilter))
+									{
+										match = string.Compare(triggerData.TriggerFilter?.Trim(), triggerDetail.TriggerFilter?.Trim(), true) == 0;
+										if (match)
+										{
+											break;
+										}
+									}
+									else
+									{
+										match = true;
+										break;
+									}
+								}
+							}
+						}
+					}
+					
 
 					//if a match and it is mapped to something, go there, otherwise ignore as a trigger
 					if (match && triggerDetailMap != null && triggerDetailMap.Count() > 0)
@@ -1651,8 +1675,24 @@ namespace MistyCharacter
 
                 if (!triggerSuccessful)
                 {
-                    SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
+					triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
                 }
+
+				if(!triggerSuccessful)
+				{
+					if (!SendManagedResponseEvent(new TriggerData(speechIntent.Text, speechIntent.TriggerFilter, Triggers.SpeechHeard), true))
+					{
+						if (_conversationGroup.IntentUtterances.TryGetValue(speechIntent.TriggerFilter, out UtteranceData utteranceData2))
+						{
+							triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, utteranceData2.Name, Triggers.SpeechHeard), true);
+						}
+
+						if (!triggerSuccessful)
+						{
+							triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard), true);
+						}
+					}
+				}
             }
             SpeechIntentEvent?.Invoke(this, speechIntent);
         }
@@ -1668,7 +1708,13 @@ namespace MistyCharacter
 			CharacterState.ArTagEvent = (ArTagDetectionEvent)arTagEvent;
 			if (!SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), arTagEvent.TagId.ToString(), Triggers.ArTagSeen)))
 			{
-				SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), "", Triggers.ArTagSeen));
+				if(!SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), "", Triggers.ArTagSeen)))
+				{
+					if (!SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), arTagEvent.TagId.ToString(), Triggers.ArTagSeen), true))
+					{
+						SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), "", Triggers.ArTagSeen), true);
+					}
+				}
 			}
 			
 			ArTagEvent?.Invoke(this, arTagEvent);
@@ -1684,7 +1730,13 @@ namespace MistyCharacter
 			CharacterState.QrTagEvent = (QrTagDetectionEvent)qrTagEvent;
 			if (!SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo?.ToString(), qrTagEvent.DecodedInfo?.ToString(), Triggers.QrTagSeen)))
 			{
-				SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo.ToString(), "", Triggers.QrTagSeen));
+				if(!SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo.ToString(), "", Triggers.QrTagSeen)))
+				{
+					if (!SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo?.ToString(), qrTagEvent.DecodedInfo?.ToString(), Triggers.QrTagSeen), true))
+					{
+						SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo.ToString(), "", Triggers.QrTagSeen), true);
+					}
+				}
 			}
 			
 			QrTagEvent?.Invoke(this, qrTagEvent);
@@ -1700,7 +1752,13 @@ namespace MistyCharacter
 			CharacterState.SerialMessageEvent = (SerialMessageEvent)serialMessageEvent;
 			if (!SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, serialMessageEvent.Message, Triggers.SerialMessage)))
 			{
-				SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, "", Triggers.SerialMessage));
+				if(!SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, "", Triggers.SerialMessage)))
+				{
+					if (!SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, serialMessageEvent.Message, Triggers.SerialMessage), true))
+					{
+						SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, "", Triggers.SerialMessage), true);
+					}
+				}
 			}
 
 			SerialMessageEvent?.Invoke(this, serialMessageEvent);
@@ -1745,8 +1803,39 @@ namespace MistyCharacter
 
 			if (!sentMsg)
 			{
-				SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, "", Triggers.FaceRecognized));
+				sentMsg = SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, "", Triggers.FaceRecognized));
+
+
+				//dupe code to cleanup
+				if (!sentMsg)
+				{
+					if (faceRecognitionEvent.Label == ConversationConstants.UnknownPersonFaceLabel)
+					{
+						sentMsg = SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeUnknownFaceTrigger, Triggers.FaceRecognized), true);
+					}
+					else
+					{
+						if (!SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, faceRecognitionEvent.Label, Triggers.FaceRecognized), true))
+						{
+							if (_lastKnownFace != CharacterState.LastKnownFaceSeen)
+							{
+								sentMsg = SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeNewFaceTrigger, Triggers.FaceRecognized), true);
+							}
+						}
+
+						if (!sentMsg)
+						{
+							sentMsg = SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeKnownFaceTrigger, Triggers.FaceRecognized), true);
+						}
+					}
+
+					if (!sentMsg)
+					{
+						sentMsg = SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, "", Triggers.FaceRecognized), true);
+					}
+				}
 			}
+
 
 			FaceRecognitionEvent?.Invoke(this, faceRecognitionEvent);
 		}
@@ -1773,7 +1862,13 @@ namespace MistyCharacter
 
 				if (!SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger)))
 				{
-					SendManagedResponseEvent(new TriggerData(text, "", trigger));
+					if(!SendManagedResponseEvent(new TriggerData(text, "", trigger)))
+					{
+						if (!SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger), true))
+						{
+							SendManagedResponseEvent(new TriggerData(text, "", trigger), true);
+						}
+					}
 				}
 				ExternalEvent?.Invoke(this, userEvent);
 			}			
@@ -1793,7 +1888,13 @@ namespace MistyCharacter
 			CharacterState.ObjectEvent = (ObjectDetectionEvent)objectDetectionEvent;
 			if (!SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen)))
 			{
-				SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen));
+				if(!SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen)))
+				{
+					if (!SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))
+					{
+						SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen), true);
+					}
+				}
 			}
 			
 			ObjectEvent?.Invoke(this, objectDetectionEvent);
@@ -1811,7 +1912,13 @@ namespace MistyCharacter
             
 			if (!SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", capTouchEvent.SensorPosition.ToString(), capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased)))
 			{
-				SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", "", capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased));
+				if(!SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", "", capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased)))
+				{
+					if (!SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", capTouchEvent.SensorPosition.ToString(), capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased), true))
+					{
+						SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", "", capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased), true);
+					}
+				}
 			}
 			CapTouchEvent?.Invoke(this, capTouchEvent);
 		}
@@ -1827,7 +1934,13 @@ namespace MistyCharacter
             
 			if (!SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", bumpEvent.SensorPosition.ToString(), bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased)))
 			{
-				SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", "", bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased));
+				if(!SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", "", bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased)))
+				{
+					if (!SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", bumpEvent.SensorPosition.ToString(), bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased), true))
+					{
+						SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", "", bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased), true);						
+					}
+				}
 			}
 			BumperEvent?.Invoke(this, bumpEvent);
 		}
@@ -2051,38 +2164,9 @@ namespace MistyCharacter
                     return;
 				}
 
-				bool hasAudio = false;
-				//Set values based upon defaults and passed in
-				if (!EmotionAnimations.TryGetValue(animationRequest.Emotion, out AnimationRequest defaultAnimation))
-				{
-					defaultAnimation = new AnimationRequest();
-				}
-				
-				if(animationRequest.Silence)
-				{
-					hasAudio = false;
-					animationRequest.AudioFile = null;
-					animationRequest.Speak = "";
-				}
-				else if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile) || !string.IsNullOrWhiteSpace(animationRequest.Speak))
-				{
-					hasAudio = true;
-				}
+				AnimationManager.StopRunningAnimationScripts();
 
-				await SpeechManager.UpdateKeyPhraseRecognition(newInteraction, hasAudio);
-
-				//Use image default if NULL , if EMPTY Speak (just whitespace), no new image
-				if (animationRequest.ImageFile == null)
-				{
-					animationRequest.ImageFile = defaultAnimation.ImageFile;
-				}
-
-				//Set default LED for emotion if not already set
-				if (animationRequest.LEDTransitionAction == null)
-				{
-					animationRequest.LEDTransitionAction = defaultAnimation.LEDTransitionAction;
-				}
-		
+				//should we start skill listening even if it may retrigger?
 				foreach (string skillMessageId in CurrentInteraction.SkillMessages)
 				{
 					SkillMessage skillMessage = _currentConversationData.SkillMessages.FirstOrDefault(x => x.Id == skillMessageId);
@@ -2142,34 +2226,6 @@ namespace MistyCharacter
 					}
 				}
 				
-				if (animationRequest.Volume != null && animationRequest.Volume > 0)
-				{
-					SpeechManager.Volume = (int)animationRequest.Volume;
-				}
-				else if (defaultAnimation.Volume != null && defaultAnimation.Volume > 0)
-				{
-					SpeechManager.Volume = (int)defaultAnimation.Volume;
-				}
-				
-				if (hasAudio)
-				{
-					lock (_lockListenerData)
-					{
-						string audioFile = "";
-						if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile))
-						{
-							audioFile = SpeechManager.GetLocaleName(animationRequest.AudioFile);
-						}
-						else
-						{
-							audioFile = SpeechManager.GetLocaleName(animationRequest.SpeakFileName);
-						}
-
-						_audioAnimationCallbacks.Remove(audioFile);
-						_audioAnimationCallbacks.Add(audioFile);
-					}
-				}
-				
 				//Animation started, make sure all the immediate events are going and set listen by intent
 				IDictionary<string, IList<TriggerActionOption>> allowedIntents = CurrentInteraction.TriggerMap;
 				foreach (KeyValuePair<string, IList<TriggerActionOption>> possibleIntent in allowedIntents)
@@ -2203,6 +2259,105 @@ namespace MistyCharacter
 						{
 							ListenToEvent(triggerDetail, (int)(triggerDetail.StartingTriggerDelay * 1000));
 						}
+					}
+				}
+
+				bool hasAudio = false;
+				//Set values based upon defaults and passed in
+				if (!EmotionAnimations.TryGetValue(animationRequest.Emotion, out AnimationRequest defaultAnimation))
+				{
+					defaultAnimation = new AnimationRequest();
+				}
+
+				if (animationRequest.Silence)
+				{
+					hasAudio = false;
+					animationRequest.AudioFile = null;
+					animationRequest.Speak = "";
+				}
+				else if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile) || !string.IsNullOrWhiteSpace(animationRequest.Speak))
+				{
+					hasAudio = true;
+				}
+
+				await SpeechManager.UpdateKeyPhraseRecognition(newInteraction, hasAudio);
+
+				//Use image default if NULL , if EMPTY Speak (just whitespace), no new image
+				if (animationRequest.ImageFile == null)
+				{
+					animationRequest.ImageFile = defaultAnimation.ImageFile;
+				}
+
+				//Set default LED for emotion if not already set
+				if (animationRequest.LEDTransitionAction == null)
+				{
+					animationRequest.LEDTransitionAction = defaultAnimation.LEDTransitionAction;
+				}
+				
+				if (animationRequest.Volume != null && animationRequest.Volume > 0)
+				{
+					SpeechManager.Volume = (int)animationRequest.Volume;
+				}
+				else if (defaultAnimation.Volume != null && defaultAnimation.Volume > 0)
+				{
+					SpeechManager.Volume = (int)defaultAnimation.Volume;
+				}
+
+
+				//NEED TO REPROCESS TEXT FOR INTENT!!!
+
+				if (interaction.Retrigger &&
+					CharacterState.LatestTriggerMatched.Value != null &&
+					CharacterState.LatestTriggerMatched.Value.Trigger == Triggers.SpeechHeard) //for now
+				{
+					await Task.Delay(100);
+					//SpeechMatchData data = SpeechIntentManager.GetIntent(CharacterState.LatestTriggerMatched.Value.Text);
+					//SpeechManager_SpeechIntent(this, );
+
+					//SendManagedResponseEvent(TriggerData triggerData, bool conversationTriggerCheck)
+					//if (ProcessAndVerifyTrigger(new TriggerData(CharacterState.LatestTriggerMatched.Value.Text, data.Id)))
+
+					//need to really call each appropriate method to trigger all
+					if (SendManagedResponseEvent(new TriggerData(CharacterState.LatestTriggerMatched.Value.Text, CharacterState.LatestTriggerMatched.Value.TriggerFilter), false))
+					{
+						StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Retrigger | {CharacterState.LatestTriggerMatched.Value.Trigger} - {CharacterState.LatestTriggerMatched.Value.TriggerFilter} - {CharacterState.LatestTriggerMatched.Value.Text}.");
+						return;
+					}
+					else
+					{
+						switch (CharacterState.LatestTriggerMatched.Value.Trigger)
+						{
+							//Hmmm, so if the second one is listening for unknown, this will say it can't find it
+
+							case Triggers.SpeechHeard:
+								//send in unknown
+								if (SendManagedResponseEvent(new TriggerData(CharacterState.LatestTriggerMatched.Value.Text, ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard), false))
+								{
+									StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Retrigger | {CharacterState.LatestTriggerMatched.Value.Trigger} - Unknown - {CharacterState.LatestTriggerMatched.Value.Text}.");
+									return;
+								}
+								break;
+						}
+					}
+				}
+
+
+				if (hasAudio)
+				{
+					lock (_lockListenerData)
+					{
+						string audioFile = "";
+						if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile))
+						{
+							audioFile = SpeechManager.GetLocaleName(animationRequest.AudioFile);
+						}
+						else
+						{
+							audioFile = SpeechManager.GetLocaleName(animationRequest.SpeakFileName);
+						}
+
+						_audioAnimationCallbacks.Remove(audioFile);
+						_audioAnimationCallbacks.Add(audioFile);
 					}
 				}
 
@@ -2292,6 +2447,15 @@ namespace MistyCharacter
 					});
 				}
 
+				if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
+				{
+					_ = Task.Run(() =>
+					{
+						//Run the animation script
+						AnimationManager.RunAnimationScript(animationRequest.AnimationScript);
+					});
+				}
+
 				//If animation is shorter than audio, there could be some oddities in conversations... should we still allow it?
 				int interactionTimeoutMs = newInteraction.InteractionFailedTimeout <= 0 ? 100 : (int)(newInteraction.InteractionFailedTimeout*1000);				
 				_noInteractionTimer = new Timer(CommunicationBreakdownCallback, UniqueAnimationId, interactionTimeoutMs, Timeout.Infinite);
@@ -2336,7 +2500,10 @@ namespace MistyCharacter
 		{
 			if(timerData != null && ((TimerTriggerData)timerData)?.AnimationId == UniqueAnimationId)
 			{
-				SendManagedResponseEvent(new TriggerData(DateTime.Now.ToString(), "", Triggers.Timeout));			
+				if(!SendManagedResponseEvent(new TriggerData(DateTime.Now.ToString(), "", Triggers.Timeout)))
+				{
+					SendManagedResponseEvent(new TriggerData(DateTime.Now.ToString(), "", Triggers.Timeout), true);
+				}
 			}
 		}
 
@@ -2344,7 +2511,10 @@ namespace MistyCharacter
 		{
 			if (timerData != null && ((TimerTriggerData)timerData)?.AnimationId == UniqueAnimationId)
 			{
-				SendManagedResponseEvent(new TriggerData(DateTime.Now.ToString(), "", Triggers.Timer));
+				if(!SendManagedResponseEvent(new TriggerData(DateTime.Now.ToString(), "", Triggers.Timer)))
+				{
+					SendManagedResponseEvent(new TriggerData(DateTime.Now.ToString(), "", Triggers.Timer), true);
+				}
 			}
 		}
 

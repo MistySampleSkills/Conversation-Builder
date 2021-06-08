@@ -52,5 +52,8 @@ namespace ConversationBuilder.DataModels
 
 		[Display(Name = "Optional text to display (beta)")]		
 		public string ScreenText { get; set; }		
+
+		[Display(Name = "Comparison Priority (beta)")]		
+		public int Priority { get; set; } = 1;
 	}
 }

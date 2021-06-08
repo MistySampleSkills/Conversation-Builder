@@ -142,7 +142,8 @@ namespace MistyCharacter
 				if (!_parameters.ContainsKey("ConversationGroup"))
 				{
 					string endpoint = GetStringField(_parameters, "Endpoint");
-                    if(string.IsNullOrWhiteSpace(endpoint))
+					endpoint = endpoint.Trim();
+					if (string.IsNullOrWhiteSpace(endpoint))
                     {
                         _misty.SkillLogger.Log("No endpoint provided, using last saved conversation.");
                     }
@@ -155,7 +156,7 @@ namespace MistyCharacter
 						string accountId = GetStringField(_parameters, "AccountId") ?? null;
 						string key = GetStringField(_parameters, "Key") ?? null;
 
-						endpoint += $"?id={conversationGroupId}&accountid={accountId}&key={key}";
+						endpoint += $"?id={conversationGroupId.Trim()}&accountid={accountId}&key={key}";
 
 						IDictionary<string, object> requestedParameters = new Dictionary<string, object>();
 						try
@@ -321,6 +322,8 @@ namespace MistyCharacter
 				CharacterParameters.Character = GetStringField(_parameters, ConversationConstants.Character) ?? "basic";
 				CharacterParameters.RequestedCharacter = GetStringField(_parameters, ConversationConstants.Character) ?? "";
 
+				CharacterParameters.UsePreSpeech = GetBoolField(_parameters, ConversationConstants.UsePreSpeech) ?? false;
+
 				if (CharacterParameters.Character != CharacterParameters.RequestedCharacter)
 				{
 					string msg = $"Requested character '{CharacterParameters.RequestedCharacter}' could not be found, using {CharacterParameters.Character}.";
@@ -389,12 +392,6 @@ namespace MistyCharacter
 					}
 				}
 				
-				//TODO Remove override once 820 service functionality is avalable in production nuget
-				speechConfiguration.SpeechRecognitionService = speechConfiguration.SpeechRecognitionService == "AzureOnboard" ? "Azure" : speechConfiguration.SpeechRecognitionService;
-				speechConfiguration.SpeechRecognitionService = speechConfiguration.SpeechRecognitionService == "GoogleOnboard" ? "Google" : speechConfiguration.SpeechRecognitionService;
-				speechConfiguration.TextToSpeechService = speechConfiguration.TextToSpeechService == "AzureOnboard" ? "Azure" : speechConfiguration.TextToSpeechService;
-				speechConfiguration.TextToSpeechService = speechConfiguration.TextToSpeechService == "GoogleOnboard" ? "Google" : speechConfiguration.TextToSpeechService;
-
 				CharacterParameters.SpeechRecognitionService = speechConfiguration.SpeechRecognitionService ?? "Azure";
 				CharacterParameters.TextToSpeechService = speechConfiguration.TextToSpeechService ?? "Misty";
 
@@ -403,7 +400,6 @@ namespace MistyCharacter
 				CharacterParameters.LogInteraction = GetBoolField(_parameters, ConversationConstants.LogInteraction) ?? true;
 				CharacterParameters.StreamInteraction = GetBoolField(_parameters, ConversationConstants.StreamInteraction) ?? false;
 				CharacterParameters.FacePitchOffset = GetIntField(_parameters, ConversationConstants.FacePitchOffset) ?? 0;
-
 				CharacterParameters.ObjectDetectionDebounce = GetIntField(_parameters, ConversationConstants.FollowFaceDebounce) ?? 0.333;
 				
 				try

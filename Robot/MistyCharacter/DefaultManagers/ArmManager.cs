@@ -229,7 +229,6 @@ namespace MistyCharacter
 			}
 		}
 		
-		
 		private bool _isDisposed = false;
 
 		protected void Dispose(bool disposing)

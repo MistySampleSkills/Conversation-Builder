@@ -102,6 +102,9 @@
 			<th>
 				Weight
 			</th>
+			<th>
+				Retrigger
+			</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -119,6 +122,7 @@
 			</td>
 			<td>
 			</td>
+			<td></td>	
 			<td></td>	
 			<td></td>	
 			<td>
@@ -184,6 +188,12 @@
 						<span asp-validation-for="Weight" class="text-danger"></span>
 					</div>
 					</td>
+					<td>
+					<div class="form-group">
+						<input asp-for="Retrigger" class="form-control" />
+						<span asp-validation-for="Retrigger" class="text-danger"></span>
+					</div>
+					</td>
 					
 					<td>
 					<div class="form-group">
@@ -226,6 +236,7 @@
 				<td>@intentAction.InterruptCurrentAction</td>
 				<td>@animationName</td>
 				<td>@intentAction.Weight</td>
+				<td>@intentAction.Retrigger</td>
 				<td>@Html.ActionLink("Remove", "RemoveResponseHandler", new { conversationId = @Model.Id, selectedTriggerId = @item.Id, removedTriggerAction = @intentAction.Id})</td>
 				</tr>
 			}

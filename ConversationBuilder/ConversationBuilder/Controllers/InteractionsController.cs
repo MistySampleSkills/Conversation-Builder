@@ -407,6 +407,7 @@ namespace ConversationBuilder.Controllers
 
 					triggerActionOption.InterruptCurrentAction = model.InterruptCurrentAction;
 					triggerActionOption.Weight = model.Weight;
+					triggerActionOption.Retrigger = model.Retrigger;
 					
 					if(!string.IsNullOrWhiteSpace(model.Animation) && model.Animation != "Default Animation")
 					{
@@ -620,6 +621,7 @@ namespace ConversationBuilder.Controllers
 								triggerActionOption.GoToConversation = option.GoToConversation;
 								triggerActionOption.GoToInteraction = option.GoToInteraction;
 								triggerActionOption.Weight = option.Weight;
+								triggerActionOption.Retrigger = option.Retrigger;
 								triggerActionOption.InterruptCurrentAction = option.InterruptCurrentAction;
 
 								optionList.Add(triggerActionOption);						

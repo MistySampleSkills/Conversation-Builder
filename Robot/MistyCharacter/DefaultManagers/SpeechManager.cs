@@ -80,6 +80,7 @@ namespace MistyCharacter
 		private bool _keyPhraseOn;
 		private bool _processingAudioCallback;
 		private SemaphoreSlim _keyPhraseOnSlim = new SemaphoreSlim(1, 1);
+		private Random _random = new Random();
 
 		private int _volume;
 		public int Volume
@@ -121,7 +122,7 @@ namespace MistyCharacter
 		public void SetListenTimingMs(int listenTimeout, int silenceTimeout)
 		{
 			_listenTimeout = listenTimeout >= 1000 ? listenTimeout : 1000;
-			_listenTimeout = silenceTimeout >= 1000 ? listenTimeout : 1000;			
+			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;			
 		}
 
 		public override async Task<bool> Initialize()
@@ -288,7 +289,7 @@ namespace MistyCharacter
 						}
 					}
 
-					Robot.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
+					Robot.Speak(currentAnimation.Speak, CharacterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
 				}
@@ -464,7 +465,7 @@ namespace MistyCharacter
 			{
 				_recording = false;
 				Robot.SkillLogger.Log($"Audio Callback. Name: {audioComplete.Name}");
-				if(_processingAudioCallback)
+				if(_processingAudioCallback || audioComplete.Name.StartsWith("prespeech"))
 				{
 					return;
 				}
@@ -480,12 +481,11 @@ namespace MistyCharacter
 						Robot.SkillLogger.Log("Capture Speech called.");
 						switch (CharacterParameters.SpeechRecognitionService)
 						{
-							//Add back in once new nuget released... foreshadowing ;)
 							case "GoogleOnboard":
-								//_ = Robot.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
+								_ = Robot.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
 								return;
 							case "AzureOnboard":
-								//_ = Robot.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
+								_ = Robot.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.Region, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
 								return;
 							default:
 								_ = Robot.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
@@ -501,7 +501,10 @@ namespace MistyCharacter
 			finally
 			{
 				_processingAudioCallback = false;
-				StartedListening?.Invoke(this, DateTime.Now);
+				if(_recording)
+				{
+					StartedListening?.Invoke(this, DateTime.Now);
+				}
 			}
 		}
 
@@ -583,7 +586,12 @@ namespace MistyCharacter
 				}
 
 				SpeechToTextData description = new SpeechToTextData();
-				
+
+				if(CharacterParameters.UsePreSpeech)
+				{
+					Robot.Speak(CharacterParameters.PreSpeechPhrases[_random.Next(0, CharacterParameters.PreSpeechPhrases.Count)], false, "prespeech", null);
+				}
+
 				switch (CharacterParameters.SpeechRecognitionService)
 				{
 					case "Google":
@@ -607,7 +615,7 @@ namespace MistyCharacter
 				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
 			}
 		}
-
+		
 		private void HandleSpeechResponse(string text)
 		{
 			if (!string.IsNullOrWhiteSpace(text))

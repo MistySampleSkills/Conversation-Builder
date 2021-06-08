@@ -130,6 +130,9 @@ Entry Point: @Model.ConversationEntryPoint
 			<th>
 				Weight
 			</th>
+			<th>
+				Retrigger
+			</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -147,6 +150,7 @@ Entry Point: @Model.ConversationEntryPoint
 			</td>
 			<td>
 				
+			<td></td>	
 			</td>
 			<td></td>	
 			<td></td>	
@@ -216,6 +220,12 @@ Entry Point: @Model.ConversationEntryPoint
 						<span asp-validation-for="Weight" class="text-danger"></span>
 					</div>
 					</td>
+					<td>
+					<div class="form-group">
+						<input asp-for="Retrigger" class="form-control" />
+						<span asp-validation-for="Retrigger" class="text-danger"></span>
+					</div>
+					</td>
 					
 					<td>
 					<div class="form-group">
@@ -258,6 +268,7 @@ Entry Point: @Model.ConversationEntryPoint
 				<td>@intentAction.InterruptCurrentAction</td>
 				<td>@animationName</td>
 				<td>@intentAction.Weight</td>
+				<td>@intentAction.Retrigger</td>
 				<td>@Html.ActionLink("Remove", "RemoveResponseHandler", new { interactionId = @Model.Id, conversationId = @Model.ConversationId, selectedTriggerId = @item.Id, removedTriggerAction = @intentAction.Id})</td>
 				</tr>
 			}

@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using MistyRobotics.Common.Types;
+using System.Collections.Generic;
 
 namespace Conversation.Common
 {
@@ -45,8 +46,7 @@ namespace Conversation.Common
 
 		public string TextToSpeechService { get; set; } = "Misty";
 		public string SpeechRecognitionService { get; set; } = "Azure";
-
-
+		
 		public int FacePitchOffset { get; set; }
 		public double ObjectDetectionDebounce { get; set; } = 0.333;
 
@@ -75,5 +75,16 @@ namespace Conversation.Common
 		public string Payload { get; set; }
 
 		public string InitializationError { get; set; }
+
+		public bool UsePreSpeech { get; set; }
+		
+		public IList<string> PreSpeechPhrases { get; set; } = new List<string>
+		{
+			"Let me see what I can find.",
+			"Hold on one moment.",
+			"I think I can help with that.",
+			"Let me see...",
+			"Let me find that.",
+		};
     }
 }

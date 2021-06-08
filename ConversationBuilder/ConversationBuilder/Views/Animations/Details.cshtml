@@ -115,6 +115,12 @@
 		@if(ViewBag.ShowBetaItems)
 		{
 			<dt>
+				@Html.DisplayNameFor(model => model.AnimationScript)
+			</dt>
+			<dd>
+				<textarea style="width:100%" readonly=true>@Html.DisplayFor(model => model.AnimationScript)</textarea>						
+			</dd>
+			<dt>
 				@Html.DisplayNameFor(model => model.ManagementAccess)
 			</dt>
 			<dd>

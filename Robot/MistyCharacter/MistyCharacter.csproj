@@ -122,11 +122,13 @@
   <ItemGroup>
     <Compile Include="Character\TimerTriggerData.cs" />
     <Compile Include="Character\ListeningState.cs" />
+    <Compile Include="DefaultManagers\AnimationManager.cs" />
     <Compile Include="DefaultManagers\IEmotionManager.cs" />
     <Compile Include="DefaultManagers\EmotionManager.cs" />
     <Compile Include="Character\ManagerConfiguration.cs" />
     <Compile Include="Character\IBaseCharacter.cs" />
     <Compile Include="DefaultManagers\BaseManager.cs" />
+    <Compile Include="DefaultManagers\IAnimationManager.cs" />
     <Compile Include="DefaultManagers\ISpeechManager.cs" />
     <Compile Include="DefaultManagers\IArmManager.cs" />
     <Compile Include="DefaultManagers\IHeadManager.cs" />
@@ -149,10 +151,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.214-beta</Version>
+      <Version>0.9.229-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.214-beta</Version>
+      <Version>0.9.229-beta</Version>
     </PackageReference>
     <PackageReference Include="System.IO">
       <Version>4.3.0</Version>

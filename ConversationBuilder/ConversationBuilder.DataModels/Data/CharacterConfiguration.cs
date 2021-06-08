@@ -79,8 +79,11 @@ namespace ConversationBuilder.DataModels
 		public bool ShowListeningIndicator { get; set; } = true;
 
 		[Display(Name = "Starting volume of Misty")]
-		public int? StartVolume { get; set; }
-		
+		public int? StartVolume { get; set; }		
+
+		[Display(Name = "Use prespeech while processing audio")]
+		public bool UsePreSpeech { get; set; }
+
 		[Display(Name = "Only change if using a different, home-made Misty Conversation Skill")]
 		public string Skill { get; set; }
 		

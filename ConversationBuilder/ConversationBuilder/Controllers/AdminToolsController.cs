@@ -165,7 +165,6 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 
-
 					foreach(string triggerId in conversation.Triggers)
 					{
 						if(!skillConversation.Triggers.Any(x => x.Id == triggerId))
@@ -292,6 +291,7 @@ namespace ConversationBuilder.Controllers
 						skillParameters.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
 						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;						
 						skillParameters.StartVolume = characterConfiguration.StartVolume;
+						skillParameters.UsePreSpeech = characterConfiguration.UsePreSpeech;
 						skillParameters.Payload = characterConfiguration.Payload;
 						skillParameters.LogLevel = characterConfiguration.LogLevel;
 						skillParameters.ObjectDetectionDebounce = characterConfiguration.ObjectDetectionDebounce;
@@ -527,6 +527,7 @@ namespace ConversationBuilder.Controllers
 									newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
 									newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
 								}
+								newTriggerActionOption.Retrigger = triggerActionOption.Retrigger;
 								newTriggerActionOption.Weight = triggerActionOption.Weight;
 								newTriggerActionOption.Id = Guid.NewGuid().ToString();
 								newTriggerOptions.Add(newTriggerActionOption);
@@ -565,6 +566,7 @@ namespace ConversationBuilder.Controllers
 							}
 							
 							newTriggerActionOption.Weight = triggerActionOption.Weight;
+							newTriggerActionOption.Retrigger = triggerActionOption.Retrigger;
 							newTriggerActionOption.Id = Guid.NewGuid().ToString();
 							newTriggerOptions.Add(newTriggerActionOption);
 						}

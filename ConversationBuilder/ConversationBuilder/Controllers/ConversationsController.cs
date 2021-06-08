@@ -599,6 +599,7 @@ namespace ConversationBuilder.Controllers
 
 					triggerActionOption.InterruptCurrentAction = model.InterruptCurrentAction;
 					triggerActionOption.Weight = model.Weight;
+					triggerActionOption.Retrigger = model.Retrigger;
 					if(!string.IsNullOrWhiteSpace(model.Animation) && model.Animation != "Default Animation")
 					{
 						conversation.InteractionAnimations.Remove(triggerActionOption.Id);

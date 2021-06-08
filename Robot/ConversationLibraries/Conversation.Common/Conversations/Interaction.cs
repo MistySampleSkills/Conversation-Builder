@@ -60,6 +60,8 @@ namespace Conversation.Common
 
 		public IList<string> SkillMessages { get; set; } = new List<string>();
 
+		public bool Retrigger { get; set; }
+
 		public Interaction() { }
 
 		public Interaction(Interaction state)

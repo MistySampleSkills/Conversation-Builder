@@ -337,6 +337,7 @@ namespace ConversationBuilder.Controllers
 					genericData.Value = model.Value;
 					genericData.Image = model.Image;
 					genericData.ScreenText = model.ScreenText;
+					genericData.Priority = model.Priority;
 					genericDataStore.Data.Remove(genericData.Id);
 					genericDataStore.Data.Add(genericData.Id, genericData);
 					await _cosmosDbService.ContainerManager.GenericDataStoreData.UpdateAsync(genericDataStore);
@@ -381,6 +382,7 @@ namespace ConversationBuilder.Controllers
 						genericDataViewModel.Value = genericData.Value.Value;
 						genericDataViewModel.Image = genericData.Value.Image;
 						genericDataViewModel.ScreenText = genericData.Value.ScreenText;
+						genericDataViewModel.Priority = genericData.Value.Priority;
 
 						return View(genericDataViewModel);
 					}
@@ -417,6 +419,7 @@ namespace ConversationBuilder.Controllers
 						genericData.Value.Value = model.Value;
 						genericData.Value.Image = model.Image;
 						genericData.Value.ScreenText = model.ScreenText;
+						genericData.Value.Priority = model.Priority;
 						genericDataStore.Data.Remove(model.DataId);
 						genericDataStore.Data.Add(model.DataId, genericData.Value);
 						await _cosmosDbService.ContainerManager.GenericDataStoreData.UpdateAsync(genericDataStore);

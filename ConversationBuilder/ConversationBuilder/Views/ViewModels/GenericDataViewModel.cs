@@ -34,6 +34,7 @@ namespace ConversationBuilder.ViewModels
 		public string Value { get; set; }
 		public string Image { get; set; }
 		public string ScreenText { get; set; }
+		public int Priority { get; set; } = 1;
 		public bool TreatKeyAsUtterance { get; set; }
 		
 		[Display(Name = "Word Match Rule")]

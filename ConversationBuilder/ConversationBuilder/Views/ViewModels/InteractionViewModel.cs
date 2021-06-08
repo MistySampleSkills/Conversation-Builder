@@ -40,6 +40,7 @@ namespace ConversationBuilder.ViewModels
 		public string ConversationId { get; set; }
 
 		public int Weight { get; set; } = 1;
+		public bool Retrigger { get; set; }
 		public string GoToConversation { get; set; }
 		public string GoToInteraction { get; set; }
 		public bool InterruptCurrentAction { get; set; } = true;

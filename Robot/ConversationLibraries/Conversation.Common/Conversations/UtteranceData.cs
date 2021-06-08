@@ -48,5 +48,7 @@ namespace Conversation.Common
 		public string WordMatchRule { get; set; } = "Exact";
 
 		public IList<string> Utterances { get; set; } = new List<string>();
+
+		public int Priority { get; set; } = 1;
 	}
 }

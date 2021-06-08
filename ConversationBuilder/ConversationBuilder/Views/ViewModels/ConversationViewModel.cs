@@ -48,6 +48,7 @@ namespace ConversationBuilder.ViewModels
 		public IList<SkillMessage> SkillMessages { get; set; } = new List<SkillMessage>();
 
 		public int Weight { get; set; } = 1;
+		public bool Retrigger { get; set; }
 		public string GoToConversation { get; set; }
 		public string GoToInteraction { get; set; }
 		public bool InterruptCurrentAction { get; set; } = true;
