@@ -37,7 +37,7 @@
 		</main>
 	</div>
 	<div class="container">
-		@if(User.IsInRole(Roles.SiteAdministrator) || User.IsInRole(Roles.Customer))
+		@if(User.IsInRole(ConversationBuilder.Roles.SiteAdministrator) || User.IsInRole(ConversationBuilder.Roles.Customer))
 		{
 			<div class="container" style = "text-align: center;">
 				<nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
