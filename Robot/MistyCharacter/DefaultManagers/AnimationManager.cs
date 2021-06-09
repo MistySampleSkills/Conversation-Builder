@@ -76,8 +76,7 @@ namespace MistyCharacter
 
 		public override Task<bool> Initialize()
 		{
-			//Reusing this layer for these, should we?
-			_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+			_ = Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
 			{
 				Wrap = true,
 				Visible = true,
@@ -307,7 +306,27 @@ namespace MistyCharacter
 							break;
 						case "RESET-LAYERS":
 							//RESET-LAYERS;
-							_ = Robot.SetDisplaySettingsAsync(true);							
+							_userTextLayerVisible = false;
+							_ = Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
+							{
+								Deleted = true
+							});
+
+							_videoLayerVisible = false;
+							_ = Robot.SetVideoDisplaySettingsAsync("VideoLayer", new VideoSettings
+							{
+								Deleted = true
+							});
+							_userImageLayerVisible = false;
+							_ = Robot.SetImageDisplaySettingsAsync("UserImageLayer", new ImageSettings
+							{
+								Deleted = true
+							});
+							_webLayerVisible = false;
+							_ = Robot.SetWebViewDisplaySettingsAsync("WebLayer", new WebViewSettings
+							{
+								Deleted = true
+							});
 							break;
 						case "RESET-EYES":
 							//HALT;
@@ -351,7 +370,7 @@ namespace MistyCharacter
 							//TEXT:text to display;
 							if (!_userTextLayerVisible)
 							{
-								await Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+								await Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
 								{
 									Wrap = true,
 									Visible = true,
@@ -368,12 +387,13 @@ namespace MistyCharacter
 								});
 								_userTextLayerVisible = true;
 							}
-							_ = Robot.DisplayTextAsync(Convert.ToString(commandData[1]), "UserDataText");
+							_ = Robot.DisplayTextAsync(Convert.ToString(commandData[1]), "AnimationText");
 							break;
 						case "CLEAR-TEXT":
 							//CLEAR-TEXT;
 							_userTextLayerVisible = false;
-							_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+
+							_ = Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
 							{
 								Deleted = true
 							});
