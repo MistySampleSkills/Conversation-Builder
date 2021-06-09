@@ -90,12 +90,7 @@ namespace ConversationBuilder.Areas.Identity.Pages.Account
 					ApplicationUser user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
 					IList<string> roles = await _signInManager.UserManager.GetRolesAsync(user);
 					
-					if (roles.Contains(Roles.SiteAdministrator))
-					{
-						return RedirectToAction("AdminPage", "Home");
-					}
-
-					if (roles.Contains(Roles.Customer))
+					if (roles.Contains(Roles.SiteAdministrator) || roles.Contains(Roles.Customer))
 					{
 						return RedirectToAction("UserPage", "Home");
 					}

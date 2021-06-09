@@ -8,23 +8,7 @@
 
 <div class="text-center">
 	
-	@if(User.Identity.IsAuthenticated)
-	{
-		if (User.IsInRole("MistyAdministrator"))
-		{
-			<h6><a class="nav-link" asp-area="" asp-controller="Home" asp-action="AdminPage">Build Conversations</a></h6>
-		}
-		else if(User.IsInRole("Customer"))
-		{
-			<h6><a class="nav-link" asp-area="" asp-controller="Home" asp-action="UserPage">Build Conversations</a></h6>
-		}
-
-		if (User.IsInRole("MistyAdministrator"))
-		{
-			<h6><a class="nav-link" asp-area="identity" asp-page="/account/register">Register a New User</a></h6>
-		}
-	}
-	else
+	@if(!User.Identity.IsAuthenticated)
 	{
 		<p>
 			The conversation builder lets you create interesting conversations for the Misty II robot that utilize most of her sensors and inputs, without writing code.
@@ -34,7 +18,4 @@
 		</p>
 	}
 
-</div>
-<div class="text-center">
-	Version 0.0.2
 </div>
