@@ -73,6 +73,7 @@ namespace Conversation.Common
 			HeadActionDelay = state.HeadActionDelay;
 			LEDActionDelay = state.LEDActionDelay;
 			AnimationScript = state.AnimationScript;
+			RepeatScript = state.RepeatScript;
 			LEDTransitionAction = state.LEDTransitionAction;
 		}
 
@@ -232,6 +233,11 @@ namespace Conversation.Common
 		/// <summary>
 		/// Optional animation script
 		/// </summary>
-		public string AnimationScript { get; set; }		
+		public string AnimationScript { get; set; }
+
+		/// <summary>
+		/// If the script should be repeated until the interation is over
+		/// </summary>
+		public bool RepeatScript { get; set; }		
 	}
 }

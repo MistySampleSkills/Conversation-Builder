@@ -80,7 +80,6 @@ namespace MistyCharacter
 
 		private const int MaxProcessingVoiceWaits = 30;
 		private const int DelayBetweenProcessingVoiceChecksMs = 100;
-		private const string MissingInlineData = "Missing";
 		private int _currentProcessingVoiceWaits = 0;
 		private KeyValuePair<DateTime, TriggerData> _latestTriggerMatchData = new KeyValuePair<DateTime, TriggerData>();
 		private IList<string> _skillsToStop = new List<string>();
@@ -113,7 +112,6 @@ namespace MistyCharacter
 		private IEmotionManager EmotionManager;
 		private ISpeechIntentManager SpeechIntentManager;
 		private IList<string> LiveTriggers = new List<string>();
-		private IList<string> _replacementValues = new List<string> { "face", "filter", "qrcode", "arcode", "text", "intent", "time", "robotname" };		
 		private ConversationGroup _conversationGroup = new ConversationGroup();
 		private IList<GenericDataStore> _genericDataStores  = new List<GenericDataStore>();
 		private AnimationRequest _currentAnimation;
@@ -157,6 +155,9 @@ namespace MistyCharacter
 				Logger = Misty.SkillLogger;
 				PopulateEmotionDefaults();
 
+				_conversationGroup = CharacterParameters.ConversationGroup;
+				_genericDataStores = CharacterParameters.ConversationGroup.GenericDataStores;
+				
 				Misty.UnregisterAllEvents(null);
                 await Task.Delay(1000);
 				/*Misty.UnregisterEvent("BumpSensor", null);
@@ -182,11 +183,11 @@ namespace MistyCharacter
 
 				SpeechIntentManager = _managerConfiguration?.SpeechIntentManager ?? new SpeechIntentManager(Misty, CharacterParameters.ConversationGroup.IntentUtterances, CharacterParameters.ConversationGroup.GenericDataStores);
 				
-				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Misty, OriginalParameters, CharacterParameters, SpeechIntentManager);
+				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Misty, OriginalParameters, CharacterParameters, CharacterState, StateAtAnimationStart, PreviousState, _genericDataStores, SpeechIntentManager);
 				await SpeechManager.Initialize();
 
-				//TODO Pass in?
-				AnimationManager = new AnimationManager(Misty, OriginalParameters, CharacterParameters);
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Misty, OriginalParameters, CharacterParameters, SpeechManager);
+				await AnimationManager.Initialize();
 
 				IgnoreEvents();
 
@@ -462,10 +463,7 @@ namespace MistyCharacter
 			{
 				Misty.SetDefaultVolume((int)CharacterParameters.StartVolume, null);
 			}
-
-			_conversationGroup = CharacterParameters.ConversationGroup;
-			_genericDataStores = CharacterParameters.ConversationGroup.GenericDataStores;
-
+			
 			string startConversation = conversationId ?? _conversationGroup.StartupConversation;
 			_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == startConversation);
 
@@ -594,242 +592,8 @@ namespace MistyCharacter
 			}
 		}
 		
-		private void TryToPersonalizeDataOne(string text, out string newText, out string newImage)
-		{
-			newText = text;
-			newImage = null;
-			if (CharacterState == null)
-			{
-				return;
-			}
-
-			if (newText.Contains("{{") && newText.Contains("}}"))
-			{
-				int replacementItemCount = Regex.Matches(newText, "{{").Count;
-
-				//Loop through all inline text groups
-				for (int i = 0; i < replacementItemCount; i++)
-				{
-
-					int indexOpen = 0;
-					int indexClose = 0;
-					string replacementTextList = "";
-
-					indexOpen = newText.IndexOf("{{");
-					indexClose = newText.IndexOf("}}");
-
-					if (indexClose - 2 <= indexOpen)
-					{
-						continue;
-					}
-
-					replacementTextList = newText.Substring(indexOpen + 2, (indexClose - 2) - indexOpen);
-
-					if (string.IsNullOrWhiteSpace(replacementTextList))
-					{
-						continue;
-					}
-					
-					IList<string> optionList = new List<string>();					
-					if (!replacementTextList.Contains("||"))
-					{
-						optionList.Add(replacementTextList);
-					}
-
-					if (replacementTextList.Contains("||"))
-					{
-						string[] dataArray = replacementTextList.ToLower().Trim().Split("||");
-						if (dataArray != null && dataArray.Count() > 0)
-						{
-							foreach (string option in dataArray)
-							{
-								if (!optionList.Contains(option))
-								{
-									optionList.Add(option);
-								}
-							}
-						}
-					}
-                    
-					//Loop through the options to find match
-					int optionCount = 0;
-					bool textChanged = false;
-					foreach (string option in optionList)
-					{
-						if(textChanged)
-						{
-							break;
-						}
-
-						//Extract the replacement Name/Key pair if it exists - old format vs new format
-						int nameKeyIndexOpen = option.IndexOf("[[");
-						int nameKeyIndexClose = option.IndexOf("]]");
-
-						string replacementNameKey;
-						if (nameKeyIndexClose - 2 <= nameKeyIndexOpen)
-						{
-							replacementNameKey = option;
-						}
-						else
-						{
-							replacementNameKey = option.Substring(nameKeyIndexOpen + 2, (nameKeyIndexClose - 2) - nameKeyIndexOpen);
-						}
-
-						if (string.IsNullOrWhiteSpace(replacementNameKey))
-						{
-							continue;
-						}
-						
-						optionCount++;
-						//does it contain a :
-						if (replacementNameKey.Contains(":"))
-						{
-							string[] dataArray = replacementNameKey.ToLower().Trim().Split(":");
-							if (dataArray != null && dataArray.Count() == 2)
-							{
-								string userDataName = dataArray[0].Trim().ToLower();
-
-								if (_replacementValues != null &&
-								   _replacementValues.Count() > 0 &&
-								   _replacementValues.Contains(userDataName))
-								{
-									//if it is a built in item in the FIRST position, it replaces the NAME with the lookup item
-									//{ { face: team} }
-									//looks up as { { Brad: team} }
-									//where face/ Brad is the Name of the user data and team is the key
-
-									string newData = GetBuiltInReplacement(userDataName);
-									if (newData == MissingInlineData)
-									{
-										newData = userDataName;
-									}
-									
-									//try looking up the user data by name now
-									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.ToLower().Trim());
-									if (dataStore != null)
-									{
-										//found a match for the name, now look up the key 2nd position
-
-										string dataKey = dataArray[1].Trim().ToLower();
-										string newKey = dataKey;
-										
-										if (_replacementValues.Contains(dataKey))
-										{
-											newKey = GetBuiltInReplacement(dataKey);
-										}
-										if (newKey == MissingInlineData)
-										{
-											newKey = dataKey;
-										}
-
-										if (dataKey == "random")
-										{
-											//grab a random user data item from this group
-											//{{Greetings:random}}
-											GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
-											if(genericDataStore != null)
-											{
-												int dataCount = genericDataStore.Data.Count();
-												int randomItem = _random.Next(optionCount, dataCount);
-												GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
-												if (genericData?.Value != null)
-												{
-													textChanged = true;
-													ProcessUserDataUpdates(genericData, out newImage);
-													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-												}
-											}
-										}
-										else if (dataStore.TreatKeyAsUtterance)
-										{
-											GenericData genericData = SpeechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-											}
-										}
-										else
-										{
-											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key.ToLower().Trim() == newKey.ToLower().Trim());
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
-											}
-										}
-									}
-								}
-								else
-								{
-									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == userDataName);
-									if (dataStore != null)
-									{
-										//found a match for the name, now look up the key 2nd position
-										string dataKey = dataArray[1].Trim().ToLower();
-										string newKey = dataKey;
-										if (_replacementValues.Contains(dataKey))
-										{
-											newKey = GetBuiltInReplacement(dataKey);
-										}
-										if (newKey == MissingInlineData)
-										{
-											newKey = dataKey;
-										}
-
-
-										if (dataStore.TreatKeyAsUtterance)
-										{
-											GenericData genericData = SpeechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-											}
-										}
-										else
-										{
-											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key == newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
-											}
-										}
-									}
-								}
-							}
-						}
-						else
-						{
-							//no, then check for a replacement value
-							if (_replacementValues != null &&
-							_replacementValues.Count() > 0 &&
-							_replacementValues.Contains(replacementNameKey))
-							{
-								string newData = GetBuiltInReplacement(replacementNameKey);
-								if (newData != MissingInlineData)
-								{
-									textChanged = true;
-									newText = newText.Replace("{{" + replacementTextList + "}}", newData);
-								}
-							}
-							else
-							{
-								//replace it with this option as is
-								textChanged = true;
-								newText = newText.Replace("{{" + replacementTextList + "}}", replacementNameKey);
-							}
-						}
-					}
-				}
-			}
-		}
-
+		
+/*
 		private void TryToPersonalizeDataTwo(string text, out string newText, out string newImage)
 		{
 			newText = text;
@@ -1026,81 +790,8 @@ namespace MistyCharacter
 					}
 				}
 			}
-		}
+		}*/
 
-		public void ProcessUserDataUpdates(GenericData genericData, out string newImage)
-		{
-			newImage = null;
-			if (!string.IsNullOrWhiteSpace(genericData.ScreenText))
-			{
-				_ = Misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
-				{
-					Wrap = true,
-					Visible = true,
-					Weight = 25,
-					Size = 30,
-					HorizontalAlignment = ImageHorizontalAlignment.Center,
-					VerticalAlignment = ImageVerticalAlignment.Bottom,
-					Red = 255,
-					Green = 255,
-					Blue = 255,
-					PlaceOnTop = true,
-					FontFamily = "Courier New",
-					Height = 50
-				});
-
-				Misty.DisplayText(genericData.ScreenText, "UserDataText", null);
-			}
-
-			if (!string.IsNullOrWhiteSpace(genericData.Image))
-			{
-				Misty.DisplayImage(genericData.Image, null, genericData.Image.Contains("http:") || genericData.Image.Contains("https:"), null);
-				newImage = genericData.Image;
-			}
-		}
-
-		private string GetBuiltInReplacement(string option)
-		{
-			string newData = "";
-			switch (option.ToLower().Trim())
-			{
-				case "face":
-					newData = CharacterState.LastKnownFaceSeen ??
-						CharacterState.FaceRecognitionEvent?.Label ??
-						StateAtAnimationStart?.FaceRecognitionEvent?.Label ??
-						PreviousState?.FaceRecognitionEvent?.Label ?? MissingInlineData;
-					break;
-				case "qrcode":
-					newData = CharacterState.QrTagEvent?.DecodedInfo ??
-						StateAtAnimationStart?.QrTagEvent?.DecodedInfo ??
-						PreviousState?.QrTagEvent?.DecodedInfo ?? MissingInlineData;
-					break;
-				case "arcode":
-					newData = CharacterState.ArTagEvent?.TagId.ToString() ??
-						StateAtAnimationStart?.ArTagEvent?.TagId.ToString() ??
-						PreviousState?.ArTagEvent?.TagId.ToString() ?? MissingInlineData;
-					break;
-				case "text":
-					newData = CharacterState.SpeechResponseEvent?.Text ??
-						StateAtAnimationStart?.SpeechResponseEvent?.Text ??
-						PreviousState?.SpeechResponseEvent?.Text ?? MissingInlineData;
-					break;
-				case "intent":
-					newData = CharacterState.SpeechResponseEvent?.TriggerFilter ??
-						StateAtAnimationStart?.SpeechResponseEvent?.TriggerFilter ??
-						PreviousState?.SpeechResponseEvent?.TriggerFilter ?? MissingInlineData;
-					break;
-				case "robotname":
-					newData = _conversationGroup.RobotName ?? "Misty";
-					break;
-				case "time":
-					newData = TimeManager.GetTimeObject().SpokenTime ?? MissingInlineData;
-					break;
-			}
-			return newData;
-
-		}
-		
 		private void LocomotionManager_DriveEncoderEvent(object sender, IDriveEncoderEvent e)
 		{
 			if (CharacterState == null)
@@ -2366,7 +2057,7 @@ namespace MistyCharacter
 				{
 					hasAudio = true;
 
-					TryToPersonalizeDataOne(animationRequest.Speak, out string newText, out string newImage);
+					SpeechManager.TryToPersonalizeData(animationRequest.Speak, animationRequest, newInteraction, out string newText, out string newImage);
 					animationRequest.Speak = newText;
 					animationRequest.ImageFile = string.IsNullOrWhiteSpace(newImage) ? animationRequest.ImageFile : newImage;
 
@@ -2451,8 +2142,7 @@ namespace MistyCharacter
 				{
 					_ = Task.Run(() =>
 					{
-						//Run the animation script
-						AnimationManager.RunAnimationScript(animationRequest.AnimationScript);
+						AnimationManager.RunAnimationScript(animationRequest.AnimationScript, animationRequest.RepeatScript, _currentAnimation, CurrentInteraction);
 					});
 				}
 

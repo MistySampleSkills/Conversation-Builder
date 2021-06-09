@@ -131,10 +131,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.229-beta</Version>
+      <Version>0.9.239-alpha</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.229-beta</Version>
+      <Version>0.9.239-alpha</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

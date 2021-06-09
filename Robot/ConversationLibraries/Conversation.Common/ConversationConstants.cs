@@ -124,5 +124,6 @@ namespace Conversation.Common
 		public readonly static string LargePrint = "LargePrint";
 		public readonly static string ShowListeningIndicator = "ShowListeningIndicator";
 		public readonly static string UsePreSpeech = "UsePreSpeech";
+		public readonly static string PreSpeechPhrases = "PreSpeechPhrases";
 	}
 }

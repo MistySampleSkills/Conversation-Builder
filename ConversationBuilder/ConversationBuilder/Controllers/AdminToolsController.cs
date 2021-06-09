@@ -292,6 +292,7 @@ namespace ConversationBuilder.Controllers
 						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;						
 						skillParameters.StartVolume = characterConfiguration.StartVolume;
 						skillParameters.UsePreSpeech = characterConfiguration.UsePreSpeech;
+						skillParameters.PreSpeechPhrases = characterConfiguration.PreSpeechPhrases;
 						skillParameters.Payload = characterConfiguration.Payload;
 						skillParameters.LogLevel = characterConfiguration.LogLevel;
 						skillParameters.ObjectDetectionDebounce = characterConfiguration.ObjectDetectionDebounce;

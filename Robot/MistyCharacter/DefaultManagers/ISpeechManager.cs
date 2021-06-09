@@ -47,6 +47,8 @@ namespace MistyCharacter
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
 		void AbortListening(string audioName);
 
+		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText, out string newImage);
+
 		event EventHandler<string> StartedSpeaking;
 		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
 		event EventHandler<DateTime> StartedListening;

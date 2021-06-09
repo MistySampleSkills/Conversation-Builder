@@ -219,13 +219,12 @@ namespace ConversationBuilder.DataModels
 		[JsonProperty(PropertyName = "LEDTransitionAction")]
 		public string LEDTransitionAction{ get; set; }	
 
-		[Display(Name = "AnimationScript")]
+		[Display(Name = "Animation Script")]
 		[JsonProperty(PropertyName = "AnimationScript")]
-		/// <summary>
-		/// Show this image file
-		/// If not populated, displays image for emotion
-		/// </summary>
 		public string AnimationScript { get; set; }
+
+		[Display(Name = "Repeat Animation Script")]		
+		public bool RepeatScript { get; set; }	
 
 		[Display(Name = "Created")]
 		[JsonProperty(PropertyName = "Created")]

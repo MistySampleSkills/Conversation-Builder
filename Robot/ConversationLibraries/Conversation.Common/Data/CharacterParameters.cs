@@ -77,14 +77,7 @@ namespace Conversation.Common
 		public string InitializationError { get; set; }
 
 		public bool UsePreSpeech { get; set; }
-		
-		public IList<string> PreSpeechPhrases { get; set; } = new List<string>
-		{
-			"Let me see what I can find.",
-			"Hold on one moment.",
-			"I think I can help with that.",
-			"Let me see...",
-			"Let me find that.",
-		};
-    }
+
+		public IList<string> PreSpeechPhrases { get; set; } = new List<string>();
+	}
 }

@@ -324,6 +324,38 @@ namespace MistyCharacter
 
 				CharacterParameters.UsePreSpeech = GetBoolField(_parameters, ConversationConstants.UsePreSpeech) ?? false;
 
+				//Parse string into prespeech by semicolon
+				try
+				{
+					string preSpeechString = GetStringField(_parameters, ConversationConstants.PreSpeechPhrases) ?? "";
+					if (!string.IsNullOrWhiteSpace(preSpeechString))
+					{
+						string[] preSpeechStrings = preSpeechString.Replace(Environment.NewLine, "").Split(";");
+						if (preSpeechStrings != null && preSpeechStrings.Length > 0)
+						{
+							CharacterParameters.PreSpeechPhrases = preSpeechStrings.ToList();
+						}
+					}
+				}
+				catch
+				{
+					_misty.SkillLogger.Log($"Failed parsing pre-speech phrases, using defaults.");
+				}
+				finally
+				{
+					if(CharacterParameters.PreSpeechPhrases == null || CharacterParameters.PreSpeechPhrases.Count == 0)
+					{
+						CharacterParameters.PreSpeechPhrases = new List<string>
+						{
+							"One second please.",
+							"Hold on one moment.",
+							"I think I can help with that.",
+							"Let me see.",
+							"Let me find that.",
+						};
+					}
+				}
+
 				if (CharacterParameters.Character != CharacterParameters.RequestedCharacter)
 				{
 					string msg = $"Requested character '{CharacterParameters.RequestedCharacter}' could not be found, using {CharacterParameters.Character}.";
@@ -615,3 +647,4 @@ namespace MistyCharacter
 
 	}
 }
+ 

@@ -118,7 +118,13 @@
 				@Html.DisplayNameFor(model => model.AnimationScript)
 			</dt>
 			<dd>
-				<textarea style="width:100%" readonly=true>@Html.DisplayFor(model => model.AnimationScript)</textarea>						
+				<textarea style="width:100%" rows=5 readonly=true>@Html.DisplayFor(model => model.AnimationScript)</textarea>						
+			</dd>
+			<dt>
+				@Html.DisplayNameFor(model => model.RepeatScript)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.RepeatScript)
 			</dd>
 			<dt>
 				@Html.DisplayNameFor(model => model.ManagementAccess)

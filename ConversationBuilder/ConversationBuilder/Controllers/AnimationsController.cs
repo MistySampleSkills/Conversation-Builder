@@ -264,6 +264,7 @@ namespace ConversationBuilder.Controllers
 					loadedAnimation.OverrideVoice   = animation.OverrideVoice;
 					loadedAnimation.SpeakingStyle  = animation.SpeakingStyle;
 					loadedAnimation.AnimationScript = animation.AnimationScript;
+					loadedAnimation.RepeatScript = animation.RepeatScript;
 					loadedAnimation.Updated = DateTimeOffset.UtcNow;
 					
 					await _cosmosDbService.ContainerManager.AnimationData.UpdateAsync(loadedAnimation);

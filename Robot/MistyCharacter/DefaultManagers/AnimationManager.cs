@@ -32,11 +32,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Conversation.Common;
 using MistyRobotics.Common.Types;
-using MistyRobotics.SDK.Messengers;
-using System.Threading.Tasks;
 using MistyRobotics.SDK;
+using MistyRobotics.SDK.Messengers;
 
 namespace MistyCharacter
 {
@@ -47,8 +47,18 @@ namespace MistyCharacter
 
 	public class AnimationManager : BaseManager, IAnimationManager
 	{
-		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
-		: base(misty, parameters, characterParameters) {}
+		public event EventHandler<DateTime> CompletedAnimationScript;
+		public event EventHandler<DateTime> StartedAnimationScript;
+		public event EventHandler<DateTime> AnimationScriptActionsComplete;
+		public event EventHandler<DateTime> RepeatingAnimationScript;
+
+		public event EventHandler<DateTime> UserScriptEvent;
+
+		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager)
+		: base(misty, parameters, characterParameters)
+		{
+			_speechManager = speechManager;
+		}
 
 		private bool _userTextLayerVisible;
 		private bool _webLayerVisible;
@@ -59,6 +69,10 @@ namespace MistyCharacter
 		private bool _runningAnimation;
 		private object _animationsCanceledLock = new object();
 		private IList<string> _completionCommands = new List<string>();
+		private ISpeechManager _speechManager;
+		private AnimationRequest _currentAnimation;
+		private Interaction _currentInteraction;
+		private bool _repeatScript;
 
 		public override Task<bool> Initialize()
 		{
@@ -97,7 +111,7 @@ namespace MistyCharacter
 			}
 		}
 
-		public async Task<bool> RunAnimationScript(string animationScript, bool stopOnFailedCommand = false)
+		public async Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, bool stopOnFailedCommand = false)
 		{
 			try
 			{
@@ -108,6 +122,10 @@ namespace MistyCharacter
 				_runningAnimation = true;
 				if (!string.IsNullOrWhiteSpace(animationScript))
 				{
+					StartedAnimationScript?.Invoke(this, DateTime.Now);
+					_repeatScript = repeatScript;
+					_currentAnimation = currentAnimation;
+					_currentInteraction = currentInteraction;
 					_animationsCanceled = false;
 					animationScript = animationScript.Trim().Replace(Environment.NewLine, "");
 					string[] commands = animationScript.Split(";");
@@ -121,29 +139,46 @@ namespace MistyCharacter
 						}
 						//deal with repeat command!
 					}
-					
-					foreach (string runCommand in commands)
+
+					bool firstLoop = true;
+					do
 					{
-						if (_animationsCanceled)
+						if ((!firstLoop && !_repeatScript) || _animationsCanceled)
 						{
-							lock (_animationsCanceledLock)
-							{
-								_animationsCanceled = false;
-							}
 							return false;
 						}
-						else
+						else if (!firstLoop && _repeatScript)
 						{
-							CommandResult commandResult = await ProcessCommand(runCommand, false);
-							if(!commandResult.Success && stopOnFailedCommand)
+							RepeatingAnimationScript?.Invoke(this, DateTime.Now);
+						}
+
+						foreach (string runCommand in commands)
+						{
+							if (_animationsCanceled)
 							{
-								_runningAnimation = false;
+								lock (_animationsCanceledLock)
+								{
+									_animationsCanceled = false;
+								}
 								return false;
 							}
+							else
+							{
+								CommandResult commandResult = await ProcessCommand(runCommand, false);
+								if (!commandResult.Success && stopOnFailedCommand)
+								{
+									_runningAnimation = false;
+									return false;
+								}
 
+							}
 						}
+						AnimationScriptActionsComplete?.Invoke(this, DateTime.Now);
+						firstLoop = false;
 					}
+					while (_repeatScript && !_animationsCanceled && _runningAnimation);
 					
+					CompletedAnimationScript?.Invoke(this, DateTime.Now);
 					return true;
 				}
 				return false;
@@ -181,35 +216,35 @@ namespace MistyCharacter
 					action = action.Replace("#", "").Trim();
 
 					//split the rest based on action, hacky wacky for now
+					//deal with inconsistencies for arms and head, so all scripting is ms
 					switch (action.ToUpper())
 					{
 						case "ARMS":
 							//ARMS:leftDegrees,rightDegrees,timeMs;
 							string[] data = commandData[1].Split(",");
-							_ =  Robot.MoveArmsAsync(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), null, null, Convert.ToInt32(data[2]), AngularUnit.Degrees);
+							_ =  Robot.MoveArmsAsync(Convert.ToDouble(data[0]), Convert.ToDouble(data[1]), null, null, Convert.ToDouble(data[2]) / 1000, AngularUnit.Degrees);
 							break;
 						case "ARM-V":
 							//ARMS-V:leftDegrees,rightDegrees,velocity;
 							string[] armVData = commandData[1].Split(",");
 							RobotArm selectedVArm = armVData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-							_ = Robot.MoveArmAsync(Convert.ToInt32(armVData[1]), selectedVArm, Convert.ToInt32(armVData[2]), null, AngularUnit.Degrees);
+							_ = Robot.MoveArmAsync(Convert.ToDouble(armVData[1]), selectedVArm, Convert.ToDouble(armVData[2]), null, AngularUnit.Degrees);
 							break;
 						case "ARM":
 							//ARM:left/right,degrees,timeMs;
 							string[] armData = commandData[1].Split(",");
 							RobotArm selectedArm = armData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-							_ = Robot.MoveArmAsync(Convert.ToInt32(armData[1]), selectedArm, null, Convert.ToInt32(armData[2]), AngularUnit.Degrees);
+							_ = Robot.MoveArmAsync(Convert.ToDouble(armData[1]), selectedArm, null, Convert.ToDouble(armData[2]) / 1000, AngularUnit.Degrees);
 							break;
 						case "HEAD": 
-							//TODO THIS IS NOT WORKING, VEEEEERRRRY SLOW!
 							//HEAD:pitch,roll,yaw,timeMs;
 							string[] headData = commandData[1].Split(",");
-							_ = Robot.MoveHeadAsync(Convert.ToInt32(headData[0]), Convert.ToInt32(headData[1]), Convert.ToInt32(headData[2]), null, Convert.ToInt32(headData[3]), AngularUnit.Degrees);
+							_ = Robot.MoveHeadAsync(Convert.ToDouble(headData[0]), Convert.ToDouble(headData[1]), Convert.ToDouble(headData[2]), null, Convert.ToDouble(headData[3]) / 1000, AngularUnit.Degrees);
 							break;
 						case "HEAD-V":
 							//HEAD:pitch,roll,yaw,velocity;
 							string[] headVData = commandData[1].Split(",");
-							_ = Robot.MoveHeadAsync(Convert.ToInt32(headVData[0]), Convert.ToInt32(headVData[1]), Convert.ToInt32(headVData[2]), Convert.ToInt32(headVData[3]), null, AngularUnit.Degrees);
+							_ = Robot.MoveHeadAsync(Convert.ToDouble(headVData[0]), Convert.ToDouble(headVData[1]), Convert.ToDouble(headVData[2]), Convert.ToDouble(headVData[3]), null, AngularUnit.Degrees);
 							break;
 						case "PAUSE":
 							//PAUSE:timeMs;
@@ -242,10 +277,21 @@ namespace MistyCharacter
 							}
 							break;
 						case "PICTURE":
-							//PICTURE:image-name;
+							//PICTURE:image-name,true/false(display on screen),width,height;
 
 							//TODO Fit on screen!!
-							_ = await Robot.TakePictureAsync(Convert.ToString(commandData[1]), false, true, true, null, null);
+							string[] pictureData = commandData[1].Split(",");
+							double? width = null;
+							double? height = null;
+							if (pictureData.Length >= 3)
+							{
+								width = Convert.ToDouble(pictureData[2].Trim());
+							}
+							if (pictureData.Length >= 4)
+							{
+								height = Convert.ToDouble(pictureData[3].Trim());
+							}
+							_ = await Robot.TakePictureAsync(Convert.ToString(pictureData[0].Trim()), false, Convert.ToBoolean(pictureData[1]), true, width, height);
 							break;
 						case "SERIAL":
 							//SERIAL:write to the serial stream;
@@ -332,19 +378,13 @@ namespace MistyCharacter
 								Deleted = true
 							});
 							break;
-						case "SPEAK":
-							//SPEAK:What to say;
-
-							//TODO Make this use the speech system....
-
-							_ = Robot.SpeakAsync(Convert.ToString(commandData[1]), false, "ignore");
-							break;
+						
 						case "AUDIO":
 							//AUDIO:audio-file-name.wav;
 							_ = Robot.PlayAudioAsync(Convert.ToString(commandData[1]), null);
 							break;
 						case "VIDEO":
-							//VIDEO:videoName;
+							//VIDEO:videoName.mp4;
 							if (!_videoLayerVisible)
 							{
 								await Robot.SetVideoDisplaySettingsAsync("VideoLayer", new VideoSettings
@@ -357,7 +397,7 @@ namespace MistyCharacter
 							_ = Robot.DisplayVideoAsync(Convert.ToString(commandData[1]), "VideoLayer", false);
 							break;
 						case "VIDEO-URL":
-							//VIDEO-URL:videoName;
+							//VIDEO-URL:http://www.site.com/videoName.mpeg;
 
 							if (!_videoLayerVisible)
 							{
@@ -379,7 +419,7 @@ namespace MistyCharacter
 							});
 							break;
 						case "WEB":
-							//WEB:http://site-name;
+							//WEB:http://site-name.com;
 							if (!_webLayerVisible)
 							{
 								await Robot.SetWebViewDisplaySettingsAsync("WebLayer", new WebViewSettings
@@ -433,9 +473,67 @@ namespace MistyCharacter
 							}
 							break;
 
-						//TODO
-						case "REPEAT":
-							//REPEAT;
+						case "SPEAK":
+							//SPEAK:What to say;
+							string toTalkyTalk = Convert.ToString(commandData[1]);
+
+							if (_speechManager.TryToPersonalizeData(toTalkyTalk, _currentAnimation, _currentInteraction, out string newText, out _))
+							{
+								_currentAnimation.Speak = newText;
+							}
+							else
+							{
+								_currentAnimation.Speak = toTalkyTalk;
+							}
+
+							_currentInteraction.StartListening = false;
+							_speechManager.Speak(_currentAnimation, _currentInteraction);
+							//_ = Robot.SpeakAsync(), false, "ignore");
+							break;
+
+						case "SPEAK-AND-LISTEN":
+							//SPEAK-AND-LISTEN:What to say;
+							string toTalkyTalk2 = Convert.ToString(commandData[1]);
+
+							if (_speechManager.TryToPersonalizeData(toTalkyTalk2, _currentAnimation, _currentInteraction, out string newText2, out _))
+							{
+								_currentAnimation.Speak = newText2;
+							}
+							else
+							{
+								_currentAnimation.Speak = toTalkyTalk2;
+							}
+							_currentInteraction.StartListening = true;
+							_speechManager.Speak(_currentAnimation, _currentInteraction);
+							//_ = Robot.SpeakAsync(), false, "ignore");
+							break;
+						case "START-LISTEN":
+							//START-LISTEN;
+							switch (CharacterParameters.SpeechRecognitionService)
+							{
+								case "GoogleOnboard":
+									_ = Robot.CaptureSpeechGoogleAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
+									break;
+								case "AzureOnboard":
+									_ = Robot.CaptureSpeechAzureAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.Region, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
+									break;
+								default:
+									_ = Robot.CaptureSpeechAsync(false, true, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), null);
+									break;
+							}
+							break;
+						case "AllOW-KEYPHRASE":
+							//AllOW-KEYPHRASE;
+							_currentInteraction.AllowKeyPhraseRecognition = true;
+							_ = await _speechManager.UpdateKeyPhraseRecognition(_currentInteraction, false);
+							break;
+						case "CANCEL-KEYPHRASE":
+							//CANCEL-KEYPHRASE;
+							_currentInteraction.AllowKeyPhraseRecognition = false;
+							_ = await _speechManager.UpdateKeyPhraseRecognition(_currentInteraction, true);
+							break;
+							
+						//TODO LOCO
 						case "DRIVE":
 							//DRIVE:distanceMeters,timeMs,reverse;
 						case "HEADING":
