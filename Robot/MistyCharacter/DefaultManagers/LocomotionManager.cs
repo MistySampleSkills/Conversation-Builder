@@ -148,11 +148,10 @@ namespace MistyCharacter
 		public event EventHandler<LocomotionAction> CompletedLocomotionAction;
 		public event EventHandler<LocomotionAction> LocomotionFailed;
 		public event EventHandler<LocomotionAction> LocomotionStopped;
+
 		public event EventHandler<LocomotionAction> ReachedDestination;
-
-		public event EventHandler<LocomotionAction> ReachedWaypoint;
-		public event EventHandler<LocomotionAction> TryingNewWaypointRoute;
-
+		public event EventHandler<LocomotionAction> PassingWaypoint;
+		public event EventHandler<LocomotionAction> TryingNewRoute;
 		public event EventHandler<IIMUEvent> IMUEvent;
 
 		public LocomotionState CurrentLocomotionState { get; private set; } = new LocomotionState();
@@ -197,7 +196,7 @@ namespace MistyCharacter
 						break;
 					case LocomotionCommand.Turn:
 						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
-						await Turn((double)locomotionAction.Degrees, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
+						await Turn((double)locomotionAction.Degrees, (int)locomotionAction.TimeMs);
 						break;
 					case LocomotionCommand.Arc:
 						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
@@ -222,9 +221,9 @@ namespace MistyCharacter
 			}
 		}
 
-		private async Task Turn(double degrees, int timeMs, bool reverse = false)
+		private async Task Turn(double degrees, int timeMs)
 		{
-			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, 0, timeMs, reverse);
+			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, 0, timeMs, false);
 		}
 
 		private async Task Arc(double degrees, double radius, int timeMs, bool reverse = false)

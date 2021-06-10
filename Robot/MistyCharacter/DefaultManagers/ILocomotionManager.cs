@@ -45,10 +45,10 @@ namespace MistyCharacter
 
 		event EventHandler<LocomotionAction> StartedLocomotionAction;
 		event EventHandler<LocomotionAction> CompletedLocomotionAction;
-		event EventHandler<LocomotionAction> ReachedWaypoint;
+		event EventHandler<LocomotionAction> PassingWaypoint;
 		event EventHandler<LocomotionAction> ReachedDestination;
 		event EventHandler<LocomotionAction> LocomotionFailed;
-		event EventHandler<LocomotionAction> TryingNewWaypointRoute;
+		event EventHandler<LocomotionAction> TryingNewRoute;
 
 		void Dispose();
 	}

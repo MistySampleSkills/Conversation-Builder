@@ -57,5 +57,7 @@ namespace Conversation.Common
 
         public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
         public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
-    }
+
+		public string RobotGroup { get; set; }
+	}
 }

@@ -36,13 +36,22 @@ using System.Threading.Tasks;
 using Conversation.Common;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
+using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
+using SkillTools.Web;
 
 namespace MistyCharacter
 {
 	public class CommandResult
 	{
 		public bool Success { get; set; }
+	}
+
+	public class EventPayload
+	{
+		public string Trigger { get; set; }
+		public string Filter { get; set; }
+		public string Text { get; set; }
 	}
 
 	public class AnimationManager : BaseManager, IAnimationManager
@@ -97,7 +106,25 @@ namespace MistyCharacter
 
 			return Task.FromResult(true);
 		}
-		
+
+		public async void SendCrossRobotEvent(string robotIpString, string trigger, string triggerFilter, string text, bool includeSelf=true)
+		{
+			string[] ips = robotIpString.Replace(Environment.NewLine, "").Split(";");
+			foreach (string ip in ips)
+			{
+				WebMessenger webMessenger = new WebMessenger();
+				
+				IDictionary<string, object> payload = new Dictionary<string, object>();
+				payload.Add("Trigger", trigger);
+				payload.Add("Filter", triggerFilter);
+				payload.Add("Text", text);
+
+				UserEvent userEvent = new UserEvent("ExternalEvent", "ConversationBuilder", EventOriginator.Skill, payload, -1);
+				string data = Newtonsoft.Json.JsonConvert.SerializeObject(userEvent);
+				WebMessengerData response = await webMessenger.PostRequest(ip, data, "application/json");
+			}
+		}
+
 		public void StopRunningAnimationScripts()
 		{
 			lock(_animationsCanceledLock)
@@ -566,14 +593,16 @@ namespace MistyCharacter
 							break;
 
 						case "TURN":
-							//TURN:degrees,timeMs,true/false(reverse);
+							//TURN:degrees,timeMs,left/right;
 							string[] turnData = commandData[1].Split(",");
+							string direction = Convert.ToString(turnData[2]);
+							direction = direction.ToLower();
 							_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
 							{
 								Action = LocomotionCommand.Turn,
-								Degrees = Convert.ToDouble(turnData[0]),
+								Degrees = direction.StartsWith("r") ? -Math.Abs(Convert.ToDouble(turnData[0])) : Math.Abs(Convert.ToDouble(turnData[0])),
 								TimeMs = Convert.ToInt32(turnData[1]),
-								Reverse = Convert.ToBoolean(turnData[3])
+								Reverse = false
 							});
 							break;
 
