@@ -92,9 +92,6 @@ namespace MistyCharacter
 		private CharacterState _stateAtAnimationStart;
 		private CharacterState _previousState;
 
-		private bool _usePreSpeech = true;
-		private string[] _preSpeechOverrides;
-
 		private int _volume;
 		public int Volume
 		{
@@ -198,23 +195,6 @@ namespace MistyCharacter
 			LogEventDetails(Robot.RegisterTextToSpeechCompleteEvent(TTSCallback, 100, true, "CharacterTTSComplete", null));
 					
 			return true;
-		}
-
-		public void SetPreSpeechOptions(bool usePreSpeech, string preSpeechString)
-		{
-			_usePreSpeech = usePreSpeech;
-			if (!string.IsNullOrWhiteSpace(preSpeechString))
-			{
-				string[] preSpeechStrings = preSpeechString.Replace(Environment.NewLine, "").Split(";");
-				if (preSpeechStrings != null && preSpeechStrings.Length > 0)
-				{
-					_preSpeechOverrides = preSpeechStrings;
-				}
-			}
-			else
-			{
-				_preSpeechOverrides = null;
-			}
 		}
 
 		/// <summary>
@@ -573,6 +553,7 @@ namespace MistyCharacter
 			try
 			{
 				_recording = false;
+				StoppedListening?.Invoke(this, voiceRecordEvent);
 				if (_listenAborted)
 				{
 					Robot.SkillLogger.Log("Voice Record Callback called while processing, ignoring.");
@@ -580,10 +561,7 @@ namespace MistyCharacter
 				}
 
 				Robot.SkillLogger.Log("Voice Record Callback - processing");
-
-				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
-
-				StoppedListening?.Invoke(this, voiceRecordEvent);
+				
 				if (voiceRecordEvent.ErrorCode == 3)
 				{
 					Robot.SkillLogger.Log("Didn't hear anything or can no longer translate. Error 3");
@@ -622,17 +600,8 @@ namespace MistyCharacter
 
 				SpeechToTextData description = new SpeechToTextData();
 
-				if(CharacterParameters.UsePreSpeech && _usePreSpeech)
-				{
-					if(_preSpeechOverrides != null && _preSpeechOverrides.Length > 0)
-					{
-						Robot.Speak(_preSpeechOverrides[_random.Next(0, _preSpeechOverrides.Length)], false, "prespeech", null);
-					}
-					else if(CharacterParameters.PreSpeechPhrases.Count > 0)
-					{
-						Robot.Speak(CharacterParameters.PreSpeechPhrases[_random.Next(0, CharacterParameters.PreSpeechPhrases.Count)], false, "prespeech", null);
-					}
-				}
+				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
+				
 
 				switch (CharacterParameters.SpeechRecognitionService)
 				{

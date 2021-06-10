@@ -45,9 +45,7 @@ namespace MistyCharacter
 		string GetLocaleName(string name);
 		void SetListenTimingMs(int listenTimeout, int silenceTimeout);
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
-		void AbortListening(string audioName);
-		void SetPreSpeechOptions(bool usePreSpeech, string preSpeechString);
-
+		void AbortListening(string audioName);		
 		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText, out string newImage);
 
 		event EventHandler<string> StartedSpeaking;

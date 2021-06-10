@@ -362,7 +362,37 @@ namespace MistyCharacter
 		{
 			StartedProcessingVoice?.Invoke(this, e);            
             _processingVoice = true;
-            ManageListeningDisplay(ListeningState.ProcessingSpeech);
+			
+			if (CharacterParameters.UsePreSpeech && CurrentInteraction.UsePreSpeech)
+			{
+				string[] preSpeechOverrides = null;
+				if (!string.IsNullOrWhiteSpace(CurrentInteraction.PreSpeechPhrases))
+				{
+					string[] preSpeechStrings = CurrentInteraction.PreSpeechPhrases.Replace(Environment.NewLine, "").Split(";");
+					if (preSpeechStrings != null && preSpeechStrings.Length > 0)
+					{
+						preSpeechOverrides = preSpeechStrings;
+					}
+				}
+
+				if((preSpeechOverrides == null || preSpeechOverrides.Length == 0) && 
+					(CharacterParameters.PreSpeechPhrases != null && CharacterParameters.PreSpeechPhrases.Count > 0))
+				{
+					preSpeechOverrides = CharacterParameters.PreSpeechPhrases.ToArray();
+				}
+
+				if (preSpeechOverrides != null && preSpeechOverrides.Length > 0)
+				{
+					AnimationRequest animation = new AnimationRequest(_currentAnimation);
+					string selectedPhrase = preSpeechOverrides[_random.Next(0, preSpeechOverrides.Length-1)];
+					
+					SpeechManager.TryToPersonalizeData(selectedPhrase, animation, CurrentInteraction, out string newText, out string newImage);
+					animation.Speak = newText;					
+					SpeechManager.Speak(animation, CurrentInteraction);					
+				}
+			}
+
+			ManageListeningDisplay(ListeningState.ProcessingSpeech);
         }
 
 		private void SpeechManager_CompletedProcessingVoice(object sender, IVoiceRecordEvent e)
@@ -475,7 +505,6 @@ namespace MistyCharacter
 
 			string startInteraction = interactionId ?? _currentConversationData.StartupInteraction;
 			CurrentInteraction = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == startInteraction);
-			SpeechManager.SetPreSpeechOptions(CurrentInteraction.UsePreSpeech, CurrentInteraction.PreSpeechPhrases);
 			
 			if (CurrentInteraction != null)
 			{
@@ -1777,7 +1806,6 @@ namespace MistyCharacter
 				});
 
 				CurrentInteraction = new Interaction(interaction);
-				SpeechManager.SetPreSpeechOptions(CurrentInteraction.UsePreSpeech, CurrentInteraction.PreSpeechPhrases);
 
 				StateAtAnimationStart = new CharacterState(CharacterState);
 				InteractionStarted?.Invoke(this, DateTime.Now);
