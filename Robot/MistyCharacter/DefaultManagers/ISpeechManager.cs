@@ -46,6 +46,7 @@ namespace MistyCharacter
 		void SetListenTimingMs(int listenTimeout, int silenceTimeout);
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
 		void AbortListening(string audioName);
+		void SetPreSpeechOptions(bool usePreSpeech, string preSpeechString);
 
 		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText, out string newImage);
 

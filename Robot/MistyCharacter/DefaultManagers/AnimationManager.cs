@@ -54,12 +54,6 @@ namespace MistyCharacter
 
 		public event EventHandler<DateTime> UserScriptEvent;
 
-		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager)
-		: base(misty, parameters, characterParameters)
-		{
-			_speechManager = speechManager;
-		}
-
 		private bool _userTextLayerVisible;
 		private bool _webLayerVisible;
 		private bool _videoLayerVisible;
@@ -70,9 +64,17 @@ namespace MistyCharacter
 		private object _animationsCanceledLock = new object();
 		private IList<string> _completionCommands = new List<string>();
 		private ISpeechManager _speechManager;
+		private ILocomotionManager _locomotionManager;
 		private AnimationRequest _currentAnimation;
 		private Interaction _currentInteraction;
 		private bool _repeatScript;
+
+		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, ILocomotionManager locomotionManager)
+		: base(misty, parameters, characterParameters)
+		{
+			_speechManager = speechManager;
+			_locomotionManager = locomotionManager;
+		}
 
 		public override Task<bool> Initialize()
 		{
@@ -298,38 +300,25 @@ namespace MistyCharacter
 							break;							
 						case "STOP":
 							//STOP;
-							await Robot.StopAsync();
+							// TODO Needs to stop entire locomotion recipe/ script, or separate command?
+							await _locomotionManager.HandleLocomotionAction(new LocomotionAction
+							{
+								Action = LocomotionCommand.Stop
+							});
 							break;
 						case "HALT":
 							//HALT;
-							await Robot.HaltAsync(new List<MotorMask> { MotorMask.AllMotors });
+							await _locomotionManager.HandleLocomotionAction(new LocomotionAction
+							{
+								Action = LocomotionCommand.Halt
+							});
 							break;
 						case "RESET-LAYERS":
 							//RESET-LAYERS;
-							_userTextLayerVisible = false;
-							_ = Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
-							{
-								Deleted = true
-							});
-
-							_videoLayerVisible = false;
-							_ = Robot.SetVideoDisplaySettingsAsync("VideoLayer", new VideoSettings
-							{
-								Deleted = true
-							});
-							_userImageLayerVisible = false;
-							_ = Robot.SetImageDisplaySettingsAsync("UserImageLayer", new ImageSettings
-							{
-								Deleted = true
-							});
-							_webLayerVisible = false;
-							_ = Robot.SetWebViewDisplaySettingsAsync("WebLayer", new WebViewSettings
-							{
-								Deleted = true
-							});
+							ClearAnimationDisplayLayers();
 							break;
 						case "RESET-EYES":
-							//HALT;
+							//RESET-EYES;
 							_ = Robot.SetBlinkSettingsAsync(true, null, null, null, null, null);
 							break;
 						case "IMAGE":
@@ -508,7 +497,6 @@ namespace MistyCharacter
 
 							_currentInteraction.StartListening = false;
 							_speechManager.Speak(_currentAnimation, _currentInteraction);
-							//_ = Robot.SpeakAsync(), false, "ignore");
 							break;
 
 						case "SPEAK-AND-LISTEN":
@@ -525,7 +513,6 @@ namespace MistyCharacter
 							}
 							_currentInteraction.StartListening = true;
 							_speechManager.Speak(_currentAnimation, _currentInteraction);
-							//_ = Robot.SpeakAsync(), false, "ignore");
 							break;
 						case "START-LISTEN":
 							//START-LISTEN;
@@ -553,15 +540,63 @@ namespace MistyCharacter
 							_ = await _speechManager.UpdateKeyPhraseRecognition(_currentInteraction, true);
 							break;
 							
-						//TODO LOCO
 						case "DRIVE":
-							//DRIVE:distanceMeters,timeMs,reverse;
+							//DRIVE:distanceMeters,timeMs,true/false(reverse);
+							string[] driveData = commandData[1].Split(",");
+							_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+							{
+								Action = LocomotionCommand.Drive,
+								DistanceMeters = Convert.ToDouble(driveData[0]),
+								TimeMs = Convert.ToInt32(driveData[1]),
+								Reverse = Convert.ToBoolean(driveData[2])
+							});
+							break;
+
 						case "HEADING":
-							//HEADING:heading,distanceMeters,timeMs,reverse;
+							//HEADING:heading,distanceMeters,timeMs,true/false(reverse);
+							string[] headingData = commandData[1].Split(",");
+							_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+							{
+								Action = LocomotionCommand.Heading,
+								Heading = Convert.ToDouble(headingData[0]),
+								DistanceMeters = Convert.ToDouble(headingData[1]),
+								TimeMs = Convert.ToInt32(headingData[2]),
+								Reverse = Convert.ToBoolean(headingData[3])
+							});
+							break;
+
 						case "TURN":
-							//TURN:+/-degrees,timeMs;
+							//TURN:degrees,timeMs,true/false(reverse);
+							string[] turnData = commandData[1].Split(",");
+							_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+							{
+								Action = LocomotionCommand.Turn,
+								Degrees = Convert.ToDouble(turnData[0]),
+								TimeMs = Convert.ToInt32(turnData[1]),
+								Reverse = Convert.ToBoolean(turnData[3])
+							});
+							break;
+
 						case "ARC":
-							//ARC:heading,radius,timeMs,reverse;
+							//ARC:heading,radius,timeMs,true/false(reverse);
+							string[] arcData = commandData[1].Split(",");
+							_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+							{
+								Action = LocomotionCommand.Arc,
+								Heading = Convert.ToDouble(arcData[0]),
+								Radius = Convert.ToInt32(arcData[1]),
+								TimeMs = Convert.ToInt32(arcData[2]),
+								Reverse = Convert.ToBoolean(arcData[3])
+							});
+							break;
+
+						//TODO
+						case "RETURN":
+							//RETURN; //return to last known waypoint
+						case "WANDER":
+							//WANDER:leftAreaMeters,upAreaMeters,rightAreaMeters,downAreaMeters,velocity;
+						case "WAYPOINT":
+							//WAYPOINT:waypoint-name,velocity?;
 						default:
 							Robot.SkillLogger.Log($"Unknown command in animation script. {action?.ToUpper()}");
 							return new CommandResult { Success = false };
@@ -573,7 +608,6 @@ namespace MistyCharacter
 					Robot.SkillLogger.Log("Missing command in animation script.");
 					return new CommandResult { Success = false };
 				}
-				
 			}
 			catch (Exception ex)
 			{
@@ -581,6 +615,31 @@ namespace MistyCharacter
 				Robot.SkillLogger.Log($"Failed processing animation script. {command}", ex);
 				return new CommandResult { Success = false };
 			}
+		}
+
+		private void ClearAnimationDisplayLayers()
+		{
+			_userTextLayerVisible = false;
+			_ = Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
+			{
+				Deleted = true
+			});
+
+			_videoLayerVisible = false;
+			_ = Robot.SetVideoDisplaySettingsAsync("VideoLayer", new VideoSettings
+			{
+				Deleted = true
+			});
+			_userImageLayerVisible = false;
+			_ = Robot.SetImageDisplaySettingsAsync("UserImageLayer", new ImageSettings
+			{
+				Deleted = true
+			});
+			_webLayerVisible = false;
+			_ = Robot.SetWebViewDisplaySettingsAsync("WebLayer", new WebViewSettings
+			{
+				Deleted = true
+			});
 		}
 
 		private bool _isDisposed = false;
@@ -591,10 +650,7 @@ namespace MistyCharacter
 			{
 				if (disposing)
 				{
-					Robot.SetVideoDisplaySettings("VideoLayer", new VideoSettings
-					{
-						Deleted = true
-					}, null);
+					ClearAnimationDisplayLayers();
 				}
 
 				_isDisposed = true;

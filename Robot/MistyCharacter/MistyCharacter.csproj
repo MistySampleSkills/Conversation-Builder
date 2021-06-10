@@ -123,12 +123,14 @@
     <Compile Include="Character\TimerTriggerData.cs" />
     <Compile Include="Character\ListeningState.cs" />
     <Compile Include="DefaultManagers\AnimationManager.cs" />
+    <Compile Include="DefaultManagers\LocomotionManager.cs" />
     <Compile Include="DefaultManagers\IEmotionManager.cs" />
     <Compile Include="DefaultManagers\EmotionManager.cs" />
     <Compile Include="Character\ManagerConfiguration.cs" />
     <Compile Include="Character\IBaseCharacter.cs" />
     <Compile Include="DefaultManagers\BaseManager.cs" />
     <Compile Include="DefaultManagers\IAnimationManager.cs" />
+    <Compile Include="DefaultManagers\ILocomotionManager.cs" />
     <Compile Include="DefaultManagers\ISpeechManager.cs" />
     <Compile Include="DefaultManagers\IArmManager.cs" />
     <Compile Include="DefaultManagers\IHeadManager.cs" />

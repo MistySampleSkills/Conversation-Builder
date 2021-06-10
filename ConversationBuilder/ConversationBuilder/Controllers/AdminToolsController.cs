@@ -237,6 +237,8 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 								skillInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
 								skillInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;								
+								skillInteraction.UsePreSpeech = interaction.UsePreSpeech;					
+								skillInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;					
 								skillInteraction.SilenceTimeout = interaction.SilenceTimeout;
 								skillInteraction.ListenTimeout = interaction.ListenTimeout;
 								skillInteraction.Animation = interaction.Animation;
@@ -264,7 +266,7 @@ namespace ConversationBuilder.Controllers
 					}
 					
 					skillConversation.ConversationDeparturePoints = conversation.ConversationDeparturePoints;
-					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;
+					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;					
 					skillConversation.InteractionAnimations = conversation.InteractionAnimations;
 					skillConversation.Description = conversation.Description;
 					skillConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
@@ -937,7 +939,9 @@ namespace ConversationBuilder.Controllers
 						interactionViewModel.StartListening = interaction.StartListening;
 						interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;
 						interactionViewModel.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
-						interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;					
+						interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;			
+						interactionViewModel.UsePreSpeech = interaction.UsePreSpeech;					
+						interactionViewModel.PreSpeechPhrases = interaction.PreSpeechPhrases;															
 						interactionViewModel.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 						interactionViewModel.ListenTimeout = interaction.ListenTimeout;
 						interactionViewModel.SilenceTimeout = interaction.SilenceTimeout;

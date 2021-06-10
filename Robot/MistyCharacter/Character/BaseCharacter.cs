@@ -110,6 +110,7 @@ namespace MistyCharacter
 		private IAnimationManager AnimationManager;
 		private ITimeManager TimeManager;
 		private IEmotionManager EmotionManager;
+		private ILocomotionManager LocomotionManager;
 		private ISpeechIntentManager SpeechIntentManager;
 		private IList<string> LiveTriggers = new List<string>();
 		private ConversationGroup _conversationGroup = new ConversationGroup();
@@ -186,7 +187,10 @@ namespace MistyCharacter
 				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Misty, OriginalParameters, CharacterParameters, CharacterState, StateAtAnimationStart, PreviousState, _genericDataStores, SpeechIntentManager);
 				await SpeechManager.Initialize();
 
-				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Misty, OriginalParameters, CharacterParameters, SpeechManager);
+				LocomotionManager = _managerConfiguration?.LocomotionManager ?? new LocomotionManager(Misty, OriginalParameters, CharacterParameters);
+				await LocomotionManager.Initialize();
+
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Misty, OriginalParameters, CharacterParameters, SpeechManager, LocomotionManager);
 				await AnimationManager.Initialize();
 
 				IgnoreEvents();
@@ -471,6 +475,7 @@ namespace MistyCharacter
 
 			string startInteraction = interactionId ?? _currentConversationData.StartupInteraction;
 			CurrentInteraction = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == startInteraction);
+			SpeechManager.SetPreSpeechOptions(CurrentInteraction.UsePreSpeech, CurrentInteraction.PreSpeechPhrases);
 			
 			if (CurrentInteraction != null)
 			{
@@ -1772,6 +1777,8 @@ namespace MistyCharacter
 				});
 
 				CurrentInteraction = new Interaction(interaction);
+				SpeechManager.SetPreSpeechOptions(CurrentInteraction.UsePreSpeech, CurrentInteraction.PreSpeechPhrases);
+
 				StateAtAnimationStart = new CharacterState(CharacterState);
 				InteractionStarted?.Invoke(this, DateTime.Now);
 

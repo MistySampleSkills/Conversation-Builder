@@ -184,6 +184,9 @@ namespace ConversationBuilder.Controllers
 					interactionViewModel.Animation = interaction.Animation;
 
 					interactionViewModel.StartListening = interaction.StartListening;
+					
+					interactionViewModel.UsePreSpeech = interaction.UsePreSpeech;					
+					interactionViewModel.PreSpeechPhrases = interaction.PreSpeechPhrases;		
 					interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;
 					interactionViewModel.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
 					interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;					
@@ -592,7 +595,9 @@ namespace ConversationBuilder.Controllers
 					newInteraction.Animation = interaction.Animation;
 					newInteraction.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
 					newInteraction.ConversationId = interaction.ConversationId;					
-					newInteraction.StartListening = interaction.StartListening;
+					newInteraction.StartListening = interaction.StartListening;						
+					newInteraction.UsePreSpeech = interaction.UsePreSpeech;					
+					newInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;	
 					newInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 					newInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
 					newInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;					
@@ -817,7 +822,9 @@ namespace ConversationBuilder.Controllers
 					loadedInteraction.Name = interaction.Name;
 					loadedInteraction.Animation = interaction.Animation;
 					loadedInteraction.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
-					loadedInteraction.StartListening = interaction.StartListening;
+					loadedInteraction.StartListening = interaction.StartListening;			
+					loadedInteraction.UsePreSpeech = interaction.UsePreSpeech;					
+					loadedInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;	
 					loadedInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
 					loadedInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 					loadedInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;

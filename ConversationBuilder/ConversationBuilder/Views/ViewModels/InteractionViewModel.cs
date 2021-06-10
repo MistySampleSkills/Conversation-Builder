@@ -63,5 +63,13 @@ namespace ConversationBuilder.ViewModels
 		[Display(Name = "Conversation Entry Point")]
 		public bool ConversationEntryPoint { get; set; }
 		public string ConversationName { get; set; }
+
+		[Display(Name = "Use prespeech for speech intent processing")]
+		public bool UsePreSpeech { get; set; } = true;
+		
+
+		[Display(Name = "Override PreSpeech Phrases")]
+		public string PreSpeechPhrases { get; set; }
+
 	}
 }

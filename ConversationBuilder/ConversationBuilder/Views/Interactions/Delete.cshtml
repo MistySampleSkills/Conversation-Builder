@@ -75,7 +75,19 @@
 			</dd>
 
 			@if(ViewBag.ShowBetaItems)
-			{
+			{			
+				<dt>
+					@Html.DisplayNameFor(model => model.UsePreSpeech)
+				</dt>
+				<dd>
+					@Html.DisplayFor(model => model.UsePreSpeech)
+				</dd>					
+				<dt>
+					@Html.DisplayNameFor(model => model.PreSpeechPhrases)
+				</dt>
+				<dd>
+					<textarea style="width:100%" rows=5 readonly=true>@Html.DisplayFor(model => model.PreSpeechPhrases)</textarea>						
+				</dd>
 				<dt>
 					@Html.DisplayNameFor(model => model.AllowVoiceProcessingOverride)
 				</dt>

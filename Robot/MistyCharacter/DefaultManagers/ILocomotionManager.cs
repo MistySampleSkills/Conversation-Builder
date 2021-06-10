@@ -30,43 +30,27 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
+using Conversation.Common;
+using MistyRobotics.SDK.Events;
 
-namespace ConversationBuilder.DataModels
+namespace MistyCharacter
 {
-	public class SkillInteraction
+	public interface ILocomotionManager
 	{
-		public string Id { get; set; }
+		Task<bool> Initialize();
 
-		public string Name { get; set; }
+		Task HandleLocomotionAction(LocomotionAction locomotionAction);
 
-		public string Animation { get; set; }
-		
-		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
+		event EventHandler<LocomotionAction> StartedLocomotionAction;
+		event EventHandler<LocomotionAction> CompletedLocomotionAction;
+		event EventHandler<LocomotionAction> ReachedWaypoint;
+		event EventHandler<LocomotionAction> ReachedDestination;
+		event EventHandler<LocomotionAction> LocomotionFailed;
+		event EventHandler<LocomotionAction> TryingNewWaypointRoute;
 
-		public bool StartListening { get; set; } = false;
-
-		public bool AllowKeyPhraseRecognition { get; set; }
-
-		public bool AllowConversationTriggers { get; set; } = true;
-
-		public bool AllowVoiceProcessingOverride { get; set; } = true;
-
-		public double ListenTimeout { get; set; } = 6;
-
-		public double SilenceTimeout { get; set; } = 6;
-
-		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
-
-		public string ConversationId { get; set; }
-
-		public bool ConversationEntryPoint { get; set; }
-
-		public IList<string> SkillMessages { get; set; } = new List<string>();
-
-		
-		public bool UsePreSpeech { get; set; } = true;
-		
-		public string PreSpeechPhrases { get; set; }
+		void Dispose();
 	}
 }
+ 

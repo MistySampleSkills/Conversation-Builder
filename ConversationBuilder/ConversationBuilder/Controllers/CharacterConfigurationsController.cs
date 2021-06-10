@@ -226,8 +226,8 @@ namespace ConversationBuilder.Controllers
 					loadedCharacterConfiguration.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
 					loadedCharacterConfiguration.DisplaySpoken = characterConfiguration.DisplaySpoken;					
 					loadedCharacterConfiguration.StartVolume = characterConfiguration.StartVolume;
-					loadedCharacterConfiguration.UsePreSpeech = characterConfiguration.UsePreSpeech;
 					loadedCharacterConfiguration.PreSpeechPhrases = characterConfiguration.PreSpeechPhrases;
+					loadedCharacterConfiguration.UsePreSpeech = characterConfiguration.UsePreSpeech;
 					loadedCharacterConfiguration.Payload = characterConfiguration.Payload;
 					loadedCharacterConfiguration.ManagementAccess = characterConfiguration.ManagementAccess;
 					loadedCharacterConfiguration.StreamInteraction = characterConfiguration.StreamInteraction;

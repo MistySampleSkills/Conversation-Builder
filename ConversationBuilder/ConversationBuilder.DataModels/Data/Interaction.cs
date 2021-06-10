@@ -52,6 +52,12 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Default Animation")]
 		public string Animation { get; set; }
 
+		[Display(Name = "Use prespeech for speech intent processing")]
+		public bool UsePreSpeech { get; set; } = true;
+		
+		[Display(Name = "Override PreSpeech Phrases")]
+		public string PreSpeechPhrases { get; set; }
+
 		public IList<string> SkillMessages { get; set; } = new List<string>();
 		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 		

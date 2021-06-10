@@ -39,7 +39,7 @@ namespace MistyCharacter
 	{
 		public ManagerConfiguration() { }
 
-		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null)
+		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null, ILocomotionManager locomotionManager = null)
 		{
 			SpeechManager = speechmanager;
 			ArmManager = armManager;
@@ -48,6 +48,7 @@ namespace MistyCharacter
 			EmotionManager = emotionManager;
 			SpeechIntentManager = speechIntentManager;
 			AnimationManager = animationManager;
+			LocomotionManager = locomotionManager;
 		}
 
 		public ISpeechManager SpeechManager { get; set; }
@@ -57,5 +58,6 @@ namespace MistyCharacter
 		public IEmotionManager EmotionManager { get; set; }
 		public ISpeechIntentManager SpeechIntentManager { get; set; }
 		public IAnimationManager AnimationManager { get; set; }
+		public ILocomotionManager LocomotionManager { get; set; }
 	}
 }

@@ -92,6 +92,9 @@ namespace MistyCharacter
 		private CharacterState _stateAtAnimationStart;
 		private CharacterState _previousState;
 
+		private bool _usePreSpeech = true;
+		private string[] _preSpeechOverrides;
+
 		private int _volume;
 		public int Volume
 		{
@@ -196,7 +199,24 @@ namespace MistyCharacter
 					
 			return true;
 		}
-		
+
+		public void SetPreSpeechOptions(bool usePreSpeech, string preSpeechString)
+		{
+			_usePreSpeech = usePreSpeech;
+			if (!string.IsNullOrWhiteSpace(preSpeechString))
+			{
+				string[] preSpeechStrings = preSpeechString.Replace(Environment.NewLine, "").Split(";");
+				if (preSpeechStrings != null && preSpeechStrings.Length > 0)
+				{
+					_preSpeechOverrides = preSpeechStrings;
+				}
+			}
+			else
+			{
+				_preSpeechOverrides = null;
+			}
+		}
+
 		/// <summary>
 		/// Called when the POTENTIAL to start key phrase rec has been triggered (basically not listening already or speaking/playing audio)
 		/// </summary>
@@ -602,9 +622,16 @@ namespace MistyCharacter
 
 				SpeechToTextData description = new SpeechToTextData();
 
-				if(CharacterParameters.UsePreSpeech)
+				if(CharacterParameters.UsePreSpeech && _usePreSpeech)
 				{
-					Robot.Speak(CharacterParameters.PreSpeechPhrases[_random.Next(0, CharacterParameters.PreSpeechPhrases.Count)], false, "prespeech", null);
+					if(_preSpeechOverrides != null && _preSpeechOverrides.Length > 0)
+					{
+						Robot.Speak(_preSpeechOverrides[_random.Next(0, _preSpeechOverrides.Length)], false, "prespeech", null);
+					}
+					else if(CharacterParameters.PreSpeechPhrases.Count > 0)
+					{
+						Robot.Speak(CharacterParameters.PreSpeechPhrases[_random.Next(0, CharacterParameters.PreSpeechPhrases.Count)], false, "prespeech", null);
+					}
 				}
 
 				switch (CharacterParameters.SpeechRecognitionService)
