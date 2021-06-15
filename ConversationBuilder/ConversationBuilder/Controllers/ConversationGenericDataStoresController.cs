@@ -60,8 +60,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetCountAsync();
-				IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync(startItem, 1000);//TODO
+				int totalCount = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);//TODO
 				IList<GenericDataStore> filteredGenericDataStores = new List<GenericDataStore>();
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);				
 				foreach(var genericDataStore in conversation.GenericDataStores)

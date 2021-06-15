@@ -141,6 +141,14 @@ namespace MistyCharacter
 			{
 				if (!_parameters.ContainsKey("ConversationGroup"))
 				{
+					string robotIp = GetStringField(_parameters, "RobotIp");
+					robotIp = robotIp.Trim();
+					if (string.IsNullOrWhiteSpace(robotIp))
+					{
+						_misty.SkillLogger.Log("No robot ip provided, cannot perform cross robot communication.");
+					}
+					CharacterParameters.RobotIp = robotIp;
+
 					string endpoint = GetStringField(_parameters, "Endpoint");
 					endpoint = endpoint.Trim();
 					if (string.IsNullOrWhiteSpace(endpoint))

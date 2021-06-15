@@ -110,6 +110,8 @@ namespace MistyCharacter
 		public double PitchVelocity { get; set; }
 		public double RollVelocity { get; set; }
 		public double YawVelocity { get; set; }
+		
+		public double? LockedHeading { get; set; }
 	}
 
 	public enum LocomotionCommand
@@ -122,7 +124,8 @@ namespace MistyCharacter
 		Wander,
 		Return,//ToLastWaypoint
 		Stop,
-		Halt
+		Halt,
+		TurnHeading,
 	}
 
 	public class LocomotionAction
@@ -168,7 +171,7 @@ namespace MistyCharacter
 			CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Initialized;
 			return Task.FromResult(true);
 		}
-
+		
 		/// <summary>
 		/// Handle loco actions for this character
 		/// </summary>
@@ -198,6 +201,10 @@ namespace MistyCharacter
 						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
 						await Turn((double)locomotionAction.Degrees, (int)locomotionAction.TimeMs);
 						break;
+					case LocomotionCommand.TurnHeading:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
+						await TurnHeading((double)locomotionAction.Heading, (int)locomotionAction.TimeMs);
+						break;
 					case LocomotionCommand.Arc:
 						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
 						await Arc((double)locomotionAction.Degrees, (double)locomotionAction.Radius, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
@@ -226,11 +233,16 @@ namespace MistyCharacter
 			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, 0, timeMs, false);
 		}
 
+		private async Task TurnHeading(double heading, int timeMs)
+		{
+			await Robot.DriveArcAsync(heading, 0, timeMs, false);
+		}
+
 		private async Task Arc(double degrees, double radius, int timeMs, bool reverse = false)
 		{
 			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, radius, timeMs, reverse);
 		}
-
+		
 		private async Task Heading(double heading, double distance, int timeMs, bool reverse = false)
 		{
 			await Robot.DriveHeadingAsync(heading, distance, timeMs, reverse);

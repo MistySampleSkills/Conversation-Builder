@@ -57,7 +57,7 @@ namespace ConversationBuilder.Controllers
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<ActionResult<SkillParameters>> ConversationGroup(string id, string accountId, string key)
+		public async Task<ActionResult<SkillParameters>> ConversationGroup(string id, string accountId, string key, string accessId = null)
 		{			
 			try
 			{
@@ -74,6 +74,17 @@ namespace ConversationBuilder.Controllers
 				else if(conversationGroup.RequestAccess == "Public")
 				{
 					SkillParameters skillParameters = await GenerateSkillConfiguration(id);					
+					if(!string.IsNullOrWhiteSpace(accessId))
+					{
+						//Garb the robot ips and recipes for this access id
+						IEnumerable<Robot> robots = await _cosmosDbService.ContainerManager.RobotData.GetListAsync(1, 10000, accessId);
+						IEnumerable<Recipe> recipes = await _cosmosDbService.ContainerManager.RecipeData.GetListAsync(1, 10000, accessId);
+						
+						//TODO Actual auth b4 we garb it all and gvie it all away! ;)
+						
+						skillParameters.Robots = robots.ToList();
+						skillParameters.Recipes = recipes.ToList();						
+					}
 					string skillConfiguration = Newtonsoft.Json.JsonConvert.SerializeObject(skillParameters);
 					return Ok(skillConfiguration);
 
@@ -85,6 +96,12 @@ namespace ConversationBuilder.Controllers
 					if(skillAuthorizations != null && skillAuthorizations.Any(x => x.AccountId == accountId && x.Key == key))
 					{	
 						SkillParameters skillParameters = await GenerateSkillConfiguration(id);	
+
+						//if they passed in an access id, get the robot information associated with it
+						
+						//3ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(id);
+
+
 						string skillConfiguration = Newtonsoft.Json.JsonConvert.SerializeObject(skillParameters);
 						return Ok(skillConfiguration);
 					}

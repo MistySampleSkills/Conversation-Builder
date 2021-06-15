@@ -115,6 +115,7 @@ namespace ConversationBuilder.Controllers
 				}
 				
 				UserConfiguration userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(id);
+				await SetViewBagData();
 				if (userConfiguration == null)
 				{
 					//first time viewing profile? create it, should have prolly been to details first
@@ -135,7 +136,6 @@ namespace ConversationBuilder.Controllers
 					ViewBag.SpeechConfigurations = await SpeechConfigurationList();
 					
 					ViewBag.Themes = new Themes().AllItems;
-					await SetViewBagData();
 					return View(userConfiguration);
 				}
 			}
@@ -157,13 +157,16 @@ namespace ConversationBuilder.Controllers
 					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
 				}
 			
+				await SetViewBagData();
 				if (ModelState.IsValid)
 				{
 					UserConfiguration loadedUserConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(userConfiguration.Id);
 					loadedUserConfiguration.Id = userConfiguration.Id;
 					loadedUserConfiguration.Updated = DateTimeOffset.UtcNow;
 					loadedUserConfiguration.OverrideCssFile = userConfiguration.OverrideCssFile;
+					loadedUserConfiguration.AccessTokenList = userConfiguration.AccessTokenList;
 					loadedUserConfiguration.ShowBetaItems = userConfiguration.ShowBetaItems;
+					loadedUserConfiguration.ShowAllConversations = userConfiguration.ShowAllConversations;
 					loadedUserConfiguration.UserName = userConfiguration.UserName;
 					loadedUserConfiguration.Updated = DateTimeOffset.UtcNow;
 					

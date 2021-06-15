@@ -58,7 +58,9 @@ namespace ConversationBuilder.Data.Cosmos
 		public ILEDTransitionActionData LEDTransitionActionData {get; private set;}
 		public IGenericDataStoreData GenericDataStoreData {get; private set;}
 		public IUserConfigurationData UserConfigurationData {get; private set;}
-		
+		public IRobotData RobotData {get; private set;}
+		public IRecipeData RecipeData {get; private set;}
+
 		public ContainerManager(CosmosClient dbClient, string databaseName, ContainerType containerType)
 		{
 			_container = dbClient.GetContainer(databaseName, containerType.ToString());	
@@ -79,6 +81,8 @@ namespace ConversationBuilder.Data.Cosmos
 			LEDTransitionActionData = new LEDTransitionActionData(_container);
 			GenericDataStoreData = new GenericDataStoreData(_container);
 			UserConfigurationData = new UserConfigurationData(_container);
+			RobotData = new RobotData(_container);
+			RecipeData = new RecipeData(_container);
 		}
 	}
 }

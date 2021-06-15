@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface ISkillMessageData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<SkillMessage> GetAsync(string id);
 		Task UpdateAsync(SkillMessage data);
 		Task<ItemResponse<SkillMessage>> AddAsync(SkillMessage data);		
 		Task DeleteAsync(string id);
-		Task<IList<SkillMessage>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<SkillMessage>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<SkillMessage>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<SkillMessage>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class SkillMessageData : PartitionManager, ISkillMessageData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<SkillMessage>(id);
 		}
 
-		public async Task<IList<SkillMessage>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<SkillMessage>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<SkillMessage>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<SkillMessage>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<SkillMessage>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<SkillMessage>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<SkillMessage>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<SkillMessage>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

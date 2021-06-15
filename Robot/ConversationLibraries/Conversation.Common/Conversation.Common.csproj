@@ -127,6 +127,8 @@
     <Compile Include="Conversations\GenericDataStore.cs" />
     <Compile Include="Conversations\Interaction.cs" />
     <Compile Include="Conversations\ConversationData.cs" />
+    <Compile Include="Conversations\Recipe.cs" />
+    <Compile Include="Conversations\Robot.cs" />
     <Compile Include="Conversations\TriggerActionOption.cs" />
     <Compile Include="Conversations\SkillMessage.cs" />
     <Compile Include="Conversations\TriggerDetail.cs" />

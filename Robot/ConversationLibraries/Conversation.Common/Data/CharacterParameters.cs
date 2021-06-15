@@ -75,9 +75,14 @@ namespace Conversation.Common
 		public string Payload { get; set; }
 
 		public string InitializationError { get; set; }
+		public string RobotIp { get; set; }
 
 		public bool UsePreSpeech { get; set; }
 
 		public IList<string> PreSpeechPhrases { get; set; } = new List<string>();
+
+		public IList<Robot> Robots { get; set; } = new List<Robot>();
+
+		public IList<Recipe> Recipes { get; set; } = new List<Recipe>();
 	}
 }

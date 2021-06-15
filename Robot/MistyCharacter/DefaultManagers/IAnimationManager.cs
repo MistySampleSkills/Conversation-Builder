@@ -45,6 +45,8 @@ namespace MistyCharacter
 
 		void StopRunningAnimationScripts();
 
+		bool HandleSyncEvent(string name, bool forceStop = false)
+
 		void Dispose();
 	}
 }

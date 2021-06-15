@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface IAnimationData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<Animation> GetAsync(string id);
 		Task UpdateAsync(Animation data);
 		Task<ItemResponse<Animation>> AddAsync(Animation data);		
 		Task DeleteAsync(string id);
-		Task<IList<Animation>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<Animation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<Animation>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<Animation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class AnimationData : PartitionManager, IAnimationData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<Animation>(id);
 		}
 
-		public async Task<IList<Animation>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<Animation>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<Animation>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<Animation>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<Animation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<Animation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<Animation>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<Animation>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

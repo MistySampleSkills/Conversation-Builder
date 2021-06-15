@@ -1,0 +1,95 @@
+﻿@model ConversationBuilder.DataModels.Robot
+
+@{
+	ViewData["Title"] = "Details";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<h3>Details for @Html.DisplayFor(model => model.RobotName)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.SerialNumber)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.SerialNumber)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.DeviceId)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.DeviceId)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RobotName)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RobotName)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RobotConfig)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RobotConfig)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IsValidConfig)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IsValidConfig)
+		@* </dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IsProvisioned)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IsProvisioned)
+		</dd> *@
+		<dt>
+			@Html.DisplayNameFor(model => model.ListenForSynchronizationTriggers)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ListenForSynchronizationTriggers)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.SendSynchronizationTriggers)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.SendSynchronizationTriggers)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IP)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IP)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+</div>
+<div>
+	@Html.ActionLink("Edit", "Edit", new { id= Model.Id }) |
+	@Html.ActionLink("Back to List", "Index",  "Robots") |	
+</div>

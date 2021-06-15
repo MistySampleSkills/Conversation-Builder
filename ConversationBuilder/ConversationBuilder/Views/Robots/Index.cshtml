@@ -1,0 +1,60 @@
+﻿@model IEnumerable<ConversationBuilder.DataModels.Robot>
+
+@{
+	ViewData["Title"] = "Index";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<h3>Robots</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+<p>
+	@Html.ActionLink("Create New", "Create",  "Robots")
+</p>
+<table class="table">
+	<thead>
+		<tr>
+			<th>
+				Serial Number
+			</th>
+			<th>
+				Name
+			</th>
+			<th>
+				Listen For Synchronization Triggers
+			</th>
+			<th>
+				Send Synchronization Triggers
+			</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+@if(Model != null)
+{
+	foreach (var item in Model) {
+		<tr>
+			<td>
+				@Html.DisplayFor(modelItem => item.SerialNumber)
+			</td>
+			<td>
+				@Html.DisplayFor(modelItem => item.RobotName)
+			</td>
+			<td>
+				@Html.DisplayFor(modelItem => item.ListenForSynchronizationTriggers)
+			</td>
+			<td>
+				@Html.DisplayFor(modelItem => item.SendSynchronizationTriggers)
+			</td>
+			<td>
+				@Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
+				@Html.ActionLink("Details", "Details", new { id=item.Id })
+			</td>
+		</tr>
+	}
+}
+	</tbody>
+</table>

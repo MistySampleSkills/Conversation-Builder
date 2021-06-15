@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface IConversationGroupData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<ConversationGroup> GetAsync(string id);
 		Task UpdateAsync(ConversationGroup data);
 		Task<ItemResponse<ConversationGroup>> AddAsync(ConversationGroup data);		
 		Task DeleteAsync(string id);
-		Task<IList<ConversationGroup>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<ConversationGroup>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<ConversationGroup>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<ConversationGroup>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class ConversationGroupData : PartitionManager, IConversationGroupData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<ConversationGroup>(id);
 		}
 
-		public async Task<IList<ConversationGroup>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<ConversationGroup>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<ConversationGroup>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<ConversationGroup>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<ConversationGroup>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<ConversationGroup>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<ConversationGroup>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<ConversationGroup>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

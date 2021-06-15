@@ -211,7 +211,11 @@ namespace MistyCharacter
 
 				LogEventDetails(Misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
 
-				LogEventDetails(Misty.RegisterUserEvent("ExternalEvent", UserEventCallback, 0, true, null));
+				LogEventDetails(Misty.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
+
+				LogEventDetails(Misty.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
+
+				LogEventDetails(Misty.RegisterUserEvent("RobotCommand", RobotCommandCallback, 0, true, null));
 
 				Misty.StartFaceRecognition(null);
 				//TODO These should be configurable
@@ -1565,8 +1569,26 @@ namespace MistyCharacter
 			FaceRecognitionEvent?.Invoke(this, faceRecognitionEvent);
 		}
 
-		private void UserEventCallback(IUserEvent userEvent)
+		private void SyncEventCallback(IUserEvent userEvent)
 		{
+			//this is an external call to the animation manager of another bot (and self if set)
+
+			AnimationManager.HandleSyncEvent(name, false);
+		}
+
+		private void RobotCommandCallback(IUserEvent userEvent)
+		{
+			if (userEvent.TryGetPayload(out IDictionary<string, object> payload))
+			{
+				//this is an external call to the animation manager of another bot (and self if set)
+				//if it is in responsive state, handle this...
+			}
+		}
+
+		private void ExternalEventCallback(IUserEvent userEvent)
+		{
+			//Callback from external skills
+
 			if (CharacterState == null)
 			{
 				return;

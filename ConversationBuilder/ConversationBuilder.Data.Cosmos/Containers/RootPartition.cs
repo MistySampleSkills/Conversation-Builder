@@ -47,6 +47,8 @@ namespace ConversationBuilder.Data.Cosmos
 		SpeechConfiguration,
 		LEDTransitionAction,
 		GenericDataStore,
-		UserConfiguration
+		UserConfiguration,
+		Robot,
+		Recipe,
 	}
 }

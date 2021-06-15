@@ -72,8 +72,10 @@ namespace ConversationBuilder.Controllers
 
 		protected readonly ICosmosDbService _cosmosDbService;
 		protected readonly UserManager<ApplicationUser> _userManager;
+		protected UserConfiguration _userConfiguration;
 
 		private UserInformation _userInformation = null;
+
 
 		public AdminToolController(ICosmosDbService cosmosDbService, UserManager<ApplicationUser> userManager)
 		{
@@ -604,18 +606,18 @@ namespace ConversationBuilder.Controllers
 			return foundValue ?? triggerFilter;
 		}
 
-		protected async Task SetViewBagData(string message = null)
+		protected async Task<UserConfiguration> SetViewBagData(string message = null)
 		{
 			if (_userInformation == null)
 			{
 				await GetUserInformation();
 			}
 
-			UserConfiguration userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
-			ViewBag.ShowBetaItems = userConfiguration?.ShowBetaItems ?? false;
-			if(!string.IsNullOrWhiteSpace(userConfiguration?.OverrideCssFile))
+			_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
+			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? false;
+			if(!string.IsNullOrWhiteSpace(_userConfiguration?.OverrideCssFile))
 			{
-				ViewBag.CssFile = userConfiguration.OverrideCssFile + (userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");				
+				ViewBag.CssFile = _userConfiguration.OverrideCssFile + (_userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");				
 			}
 			else
 			{
@@ -624,6 +626,8 @@ namespace ConversationBuilder.Controllers
 			
 			ViewBag.Message = message ?? "";
 			ViewBag.Data = new CommonViewData(_userInformation);
+			ViewBag.ShowAllConversations = _userConfiguration.ShowAllConversations;
+			return _userConfiguration;
 		}
 
 		protected void SetFilterAndPagingViewData(int startItem, string filterName, int total, int count = 50)
@@ -754,11 +758,24 @@ namespace ConversationBuilder.Controllers
 			return "";
 		}
 		
+		protected async Task VerifyUserData()
+		{
+			if(_userConfiguration == null)
+			{
+				_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
+			}
+
+			if(_userInformation == null)
+			{
+				await GetUserInformation();
+			} 
+		}
 		protected async Task<IDictionary<string, string>> GenericDataStores()
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync();
+			await VerifyUserData();
+			IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(GenericDataStore genericDataStore in genericDataStores.OrderBy(x => x.Name))
 			{
 				list.Add(genericDataStore.Id, genericDataStore.Name);
@@ -770,7 +787,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync();
+			await VerifyUserData();
+			IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(SpeechHandler speechHandler in speechHandlers.OrderBy(x => x.Name))
 			{
 				list.Add(speechHandler.Id, speechHandler.Name);
@@ -782,7 +800,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<SkillMessage> skillMessages = await _cosmosDbService.ContainerManager.SkillMessageData.GetListAsync();
+			await VerifyUserData();
+			IList<SkillMessage> skillMessages = await _cosmosDbService.ContainerManager.SkillMessageData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(SkillMessage skillMessage in skillMessages.OrderBy(x => x.Name))
 			{
 				list.Add(skillMessage.Id, skillMessage.Name);
@@ -794,7 +813,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<Animation> animations = await _cosmosDbService.ContainerManager.AnimationData.GetListAsync();
+			await VerifyUserData();
+			IList<Animation> animations = await _cosmosDbService.ContainerManager.AnimationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(Animation animation in animations.OrderBy(x => x.Name))
 			{
 				list.Add(animation.Id, animation.Name);
@@ -806,7 +826,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<ArmLocation> armLocations = await _cosmosDbService.ContainerManager.ArmLocationData.GetListAsync();
+			await VerifyUserData();
+			IList<ArmLocation> armLocations = await _cosmosDbService.ContainerManager.ArmLocationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(ArmLocation armLocation in armLocations.OrderBy(x => x.Name))
 			{
 				list.Add(armLocation.Id, armLocation.Name);
@@ -818,7 +839,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<SpeechConfiguration> speechConfigurations = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetListAsync();
+			await VerifyUserData();
+			IList<SpeechConfiguration> speechConfigurations = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(SpeechConfiguration speechConfiguration in speechConfigurations.OrderBy(x => x.Name))
 			{
 				list.Add(speechConfiguration.Id, speechConfiguration.Name);
@@ -830,7 +852,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<LEDTransitionAction> ledTransitionActions = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetListAsync();
+			await VerifyUserData();
+			IList<LEDTransitionAction> ledTransitionActions = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(LEDTransitionAction ledTransitionAction in ledTransitionActions.OrderBy(x => x.Name))
 			{
 				list.Add(ledTransitionAction.Id, ledTransitionAction.Name);
@@ -842,7 +865,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<HeadLocation> headLocations = await _cosmosDbService.ContainerManager.HeadLocationData.GetListAsync();
+			await VerifyUserData();
+			IList<HeadLocation> headLocations = await _cosmosDbService.ContainerManager.HeadLocationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(HeadLocation headLocation in headLocations.OrderBy(x => x.Name))
 			{
 				list.Add(headLocation.Id, headLocation.Name);
@@ -854,7 +878,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<TriggerDetail> triggerDetails = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync();
+			await VerifyUserData();
+			IList<TriggerDetail> triggerDetails = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(TriggerDetail triggerDetail in triggerDetails.OrderBy(x => x.Name))
 			{
 				list.Add(triggerDetail.Id, $"{triggerDetail.Name}");
@@ -867,7 +892,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			Dictionary<string, string> conversationInteractions = new Dictionary<string, string>();
-			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId);
+			await VerifyUserData();
+			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			
 			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
@@ -898,7 +924,8 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, Dictionary<string, string>> conversationInteractions = new Dictionary<string, Dictionary<string, string>>();
 	
 			Dictionary<string, string> interactionList = new Dictionary<string, string>();
-			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId);
+			await VerifyUserData();
+			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
 				if(interaction?.Id != null && !interactionList.ContainsKey(interaction.Id))
@@ -1037,7 +1064,9 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<Conversation> conversations = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync();
+			
+			await VerifyUserData();
+			IList<Conversation> conversations = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(Conversation conversation in conversations.OrderBy(x => x.Name))
 			{
 				list.Add(conversation.Id, conversation.Name);
@@ -1049,7 +1078,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<CharacterConfiguration> conversations = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetListAsync();
+			await VerifyUserData();
+			IList<CharacterConfiguration> conversations = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(CharacterConfiguration characterConfiguration in conversations.OrderBy(x => x.Name))
 			{
 				list.Add(characterConfiguration.Id, characterConfiguration.Name);

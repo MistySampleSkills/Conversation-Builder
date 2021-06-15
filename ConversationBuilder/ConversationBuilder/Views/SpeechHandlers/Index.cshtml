@@ -15,6 +15,11 @@
 	@Html.ActionLink("Create New", "Create",  "SpeechHandlers")
 </p>
 
+@if(!ViewBag.ShowAllConversations)
+{
+	<h5>Showing filtered data.</h5>
+}
+
 <table class="table">
 	<thead>
 		<tr>
