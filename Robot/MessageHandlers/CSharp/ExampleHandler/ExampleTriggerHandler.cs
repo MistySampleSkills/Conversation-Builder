@@ -94,7 +94,7 @@ namespace ExampleHandlerSkill
 				IDictionary<string, object> innerParameters = Newtonsoft.Json.JsonConvert.DeserializeObject<IDictionary<string, object>>(Convert.ToString(innerParameterObject));
 				_parameterManager = new ParameterManager(_misty, innerParameters, false);
 				CharacterParameters characterParameters = await _parameterManager.Initialize();
-				if(characterParameters == null || !string.IsNullOrWhiteSpace(characterParameters.InitializationError))
+				if(characterParameters == null || !string.IsNullOrWhiteSpace(characterParameters.InitializationStatusMessage))
 				{
 					_misty.Speak($"Failed processing parameters in Example handler skill.  Skill may not work properly.", true, "failed", null);
 				}

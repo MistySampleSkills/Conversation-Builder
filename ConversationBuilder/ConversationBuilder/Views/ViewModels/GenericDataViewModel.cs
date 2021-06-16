@@ -37,9 +37,11 @@ namespace ConversationBuilder.ViewModels
 		public int Priority { get; set; } = 1;
 		public bool TreatKeyAsUtterance { get; set; }
 		
-		[Display(Name = "Word Match Rule")]
+		[Display(Name = "Word Match Rule (utterance)")]
 		public string WordMatchRule { get; set; } = "Exact";
-		public bool ExactMatchesOnly { get; set; }
+		
+		[Display(Name = "Exact Phrase Matches Only (utterance)")]
+		public bool ExactPhraseMatchesOnly { get; set; }
 
 		public DateTimeOffset Created { get; set; }
 		

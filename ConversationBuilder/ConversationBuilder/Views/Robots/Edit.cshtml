@@ -20,7 +20,8 @@
 			<input asp-for="Id" class="form-control" hidden="true" />
 			<div class="form-group">
 				<label asp-for="SerialNumber" class="control-label">Serial Number</label>
-				<input asp-for="SerialNumber" class="form-control" readonly="true" />
+				<input asp-for="SerialNumber" class="form-control"/>
+				<span asp-validation-for="SerialNumber" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="RobotName" class="control-label">Name</label>
@@ -47,14 +48,7 @@
 			<div class="form-group">
 				<div class="checkbox">
 					<label>
-						<input asp-for="SendSynchronizationTriggers" /> @Html.DisplayNameFor(model => model.SendSynchronizationTriggers)
-					</label>
-				</div>
-			</div>
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="ListenForSynchronizationTriggers" /> @Html.DisplayNameFor(model => model.ListenForSynchronizationTriggers)
+						<input asp-for="AllowCrossRobotCommunication" /> @Html.DisplayNameFor(model => model.AllowCrossRobotCommunication)
 					</label>
 				</div>
 			</div>

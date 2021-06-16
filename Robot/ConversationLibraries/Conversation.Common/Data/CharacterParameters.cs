@@ -74,7 +74,10 @@ namespace Conversation.Common
 
 		public string Payload { get; set; }
 
-		public string InitializationError { get; set; }
+		public string InitializationStatusMessage { get; set; }
+
+		public string InitializationErrorStatus { get; set; }
+
 		public string RobotIp { get; set; }
 
 		public bool UsePreSpeech { get; set; }

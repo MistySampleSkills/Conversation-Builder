@@ -83,7 +83,7 @@ namespace MistyConversation
 					Wrap = true,
 					Visible = true,
 					Weight = 15,
-					Size = 25,
+					Size = 20,
 					HorizontalAlignment = ImageHorizontalAlignment.Center,
 					VerticalAlignment = ImageVerticalAlignment.Bottom,
 					Red = 255,
@@ -91,9 +91,9 @@ namespace MistyConversation
 					Blue = 255,
 					PlaceOnTop = true,
 					FontFamily = "Courier New",
-					Height = 30
+					Height = 45
 				});
-
+				
 				Misty.DisplayText("Hello...", "Text", null);
 				Misty.ChangeLED(0, 255, 255, null);
 				Misty.MoveArms(65.0, 65.0, 20, 20, null, AngularUnit.Degrees, null);

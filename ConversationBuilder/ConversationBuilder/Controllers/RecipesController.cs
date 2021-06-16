@@ -196,5 +196,54 @@ namespace ConversationBuilder.Controllers
 			}
 		}
 
+		public async Task<ActionResult> Delete(string id)
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+			
+				Recipe recipe = await _cosmosDbService.ContainerManager.RecipeData.GetAsync(id);
+				if (recipe == null)
+				{
+					return RedirectToAction(nameof(Index));
+				}
+				else
+				{
+					ViewBag.CanBeDeleted = true;
+					await SetViewBagData();
+					return View(recipe);
+				}
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception deleting recipe.", exception = ex.Message });
+			}
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<ActionResult> Delete(string id, IFormCollection collection)
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+
+				 await _cosmosDbService.ContainerManager.RecipeData.DeleteAsync(id);
+				return RedirectToAction(nameof(Index));				
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception deleting recipe.", exception = ex.Message });
+			}
+		}
+
 	}
 }

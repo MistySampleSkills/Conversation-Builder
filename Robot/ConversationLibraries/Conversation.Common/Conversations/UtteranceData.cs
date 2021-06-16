@@ -43,7 +43,7 @@ namespace Conversation.Common
 
 		public string Description { get; set; }
 
-		public bool ExactMatchesOnly { get; set; }
+		public bool ExactPhraseMatchesOnly { get; set; }
 		
 		public string WordMatchRule { get; set; } = "Exact";
 

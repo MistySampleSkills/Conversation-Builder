@@ -212,7 +212,7 @@ namespace ConversationBuilder.Controllers
 					loadedGenericDataStore.Description = genericDataStore.Description;
 					loadedGenericDataStore.ManagementAccess = genericDataStore.ManagementAccess;
 					loadedGenericDataStore.TreatKeyAsUtterance = genericDataStore.TreatKeyAsUtterance;
-					loadedGenericDataStore.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+					loadedGenericDataStore.ExactPhraseMatchesOnly = genericDataStore.ExactPhraseMatchesOnly;
 					loadedGenericDataStore.WordMatchRule = genericDataStore.WordMatchRule;
 					loadedGenericDataStore.Updated = DateTimeOffset.UtcNow;
 					await _cosmosDbService.ContainerManager.GenericDataStoreData.UpdateAsync(loadedGenericDataStore);
@@ -304,7 +304,7 @@ namespace ConversationBuilder.Controllers
 					genericDataViewModel.Data = genericDataStore.Data;
 					genericDataViewModel.Description = genericDataStore.Description;
 					genericDataViewModel.TreatKeyAsUtterance = genericDataStore.TreatKeyAsUtterance;
-					genericDataViewModel.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+					genericDataViewModel.ExactPhraseMatchesOnly = genericDataStore.ExactPhraseMatchesOnly;
 					genericDataViewModel.WordMatchRule = genericDataStore.WordMatchRule;
 					genericDataViewModel.Name = genericDataStore.Name;
 					genericDataViewModel.Id = genericDataStore.Id;

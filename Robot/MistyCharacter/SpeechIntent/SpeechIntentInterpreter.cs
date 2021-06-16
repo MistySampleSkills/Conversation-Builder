@@ -81,7 +81,7 @@ namespace MistyCharacter.SpeechIntent
                         UtteranceData utteranceData = new UtteranceData();
                         utteranceData.Name = data.Value.Key;
                         utteranceData.Id = data.Value.Key;
-                        utteranceData.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+                        utteranceData.ExactPhraseMatchesOnly = genericDataStore.ExactPhraseMatchesOnly;
 						utteranceData.WordMatchRule = genericDataStore.WordMatchRule;
 						utteranceData.Utterances = utterances;
 						utteranceData.Priority = genericData.Priority;
@@ -186,7 +186,7 @@ namespace MistyCharacter.SpeechIntent
 				
 				foreach (KeyValuePair<string, UtteranceData> utteranceData in filteredUtteranceLists)
 				{
-					bool exactMatchOnly = utteranceData.Value.ExactMatchesOnly;					
+					bool exactPhraseMatchOnly = utteranceData.Value.ExactPhraseMatchesOnly;					
 					string wordMatchRule = utteranceData.Value.WordMatchRule;
 					TextComparisonObject textComparisonObject = 
 						new TextComparisonObject
@@ -233,7 +233,7 @@ namespace MistyCharacter.SpeechIntent
 							return speechMatchData;
 						}
 						
-						if (exactMatchOnly)
+						if (exactPhraseMatchOnly)
 						{
 							speechMatchData.Name = ConversationConstants.HeardUnknownTrigger;
 							speechMatchData.Id = ConversationConstants.HeardUnknownTrigger;

@@ -185,7 +185,7 @@ namespace ConversationBuilder.Controllers
 											UtteranceData utteranceData = new UtteranceData();
 											utteranceData.Name = speechHandler.Name;
 											utteranceData.Description = speechHandler.Description;
-											utteranceData.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+											utteranceData.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;
 											utteranceData.WordMatchRule = speechHandler.WordMatchRule;
 											utteranceData.Id = speechHandler.Id;
 											utteranceData.Utterances = speechHandler.Utterances;
@@ -206,7 +206,7 @@ namespace ConversationBuilder.Controllers
 												UtteranceData utteranceData = new UtteranceData();
 												utteranceData.Name = speechHandler.Name;
 												utteranceData.Description = speechHandler.Description;
-												utteranceData.ExactMatchesOnly = speechHandler.ExactMatchesOnly;												
+												utteranceData.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;												
 												utteranceData.WordMatchRule = speechHandler.WordMatchRule;
 												utteranceData.Id = speechHandler.Id;
 												utteranceData.Utterances = speechHandler.Utterances;
@@ -363,7 +363,7 @@ namespace ConversationBuilder.Controllers
 							speechHandler.Updated = now;
 							speechHandler.Created = now;
 							speechHandler.ManagementAccess = "Public";
-							speechHandler.ExactMatchesOnly = utterance.Value.ExactMatchesOnly;							
+							speechHandler.ExactPhraseMatchesOnly = utterance.Value.ExactPhraseMatchesOnly;							
 							speechHandler.WordMatchRule = utterance.Value.WordMatchRule;
 							speechHandler.Utterances = utterance.Value.Utterances;
 							speechHandler.CreatedBy = _userInformation?.AccessId;

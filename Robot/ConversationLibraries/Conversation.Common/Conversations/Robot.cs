@@ -44,9 +44,7 @@ namespace Conversation.Common
 
 		public bool IsProvisioned { get; set; }
 		
-		public bool SendSynchronizationTriggers {get; set;}
-		
-		public bool ListenForSynchronizationTriggers { get; set; }
+		public bool AllowCrossRobotCommunication {get; set;}
 		
 		public string RobotConfig { get; set; }
 		

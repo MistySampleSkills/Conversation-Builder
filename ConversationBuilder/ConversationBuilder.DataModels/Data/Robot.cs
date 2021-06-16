@@ -54,11 +54,8 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Is Provisioned")]
 		public bool IsProvisioned { get; set; }
 
-		[Display(Name = "Send Synchronization Triggers")]
-		public bool SendSynchronizationTriggers {get; set;}
-
-		[Display(Name = "Listen For Synchronization Triggers")]
-		public bool ListenForSynchronizationTriggers { get; set; }
+		[Display(Name = "Allow Cross Robot Communication")]
+		public bool AllowCrossRobotCommunication {get; set;}
 
 		[Display(Name = "Config")]
 		public string RobotConfig { get; set; }
@@ -69,7 +66,6 @@ namespace ConversationBuilder.DataModels
 		[DataType(DataType.DateTime)]
 		public DateTimeOffset Created { get; set; }
 
-		[Required]
 		[Display(Name = "Device Id")]
 		public string DeviceId { get; set; }
 

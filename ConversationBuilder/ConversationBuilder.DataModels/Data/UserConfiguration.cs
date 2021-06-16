@@ -53,9 +53,6 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Show All Conversations")]	
 		public bool ShowAllConversations { get; set; } = true;
 
-		
-		[Display(Name = "Access Token List")]		
-		public string AccessTokenList { get; set; }
 	
 		public DateTimeOffset Created { get; set; }	
 		public DateTimeOffset Updated { get; set; }

@@ -39,14 +39,18 @@ namespace MistyCharacter
 {
 	public interface IAnimationManager
 	{
+		event EventHandler<TriggerData> SyncEvent;
+
 		Task<bool> Initialize();
 
 		Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, bool stopOnFailedCommand = false);
 
 		void StopRunningAnimationScripts();
 
-		bool HandleSyncEvent(string name, bool forceStop = false)
+		bool HandleSyncEvent(IUserEvent userEvent);
 
+		Task HandleExternalCommand(IUserEvent userEvent);
+		
 		void Dispose();
 	}
 }

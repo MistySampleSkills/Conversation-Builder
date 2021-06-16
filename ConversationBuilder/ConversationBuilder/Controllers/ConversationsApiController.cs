@@ -71,7 +71,7 @@ namespace ConversationBuilder.Controllers
 					return NotFound("Conversation group is not available at this time.");
 					//it exists but isn't available					
 				}
-				else if(conversationGroup.RequestAccess == "Public")
+				else if(conversationGroup.RequestAccess == "Public" || conversationGroup.RequestAccess == "Shared")
 				{
 					SkillParameters skillParameters = await GenerateSkillConfiguration(id);					
 					if(!string.IsNullOrWhiteSpace(accessId))

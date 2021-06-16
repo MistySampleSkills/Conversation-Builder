@@ -142,29 +142,39 @@ namespace MistyCharacter
 				if (!_parameters.ContainsKey("ConversationGroup"))
 				{
 					string robotIp = GetStringField(_parameters, "RobotIp");
-					robotIp = robotIp.Trim();
 					if (string.IsNullOrWhiteSpace(robotIp))
 					{
-						_misty.SkillLogger.Log("No robot ip provided, cannot perform cross robot communication.");
+						_misty.SkillLogger.Log("No robot ip provided, any cross-robot communication will also send to self.");
+					}
+					else
+					{
+						robotIp = robotIp.Trim();
 					}
 					CharacterParameters.RobotIp = robotIp;
 
 					string endpoint = GetStringField(_parameters, "Endpoint");
-					endpoint = endpoint.Trim();
 					if (string.IsNullOrWhiteSpace(endpoint))
                     {
                         _misty.SkillLogger.Log("No endpoint provided, using last saved conversation.");
-                    }
-                    endpoint += "/api/conversations/group";
+						CharacterParameters.InitializationStatusMessage = "No endpoint provided. Running saved conversation.";
+					}
+					else
+					{
+						endpoint = endpoint.Trim();
+						endpoint += "/api/conversations/group";
+					}
 
 					string conversationGroupId = GetStringField(_parameters, "ConversationGroupId") ?? null;
 				
 					if (!string.IsNullOrWhiteSpace(conversationGroupId))
 					{
+						//TODO This will prolly not be enough for different auth areas...
+
 						string accountId = GetStringField(_parameters, "AccountId") ?? null;
 						string key = GetStringField(_parameters, "Key") ?? null;
+						string accessId = GetStringField(_parameters, "AccessId") ?? null;
 
-						endpoint += $"?id={conversationGroupId.Trim()}&accountid={accountId}&key={key}";
+						endpoint += $"?id={conversationGroupId.Trim()}&accountid={accountId}&key={key}&accessId={accessId}";
 
 						IDictionary<string, object> requestedParameters = new Dictionary<string, object>();
 						try
@@ -177,6 +187,8 @@ namespace MistyCharacter
 						catch
 						{
 							_misty.SkillLogger.Log("Could not locate conversation group data, using last saved conversation.");
+							CharacterParameters.InitializationStatusMessage = "Failed endpoint contact. Running saved conversation.";
+							CharacterParameters.InitializationErrorStatus = "Warning";
 						}
 					
 						//copy those we didn't pass in
@@ -191,7 +203,8 @@ namespace MistyCharacter
 					else
 					{
 						_misty.SkillLogger.Log("Could not locate conversation group data, using last saved conversation.");
-						await Task.Delay(3000);
+						CharacterParameters.InitializationStatusMessage = "Failed endpoint contact. Running saved conversation.";
+						CharacterParameters.InitializationErrorStatus = "Warning";
 					}
 				}
 
@@ -245,20 +258,23 @@ namespace MistyCharacter
 					}
 					catch (Exception ex)
 					{
-						CharacterParameters.InitializationError = "Couldn't parse conversation.";
+						CharacterParameters.InitializationStatusMessage = "Couldn't parse conversation. Cannot continue.";
+						CharacterParameters.InitializationErrorStatus = "Error";
 						_misty.SkillLogger.Log("Failed parsing the conversation group data, cannot continue.", ex);
 						return CharacterParameters;
 					}
 				}
 				else
 				{
-					CharacterParameters.InitializationError = "No conversation data.";
+					CharacterParameters.InitializationStatusMessage = "No conversation data. Cannot continue.";
+					CharacterParameters.InitializationErrorStatus = "Error";
 					_misty.SkillLogger.Log("Failed parsing conversation, no data was pass in for the conversation group.");
 				}
 
 				if (conversationGroup == null)
 				{
-					CharacterParameters.InitializationError = "No conversation data.";
+					CharacterParameters.InitializationErrorStatus = "Error";
+					CharacterParameters.InitializationStatusMessage = "No conversation data. Cannot continue.";
 					return CharacterParameters;
 				}
 
@@ -281,6 +297,8 @@ namespace MistyCharacter
 					{
 						//user has invalid payload
 						_misty.SkillLogger.Log($"Failed parsing user defined payload data, skill may not work as expected.");
+						CharacterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
+						CharacterParameters.InitializationErrorStatus = "Warning";
 					}
 				}
 
@@ -315,6 +333,8 @@ namespace MistyCharacter
 						{
 							//user has invalid payload
 							_misty.SkillLogger.Log($"Failed parsing user defined skill {skillMessage.Skill} payload, skill may not work as expected.");
+							CharacterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
+							CharacterParameters.InitializationErrorStatus = "Warning";
 						}
 					}
 				}
@@ -324,7 +344,27 @@ namespace MistyCharacter
 				CharacterParameters.ShowListeningIndicator = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? false;
 				CharacterParameters.HeardSpeechToScreen = GetBoolField(_parameters, ConversationConstants.HeardSpeechToScreen) ?? false;
 				CharacterParameters.StartVolume = GetIntField(_parameters, ConversationConstants.StartVolume) ?? null;
-				
+
+				try
+				{
+					CharacterParameters.Robots = JsonConvert.DeserializeObject<IList<Robot>>(GetStringField(_parameters, "Robots")) ?? new List<Robot>();
+				}
+				catch
+				{
+					_misty.SkillLogger.Log($"Failed parsing robot information, skill may not work as expected.");
+					CharacterParameters.InitializationStatusMessage = "Warning. Could not parse robot information.";
+					CharacterParameters.InitializationErrorStatus = "Warning";
+				}
+				try
+				{
+					CharacterParameters.Recipes = JsonConvert.DeserializeObject<IList<Recipe>>(GetStringField(_parameters, "Recipes")) ?? new List<Recipe>();
+				}
+				catch
+				{
+					_misty.SkillLogger.Log($"Failed parsing recipe information, skill may not work as expected.");
+					CharacterParameters.InitializationStatusMessage = "Warning. Could not parse recipe information.";
+					CharacterParameters.InitializationErrorStatus = "Warning";
+				}
 				CharacterParameters.ConversationGroup = conversationGroup;
 
 				CharacterParameters.Character = GetStringField(_parameters, ConversationConstants.Character) ?? "basic";
@@ -348,6 +388,8 @@ namespace MistyCharacter
 				catch
 				{
 					_misty.SkillLogger.Log($"Failed parsing pre-speech phrases, using defaults.");
+					CharacterParameters.InitializationStatusMessage = "Failed parsing pre-speech, using defaults.";
+					CharacterParameters.InitializationErrorStatus = "Warning";
 				}
 				finally
 				{
@@ -367,6 +409,8 @@ namespace MistyCharacter
 				if (CharacterParameters.Character != CharacterParameters.RequestedCharacter)
 				{
 					string msg = $"Requested character '{CharacterParameters.RequestedCharacter}' could not be found, using {CharacterParameters.Character}.";
+					CharacterParameters.InitializationStatusMessage = $"Requested character not found, using {CharacterParameters.Character}.";
+					CharacterParameters.InitializationErrorStatus = "Warning";
 					_misty.SkillLogger.Log(msg);
 					_misty.PublishMessage(msg, null);
 				}
@@ -382,18 +426,24 @@ namespace MistyCharacter
 					}
 					catch (Exception ex)
 					{
-						_misty.SkillLogger.Log("Failed parsing the speech configuration data, speech intent will not work.", ex);						
+						_misty.SkillLogger.Log("Failed parsing the speech configuration data, speech intent will not work.", ex);
+						CharacterParameters.InitializationErrorStatus = "Warning";
+						CharacterParameters.InitializationStatusMessage = $"Speech configuration failed, speech intent will not work.";
 					}
 				}
 				else
 				{
 					_misty.SkillLogger.Log("Failed parsing conversation, no data was pass in for the speech configuration.");
+					CharacterParameters.InitializationErrorStatus = "Warning";
+					CharacterParameters.InitializationStatusMessage = $"Speech configuration not set, speech intent will not work.";
 				}
 
 				if (speechConfiguration == null)
 				{
 					//?? is it required?
 					//return null;
+					CharacterParameters.InitializationErrorStatus = "Warning";
+					CharacterParameters.InitializationStatusMessage = $"Speech configuration not set, speech intent will not work.";
 				}
 
 				CharacterParameters.AzureSpeechParameters = new AzureSpeechParameters();
@@ -455,22 +505,26 @@ namespace MistyCharacter
 					
 					if (!audioEnabled)
 					{
+						_misty.SkillLogger.Log($"Failed to get enabled response from audio system.");
+						CharacterParameters.InitializationErrorStatus = "Warning";
+						CharacterParameters.InitializationStatusMessage = $"Warning. Unknown status of audio system.";
 						await Task.Delay(2000);
-						_misty.SkillLogger.Log($"Failed to get enabled response from audio or camera.");
 					}
 				}
 				catch (Exception ex)
 				{
-					await Task.Delay(2000);
 					_misty.SkillLogger.Log("Enable services threw an exception. 820 services not loaded properly.", ex);
-					CharacterParameters.InitializationError = "Failed audio test.";
+					CharacterParameters.InitializationErrorStatus = "Warning";
+					CharacterParameters.InitializationStatusMessage = $"Warning. Unknown status of audio and detection systems.";
+					await Task.Delay(2000);
 					return CharacterParameters;
 				}
 			}
 			catch (Exception ex)
 			{
 				_misty.SkillLogger.Log("Exception processing parameters.", ex);
-				CharacterParameters.InitializationError = "Exception processing parameters.";
+				CharacterParameters.InitializationStatusMessage = "Exception processing parameters. Cannot continue.";
+				CharacterParameters.InitializationErrorStatus = "Error";
 				return CharacterParameters;
 			}
 

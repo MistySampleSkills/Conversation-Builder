@@ -215,7 +215,7 @@ namespace MistyCharacter
 
 				LogEventDetails(Misty.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
 
-				LogEventDetails(Misty.RegisterUserEvent("RobotCommand", RobotCommandCallback, 0, true, null));
+				LogEventDetails(Misty.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
 
 				Misty.StartFaceRecognition(null);
 				//TODO These should be configurable
@@ -238,6 +238,8 @@ namespace MistyCharacter
 				SpeechManager.CompletedProcessingVoice += SpeechManager_CompletedProcessingVoice;
 				SpeechManager.StartedProcessingVoice += SpeechManager_StartedProcessingVoice;
 				SpeechManager.KeyPhraseRecognitionOn += SpeechManager_KeyPhraseRecognitionOn;
+
+				AnimationManager.SyncEvent += AnimationManager_SyncEvent;
 
 				InteractionEnded += RunNextAnimation;
 
@@ -324,6 +326,20 @@ namespace MistyCharacter
 			catch
 			{
 				return false;
+			}
+		}
+
+		private void AnimationManager_SyncEvent(object sender, TriggerData syncEvent)
+		{
+			if (!SendManagedResponseEvent(syncEvent))
+			{
+				if(!SendManagedResponseEvent(new TriggerData(syncEvent.Text, "", Triggers.SyncEvent)))
+				{
+					if (!SendManagedResponseEvent(syncEvent, true))
+					{
+						SendManagedResponseEvent(new TriggerData(syncEvent.Text, "", Triggers.SyncEvent), true);
+					}
+				}
 			}
 		}
 
@@ -1571,23 +1587,20 @@ namespace MistyCharacter
 
 		private void SyncEventCallback(IUserEvent userEvent)
 		{
-			//this is an external call to the animation manager of another bot (and self if set)
-
-			AnimationManager.HandleSyncEvent(name, false);
+			//this is an external call to the animation manager of another bot (and self if set)			
+			AnimationManager.HandleSyncEvent(userEvent);
 		}
-
+		
 		private void RobotCommandCallback(IUserEvent userEvent)
 		{
-			if (userEvent.TryGetPayload(out IDictionary<string, object> payload))
-			{
-				//this is an external call to the animation manager of another bot (and self if set)
-				//if it is in responsive state, handle this...
-			}
+			//this is an external call to the animation manager of another bot (and self if set)		
+			_ = AnimationManager.HandleExternalCommand(userEvent);			
 		}
 
+		//Callback from external skills or scripts 
 		private void ExternalEventCallback(IUserEvent userEvent)
 		{
-			//Callback from external skills
+			//TODO Deny cross robot communication per robot
 
 			if (CharacterState == null)
 			{

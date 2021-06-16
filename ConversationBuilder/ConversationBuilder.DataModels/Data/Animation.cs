@@ -231,7 +231,7 @@ namespace ConversationBuilder.DataModels
 		public DateTimeOffset Created { get; set; }
 
 		[Display(Name = "CreatedBy")]
-		[JsonProperty(PropertyName = "Created By")]
+		[JsonProperty(PropertyName = "CreatedBy")]
 		public string CreatedBy { get; set; }
 		
 		[Display(Name = "Updated")]

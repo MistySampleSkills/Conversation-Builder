@@ -212,9 +212,11 @@ namespace ConversationBuilder.Controllers
 
 					Robot loadedRobot = await _cosmosDbService.ContainerManager.RobotData.GetAsync(robot.Id);
 
+					//Allow edit?
+					loadedRobot.SerialNumber = robot.SerialNumber;		
+
 					loadedRobot.IsProvisioned = robot.IsProvisioned;
-					loadedRobot.ListenForSynchronizationTriggers = robot.ListenForSynchronizationTriggers;
-					loadedRobot.SendSynchronizationTriggers = robot.SendSynchronizationTriggers;					
+					loadedRobot.AllowCrossRobotCommunication = robot.AllowCrossRobotCommunication;					
 					loadedRobot.IP = robot.IP;
 					loadedRobot.RobotName = robot.RobotName;
 					loadedRobot.RobotConfig = robot.RobotConfig;
@@ -236,5 +238,53 @@ namespace ConversationBuilder.Controllers
 			}
 		}
 
+		public async Task<ActionResult> Delete(string id)
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+			
+				Robot robot = await _cosmosDbService.ContainerManager.RobotData.GetAsync(id);
+				if (robot == null)
+				{
+					return RedirectToAction(nameof(Index));
+				}
+				else
+				{
+					ViewBag.CanBeDeleted = true;
+					await SetViewBagData();
+					return View(robot);
+				}
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception deleting robot.", exception = ex.Message });
+			}
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<ActionResult> Delete(string id, IFormCollection collection)
+		{
+			try
+			{
+				UserInformation userInfo = await GetUserInformation();
+				if (userInfo == null)
+				{
+					return RedirectToAction("Error", "Home", new { message = UserNotFoundMessage });
+				}
+
+				 await _cosmosDbService.ContainerManager.RobotData.DeleteAsync(id);
+				return RedirectToAction(nameof(Index));				
+			}
+			catch (Exception ex)
+			{
+				return RedirectToAction("Error", "Home", new { message = "Exception deleting robot.", exception = ex.Message });
+			}
+		}
 	}
 }

@@ -47,12 +47,23 @@ namespace MistyCharacter
 	{
 		public bool Success { get; set; }
 	}
-
-	public class EventPayload
+	
+	public class AwaitingSync
 	{
+		public IList<Robot> Robots { get; set; } = new List<Robot>();
+		public string SyncName { get; set; }
+		public bool IncludeSelf { get; set; }
+		public bool AwaitAck { get; set; }
+	}
+
+	public class AwaitingEvent
+	{
+		public IList<Robot> Robots { get; set; } = new List<Robot>();
 		public string Trigger { get; set; }
-		public string Filter { get; set; }
+		public string TriggerFilter { get; set; }
 		public string Text { get; set; }
+		public bool IncludeSelf { get; set; }
+		public bool AwaitAck { get; set; }
 	}
 
 	public class AnimationManager : BaseManager, IAnimationManager
@@ -62,7 +73,7 @@ namespace MistyCharacter
 		public event EventHandler<DateTime> AnimationScriptActionsComplete;
 		public event EventHandler<DateTime> RepeatingAnimationScript;
 
-		public event EventHandler<DateTime> UserScriptEvent;
+		public event EventHandler<TriggerData> SyncEvent;
 
 		private bool _userTextLayerVisible;
 		private bool _webLayerVisible;
@@ -81,11 +92,22 @@ namespace MistyCharacter
 		private bool _repeatScript;
 		private WebMessenger _webMessenger;
 
+		//TODO This should prolly go to loco manager
 		private string _lastWaypoint;
 		private string _goingToWaypoint;
 		private IList<string> _actionsFromWaypoint = new List<string>();
 
-		private bool _responsiveState;
+		private AwaitingSync _awaitingSyncToSend;
+		private AwaitingEvent _awaitingEventToSend;
+
+		private int _waitingTimeoutMs;
+		private string _waitingEvent;
+		private bool _awaitAny;
+		private object _waitingLock = new object();
+		private TaskCompletionSource<bool> _receivedSyncEvent;
+		private TaskCompletionSource<bool> _receivedSpeechCompletionEvent;
+
+		private bool _responsiveState = true; //by default, let other bots call this bot if it knows the IP
 
 		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, ILocomotionManager locomotionManager)
 		: base(misty, parameters, characterParameters)
@@ -93,6 +115,25 @@ namespace MistyCharacter
 			_speechManager = speechManager;
 			_locomotionManager = locomotionManager;
 			_webMessenger = new WebMessenger();
+
+			_speechManager.StoppedSpeaking += _speechManager_StoppedSpeaking;
+		}
+
+		private async void _speechManager_StoppedSpeaking(object sender, IAudioPlayCompleteEvent e)
+		{
+			if(_awaitingSyncToSend != null)
+			{
+				await SendSyncEvent(_awaitingSyncToSend.Robots, _awaitingSyncToSend.SyncName, _awaitingSyncToSend.IncludeSelf, _awaitingSyncToSend.AwaitAck);
+				_awaitingSyncToSend = null;
+			}
+
+			if (_awaitingEventToSend != null)
+			{
+				await SendCrossRobotEvent(_awaitingEventToSend.Robots, _awaitingEventToSend.Trigger, _awaitingEventToSend.TriggerFilter, _awaitingEventToSend.Text, _awaitingEventToSend.IncludeSelf, _awaitingEventToSend.AwaitAck);
+				_awaitingEventToSend = null;
+			}
+
+			_receivedSpeechCompletionEvent?.TrySetResult(true);
 		}
 
 		public override Task<bool> Initialize()
@@ -121,31 +162,67 @@ namespace MistyCharacter
 		{
 			foreach (Robot robot in robots)
 			{
+				if (!includeSelf && !robot.AllowCrossRobotCommunication)
+				{
+					continue;
+				}
+
+				bool callSelf = false;
 				string[] robotIps = robot.IP.Split(",");
 				foreach (string robotIp in robotIps)
 				{
-					if(!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
+					//Need to handle when bot says it isn't gonna handle cross robot stuff
+					bool isSelf = robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "");
+					if (isSelf && !includeSelf)
 					{
-						if(robotIp.Trim().Replace("https://", "").Replace("https://", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("https://", ""))
+						continue;
+					}
+
+					if (!isSelf && !robot.AllowCrossRobotCommunication)
+					{
+						continue;
+					}
+
+					callSelf = isSelf && includeSelf;
+					/*
+					if (includeSelf && !robot.AllowCrossRobotCommunication)
+					{
+						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") != CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
 						{
 							continue;
 						}
 					}
-					
+
+					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
+					{
+						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
+						{
+							continue;
+						}
+					}*/
+
 					IDictionary<string, object> payload = new Dictionary<string, object>();
 					payload.Add("Trigger", trigger);
 					payload.Add("Filter", triggerFilter);
 					payload.Add("Text", text);
 
-					UserEvent userEvent = new UserEvent("ExternalEvent", "ConversationBuilder", EventOriginator.Skill, payload, -1);
-					string data = Newtonsoft.Json.JsonConvert.SerializeObject(userEvent);
-					if(awaitAck)
+					if (callSelf)
 					{
-						await _webMessenger.PostRequest(robotIp, data, "application/json");
+						_ = await Robot.TriggerEventAsync("SyncEvent", CharacterParameters.RobotIp ?? "ConversationBuilder", payload, null);
 					}
 					else
 					{
-						_ = _webMessenger.PostRequest(robotIp, data, "application/json");
+						UserEvent userEvent = new UserEvent("ExternalEvent", "ConversationBuilder", EventOriginator.Skill, payload, -1);
+						string data = Newtonsoft.Json.JsonConvert.SerializeObject(userEvent);
+						string endpoint = $"http://{robotIp}/api/skills/event";
+						if (awaitAck)
+						{
+							await _webMessenger.PostRequest(endpoint, data, "application/json");
+						}
+						else
+						{
+							_ = _webMessenger.PostRequest(endpoint, data, "application/json");
+						}
 					}
 				}
 			}
@@ -155,63 +232,133 @@ namespace MistyCharacter
 		{
 			foreach (Robot robot in robots)
 			{
+				if (!includeSelf && !robot.AllowCrossRobotCommunication)
+				{
+					continue;
+				}
+
+				bool callSelf = false;
 				string[] robotIps = robot.IP.Split(",");
 				foreach (string robotIp in robotIps)
 				{
-					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
+					bool isSelf = robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "");
+					if(isSelf && !includeSelf)
 					{
-						if (robotIp.Trim().Replace("https://", "").Replace("https://", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("https://", ""))
+						continue;
+					}
+
+					if(!isSelf && !robot.AllowCrossRobotCommunication)
+					{
+						continue;
+					}
+
+					callSelf = isSelf && includeSelf;
+
+				/*	if (includeSelf && !robot.AllowCrossRobotCommunication)
+					{
+						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") != CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
 						{
 							continue;
 						}
 					}
 
-					IDictionary<string, object> payload = new Dictionary<string, object>();
-					payload.Add("Trigger", "Sync");
-					payload.Add("Filter", syncName);
-
-					UserEvent userEvent = new UserEvent("SyncEvent", "ConversationBuilder", EventOriginator.Skill, payload, -1);
-					string data = Newtonsoft.Json.JsonConvert.SerializeObject(userEvent);
-					if (awaitAck)
+					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
 					{
-						await _webMessenger.PostRequest(robotIp, data, "application/json");
+						if (isSelf)
+						{
+							continue;
+						}
+					}*/
+
+					IDictionary<string, object> payload = new Dictionary<string, object>();
+					payload.Add("Trigger", "SyncEvent");
+					payload.Add("TriggerFilter", syncName.Trim());
+					
+					if(callSelf)
+					{
+						_ = await Robot.TriggerEventAsync("SyncEvent", CharacterParameters.RobotIp ?? "ConversationBuilder", payload, null);
 					}
 					else
 					{
-						_ = _webMessenger.PostRequest(robotIp, data, "application/json");
+						UserEvent userEvent = new UserEvent("SyncEvent", "ConversationBuilder", EventOriginator.Skill, payload, -1);
+						string data = Newtonsoft.Json.JsonConvert.SerializeObject(userEvent);
+
+						string endpoint = $"http://{robotIp}/api/skills/event";
+						if (awaitAck)
+						{
+							await _webMessenger.PostRequest(endpoint, data, "application/json");
+						}
+						else
+						{
+							_ = _webMessenger.PostRequest(endpoint, data, "application/json");
+						}
 					}
 				}
 			}
 		}
-
+		
 		public async Task SendCrossRobotCommand(IList<Robot> robots, string command, bool includeSelf = false, bool awaitAck = false)
 		{
-			//TODO Don't send to self!!
 			foreach (Robot robot in robots)
 			{
-				string [] robotIps = robot.IP.Split(",");
+				if (!includeSelf && !robot.AllowCrossRobotCommunication)
+				{
+					continue;
+				}
+
+				bool callSelf = false;
+				string[] robotIps = robot.IP.Split(",");
 				foreach(string robotIp in robotIps)
 				{
-					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
+					bool isSelf = robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "");
+					if (isSelf && !includeSelf)
 					{
-						if (robotIp.Trim().Replace("https://", "").Replace("https://", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("https://", ""))
+						continue;
+					}
+
+					if (!isSelf && !robot.AllowCrossRobotCommunication)
+					{
+						continue;
+					}
+
+					callSelf = isSelf && includeSelf;
+
+					/*if (includeSelf && !robot.AllowCrossRobotCommunication)
+					{
+						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") != CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
 						{
 							continue;
 						}
 					}
+
+					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
+					{
+						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
+						{
+							continue;
+						}
+					}*/
 					
 					IDictionary<string, object> payload = new Dictionary<string, object>();
 					payload.Add("Command", command);
 
-					UserEvent userEvent = new UserEvent("CrossRobotCommand", "ConversationBuilder", EventOriginator.Skill, payload, -1);
-					string data = Newtonsoft.Json.JsonConvert.SerializeObject(userEvent);
-					if (awaitAck)
+					if (callSelf)
 					{
-						await _webMessenger.PostRequest(robotIp, data, "application/json");
+						_ = await Robot.TriggerEventAsync("SyncEvent", CharacterParameters.RobotIp ?? "ConversationBuilder", payload, null);
 					}
 					else
 					{
-						_ = _webMessenger.PostRequest(robotIp, data, "application/json");
+						UserEvent userEvent = new UserEvent("CrossRobotCommand", "ConversationBuilder", EventOriginator.Skill, payload, -1);
+						string data = Newtonsoft.Json.JsonConvert.SerializeObject(userEvent);
+						string endpoint = $"http://{robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "")}/api/skills/event";
+						if (awaitAck)
+						{
+							await _webMessenger.PostRequest(endpoint, data, "application/json");
+						}
+						else
+						{
+							_ = _webMessenger.PostRequest(endpoint, data, "application/json");
+						}
 					}
 				}
 			}
@@ -382,6 +529,31 @@ namespace MistyCharacter
 			return response;
 		}
 
+		private async Task<bool> WaitOnSpeechCompletionEvent(int timeoutMs)
+		{
+			bool response = false;
+			_receivedSpeechCompletionEvent = null;
+			_receivedSpeechCompletionEvent = new TaskCompletionSource<bool>();
+			try
+			{
+				if (_receivedSpeechCompletionEvent.Task == await Task.WhenAny(_receivedSpeechCompletionEvent.Task, Task.Delay(timeoutMs)))
+				{
+					response = _receivedSpeechCompletionEvent.Task.Result;
+				}
+				else
+				{
+					Robot.SkillLogger.LogInfo("Timeout waiting for speech completion event.");
+				}
+			}
+			catch (Exception ex)
+			{
+				Robot.SkillLogger.LogError("Failed waiting for speech completion event", ex);
+			}
+
+			_receivedSpeechCompletionEvent = null;
+			return response;
+		}
+
 		private async Task<CommandResult> ProcessCommand(string command, bool guaranteedCommand, int loop)
 		{
 			// ; delimted :0)
@@ -410,7 +582,7 @@ namespace MistyCharacter
 					action = action.Replace("*", "").Trim();
 
 					//check loop limiter
-					if (loop > 1 && action.Contains("{") && action.Contains("}"))
+					if (action.Contains("{") && action.Contains("}"))
 					{
 						//get the numero of loops
 						
@@ -432,7 +604,14 @@ namespace MistyCharacter
 						}
 
 						//remove looping details
-						action = action.Substring(0, indexOpen) + action.Substring(indexClose + 1, action.Length - indexClose);
+						if(indexOpen == 0)
+						{
+							action = action.Substring((indexClose + 1), (action.Length - 1 - indexClose));
+						}
+						else
+						{
+							action = action.Substring(0, indexOpen) + action.Substring((indexClose + 1), (action.Length - 1 - indexClose));
+						}
 					}
 
 					bool sendToRobots = false;
@@ -469,7 +648,7 @@ namespace MistyCharacter
 					action = action.Replace("%", "").Trim();
 
 					//look for override robot list
-					if (loop > 1 && action.Contains("[") && action.Contains("]"))
+					if (action.Contains("[") && action.Contains("]"))
 					{
 						//get the numero of loops
 
@@ -772,32 +951,97 @@ namespace MistyCharacter
 
 							case "SPEAK":
 								//SPEAK:What to say;
-								string toTalkyTalk = Convert.ToString(commandData[1]);
-
-								if (_speechManager.TryToPersonalizeData(toTalkyTalk, _currentAnimation, _currentInteraction, out string newText, out _))
+								if (_speechManager.TryToPersonalizeData(commandData[1], _currentAnimation, _currentInteraction, out string newText, out _))
 								{
 									_currentAnimation.Speak = newText;
 								}
 								else
 								{
-									_currentAnimation.Speak = toTalkyTalk;
+									_currentAnimation.Speak = commandData[1];
 								}
 
 								_currentInteraction.StartListening = false;
 								_speechManager.Speak(_currentAnimation, _currentInteraction);
 								break;
 
-							case "SPEAK-AND-LISTEN":
-								//SPEAK-AND-LISTEN:What to say;
-								string toTalkyTalk2 = Convert.ToString(commandData[1]);
+							case "SPEAK-AND-WAIT":
+								//SPEAK-AND-WAIT:What to say, timeoutMs;
+								string[] sawData = commandData[1].Split(",");
+								if (_speechManager.TryToPersonalizeData(sawData[0], _currentAnimation, _currentInteraction, out string newspeakText, out _))
+								{
+									_currentAnimation.Speak = newspeakText;
+								}
+								else
+								{
+									_currentAnimation.Speak = sawData[0];
+								}
 
-								if (_speechManager.TryToPersonalizeData(toTalkyTalk2, _currentAnimation, _currentInteraction, out string newText2, out _))
+								_currentInteraction.StartListening = false;
+								_speechManager.Speak(_currentAnimation, _currentInteraction);
+								await WaitOnSpeechCompletionEvent(Convert.ToInt32(sawData[1]));
+								break;
+
+							case "SPEAK-AND-SYNC":
+								//SPEAK-AND-SYNC:What to say - without commas for now,SyncName;
+								//TODO Timeout??
+
+								string[] sasData = commandData[1].Split(",");
+								if (_speechManager.TryToPersonalizeData(sasData[0], _currentAnimation, _currentInteraction, out string newText2, out _))
 								{
 									_currentAnimation.Speak = newText2;
 								}
 								else
 								{
-									_currentAnimation.Speak = toTalkyTalk2;
+									_currentAnimation.Speak = sasData[0];
+								}
+								_currentInteraction.StartListening = false;
+								
+								
+								_speechManager.Speak(_currentAnimation, _currentInteraction);
+								//await Task.Delay(100);
+								_awaitingSyncToSend = new AwaitingSync
+								{
+									Robots = externalRobots,
+									SyncName = sasData[1].Trim(),
+									AwaitAck = awaitAck,
+									IncludeSelf = includeSelf
+								};
+								break;
+							case "SPEAK-AND-EVENT":
+								//SPEAK-AND-EVENT:What to say,trigger,triggerFilter,text;
+								string[] saeData = commandData[1].Split(",");
+								if (_speechManager.TryToPersonalizeData(saeData[0], _currentAnimation, _currentInteraction, out string newText3, out _))
+								{
+									_currentAnimation.Speak = newText3;
+								}
+								else
+								{
+									_currentAnimation.Speak = saeData[0];
+								}
+								_currentInteraction.StartListening = false;
+								
+								_speechManager.Speak(_currentAnimation, _currentInteraction);
+								//await Task.Delay(100);
+								_awaitingEventToSend = new AwaitingEvent
+								{
+									Robots = externalRobots,
+									Trigger = saeData[1].Trim(),
+									TriggerFilter = saeData[2].Trim(),
+									Text = saeData[3],
+									AwaitAck = awaitAck,
+									IncludeSelf = includeSelf
+								};
+								break;
+							case "SPEAK-AND-LISTEN":
+								//SPEAK-AND-LISTEN:What to say;
+								string[] salData = commandData[1].Split(",");
+								if (_speechManager.TryToPersonalizeData(salData[0], _currentAnimation, _currentInteraction, out string newText4, out _))
+								{
+									_currentAnimation.Speak = newText4;
+								}
+								else
+								{
+									_currentAnimation.Speak = salData[0];
 								}
 								_currentInteraction.StartListening = true;
 								_speechManager.Speak(_currentAnimation, _currentInteraction);
@@ -914,6 +1158,12 @@ namespace MistyCharacter
 								_actionsFromWaypoint = new List<string>();
 								break;
 
+							case "HAZARDS-OFF":
+								_ = Robot.UpdateHazardSettingsAsync(new MistyRobotics.Common.Data.HazardSettings { DisableTimeOfFlights = true });
+								break;
+							case "HAZARDS-ON":
+								_ = Robot.UpdateHazardSettingsAsync(new MistyRobotics.Common.Data.HazardSettings { RevertToDefault = true });
+								break;
 							case "START-SKILL":
 								//START-SKILL: skillId,?? and the params in robot config if cross skill
 								string[] startSkillData = commandData[1].Split(",");
@@ -924,6 +1174,7 @@ namespace MistyCharacter
 								}
 
 								//TODO also add in whatever they give ya or info from bots/skills
+
 								_ = Robot.RunSkillAsync(startSkillData[0], parameters);
 								break;
 							case "STOP-SKILL":
@@ -931,9 +1182,8 @@ namespace MistyCharacter
 								_ = Robot.CancelRunningSkillAsync(stopSkillData[0]);
 								break;
 
-							//TODO
 							case "AWAIT-ANY":
-								//AWAIT-ANY:10000/-1,true/false(if it must happen while waiting); //so keep track of events in the interaction
+								//AWAIT-ANY:10000/-1;
 								string[] awaitAnySyncEvent = commandData[1].Split(",");
 								lock (_waitingLock)
 								{
@@ -944,21 +1194,23 @@ namespace MistyCharacter
 								break;
 
 							case "AWAIT-SYNC":
-								//AWAIT-SYNC:syncName1,10000/-1,true/false(if it must happen while waiting); //so keep track of events in the interaction
+								//AWAIT-SYNC:syncName1,10000/-1;
 								string[] awaitSyncEvent = commandData[1].Split(",");
 								lock (_waitingLock)
 								{
-									_waitingEvent = awaitSyncEvent[0];
+									_waitingEvent = awaitSyncEvent[0].Trim();
 									_awaitAny = false;
 									_waitingTimeoutMs = Convert.ToInt32(awaitSyncEvent[1]);
 								}
 								break;
+
+							//TODO
 							case "RETURN":
 								//RETURN; //return to last known waypoint
 								break;
-							case "WANDER":
+							//case "WANDER":
 								//WANDER:leftAreaMeters,upAreaMeters,rightAreaMeters,downAreaMeters,velocity;
-								break;
+								//break;
 							case "GOTO-WAYPOINT":
 								//WAYPOINT:waypoint-name,velocity?;
 								break;
@@ -1001,15 +1253,24 @@ namespace MistyCharacter
 			}
 		}
 
-		private int _waitingTimeoutMs;
-		private string _waitingEvent;
-		private bool _awaitAny;
-		private object _waitingLock = new object();		
-		private TaskCompletionSource<bool> _receivedSyncEvent;
-		
 		//This command needs to come in from another bot or skill
-		public bool HandleSyncEvent(string name)
+		//Need to handle when bot says it isn't gonna handle cross robot stuff
+		public bool HandleSyncEvent(IUserEvent userEvent)
 		{
+			//TODO Deny cross robot communication per robot
+
+			string name = "";
+			IDictionary<string, object> payload = new Dictionary<string, object>();
+			if (_awaitAny || userEvent.TryGetPayload(out payload))
+			{
+				//get the name if it exists
+				if(payload != null && payload.TryGetValue("TriggerFilter", out object theName))
+				{
+					name = Convert.ToString(theName);
+				}
+			}
+		
+			//always be open to sync events for now
 			lock (_waitingLock)
 			{
 				if(_awaitAny || _waitingEvent == name)
@@ -1019,7 +1280,33 @@ namespace MistyCharacter
 					return _receivedSyncEvent?.TrySetResult(true) ?? false;
 				}
 			}
+
+			//Send sync event into conversation system in case interaction is waiting for it too...
+			SyncEvent?.Invoke(this, new TriggerData("", name, Triggers.SyncEvent));
+			
 			return false;
+		}
+
+		public async Task HandleExternalCommand(IUserEvent userEvent)
+		{
+			//TODO Deny cross robot communication per robot
+
+			//only allow external commands if robot is in responsive state
+			if (_responsiveState)
+			{
+				string command = "";
+				IDictionary<string, object> payload = new Dictionary<string, object>();
+				if (_awaitAny || userEvent.TryGetPayload(out payload))
+				{
+					//get the name if it exists
+					if (payload != null && payload.TryGetValue("Command", out object theName))
+					{
+						command = Convert.ToString(theName);
+					}
+				}
+
+				await ProcessCommand(command, false, 0);
+			}
 		}
 
 		private void ClearAnimationDisplayLayers()
