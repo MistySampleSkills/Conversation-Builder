@@ -21,8 +21,11 @@ namespace ConversationBuilder.ViewModels
 		public string Name { get; set; }
 
 		public string Animation { get; set; }
+		public string PreSpeechAnimation { get; set; }
 
 		public Animation AnimationData { get; set; }
+		
+		public Animation PreSpeechAnimationData { get; set; }
 		
 		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 

@@ -480,7 +480,7 @@ namespace MistyCharacter
 			{
 				_recording = false;
 				Robot.SkillLogger.Log($"Audio Callback. Name: {audioComplete.Name}");
-				if(_processingAudioCallback || audioComplete.Name.StartsWith("prespeech") || audioComplete.Name.StartsWith("ignore"))
+				if(_processingAudioCallback)// || audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
 				{
 					return;
 				}
@@ -636,7 +636,7 @@ namespace MistyCharacter
                 //Old conversations trigger on name, new ones on id
 
 				SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
-				Robot.SkillLogger.Log($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent}");
+				Robot.SkillLogger.Log($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
 			}
 			else
 			{

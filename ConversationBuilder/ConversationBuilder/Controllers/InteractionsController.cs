@@ -173,6 +173,7 @@ namespace ConversationBuilder.Controllers
 					ViewBag.Interactions = await InteractionList();
 					ViewBag.InteractionAndOptionList = await FullInteractionAndOptionList(interaction.ConversationId);
 					ViewBag.InteractionAnimationList = await InteractionAnimationList(interaction.ConversationId);
+					ViewBag.InteractionPreSpeechAnimationList = await InteractionPreSpeechAnimationList(interaction.ConversationId);
 
 					InteractionViewModel interactionViewModel = new InteractionViewModel();
 					interactionViewModel.ConversationId = interaction.ConversationId;
@@ -182,6 +183,7 @@ namespace ConversationBuilder.Controllers
 					interactionViewModel.ItemType = interaction.ItemType;
 					interactionViewModel.Name = interaction.Name;
 					interactionViewModel.Animation = interaction.Animation;
+					interactionViewModel.PreSpeechAnimation = interaction.PreSpeechAnimation;
 
 					interactionViewModel.StartListening = interaction.StartListening;
 					
@@ -196,6 +198,9 @@ namespace ConversationBuilder.Controllers
 					
 					Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(interaction.Animation);
 					interactionViewModel.AnimationData = animation;
+					Animation preSpeechAnimation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(interaction.PreSpeechAnimation);
+					interactionViewModel.PreSpeechAnimationData = preSpeechAnimation;
+
 					interactionViewModel.TriggerDetails = filteredTriggers.OrderBy(x => x.Name).ToList();
 
 					foreach(string skillMessageId in interaction.SkillMessages)
@@ -373,7 +378,8 @@ namespace ConversationBuilder.Controllers
 
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.ConversationId);				
 				Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.Id);				
-				Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);	
+				Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);				
+				Animation prespeechAnimation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.PreSpeechAnimation);	
 				
 				if(interaction != null && conversation != null)
 				{
@@ -392,6 +398,8 @@ namespace ConversationBuilder.Controllers
 						//map triggerAction id to conversation depature points
 						DepartureMap departureMap = new DepartureMap();
 						departureMap.AnimationId = animation?.Id ?? "Default Animation";
+						departureMap.PreSpeechAnimationId = prespeechAnimation?.Id ?? "PreSpeech Default";
+
 						departureMap.ConversationId = conversation.Id;
 						departureMap.TriggerId = model.SelectedTrigger;
 						departureMap.InteractionId = model.Id;
@@ -427,6 +435,24 @@ namespace ConversationBuilder.Controllers
 						if(!conversation.Animations.Contains(goToInteraction.Animation))
 						{
 							conversation.Animations.Add(goToInteraction.Animation);
+						}
+					}
+
+					if(!string.IsNullOrWhiteSpace(model.PreSpeechAnimation) && model.PreSpeechAnimation != "PreSpeech Default")
+					{
+						conversation.InteractionPreSpeechAnimations.Remove(triggerActionOption.Id);
+						conversation.InteractionPreSpeechAnimations.Add(triggerActionOption.Id, model.PreSpeechAnimation);
+
+						if(!conversation.Animations.Contains(model.PreSpeechAnimation))
+						{
+							conversation.Animations.Add(model.PreSpeechAnimation);
+						}
+					}
+					else
+					{
+						if(!conversation.Animations.Contains(goToInteraction.PreSpeechAnimation))
+						{
+							conversation.Animations.Add(goToInteraction.PreSpeechAnimation);
 						}
 					}
 
@@ -525,7 +551,51 @@ namespace ConversationBuilder.Controllers
 					{
 						conversation.Animations.Remove(animationId);
 					}
-						
+
+
+
+					string preSpeechAnimationId;
+					if(conversation.InteractionPreSpeechAnimations.TryGetValue(removedTriggerAction, out preSpeechAnimationId))
+					{
+						conversation.InteractionPreSpeechAnimations.Remove(removedTriggerAction);
+					}
+
+					//Check if we need to remove this from the conversation mapping
+					//Get all the animations from the interactions
+					IList<string> prespeechConversationAnimations = new List<string>();
+					foreach(string interationId in conversation.Interactions)
+					{
+						//get the interaction default animation and add it
+						Interaction interation = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interationId);
+						if(interation != null)
+						{
+							if(!prespeechConversationAnimations.Contains(interation.PreSpeechAnimation))
+							{
+								prespeechConversationAnimations.Add(interation.PreSpeechAnimation);
+							}
+							
+							//then go through interaction animation mappings
+							foreach(KeyValuePair<string, IList<TriggerActionOption>> handler in interation.TriggerMap)
+							{
+								if(handler.Value != null && handler.Value.Count() > 0)
+								{
+									foreach(TriggerActionOption triggerActionOption in handler.Value)
+									{
+										if(conversation.InteractionPreSpeechAnimations.ContainsKey(triggerActionOption.Id) && !prespeechConversationAnimations.Contains(conversation.InteractionPreSpeechAnimations[triggerActionOption.Id]))
+										{
+											prespeechConversationAnimations.Add(conversation.InteractionPreSpeechAnimations[triggerActionOption.Id]);
+										}
+									}
+								}
+							}
+						}
+					}
+
+					if(!prespeechConversationAnimations.Contains(preSpeechAnimationId))
+					{
+						conversation.Animations.Remove(preSpeechAnimationId);
+					}
+					
 					conversation.ConversationDeparturePoints.Remove(removedTriggerAction);
 					await _cosmosDbService.ContainerManager.InteractionData.UpdateAsync(interaction);
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
@@ -747,6 +817,10 @@ namespace ConversationBuilder.Controllers
 					{
 						conversation.Animations.Add(model.Animation);
 					}
+					if(!conversation.Animations.Contains(model.PreSpeechAnimation))
+					{
+						conversation.Animations.Add(model.PreSpeechAnimation);
+					}
 
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
 					await _cosmosDbService.ContainerManager.InteractionData.AddAsync(model);
@@ -821,6 +895,7 @@ namespace ConversationBuilder.Controllers
 
 					loadedInteraction.Name = interaction.Name;
 					loadedInteraction.Animation = interaction.Animation;
+					loadedInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
 					loadedInteraction.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
 					loadedInteraction.StartListening = interaction.StartListening;			
 					loadedInteraction.UsePreSpeech = interaction.UsePreSpeech;					
@@ -851,6 +926,12 @@ namespace ConversationBuilder.Controllers
 					{
 						conversation.Animations.Add(interaction.Animation);
 					}
+
+					if(!conversation.Animations.Contains(interaction.PreSpeechAnimation))
+					{
+						conversation.Animations.Add(interaction.PreSpeechAnimation);
+					}
+
 
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
 					return RedirectToAction(nameof(Index), new {conversationId = interaction.ConversationId});

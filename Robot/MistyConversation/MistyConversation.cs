@@ -74,7 +74,7 @@ namespace MistyConversation
                 //Unregister events in case didn't shut down cleanly last time
 				Misty.UnregisterAllEvents(null);
 
-                //Revert display to defaults before starting...
+				//Revert display to defaults before starting...
 				await Misty.SetDisplaySettingsAsync(true);
 				Misty.SetBlinkSettings(true, null, null, null, null, null, null);
 

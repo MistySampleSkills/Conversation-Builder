@@ -55,7 +55,8 @@ namespace ConversationBuilder.ViewModels
 		public IList<TriggerDetailViewModel> TriggerDetails { get; set; } = new List<TriggerDetailViewModel>();
 		public string SelectedTrigger { get; set; }
 		public string RemovedTriggerAction { get; set; }
-		public string Animation { get; set; }
+		public string Animation { get; set; }		
+		public string PreSpeechAnimation { get; set; }
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

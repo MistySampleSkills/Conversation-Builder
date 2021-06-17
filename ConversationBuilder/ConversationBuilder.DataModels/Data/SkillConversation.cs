@@ -57,6 +57,7 @@ namespace ConversationBuilder.DataModels
 		public IList<ArmLocation> ArmLocations { get; set; } = new List<ArmLocation> ();
 		
 		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionPreSpeechAnimations { get; set; } = new Dictionary<string, string>();
 		public IList<SkillMessage> SkillMessages { get; set; } = new List<SkillMessage> ();
 
 		public IList<TriggerDetail> Triggers { get; set; } = new List<TriggerDetail>();

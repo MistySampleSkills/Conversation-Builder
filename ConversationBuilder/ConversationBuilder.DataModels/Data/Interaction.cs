@@ -58,6 +58,9 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Override PreSpeech Phrases")]
 		public string PreSpeechPhrases { get; set; }
 
+		[Display(Name = "Default PreSpeech Animation")]
+		public string PreSpeechAnimation { get; set; }
+
 		public IList<string> SkillMessages { get; set; } = new List<string>();
 		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 		

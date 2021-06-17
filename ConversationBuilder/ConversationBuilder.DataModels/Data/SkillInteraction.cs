@@ -68,5 +68,8 @@ namespace ConversationBuilder.DataModels
 		public bool UsePreSpeech { get; set; } = true;
 		
 		public string PreSpeechPhrases { get; set; }
+
+		public string PreSpeechAnimation { get; set; }
+		
 	}
 }

@@ -404,11 +404,18 @@ namespace MistyCharacter
 				if (preSpeechOverrides != null && preSpeechOverrides.Length > 0)
 				{
 					AnimationRequest animation = new AnimationRequest(_currentAnimation);
+					Interaction interaction = new Interaction(CurrentInteraction);
+					//TODO Is this not making a copy!!
 					string selectedPhrase = preSpeechOverrides[_random.Next(0, preSpeechOverrides.Length-1)];
 					
-					SpeechManager.TryToPersonalizeData(selectedPhrase, animation, CurrentInteraction, out string newText, out string newImage);
-					animation.Speak = newText;					
-					SpeechManager.Speak(animation, CurrentInteraction);					
+					SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText, out string newImage);
+					
+					animation.Speak = newText;
+					animation.SpeakFileName = ConversationConstants.IgnoreCallback;
+					interaction.StartListening = false;
+					
+					Misty.SkillLogger.Log($"Prespeech saying '{animation?.Speak ?? "nothing"}'.");
+					SpeechManager.Speak(animation, interaction);
 				}
 			}
 
@@ -2132,7 +2139,8 @@ namespace MistyCharacter
 					animationRequest.ImageFile = string.IsNullOrWhiteSpace(newImage) ? animationRequest.ImageFile : newImage;
 
 					SpeechManager.Speak(animationRequest, newInteraction);
-					StreamAndLogInteraction($"Animation: { animationRequest.Name} | Saying {animationRequest.Speak}.");
+
+					Misty.SkillLogger.Log($"Saying '{ animationRequest.Speak}' for animation '{ animationRequest.Name}'.");
 				}
 				else if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile))
 				{

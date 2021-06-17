@@ -34,12 +34,25 @@
 			{
 				name = nameKvp.Value;
 			}
+
+			KeyValuePair<string, string> prespeechNameKvp = ((IDictionary<string, string>)ViewBag.Animations).FirstOrDefault(x => x.Key == @Model.PreSpeechAnimation);
+			string preSpeechName = @Model.PreSpeechAnimation;
+			if(prespeechNameKvp.Value != null)
+			{
+				preSpeechName = prespeechNameKvp.Value;
+			}
 		}
 		<dt>
 			@Html.DisplayNameFor(model => model.Animation)
 		</dt>
 		<dd>
 			@name
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.PreSpeechAnimation)
+		</dt>
+		<dd>
+			@preSpeechName
 		</dd>
 		<dt>
 			@Html.DisplayNameFor(model => model.InteractionFailedTimeout)

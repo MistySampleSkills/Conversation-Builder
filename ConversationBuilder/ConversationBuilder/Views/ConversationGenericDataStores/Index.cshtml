@@ -95,7 +95,9 @@ else
 			<th>
 				Description
 			</th>		
-			<th></th>
+			<th>
+				Treat Key as Speech
+			</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -106,6 +108,9 @@ else
 			</td>
 			<td>
 				@Html.DisplayFor(modelItem => item.Description)
+			</td>	
+			<td>
+				@Html.DisplayFor(modelItem => item.TreatKeyAsUtterance)
 			</td>		
 		</tr>
 }
