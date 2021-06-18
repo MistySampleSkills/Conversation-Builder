@@ -122,7 +122,6 @@ namespace ConversationBuilder.Controllers
 							{
 								skillConversationGroup.GenericDataStores.Add(genericDataStore);
 							}
-							
 						}
 					}
 

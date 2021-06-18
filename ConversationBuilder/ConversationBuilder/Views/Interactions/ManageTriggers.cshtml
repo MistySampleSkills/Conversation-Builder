@@ -228,7 +228,7 @@ Uses Pre-speech: @Model.UsePreSpeech
 								<option value="@animation.Key">@animation.Value</option>
 							}
 							<option value="PreSpeech Default" >PreSpeech Default</option>
-							<option value="" selected></option>								
+							<option value="None" selected>None</option>								
 						</select>
 					</div>
 					</td>
@@ -284,7 +284,11 @@ Uses Pre-speech: @Model.UsePreSpeech
 					string prespeechAnimationName = "PreSpeech Default";
 					if(ViewBag.InteractionPreSpeechAnimationList.TryGetValue(intentAction.Id, out string prespeechAnimation))
 					{
-						if(!@ViewBag.Animations.TryGetValue(prespeechAnimation, out prespeechAnimationName))
+						if(prespeechAnimation == "None")
+						{
+							prespeechAnimationName = "None";
+						}
+						else if(!@ViewBag.Animations.TryGetValue(prespeechAnimation, out prespeechAnimationName))
 						{
 							prespeechAnimationName = "PreSpeech Default";
 						}

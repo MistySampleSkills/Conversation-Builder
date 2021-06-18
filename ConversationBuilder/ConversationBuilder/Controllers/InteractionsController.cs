@@ -379,7 +379,25 @@ namespace ConversationBuilder.Controllers
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.ConversationId);				
 				Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.Id);				
 				Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);				
-				Animation prespeechAnimation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.PreSpeechAnimation);	
+				Animation preSpeechAnimation = null;
+
+				string prespeechAnimationId = "";
+				if(!string.IsNullOrWhiteSpace(model.PreSpeechAnimation))
+				{
+					if(model.PreSpeechAnimation == "PreSpeech Default")
+					{
+						prespeechAnimationId = "PreSpeech Default";
+					}
+					else if(model.PreSpeechAnimation == "None")
+					{
+						prespeechAnimationId = "None";
+					}
+					else
+					{
+						preSpeechAnimation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.PreSpeechAnimation);	
+						prespeechAnimationId = preSpeechAnimation.Id;
+					}
+				}
 				
 				if(interaction != null && conversation != null)
 				{
@@ -398,7 +416,10 @@ namespace ConversationBuilder.Controllers
 						//map triggerAction id to conversation depature points
 						DepartureMap departureMap = new DepartureMap();
 						departureMap.AnimationId = animation?.Id ?? "Default Animation";
-						departureMap.PreSpeechAnimationId = prespeechAnimation?.Id ?? "PreSpeech Default";
+						if(prespeechAnimationId != "PreSpeech Default")
+						{
+							departureMap.PreSpeechAnimationId = prespeechAnimationId;
+						}
 
 						departureMap.ConversationId = conversation.Id;
 						departureMap.TriggerId = model.SelectedTrigger;
@@ -438,14 +459,18 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 
-					if(!string.IsNullOrWhiteSpace(model.PreSpeechAnimation) && model.PreSpeechAnimation != "PreSpeech Default")
+					if(!string.IsNullOrWhiteSpace(prespeechAnimationId))
 					{
-						conversation.InteractionPreSpeechAnimations.Remove(triggerActionOption.Id);
-						conversation.InteractionPreSpeechAnimations.Add(triggerActionOption.Id, model.PreSpeechAnimation);
-
-						if(!conversation.Animations.Contains(model.PreSpeechAnimation))
+						if(model.PreSpeechAnimation != "PreSpeech Default")
 						{
-							conversation.Animations.Add(model.PreSpeechAnimation);
+							conversation.InteractionPreSpeechAnimations.Remove(triggerActionOption.Id);
+							conversation.InteractionPreSpeechAnimations.Add(triggerActionOption.Id, prespeechAnimationId);
+
+
+							if(prespeechAnimationId != "None" && !conversation.Animations.Contains(prespeechAnimationId))
+							{
+								conversation.Animations.Add(prespeechAnimationId);
+							}
 						}
 					}
 					else

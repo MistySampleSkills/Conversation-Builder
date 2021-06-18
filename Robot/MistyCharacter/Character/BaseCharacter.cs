@@ -403,26 +403,44 @@ namespace MistyCharacter
 
 				if (preSpeechOverrides != null && preSpeechOverrides.Length > 0)
 				{
+					bool changeAnimationMovements = false;
 					AnimationRequest animation = null;
 					AnimationRequest preSpeechAnimation = null;
-					if(!string.IsNullOrWhiteSpace(CurrentInteraction.PreSpeechAnimation) && (preSpeechAnimation = _currentConversationData.Animations.FirstOrDefault(x => x.Id == CurrentInteraction.PreSpeechAnimation)) != null)
+					if (!string.IsNullOrWhiteSpace(CurrentInteraction.PreSpeechAnimation))
 					{
-						animation = preSpeechAnimation;
+						if(CurrentInteraction.PreSpeechAnimation == "None")
+						{
+							animation = new AnimationRequest(_currentAnimation);
+						}
+						else if((preSpeechAnimation = _currentConversationData.Animations.FirstOrDefault(x => x.Id == CurrentInteraction.PreSpeechAnimation)) != null)
+						{
+							changeAnimationMovements = true;
+							animation = preSpeechAnimation;
+						}
 					}
 					else
 					{
 						animation = new AnimationRequest(_currentAnimation);
 					}
+
 					Interaction interaction = new Interaction(CurrentInteraction);
 					string selectedPhrase = preSpeechOverrides[_random.Next(0, preSpeechOverrides.Length-1)];
-					
-					SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText, out string newImage);
-					
-					animation.Speak = newText;
-					animation.SpeakFileName = ConversationConstants.IgnoreCallback;
-					interaction.StartListening = false;
-					Misty.SkillLogger.Log($"Prespeech saying '{animation?.Speak ?? "nothing"}'.");
-					SpeechManager.Speak(animation, interaction);
+					animation.Speak = selectedPhrase;
+					if(changeAnimationMovements)
+					{
+						PrespeechAnimationRequestProcessor(animation, interaction);
+					}
+					else if(!string.IsNullOrWhiteSpace(animation.Speak))
+					{
+						//just speak and don't move...
+						SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText, out string newImage);
+
+						animation.Speak = newText;
+						animation.SpeakFileName = ConversationConstants.IgnoreCallback;
+						interaction.StartListening = false;
+						Misty.SkillLogger.Log($"Prespeech saying '{animation?.Speak ?? "nothing"}' and not changing animation.");
+						SpeechManager.Speak(animation, interaction);
+					}
 				}
 			}
 
@@ -660,206 +678,6 @@ namespace MistyCharacter
 			}
 		}
 		
-		
-/*
-		private void TryToPersonalizeDataTwo(string text, out string newText, out string newImage)
-		{
-			newText = text;
-			newImage = null;
-			if (CharacterState == null)
-			{
-				return;
-			}
-
-			if (newText.Contains("{{") && newText.Contains("}}"))
-			{
-				int replacementItemCount = Regex.Matches(newText, "{{").Count;
-
-				//Loop through all inline text groups
-				for (int i = 0; i < replacementItemCount; i++)
-				{
-
-					int indexOpen = 0;
-					int indexClose = 0;
-					string replacementTextList = "";
-
-					indexOpen = newText.IndexOf("{{");
-					indexClose = newText.IndexOf("}}");
-
-					if (indexClose - 2 <= indexOpen)
-					{
-						continue;
-					}
-
-					replacementTextList = newText.Substring(indexOpen + 2, (indexClose - 2) - indexOpen);
-
-					if (string.IsNullOrWhiteSpace(replacementTextList))
-					{
-						continue;
-					}
-
-					IList<string> optionList = new List<string>();
-					if (!replacementTextList.Contains("||"))
-					{
-						optionList.Add(replacementTextList);
-					}
-
-					if (replacementTextList.Contains("||"))
-					{
-						string[] dataArray = replacementTextList.ToLower().Trim().Split("||");
-						if (dataArray != null && dataArray.Count() > 0)
-						{
-							foreach (string option in dataArray)
-							{
-								if (!optionList.Contains(option))
-								{
-									optionList.Add(option);
-								}
-							}
-						}
-					}
-
-					//Loop through the options to find match
-					int optionCount = 0;
-					bool textChanged = false;
-					foreach (string option in optionList)
-					{
-						if (textChanged)
-						{
-							break;
-						}
-
-						optionCount++;
-						//does it contain a :
-						if (option.Contains(":"))
-						{
-							string[] dataArray = option.ToLower().Trim().Split(":");
-							if (dataArray != null && dataArray.Count() == 2)
-							{
-								string userDataName = dataArray[0].Trim().ToLower();
-
-								if (_replacementValues != null &&
-								   _replacementValues.Count() > 0 &&
-								   _replacementValues.Contains(userDataName))
-								{
-									//if it is a built in item in the FIRST position, it replaces the NAME with the lookup item
-									//{ { face: team} }
-									//looks up as { { Brad: team} }
-									//where face/ Brad is the Name of the user data and team is the key
-
-									string newData = GetBuiltInReplacement(userDataName);
-									if (newData == MissingInlineData)
-									{
-										newData = userDataName;
-									}
-									//try looking up the user data by name now
-
-									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.ToLower().Trim());
-									if (dataStore != null)
-									{
-										//found a match for the name, now look up the key 2nd position
-										//TODO CLEANUP
-										string dataKey = dataArray[1].Trim().ToLower();
-										string newKey = dataKey;
-										if (_replacementValues.Contains(dataKey))
-										{
-											newKey = GetBuiltInReplacement(dataKey);
-										}
-										if (newKey == MissingInlineData)
-										{
-											newKey = dataKey;
-										}
-
-										if (dataStore.TreatKeyAsUtterance)
-										{
-											GenericData genericData = SpeechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-											}
-										}
-										else
-										{
-											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Key.ToLower().Trim() == newKey.ToLower().Trim());
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
-											}
-										}
-									}
-								}
-								else
-								{
-									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == userDataName);
-									if (dataStore != null)
-									{
-										//found a match for the name, now look up the key 2nd position
-										string dataKey = dataArray[1].Trim().ToLower();
-										string newKey = dataKey;
-										if (_replacementValues.Contains(dataKey))
-										{
-											newKey = GetBuiltInReplacement(dataKey);
-										}
-										if (newKey == MissingInlineData)
-										{
-											newKey = dataKey;
-										}
-
-
-										if (dataStore.TreatKeyAsUtterance)
-										{
-											GenericData genericData = SpeechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-											}
-										}
-										else
-										{
-											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Key == newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value, out newImage);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
-											}
-										}
-									}
-								}
-							}
-						}
-						else
-						{
-							//no, then check for a replacement value
-							if (_replacementValues != null &&
-							_replacementValues.Count() > 0 &&
-							_replacementValues.Contains(option))
-							{
-								string newData = GetBuiltInReplacement(option);
-								if (newData != MissingInlineData)
-								{
-									textChanged = true;
-									newText = newText.Replace("{{" + replacementTextList + "}}", newData);
-								}
-							}
-							else
-							{
-								//replace it with this option as is
-								textChanged = true;
-								newText = newText.Replace("{{" + replacementTextList + "}}", option);
-							}
-						}
-					}
-				}
-			}
-		}*/
-
 		private void LocomotionManager_DriveEncoderEvent(object sender, IDriveEncoderEvent e)
 		{
 			if (CharacterState == null)
@@ -1108,10 +926,12 @@ namespace MistyCharacter
 					overrideAnimation = null;
 				}
 
-				if (selectedAction.Id == null || (_currentConversationData.InteractionPreSpeechAnimations == null || !_currentConversationData.InteractionPreSpeechAnimations.TryGetValue(selectedAction.Id, out string preSpeechOverrideAnimation)))
+				if (selectedAction.Id == null || _currentConversationData.InteractionPreSpeechAnimations == null ||
+					!_currentConversationData.InteractionPreSpeechAnimations.TryGetValue(selectedAction.Id, out string preSpeechOverrideAnimation))
 				{
 					preSpeechOverrideAnimation = null;
 				}
+
 
 				if (string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
 				{
@@ -1928,6 +1748,176 @@ namespace MistyCharacter
 			}
 		}
 
+		private async void PrespeechAnimationRequestProcessor(AnimationRequest preSpeechAnimation, Interaction interaction)
+		{
+			try
+			{
+				//Stop any running scripts from previous animations
+				AnimationManager.StopRunningAnimationScripts();
+
+				preSpeechAnimation.SpeakFileName = ConversationConstants.IgnoreCallback;
+				interaction.StartListening = false;
+
+				bool hasAudio = false;
+				//Set values based upon defaults and passed in
+				if (!EmotionAnimations.TryGetValue(preSpeechAnimation.Emotion, out AnimationRequest defaultAnimation))
+				{
+					defaultAnimation = new AnimationRequest();
+				}
+
+				if (preSpeechAnimation.Silence)
+				{
+					hasAudio = false;
+					preSpeechAnimation.AudioFile = null;
+					preSpeechAnimation.Speak = "";
+				}
+				else if (!string.IsNullOrWhiteSpace(preSpeechAnimation.AudioFile) || !string.IsNullOrWhiteSpace(preSpeechAnimation.Speak))
+				{
+					hasAudio = true;
+				}
+
+				await SpeechManager.UpdateKeyPhraseRecognition(interaction, hasAudio);
+
+				//Use image default if NULL , if EMPTY Speak (just whitespace), no new image
+				if (preSpeechAnimation.ImageFile == null)
+				{
+					preSpeechAnimation.ImageFile = defaultAnimation.ImageFile;
+				}
+
+				//Set default LED for emotion if not already set
+				if (preSpeechAnimation.LEDTransitionAction == null)
+				{
+					preSpeechAnimation.LEDTransitionAction = defaultAnimation.LEDTransitionAction;
+				}
+
+				if (preSpeechAnimation.Volume != null && preSpeechAnimation.Volume > 0)
+				{
+					SpeechManager.Volume = (int)preSpeechAnimation.Volume;
+				}
+				else if (defaultAnimation.Volume != null && defaultAnimation.Volume > 0)
+				{
+					SpeechManager.Volume = (int)defaultAnimation.Volume;
+				}
+				
+				if (hasAudio)
+				{
+					lock (_lockListenerData)
+					{
+						string audioFile = "";
+						if (!string.IsNullOrWhiteSpace(preSpeechAnimation.AudioFile))
+						{
+							audioFile = SpeechManager.GetLocaleName(preSpeechAnimation.AudioFile);
+						}
+						else
+						{
+							audioFile = SpeechManager.GetLocaleName(preSpeechAnimation.SpeakFileName);
+						}
+
+						_audioAnimationCallbacks.Remove(audioFile);
+						_audioAnimationCallbacks.Add(audioFile);
+					}
+				}
+
+				//Start speech or audio playing
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.Speak))
+				{
+					hasAudio = true;
+
+					SpeechManager.TryToPersonalizeData(preSpeechAnimation.Speak, preSpeechAnimation, interaction, out string newText, out string newImage);
+					preSpeechAnimation.Speak = newText;
+					preSpeechAnimation.ImageFile = string.IsNullOrWhiteSpace(newImage) ? preSpeechAnimation.ImageFile : newImage;
+					interaction.StartListening = false;
+					SpeechManager.Speak(preSpeechAnimation, interaction);
+
+					Misty.SkillLogger.Log($"Prespeech saying '{ preSpeechAnimation.Speak}' for animation '{ preSpeechAnimation.Name}'.");
+				}
+				else if (!string.IsNullOrWhiteSpace(preSpeechAnimation.AudioFile))
+				{
+					hasAudio = true;
+					CharacterState.Audio = preSpeechAnimation.AudioFile;
+					Misty.PlayAudio(preSpeechAnimation.AudioFile, null, null);
+					Misty.SkillLogger.Log($"Prespeech playing audio '{ preSpeechAnimation.AudioFile}' for animation '{ preSpeechAnimation.Name}'.");
+				}
+			
+
+				//Display image
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.ImageFile))
+				{
+					CharacterState.Image = preSpeechAnimation.ImageFile;
+
+					if (!preSpeechAnimation.ImageFile.Contains("."))
+					{
+						preSpeechAnimation.ImageFile = preSpeechAnimation.ImageFile + ".jpg";
+					}
+					StreamAndLogInteraction($"Animation: { preSpeechAnimation.Name} | Displaying image {preSpeechAnimation.ImageFile}");
+					Misty.DisplayImage(preSpeechAnimation.ImageFile, null, false, null);
+				}
+
+				if (preSpeechAnimation.SetFlashlight != CharacterState.FlashLightOn)
+				{
+					Misty.SetFlashlight(preSpeechAnimation.SetFlashlight, null);
+					CharacterState.FlashLightOn = preSpeechAnimation.SetFlashlight;
+				}
+
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.LEDTransitionAction))
+				{
+					LEDTransitionAction ledTransitionAction = _currentConversationData.LEDTransitionActions.FirstOrDefault(x => x.Id == preSpeechAnimation.LEDTransitionAction);
+					if (ledTransitionAction != null)
+					{
+						if (TryGetPatternToTransition(ledTransitionAction.Pattern, out LEDTransition ledTransition) && ledTransitionAction.PatternTime > 0.1)
+						{
+							_ = Task.Run(async () =>
+							{
+								if (preSpeechAnimation.LEDActionDelay > 0)
+								{
+									await Task.Delay((int)(preSpeechAnimation.LEDActionDelay * 1000));
+								}
+								Misty.TransitionLED(ledTransitionAction.Red, ledTransitionAction.Green, ledTransitionAction.Blue, ledTransitionAction.Red2, ledTransitionAction.Green2, ledTransitionAction.Blue2, ledTransition, ledTransitionAction.PatternTime * 1000, null);
+							});
+
+							CharacterState.AnimationLED = ledTransitionAction;
+						}
+					}
+				}
+				
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.ArmLocation))
+				{
+					_ = Task.Run(async () =>
+					{
+						if (preSpeechAnimation.ArmActionDelay > 0)
+						{
+							await Task.Delay((int)(preSpeechAnimation.ArmActionDelay * 1000));
+						}
+						ArmManager.HandleArmAction(preSpeechAnimation, _currentConversationData);
+					});
+				}
+				
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.HeadLocation))
+				{
+					_ = Task.Run(async () =>
+					{
+						if (preSpeechAnimation.HeadActionDelay > 0)
+						{
+							await Task.Delay((int)(preSpeechAnimation.HeadActionDelay * 1000));
+						}
+						HeadManager.HandleHeadAction(preSpeechAnimation, _currentConversationData);
+					});
+				}
+
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.AnimationScript))
+				{
+					_ = Task.Run(() =>
+					{
+						AnimationManager.RunAnimationScript(preSpeechAnimation.AnimationScript, preSpeechAnimation.RepeatScript, _currentAnimation, CurrentInteraction);
+					});
+				}
+
+			}
+			catch (Exception ex)
+			{
+				Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Animation Id: { interaction.Animation} | Exception while attempting to process animation request callback.", ex);
+			}
+		}
 
 		private async void AnimationRequestProcessor(Interaction interaction)
 		{
@@ -2170,7 +2160,7 @@ namespace MistyCharacter
 					hasAudio = true;
 					CharacterState.Audio = animationRequest.AudioFile;
 					Misty.PlayAudio(animationRequest.AudioFile, null, null);
-					StreamAndLogInteraction($"Animation: { animationRequest.Name} | Playing audio {animationRequest.AudioFile}.");
+					Misty.SkillLogger.Log($"Playing audio '{ animationRequest.AudioFile}' for animation '{ animationRequest.Name}'.");
 				}
 				
 				//Display image
