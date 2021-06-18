@@ -403,9 +403,17 @@ namespace MistyCharacter
 
 				if (preSpeechOverrides != null && preSpeechOverrides.Length > 0)
 				{
-					AnimationRequest animation = new AnimationRequest(_currentAnimation);
+					AnimationRequest animation = null;
+					AnimationRequest preSpeechAnimation = null;
+					if(!string.IsNullOrWhiteSpace(CurrentInteraction.PreSpeechAnimation) && (preSpeechAnimation = _currentConversationData.Animations.FirstOrDefault(x => x.Id == CurrentInteraction.PreSpeechAnimation)) != null)
+					{
+						animation = preSpeechAnimation;
+					}
+					else
+					{
+						animation = new AnimationRequest(_currentAnimation);
+					}
 					Interaction interaction = new Interaction(CurrentInteraction);
-					//TODO Is this not making a copy!!
 					string selectedPhrase = preSpeechOverrides[_random.Next(0, preSpeechOverrides.Length-1)];
 					
 					SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText, out string newImage);
@@ -413,7 +421,6 @@ namespace MistyCharacter
 					animation.Speak = newText;
 					animation.SpeakFileName = ConversationConstants.IgnoreCallback;
 					interaction.StartListening = false;
-					
 					Misty.SkillLogger.Log($"Prespeech saying '{animation?.Speak ?? "nothing"}'.");
 					SpeechManager.Speak(animation, interaction);
 				}
@@ -1100,7 +1107,12 @@ namespace MistyCharacter
 				{
 					overrideAnimation = null;
 				}
-				
+
+				if (selectedAction.Id == null || (_currentConversationData.InteractionPreSpeechAnimations == null || !_currentConversationData.InteractionPreSpeechAnimations.TryGetValue(selectedAction.Id, out string preSpeechOverrideAnimation)))
+				{
+					preSpeechOverrideAnimation = null;
+				}
+
 				if (string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
 				{
 					Misty.SkillLogger.Log($"Trigger has been activated, but the destination is unmapped, continuing to wait for mapped trigger.");
@@ -1141,6 +1153,10 @@ namespace MistyCharacter
 						{
 							interactionRequest.Animation = overrideAnimation;
 						}
+						if (preSpeechOverrideAnimation != null)
+						{
+							interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
+						}
 						QueueInteraction(interactionRequest);
 					}
 					else if (!string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
@@ -1154,6 +1170,10 @@ namespace MistyCharacter
 						if (overrideAnimation != null)
 						{
 							interactionRequest.Animation = overrideAnimation;
+						}
+						if (preSpeechOverrideAnimation != null)
+						{
+							interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
 						}
 						QueueInteraction(interactionRequest);
 					}
@@ -1169,7 +1189,10 @@ namespace MistyCharacter
 						{
 							interactionRequest.Animation = overrideAnimation;
 						}
-
+						if (preSpeechOverrideAnimation != null)
+						{
+							interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
+						}
 						QueueInteraction(interactionRequest);
 					}
 				}

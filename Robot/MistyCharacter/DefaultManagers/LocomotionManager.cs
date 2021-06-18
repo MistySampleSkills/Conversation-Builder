@@ -316,7 +316,7 @@ namespace MistyCharacter
 			else if (tofEvent.Status == 102)
 			{
 				//102 generally indicates nothing substantial is in front of the robot so the TOF is returning the floor as a close distance
-				//So ignore the disance returned and just set to 2 meters
+				//So ignore the distance returned and just set to 2 meters
 				distance = 2;
 			}
 			else

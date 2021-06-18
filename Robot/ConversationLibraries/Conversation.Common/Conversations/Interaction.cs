@@ -66,6 +66,8 @@ namespace Conversation.Common
 
 		public string PreSpeechPhrases { get; set; }
 
+		public string PreSpeechAnimation { get; set; }
+		
 		public Interaction() { }
 
 		public Interaction(Interaction state)
@@ -75,6 +77,8 @@ namespace Conversation.Common
 			Animation = state.Animation;
 			InteractionFailedTimeout = state.InteractionFailedTimeout;
 			PreSpeechPhrases = state.PreSpeechPhrases;
+			PreSpeechAnimation = state.PreSpeechAnimation;
+			Retrigger = state.Retrigger;
 			UsePreSpeech = state.UsePreSpeech;
 			StartListening = state.StartListening;
 			AllowConversationTriggers = state.AllowConversationTriggers;

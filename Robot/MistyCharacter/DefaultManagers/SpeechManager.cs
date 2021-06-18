@@ -480,7 +480,7 @@ namespace MistyCharacter
 			{
 				_recording = false;
 				Robot.SkillLogger.Log($"Audio Callback. Name: {audioComplete.Name}");
-				if(_processingAudioCallback)// || audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
+				if(_processingAudioCallback)
 				{
 					return;
 				}
