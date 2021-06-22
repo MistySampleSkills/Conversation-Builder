@@ -98,6 +98,7 @@ namespace MistyCharacter
 
 		private IList<string> _listeningCallbacks = new List<string>();
 		private IList<string> _audioAnimationCallbacks = new List<string>();
+		private bool _waitingOnPrespeech;
 
 		private Timer _noInteractionTimer;
 		private Timer _triggerActionTimeoutTimer;
@@ -190,13 +191,15 @@ namespace MistyCharacter
 				LocomotionManager = _managerConfiguration?.LocomotionManager ?? new LocomotionManager(Misty, OriginalParameters, CharacterParameters);
 				await LocomotionManager.Initialize();
 
-				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Misty, OriginalParameters, CharacterParameters, SpeechManager, LocomotionManager);
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Misty, OriginalParameters, CharacterParameters, SpeechManager, LocomotionManager, ArmManager, HeadManager);
 				await AnimationManager.Initialize();
 
 				IgnoreEvents();
 
 				SpeechManager.SpeechIntent += SpeechManager_SpeechIntent;
-				
+				SpeechManager.PreSpeechCompleted += SpeechManager_PreSpeechCompleted;
+
+
 				LogEventDetails(Misty.RegisterBumpSensorEvent(BumpSensorCallback, 100, true, null, "BumpSensor", null));
 
 				LogEventDetails(Misty.RegisterCapTouchEvent(CapTouchCallback, 100, true, null, "CapTouch", null));
@@ -329,6 +332,11 @@ namespace MistyCharacter
 			}
 		}
 
+		private void SpeechManager_PreSpeechCompleted(object sender, IAudioPlayCompleteEvent e)
+		{
+			_waitingOnPrespeech = false;
+		}
+
 		private void AnimationManager_SyncEvent(object sender, TriggerData syncEvent)
 		{
 			if (!SendManagedResponseEvent(syncEvent))
@@ -428,12 +436,15 @@ namespace MistyCharacter
 					animation.Speak = selectedPhrase;
 					if(changeAnimationMovements)
 					{
+						_waitingOnPrespeech = true;
 						PrespeechAnimationRequestProcessor(animation, interaction);
 					}
 					else if(!string.IsNullOrWhiteSpace(animation.Speak))
 					{
+						_waitingOnPrespeech = true;
+
 						//just speak and don't move...
-						SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText, out string newImage);
+						SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText);
 
 						animation.Speak = newText;
 						animation.SpeakFileName = ConversationConstants.IgnoreCallback;
@@ -942,8 +953,15 @@ namespace MistyCharacter
 				{
 					IgnoreEvents();
 					SpeechManager.AbortListening(_currentAnimation.SpeakFileName ?? _currentAnimation.AudioFile);
-					if (selectedAction.InterruptCurrentAction)
+					if (selectedAction.InterruptCurrentAction )
 					{
+						//So hacky, stop it
+						int sanity = 0;
+						while (_waitingOnPrespeech && sanity < 10)
+						{
+							sanity++;
+							await Task.Delay(100);
+						}
 						Misty.StopSpeaking(null);
 						await Task.Delay(25);
 						Misty.StopAudio(null);
@@ -1268,10 +1286,10 @@ namespace MistyCharacter
                     triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, utteranceData.Name, Triggers.SpeechHeard));                    
                 }
 
-                if (!triggerSuccessful)
-                {
-					triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
-                }
+                //if (!triggerSuccessful)
+                //{
+				//	triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
+                //}
 
 				if(!triggerSuccessful)
 				{
@@ -1753,7 +1771,8 @@ namespace MistyCharacter
 			try
 			{
 				//Stop any running scripts from previous animations
-				AnimationManager.StopRunningAnimationScripts();
+				//don't await completion of those commands?
+				_ = AnimationManager.StopRunningAnimationScripts();
 
 				preSpeechAnimation.SpeakFileName = ConversationConstants.IgnoreCallback;
 				interaction.StartListening = false;
@@ -1823,9 +1842,8 @@ namespace MistyCharacter
 				{
 					hasAudio = true;
 
-					SpeechManager.TryToPersonalizeData(preSpeechAnimation.Speak, preSpeechAnimation, interaction, out string newText, out string newImage);
+					SpeechManager.TryToPersonalizeData(preSpeechAnimation.Speak, preSpeechAnimation, interaction, out string newText);
 					preSpeechAnimation.Speak = newText;
-					preSpeechAnimation.ImageFile = string.IsNullOrWhiteSpace(newImage) ? preSpeechAnimation.ImageFile : newImage;
 					interaction.StartListening = false;
 					SpeechManager.Speak(preSpeechAnimation, interaction);
 
@@ -1945,7 +1963,8 @@ namespace MistyCharacter
                     return;
 				}
 
-				AnimationManager.StopRunningAnimationScripts();
+				//Await completion of final commands
+				await AnimationManager.StopRunningAnimationScripts();
 
 				//should we start skill listening even if it may retrigger?
 				foreach (string skillMessageId in CurrentInteraction.SkillMessages)
@@ -2147,9 +2166,8 @@ namespace MistyCharacter
 				{
 					hasAudio = true;
 
-					SpeechManager.TryToPersonalizeData(animationRequest.Speak, animationRequest, newInteraction, out string newText, out string newImage);
+					SpeechManager.TryToPersonalizeData(animationRequest.Speak, animationRequest, newInteraction, out string newText);
 					animationRequest.Speak = newText;
-					animationRequest.ImageFile = string.IsNullOrWhiteSpace(newImage) ? animationRequest.ImageFile : newImage;
 
 					SpeechManager.Speak(animationRequest, newInteraction);
 

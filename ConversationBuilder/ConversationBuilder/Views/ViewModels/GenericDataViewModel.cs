@@ -26,14 +26,13 @@ namespace ConversationBuilder.ViewModels
 
 		public string Description { get; set; }
 		
-		//public IDictionary<string, string> Data { get; set; } = new Dictionary<string, string>();
 		public IDictionary<string, GenericData> Data { get; set; } = new Dictionary<string, GenericData>();
 
 		public string DataId { get; set; }
 		public string Key { get; set; }
 		public string Value { get; set; }
-		public string Image { get; set; }
 		public string ScreenText { get; set; }
+		public string DataAnimationScript { get; set; }
 		public int Priority { get; set; } = 1;
 		public bool TreatKeyAsUtterance { get; set; }
 		

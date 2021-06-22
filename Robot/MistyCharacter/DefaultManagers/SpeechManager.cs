@@ -54,6 +54,7 @@ namespace MistyCharacter
 	{
 		public event EventHandler<string> StartedSpeaking;
 		public event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
+		public event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
 		public event EventHandler<DateTime> StartedListening;
 		public event EventHandler<IVoiceRecordEvent> StoppedListening;
 		public event EventHandler<TriggerData> SpeechIntent;		
@@ -61,6 +62,7 @@ namespace MistyCharacter
 		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
 		public event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+		public event EventHandler<string> UserDataAnimationScript;
 
 		private const string MissingInlineData = "Missing";
 		private const string TTSNamePreface = "misty-en-";		
@@ -487,6 +489,11 @@ namespace MistyCharacter
 				_processingAudioCallback = true;
 
 				StoppedSpeaking?.Invoke(this, audioComplete);
+				//TODO cleanup
+				if (audioComplete.Name.Contains("prespeech"))
+				{
+					PreSpeechCompleted?.Invoke(this, audioComplete);
+				}
 				lock (_lockListenerData)
 				{
 					if (!_recording && !_listenAborted && (_listeningCallbacks.Remove(audioComplete.Name) || _listeningCallbacks.Remove(audioComplete.Name+".wav")))
@@ -561,18 +568,18 @@ namespace MistyCharacter
 				}
 
 				Robot.SkillLogger.Log("Voice Record Callback - processing");
-				
-				if (voiceRecordEvent.ErrorCode == 3)
-				{
-					Robot.SkillLogger.Log("Didn't hear anything or can no longer translate. Error 3");
-					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));					
-					return;
-				}
 
 				if (CharacterParameters.SpeechRecognitionService == "GoogleOnboard" ||
 					CharacterParameters.SpeechRecognitionService == "AzureOnboard")
 				{
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
+					return;
+				}
+
+				if (voiceRecordEvent.ErrorCode == 3)
+				{
+					Robot.SkillLogger.Log("Didn't hear anything or can no longer translate. Error 3");
+					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));					
 					return;
 				}
 
@@ -582,7 +589,7 @@ namespace MistyCharacter
 				if(audioResponse.Status != ResponseStatus.Success)
 				{
 					Robot.SkillLogger.Log($"Failed to retrieve file 'capture_Dialogue.wav', received {audioResponse.Status}.  Ignoring speech intent.");
-					//?? SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
+					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 					return;
 				}
 				else if (audioResponse?.Data?.Audio == null)
@@ -602,7 +609,6 @@ namespace MistyCharacter
 
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 				
-
 				switch (CharacterParameters.SpeechRecognitionService)
 				{
 					case "Google":
@@ -646,10 +652,9 @@ namespace MistyCharacter
 		}
 
 
-		public bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText, out string newImage)
+		public bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText)
 		{
 			newText = text;
-			newImage = null;
 			if (_characterState == null)
 			{
 				return false;
@@ -787,7 +792,7 @@ namespace MistyCharacter
 												if (genericData?.Value != null)
 												{
 													textChanged = true;
-													ProcessUserDataUpdates(genericData, out newImage);
+													ProcessUserDataUpdates(genericData);
 													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
 												}
 											}
@@ -798,7 +803,7 @@ namespace MistyCharacter
 											if (genericData.Value != null)
 											{
 												textChanged = true;
-												ProcessUserDataUpdates(genericData, out newImage);
+												ProcessUserDataUpdates(genericData);
 												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
 											}
 										}
@@ -808,7 +813,7 @@ namespace MistyCharacter
 											if (genericData.Value != null)
 											{
 												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value, out newImage);
+												ProcessUserDataUpdates(genericData.Value);
 												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
 											}
 										}
@@ -831,14 +836,31 @@ namespace MistyCharacter
 											newKey = dataKey;
 										}
 
-
-										if (dataStore.TreatKeyAsUtterance)
+										if (dataKey == "random")
+										{
+											//grab a random user data item from this group
+											//{{Greetings:random}}
+											GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+											if (genericDataStore != null)
+											{
+												int dataCount = genericDataStore.Data.Count();
+												int randomItem = _random.Next(optionCount, dataCount);
+												GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
+												if (genericData?.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+												}
+											}
+										}
+										else if (dataStore.TreatKeyAsUtterance)
 										{
 											GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
 											if (genericData.Value != null)
 											{
 												textChanged = true;
-												ProcessUserDataUpdates(genericData, out newImage);
+												ProcessUserDataUpdates(genericData);
 												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
 											}
 										}
@@ -848,7 +870,7 @@ namespace MistyCharacter
 											if (genericData.Value != null)
 											{
 												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value, out newImage);
+												ProcessUserDataUpdates(genericData.Value);
 												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
 											}
 										}
@@ -885,9 +907,9 @@ namespace MistyCharacter
 		}
 
 
-		public void ProcessUserDataUpdates(GenericData genericData, out string newImage)
+		public void ProcessUserDataUpdates(GenericData genericData)
 		{
-			newImage = null;
+			//get rid of this now that there is an animations script
 			if (!string.IsNullOrWhiteSpace(genericData.ScreenText))
 			{
 				_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
@@ -909,10 +931,9 @@ namespace MistyCharacter
 				Robot.DisplayText(genericData.ScreenText, "UserDataText", null);
 			}
 
-			if (!string.IsNullOrWhiteSpace(genericData.Image))
+			if(!string.IsNullOrWhiteSpace(genericData.DataAnimationScript))
 			{
-				Robot.DisplayImage(genericData.Image, null, genericData.Image.Contains("http:") || genericData.Image.Contains("https:"), null);
-				newImage = genericData.Image;
+				UserDataAnimationScript?.Invoke(this, genericData.DataAnimationScript);
 			}
 		}
 

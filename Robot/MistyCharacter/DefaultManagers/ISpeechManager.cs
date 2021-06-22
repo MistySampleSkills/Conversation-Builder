@@ -46,7 +46,7 @@ namespace MistyCharacter
 		void SetListenTimingMs(int listenTimeout, int silenceTimeout);
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
 		void AbortListening(string audioName);		
-		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText, out string newImage);
+		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
 
 		event EventHandler<string> StartedSpeaking;
 		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
@@ -55,8 +55,10 @@ namespace MistyCharacter
 		event EventHandler<TriggerData> SpeechIntent;
 		event EventHandler<bool> KeyPhraseRecognitionOn;
 		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
+		event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
 		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+		event EventHandler<string> UserDataAnimationScript;
 
 		void Dispose();
 	}

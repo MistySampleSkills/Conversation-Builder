@@ -45,7 +45,7 @@ namespace MistyCharacter
 
 		Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, bool stopOnFailedCommand = false);
 
-		void StopRunningAnimationScripts();
+		Task StopRunningAnimationScripts();
 
 		bool HandleSyncEvent(IUserEvent userEvent);
 

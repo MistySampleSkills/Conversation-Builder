@@ -72,6 +72,7 @@ namespace MistyCharacter
 			Robot.UnregisterEvent("ODEventForObjectFollow", null);			
 			Robot.UnregisterEvent("HeadYaw", null);
 			Robot.UnregisterEvent("HeadPitch", null);
+			Robot.UnregisterEvent("HeadRoll", null);
 
 			_currentHeadRequest = new HeadLocation(null, null, null);
 
@@ -88,13 +89,108 @@ namespace MistyCharacter
 			//Head Actuators for following actions.
 			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
 			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
-			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
+			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorYawValidations, "HeadYaw", null));
 
 			IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
 			actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
-			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			
+			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorPitchValidations, "HeadPitch", null));
+
+			IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
+			actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
+			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorRollValidations, "HeadRoll", null));
+
 			Robot.StartObjectDetector(characterParameters.PersonConfidence, 0, characterParameters.TrackHistory, null);
+		}
+
+		public void HandleHeadAction(HeadLocation headLocation)
+		{
+			if (headLocation != null)
+			{
+				_currentHeadRequest = headLocation;
+				if (_currentHeadRequest.MaxPitch == null && _currentHeadRequest.MinPitch == null &&
+					_currentHeadRequest.MaxYaw == null && _currentHeadRequest.MinYaw == null &&
+					_currentHeadRequest.MinRoll == null && _currentHeadRequest.MaxRoll == null)
+				{
+					//do nuthin
+					return;
+				}
+
+				if (_currentHeadRequest.MaxPitch != null && _currentHeadRequest.MaxPitch >= RobotConstants.MaximumPitchDegreesExclusive)
+				{
+					_currentHeadRequest.MaxPitch = RobotConstants.MaximumPitchDegreesExclusive - 1;
+				}
+
+				if (_currentHeadRequest.MaxYaw != null && _currentHeadRequest.MaxYaw >= RobotConstants.MaximumYawDegreesExclusive)
+				{
+					_currentHeadRequest.MaxYaw = RobotConstants.MaximumYawDegreesExclusive - 1;
+				}
+
+				if (_currentHeadRequest.MaxRoll != null && _currentHeadRequest.MaxRoll >= RobotConstants.MaximumRollDegreesExclusive)
+				{
+					_currentHeadRequest.MaxRoll = RobotConstants.MaximumRollDegreesExclusive - 1;
+				}
+
+				if (_currentHeadRequest.MinPitch != null && _currentHeadRequest.MinPitch < RobotConstants.MinimumPitchDegreesInclusive)
+				{
+					_currentHeadRequest.MinPitch = RobotConstants.MinimumPitchDegreesInclusive;
+				}
+
+				if (_currentHeadRequest.MinYaw != null && _currentHeadRequest.MinYaw < RobotConstants.MinimumYawDegreesInclusive)
+				{
+					_currentHeadRequest.MinYaw = RobotConstants.MinimumYawDegreesInclusive;
+				}
+
+				if (_currentHeadRequest.MinRoll != null && _currentHeadRequest.MinRoll < RobotConstants.MinimumRollDegreesInclusive)
+				{
+					_currentHeadRequest.MinRoll = RobotConstants.MinimumRollDegreesInclusive;
+				}
+
+				if (!_currentHeadRequest.FollowFace && string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject) &&
+					_currentHeadRequest.MinRoll == _currentHeadRequest.MaxRoll &&
+					_currentHeadRequest.MinPitch == _currentHeadRequest.MaxPitch &&
+					_currentHeadRequest.MinYaw == _currentHeadRequest.MaxYaw)
+				{
+					_headMovingContinuously = false;
+					lock (_timerLock)
+					{
+						_moveHeadTimer?.Dispose();
+					}
+
+					if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
+					{
+						_lastMovementCommand = DateTime.Now;
+						Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
+					}
+					else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
+					{
+						_lastMovementCommand = DateTime.Now;
+						Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+					}
+				}
+				else
+				{
+					if (_currentHeadRequest.FollowFace || !string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject))
+					{
+						_headMovingContinuously = true;
+						lock (_timerLock)
+						{
+							_moveHeadTimer?.Dispose();
+							if (!_isDisposed)
+							{
+								//Dealing with ye-olde options
+								double? headDelay = _currentHeadRequest.FollowRefresh != null && _currentHeadRequest.FollowRefresh > 0 ? _currentHeadRequest.FollowRefresh : (_currentHeadRequest.DelayBetweenMovements);
+								if (headDelay != null && headDelay != 0)
+								{
+									_moveHeadTimer = new Timer(MoveHeadCallback, null, (int)Math.Abs((double)headDelay * 1000), (int)Math.Abs((double)headDelay * 1000));
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		/// <summary>
@@ -105,90 +201,7 @@ namespace MistyCharacter
 			if (!string.IsNullOrWhiteSpace(animationRequest.HeadLocation))
 			{
 				HeadLocation headLocation = conversation.HeadLocations.FirstOrDefault(x => x.Id == animationRequest.HeadLocation);
-				if (headLocation != null)
-				{
-					_currentHeadRequest = headLocation;
-					if (_currentHeadRequest.MaxPitch == null && _currentHeadRequest.MinPitch == null &&
-						_currentHeadRequest.MaxYaw == null && _currentHeadRequest.MinYaw == null &&
-						_currentHeadRequest.MinRoll == null && _currentHeadRequest.MaxRoll == null)
-					{
-						//do nuthin
-						return;
-					}
-
-					if (_currentHeadRequest.MaxPitch != null && _currentHeadRequest.MaxPitch >= RobotConstants.MaximumPitchDegreesExclusive)
-					{
-						_currentHeadRequest.MaxPitch = RobotConstants.MaximumPitchDegreesExclusive - 1;
-					}
-
-					if (_currentHeadRequest.MaxYaw != null && _currentHeadRequest.MaxYaw >= RobotConstants.MaximumYawDegreesExclusive)
-					{
-						_currentHeadRequest.MaxYaw = RobotConstants.MaximumYawDegreesExclusive - 1;
-					}
-
-					if (_currentHeadRequest.MaxRoll != null && _currentHeadRequest.MaxRoll >= RobotConstants.MaximumRollDegreesExclusive)
-					{
-						_currentHeadRequest.MaxRoll = RobotConstants.MaximumRollDegreesExclusive - 1;
-					}
-
-					if (_currentHeadRequest.MinPitch != null && _currentHeadRequest.MinPitch < RobotConstants.MinimumPitchDegreesInclusive)
-					{
-						_currentHeadRequest.MinPitch = RobotConstants.MinimumPitchDegreesInclusive;
-					}
-
-					if (_currentHeadRequest.MinYaw != null && _currentHeadRequest.MinYaw < RobotConstants.MinimumYawDegreesInclusive)
-					{
-						_currentHeadRequest.MinYaw = RobotConstants.MinimumYawDegreesInclusive;
-					}
-
-					if (_currentHeadRequest.MinRoll != null && _currentHeadRequest.MinRoll < RobotConstants.MinimumRollDegreesInclusive)
-					{
-						_currentHeadRequest.MinRoll = RobotConstants.MinimumRollDegreesInclusive;
-					}
-
-					if (!_currentHeadRequest.FollowFace && string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject) &&
-						_currentHeadRequest.MinRoll == _currentHeadRequest.MaxRoll &&
-						_currentHeadRequest.MinPitch == _currentHeadRequest.MaxPitch &&
-						_currentHeadRequest.MinYaw == _currentHeadRequest.MaxYaw)
-					{
-						_headMovingContinuously = false;
-                        lock(_timerLock)
-                        {
-                            _moveHeadTimer?.Dispose();
-                        }
-
-						if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
-						{
-							_lastMovementCommand = DateTime.Now;
-							Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
-						}
-						else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
-						{
-							_lastMovementCommand = DateTime.Now;
-							Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
-						}
-					}
-					else
-					{
-						if (_currentHeadRequest.FollowFace || !string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject))
-						{
-							_headMovingContinuously = true;
-							lock (_timerLock)
-							{
-								_moveHeadTimer?.Dispose();
-								if (!_isDisposed)
-								{
-									//Dealing with ye-olde options
-									double? headDelay = _currentHeadRequest.FollowRefresh != null && _currentHeadRequest.FollowRefresh > 0 ? _currentHeadRequest.FollowRefresh : (_currentHeadRequest.DelayBetweenMovements);
-									if (headDelay != null && headDelay != 0)
-									{
-										_moveHeadTimer = new Timer(MoveHeadCallback, null, (int)Math.Abs((double)headDelay * 1000), (int)Math.Abs((double)headDelay * 1000));
-									}
-								}
-							}
-						}
-					}
-				}
+				HandleHeadAction(headLocation);
 			}
 		}
 	

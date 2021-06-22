@@ -29,9 +29,10 @@
 				<span asp-validation-for="Value" class="text-danger"></span>
 			</div>
 			<div class="form-group">
-				<label asp-for="Image" class="control-label"></label>
-				<input asp-for="Image" class="form-control" />
-				<span asp-validation-for="Image" class="text-danger"></span>
+				<label asp-for="DataAnimationScript" class="control-label"></label>
+				<label title="Optional animation script.">ℹ️</label>
+				<textarea rows=5 asp-for="DataAnimationScript" class="form-control"></textarea>
+				<span asp-validation-for="DataAnimationScript" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="ScreenText" class="control-label"></label>
@@ -67,7 +68,7 @@
 				Value
 			</th>
 			<th>
-				Image
+				Animation Script
 			</th>
 			<th>
 				Screen Text
@@ -88,7 +89,7 @@
 				<textarea style="width:100%" readonly=true>@Html.DisplayFor(modelItem => item.Value.Value)</textarea>
 			</td>
 			<td>
-				@Html.DisplayFor(modelItem => item.Value.Image)
+				<textarea style="width:100%" readonly=true>@Html.DisplayFor(modelItem => item.Value.DataAnimationScript)</textarea>				
 			</td>
 			<td>
 				@Html.DisplayFor(modelItem => item.Value.ScreenText)

@@ -39,7 +39,7 @@ namespace Conversation.Common
 	{
 		public string Key { get; set; }
 		public string Value { get; set; }
-		public string Image { get; set; }
+		public string DataAnimationScript { get; set; }
 		public string ScreenText { get; set; }
 		public int Priority { get; set; } = 1;
 	}
