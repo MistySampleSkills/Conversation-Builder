@@ -488,11 +488,16 @@ namespace MistyCharacter
 				}
 				_processingAudioCallback = true;
 
-				StoppedSpeaking?.Invoke(this, audioComplete);
 				//TODO cleanup
-				if (audioComplete.Name.Contains("prespeech"))
+				if (audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
 				{
 					PreSpeechCompleted?.Invoke(this, audioComplete);
+					Robot.SkillLogger.Log($"Prespeech complete. Name: {audioComplete.Name}");
+					return;
+				}
+				else
+				{
+					StoppedSpeaking?.Invoke(this, audioComplete);
 				}
 				lock (_lockListenerData)
 				{
@@ -568,6 +573,7 @@ namespace MistyCharacter
 				}
 
 				Robot.SkillLogger.Log("Voice Record Callback - processing");
+				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 
 				if (CharacterParameters.SpeechRecognitionService == "GoogleOnboard" ||
 					CharacterParameters.SpeechRecognitionService == "AzureOnboard")
@@ -607,7 +613,8 @@ namespace MistyCharacter
 
 				SpeechToTextData description = new SpeechToTextData();
 
-				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
+
+				//////   StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 				
 				switch (CharacterParameters.SpeechRecognitionService)
 				{

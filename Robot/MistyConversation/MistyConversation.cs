@@ -57,7 +57,7 @@ namespace MistyConversation
 			Skill = new NativeRobotSkill("Misty Conversation", "8be20a90-1150-44ac-a756-ebe4de30689e")
 			{
 				TimeoutInSeconds = -1,
-				AllowedCleanupTimeInMs = 5000,
+				AllowedCleanupTimeInMs = 10000,
 				StartupRules = new List<NativeStartupRule> { NativeStartupRule.Manual }
 			};
 		}
@@ -192,12 +192,13 @@ namespace MistyConversation
 			OnStart(sender, parameters);
 		}
 
-		public async void OnCancel(object sender, IDictionary<string, object> parameters)
+		public void OnCancel(object sender, IDictionary<string, object> parameters)
 		{
-			Misty.Speak("Misty conversation skill cancelling.", true, null, null);
-			await Misty.SetBlinkSettingsAsync(true, null, null, null, null, null);
-			Misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
 			_characterManagerLoader?.Dispose();
+
+			Misty.Speak("Misty conversation skill cancelling.", true, null, null);
+			Misty.SetBlinkSettings(true, null, null, null, null, null, null);
+			Misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
 		}
 
 		public void OnTimeout(object sender, IDictionary<string, object> parameters)
