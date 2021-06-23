@@ -204,11 +204,11 @@ namespace MistyCharacter
 				LogEventDetails(Misty.RegisterCapTouchEvent(CapTouchCallback, 100, true, null, "CapTouch", null));
 
 				LogEventDetails(Misty.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
-				/*
+				
 				LogEventDetails(Misty.RegisterArTagDetectionEvent(ArTagCallback, 100, true, "ArTag", null));
 
 				LogEventDetails(Misty.RegisterQrTagDetectionEvent(QrTagCallback, 100, true, "QrTag", null));
-				*/
+				
 				LogEventDetails(Misty.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
 				
 				LogEventDetails(Misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
@@ -219,11 +219,11 @@ namespace MistyCharacter
 
 				LogEventDetails(Misty.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
 
-				//Misty.StartFaceRecognition(null);
-				Misty.StartFaceDetection(null);
 				//TODO These should be configurable
-				//Misty.StartArTagDetector(7, 140, null); 
-				//Misty.StartQrTagDetector(null);
+				Misty.StartFaceRecognition(null);
+				//Misty.StartFaceDetection(null);
+				Misty.StartArTagDetector(7, 140, null); 
+				Misty.StartQrTagDetector(null);
 
 				ArmManager.RightArmActuatorEvent += ArmManager_RightArmActuatorEvent;
 				ArmManager.LeftArmActuatorEvent += ArmManager_LeftArmActuatorEvent;

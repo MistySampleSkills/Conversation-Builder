@@ -81,16 +81,10 @@ namespace MistyCharacter
 			personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
 			LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
 			
-
-			/*
 			List<ObjectValidation> objectValidations = new List<ObjectValidation>();
 			objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
-			LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, 0, true, objectValidations, "GenericODEvent", null));
-
-
-			*/
-
-
+			LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
+			
 			//Head Actuators for following actions.
 			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
 			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
