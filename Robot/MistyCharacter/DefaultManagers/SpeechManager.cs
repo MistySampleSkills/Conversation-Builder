@@ -81,6 +81,7 @@ namespace MistyCharacter
 		private bool _listenAborted;
 		private int _silenceTimeout = 6000;
 		private int _listenTimeout = 6000;
+		private IList<string> _allowedTriggers = new List<string>();
 		private bool _keyPhraseTriggered;
 		private bool _keyPhraseOn;
 		private bool _processingAudioCallback;
@@ -131,10 +132,11 @@ namespace MistyCharacter
 			return AssetHelper.AddMissingWavExtension(name);
 		}
 
-		public void SetListenTimingMs(int listenTimeout, int silenceTimeout)
+		public void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances)
 		{
 			_listenTimeout = listenTimeout >= 1000 ? listenTimeout : 1000;
-			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;			
+			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;
+			_allowedTriggers = allowedUtterances;
 		}
 
 		public override async Task<bool> Initialize()
@@ -278,7 +280,7 @@ namespace MistyCharacter
 
 				if (string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
-					Robot.SkillLogger.Log("No text passed in to Speak command.");
+					Robot.SkillLogger.LogWarning("No text passed in to Speak command.");
 					return;
 				}
 				
@@ -336,21 +338,15 @@ namespace MistyCharacter
 							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, CharacterParameters.AddLocaleToAudioNames)).Any())
 						)
 						{
-							if (CharacterParameters.LogLevel == SkillLogLevel.Verbose || CharacterParameters.LogLevel == SkillLogLevel.Info)
-							{
-								Robot.SkillLogger.Log($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-								Robot.SkillLogger.Log(currentAnimation.Speak);
-							}
+							Robot.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							Robot.SkillLogger.LogVerbose(currentAnimation.Speak);							
 							Robot.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
 						}
 						else
 						{
-							if (CharacterParameters.LogLevel == SkillLogLevel.Verbose || CharacterParameters.LogLevel == SkillLogLevel.Info)
-							{
-								Robot.SkillLogger.Log($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-								Robot.SkillLogger.Log(currentAnimation.Speak);
-							}
-                            
+							Robot.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							Robot.SkillLogger.LogVerbose(currentAnimation.Speak);
+							
 							switch (CharacterParameters.TextToSpeechService)
 							{
 								case "Google":
@@ -471,7 +467,7 @@ namespace MistyCharacter
 
 		protected void TTSCallback(ITextToSpeechCompleteEvent ttsComplete)
 		{
-			Robot.SkillLogger.Log($"TTS Callback: UtteranceId: {ttsComplete.UttteranceId}");
+			Robot.SkillLogger.LogVerbose($"TTS Callback: UtteranceId: {ttsComplete.UttteranceId}");
 
 			AudioCallback(new AudioPlayCompleteEvent(ttsComplete.UttteranceId, -1));
 		}
@@ -481,18 +477,18 @@ namespace MistyCharacter
 			try
 			{
 				_recording = false;
-				Robot.SkillLogger.Log($"Audio Callback. Name: {audioComplete.Name}");
+				Robot.SkillLogger.LogVerbose($"Audio Callback. Name: {audioComplete.Name}");
 				if(_processingAudioCallback)
 				{
+					Robot.SkillLogger.LogWarning($"Audio Callback ignored as system is still processing previous callback. Name: {audioComplete.Name}");
 					return;
 				}
 				_processingAudioCallback = true;
-
-				//TODO cleanup
+				
 				if (audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
 				{
 					PreSpeechCompleted?.Invoke(this, audioComplete);
-					Robot.SkillLogger.Log($"Prespeech complete. Name: {audioComplete.Name}");
+					Robot.SkillLogger.LogVerbose($"Prespeech complete. Name: {audioComplete.Name}");
 					return;
 				}
 				else
@@ -505,7 +501,7 @@ namespace MistyCharacter
 					{
 						_recording = true;
 
-						Robot.SkillLogger.Log("Capture Speech called.");
+						Robot.SkillLogger.LogVerbose("Capture Speech called.");
 						switch (CharacterParameters.SpeechRecognitionService)
 						{
 							case "GoogleOnboard":
@@ -539,7 +535,7 @@ namespace MistyCharacter
 		{ 
 			try
 			{
-				Robot.SkillLogger.Log("Key Phrase Callback called, calling capture speech.");
+				Robot.SkillLogger.LogVerbose("Key Phrase Callback called, calling capture speech.");
 				if (_recording)
 				{
 					return;
@@ -568,11 +564,11 @@ namespace MistyCharacter
 				StoppedListening?.Invoke(this, voiceRecordEvent);
 				if (_listenAborted)
 				{
-					Robot.SkillLogger.Log("Voice Record Callback called while processing, ignoring.");
+					Robot.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
 					return;
 				}
 
-				Robot.SkillLogger.Log("Voice Record Callback - processing");
+				Robot.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 
 				if (CharacterParameters.SpeechRecognitionService == "GoogleOnboard" ||
@@ -584,7 +580,7 @@ namespace MistyCharacter
 
 				if (voiceRecordEvent.ErrorCode == 3)
 				{
-					Robot.SkillLogger.Log("Didn't hear anything or can no longer translate. Error 3");
+					Robot.SkillLogger.Log("Didn't hear anything with microphone.");
 					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));					
 					return;
 				}
@@ -612,10 +608,6 @@ namespace MistyCharacter
 				}
 
 				SpeechToTextData description = new SpeechToTextData();
-
-
-				//////   StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
-				
 				switch (CharacterParameters.SpeechRecognitionService)
 				{
 					case "Google":
@@ -644,16 +636,15 @@ namespace MistyCharacter
 		{
 			if (!string.IsNullOrWhiteSpace(text))
 			{
-                SpeechMatchData intent = _speechIntentManager.GetIntent(text, null);
+                SpeechMatchData intent = _speechIntentManager.GetIntent(text, _allowedTriggers);
 
                 //Old conversations trigger on name, new ones on id
-
 				SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
-				Robot.SkillLogger.Log($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
+				Robot.SkillLogger.LogInfo($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
 			}
 			else
 			{
-				Robot.SkillLogger.Log("Didn't hear anything or can no longer translate.");
+				Robot.SkillLogger.LogInfo("Didn't hear anything or can no longer translate.");
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 			}
 		}

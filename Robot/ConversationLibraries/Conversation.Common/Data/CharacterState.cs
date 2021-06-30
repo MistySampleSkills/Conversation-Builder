@@ -44,6 +44,7 @@ namespace Conversation.Common
 		{
 			AnimationLED = state.AnimationLED;
 			ArTagEvent = state.ArTagEvent;
+			TimeOfFlightEvent = state.TimeOfFlightEvent;
 			Audio = state.Audio;
 			BatteryChargeEvent = state.BatteryChargeEvent;
 			BumpEvent = state.BumpEvent;
@@ -106,6 +107,7 @@ namespace Conversation.Common
 		public BumpSensorEvent BumpEvent { get; set; }
 		public CapTouchEvent CapTouchEvent { get; set; }
 		public ArTagDetectionEvent ArTagEvent { get; set; }
+		public TimeOfFlightEvent TimeOfFlightEvent { get; set; }
 		public SerialMessageEvent SerialMessageEvent { get; set; }
 		public UserEvent ExternalEvent { get; set; }
 		public ObjectDetectionEvent ObjectEvent { get; set; }

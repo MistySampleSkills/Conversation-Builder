@@ -233,6 +233,7 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
 								skillInteraction.ConversationId = interaction.ConversationId;
 								skillInteraction.TriggerMap = interaction.TriggerMap;
+								skillInteraction.AllowedUtterances = interaction.AllowedUtterances;
 								skillInteraction.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 								skillInteraction.StartListening = interaction.StartListening;
 								skillInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
@@ -244,6 +245,7 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.ListenTimeout = interaction.ListenTimeout;
 								skillInteraction.Animation = interaction.Animation;
 								skillInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
+
 								skillConversation.Interactions.Remove(skillInteraction);
 								skillConversation.Interactions.Add(skillInteraction);
 
@@ -512,6 +514,7 @@ namespace ConversationBuilder.Controllers
 						newInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
 						newInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;
 						newInteraction.SkillMessages = interaction.SkillMessages;
+						newInteraction.AllowedUtterances = interaction.AllowedUtterances;
 						newInteraction.ConversationId = newConversation.Id;
 						newInteraction.Updated = now;
 						newInteraction.Created = now;

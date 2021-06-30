@@ -68,5 +68,7 @@ namespace Conversation.Common
 		public const string AudioCompleted = "AudioCompleted";
 
 		public const string SyncEvent = "SyncEvent";
+
+		public const string TimeOfFlightRange = "TimeOfFlightRange";		
 	}	
 }

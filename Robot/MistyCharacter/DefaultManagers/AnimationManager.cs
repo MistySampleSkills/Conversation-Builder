@@ -188,6 +188,12 @@ namespace MistyCharacter
 
 		public override Task<bool> Initialize()
 		{
+			_ = Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
+			{
+				Visible = true,
+				PlaceOnTop = true
+			});
+
 			_ = Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
 			{
 				Wrap = true,
@@ -204,7 +210,7 @@ namespace MistyCharacter
 				Height = 50
 			});
 			_userTextLayerVisible = true;
-
+			
 			return Task.FromResult(true);
 		}
 
@@ -641,19 +647,6 @@ namespace MistyCharacter
 					return new CommandResult { Success = false };
 				}
 
-				if (command.Contains(@"//"))
-				{
-					//commented code
-					if(command.IndexOf(@"//") == 0)
-					{
-						return new CommandResult { Success = true };
-					}
-					else
-					{
-						command = command.Substring(0, command.IndexOf(@"//"));
-					}
-				}
-
 				lock (_waitingLock)
 				{
 					_waitingEvent = null;
@@ -916,35 +909,46 @@ namespace MistyCharacter
 								});
 								break;
 							case "RESET-LAYERS":
-								//RESET-LAYERS;
+								//RESET-LAYERS;								
 								ClearAnimationDisplayLayers();
+								await Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
+								{
+									Visible = true,
+									PlaceOnTop = true
+								});
 								break;
 							case "RESET-EYES":
-								//RESET-EYES;
+								//RESET-EYES;			
+								ClearAnimationDisplayLayers();
 								_ = Robot.SetBlinkSettingsAsync(true, null, null, null, null, null);
+								await Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
+								{
+									Visible = true,
+									PlaceOnTop = true
+								});
 								break;
 							case "IMAGE":
 								//IMAGE:imageName;
-								/*if (!_userImageLayerVisible)
+								if (!_userImageLayerVisible)
 								{
-									await Robot.SetImageDisplaySettingsAsync("UserImageLayer", new ImageSettings
+									await Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
 									{
 										Visible = true,
 										PlaceOnTop = true
 									});
 									_userImageLayerVisible = true;
-								}*/
+								}
 								//_ = Robot.DisplayImageAsync(commandData[1], "UserImageLayer", false);
 								_ = Robot.DisplayImageAsync(Convert.ToString(commandData[1]), null, false);
 								break;
-							/*case "CLEAR-IMAGE":
+							case "CLEAR-IMAGE":
 								//CLEAR-IMAGE;
 								_userImageLayerVisible = false;
-								_ = Robot.SetImageDisplaySettingsAsync("UserImageLayer", new ImageSettings
+								_ = Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
 								{
-									Deleted = true
+									Visible = false
 								});
-								break;*/
+								break;
 							
 							case "FOLLOW-FACE":
 								//FOLLOW-FACE;
@@ -1285,7 +1289,7 @@ namespace MistyCharacter
 									Action = LocomotionCommand.Drive,
 									DistanceMeters = Convert.ToDouble(driveData[0]),
 									TimeMs = Convert.ToInt32(driveData[1]),
-									Reverse = Convert.ToBoolean(driveData[2])
+									Reverse = Convert.ToBoolean(driveData[2].Trim())
 								});
 								break;
 
@@ -1298,7 +1302,7 @@ namespace MistyCharacter
 									Heading = Convert.ToDouble(headingData[0]),
 									DistanceMeters = Convert.ToDouble(headingData[1]),
 									TimeMs = Convert.ToInt32(headingData[2]),
-									Reverse = Convert.ToBoolean(headingData[3])
+									Reverse = Convert.ToBoolean(headingData[3].Trim())
 								});
 								break;
 
@@ -1306,24 +1310,25 @@ namespace MistyCharacter
 								//TURN:degrees,timeMs,left/right;
 								string[] turnData = commandData[1].Split(",");
 								string direction = Convert.ToString(turnData[2]);
-								direction = direction.ToLower();
+								direction = direction.ToLower().Trim();
 								_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Turn,
 									Degrees = direction.StartsWith("r") ? -Math.Abs(Convert.ToDouble(turnData[0])) : Math.Abs(Convert.ToDouble(turnData[0])),
-									TimeMs = Convert.ToInt32(turnData[1]),
-									Reverse = false
+									TimeMs = Convert.ToInt32(turnData[1].Trim()),
+									Reverse = direction.StartsWith("r") ? true : false
 								});
 								break;
 
 							case "TURN-HEADING":
-								//TURN-HEADING:heading,timeMs;
+								//TURN-HEADING:heading,timeMs,right/left;
 								string[] turnHData = commandData[1].Split(",");
 								_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.TurnHeading,
 									Heading = Math.Abs(Convert.ToDouble(turnHData[0])),
-									TimeMs = Convert.ToInt32(turnHData[1])
+									TimeMs = Convert.ToInt32(turnHData[1].Trim()),
+									Reverse = turnHData[2].Trim().ToLower().StartsWith("r") ? true : false
 								});
 								break;
 
@@ -1336,7 +1341,7 @@ namespace MistyCharacter
 									Heading = Convert.ToDouble(arcData[0]),
 									Radius = Convert.ToInt32(arcData[1]),
 									TimeMs = Convert.ToInt32(arcData[2]),
-									Reverse = Convert.ToBoolean(arcData[3])
+									Reverse = Convert.ToBoolean(arcData[3].Trim())
 								});
 								break;
 
@@ -1358,7 +1363,7 @@ namespace MistyCharacter
 							case "SET-LOCATION":
 								//SET-LOCATION:bookcase;
 								string[] locData = commandData[1].Split(",");
-								_lastWaypoint = locData[0];
+								_lastWaypoint = locData[0].Trim();
 								_goingToWaypoint = "";
 								_actionsFromWaypoint = new List<string>();
 								break;

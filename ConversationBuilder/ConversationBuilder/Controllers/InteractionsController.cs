@@ -250,13 +250,25 @@ namespace ConversationBuilder.Controllers
 				}
 
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.ConversationId);				
-				Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.Id);				
+				Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(model.Id);			
 				
 				if(interaction != null && conversation != null)
-				{
+				{				
 					if(!interaction.TriggerMap.ContainsKey(model.Handler))
 					{
+						TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.Handler);							
+				
 						interaction.TriggerMap.Add(model.Handler, new List<TriggerActionOption>());
+						if(triggerDetail.Trigger == Triggers.SpeechHeard)
+						{
+							if(interaction.AllowedUtterances == null)
+							{
+								//deal with ye olde data
+								interaction.AllowedUtterances = new List<string>();
+							}
+							interaction.AllowedUtterances.Add(model.Handler);
+						}
+
 						if(!conversation.Triggers.Contains(model.Handler))
 						{
 							conversation.Triggers.Add(model.Handler);							
@@ -291,6 +303,13 @@ namespace ConversationBuilder.Controllers
 				if(interaction != null && conversation != null)
 				{
 					interaction.TriggerMap.Remove(model.Handler);
+
+					TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(model.Handler);											
+					if(triggerDetail.Trigger == Triggers.SpeechHeard)
+					{
+							interaction.AllowedUtterances.Remove(model.Handler);
+					}
+
 					await _cosmosDbService.ContainerManager.InteractionData.UpdateAsync(interaction);
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
 

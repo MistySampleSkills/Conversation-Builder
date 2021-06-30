@@ -504,14 +504,14 @@ namespace MistyCharacter.SpeechIntent
 						{
 							if (spokenWords.Contains(matchWord))
 							{
-								if (spokenWords.IndexOf(matchWord) == matchWords.IndexOf(matchWord))
-								{
-									currentHitCount += WordMatchAndPlacementPoints;
-								}
-								else
-								{
+								//if (spokenWords.IndexOf(matchWord) == matchWords.IndexOf(matchWord))
+								//{
+								//	currentHitCount += WordMatchAndPlacementPoints;
+								//}
+								//else
+								//{
 									currentHitCount += WordMatchPoints;
-								}
+								//}
 							}
 							else if (wordMatchRule != "exact")
 							{

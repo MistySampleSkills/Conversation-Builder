@@ -507,6 +507,7 @@ namespace ConversationBuilder.Controllers
 					if(!conversation.ConversationTriggerMap.ContainsKey(model.Handler))
 					{
 						conversation.ConversationTriggerMap.Add(model.Handler, new List<TriggerActionOption>());
+						
 						if(!conversation.Triggers.Contains(model.Handler))
 						{
 							conversation.Triggers.Add(model.Handler);							

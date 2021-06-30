@@ -199,11 +199,11 @@ namespace MistyCharacter
 						break;
 					case LocomotionCommand.Turn:
 						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
-						await Turn((double)locomotionAction.Degrees, (int)locomotionAction.TimeMs);
+						await Turn((double)locomotionAction.Degrees, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
 						break;
 					case LocomotionCommand.TurnHeading:
 						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
-						await TurnHeading((double)locomotionAction.Heading, (int)locomotionAction.TimeMs);
+						await TurnHeading((double)locomotionAction.Heading, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
 						break;
 					case LocomotionCommand.Arc:
 						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
@@ -228,14 +228,14 @@ namespace MistyCharacter
 			}
 		}
 
-		private async Task Turn(double degrees, int timeMs)
+		private async Task Turn(double degrees, int timeMs, bool reverse = false)
 		{
-			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, 0, timeMs, false);
+			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, 0, timeMs, reverse);
 		}
 
-		private async Task TurnHeading(double heading, int timeMs)
+		private async Task TurnHeading(double heading, int timeMs, bool reverse = false)
 		{
-			await Robot.DriveArcAsync(heading, 0, timeMs, false);
+			await Robot.DriveArcAsync(heading, 0, timeMs, reverse);
 		}
 
 		private async Task Arc(double degrees, double radius, int timeMs, bool reverse = false)

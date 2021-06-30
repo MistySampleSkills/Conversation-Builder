@@ -123,5 +123,7 @@ namespace ConversationBuilder.DataModels
 		
 		public DateTimeOffset Updated { get; set; }
 		public string CreatedBy { get; set; }
+
+		public IList<string> AllowedUtterances { get; set; } = new List<string>();
 	}
 }

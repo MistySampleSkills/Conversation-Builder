@@ -50,6 +50,12 @@ using MistyCharacter.SpeechIntent;
 
 namespace MistyCharacter
 {
+	public class TOFCounter
+	{
+		public DateTime Started { get; set; }
+		public int Count { get; set; }
+	}
+
 	public abstract class BaseCharacter : IBaseCharacter
 	{
 		//Allow others to register for these... pass on the event data
@@ -59,6 +65,7 @@ namespace MistyCharacter
 		public event EventHandler<IBatteryChargeEvent> BatteryChargeEvent;
 		public event EventHandler<IQrTagDetectionEvent> QrTagEvent;
 		public event EventHandler<IArTagDetectionEvent> ArTagEvent;
+		public event EventHandler<ITimeOfFlightEvent> TimeOfFlightEvent;
 		public event EventHandler<ISerialMessageEvent> SerialMessageEvent;
 		public event EventHandler<IUserEvent> ExternalEvent;
 		public event EventHandler<IObjectDetectionEvent> ObjectEvent;
@@ -131,11 +138,19 @@ namespace MistyCharacter
 		
 		private object _lockListenerData = new object();
 
-		protected ConcurrentQueue<Interaction> InteractionQueue = new ConcurrentQueue<Interaction>();
-		protected ConcurrentQueue<Interaction> InteractionPriorityQueue = new ConcurrentQueue<Interaction>();
+		private ConcurrentQueue<Interaction> _interactionQueue = new ConcurrentQueue<Interaction>();
+		private ConcurrentQueue<Interaction> _interactionPriorityQueue = new ConcurrentQueue<Interaction>();
 
 		private object _eventsClearedLock = new object();
-		protected Guid UniqueAnimationId { get; private set; } = Guid.NewGuid();
+		public Guid UniqueAnimationId { get; private set; } = Guid.NewGuid();
+
+		private bool _bumpSensorRegistered;
+		private bool _capTouchRegistered;
+		private bool _arTagRegistered;
+		private bool _tofRegistered;
+		private bool _qrTagRegistered;
+		private bool _serialMessageRegistered;
+		private bool _faceRecognitionRegistered;
 
 		public BaseCharacter(IRobotMessenger misty, 
 			CharacterParameters characterParameters,
@@ -169,6 +184,7 @@ namespace MistyCharacter
 				Misty.UnregisterEvent("QrTag", null);
 				Misty.UnregisterEvent("SerialMessage", null);
 				Misty.UnregisterEvent("FaceRecognition", null);
+				Misty.UnregisterEvent("TimeOfFlightEvent", null);				
 				Misty.UnregisterEvent("ExternalEvent", null);*/
 
 				AssetWrapper = new AssetWrapper(Misty);
@@ -199,31 +215,27 @@ namespace MistyCharacter
 				SpeechManager.SpeechIntent += SpeechManager_SpeechIntent;
 				SpeechManager.PreSpeechCompleted += SpeechManager_PreSpeechCompleted;
 				
-				LogEventDetails(Misty.RegisterBumpSensorEvent(BumpSensorCallback, 100, true, null, "BumpSensor", null));
-
-				LogEventDetails(Misty.RegisterCapTouchEvent(CapTouchCallback, 100, true, null, "CapTouch", null));
-
 				LogEventDetails(Misty.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
-				
-				LogEventDetails(Misty.RegisterArTagDetectionEvent(ArTagCallback, 100, true, "ArTag", null));
-
-				LogEventDetails(Misty.RegisterQrTagDetectionEvent(QrTagCallback, 100, true, "QrTag", null));
-				
-				LogEventDetails(Misty.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
-				
-				LogEventDetails(Misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
-
 				LogEventDetails(Misty.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
-
 				LogEventDetails(Misty.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
-
 				LogEventDetails(Misty.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
 
+				/*
+				LogEventDetails(Misty.RegisterBumpSensorEvent(BumpSensorCallback, 50, true, null, "BumpSensor", null));
+				LogEventDetails(Misty.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
+				LogEventDetails(Misty.RegisterArTagDetectionEvent(ArTagCallback, 100, true, "ArTag", null));
+				LogEventDetails(Misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 100, true, null, "TimeOfFlight", null));
+				LogEventDetails(Misty.RegisterQrTagDetectionEvent(QrTagCallback, 100, true, "QrTag", null));				
+				LogEventDetails(Misty.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));				
+				LogEventDetails(Misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
+				
 				//TODO These should be configurable
 				Misty.StartFaceRecognition(null);
 				//Misty.StartFaceDetection(null);
 				Misty.StartArTagDetector(7, 140, null); 
 				Misty.StartQrTagDetector(null);
+				*/
+
 
 				ArmManager.RightArmActuatorEvent += ArmManager_RightArmActuatorEvent;
 				ArmManager.LeftArmActuatorEvent += ArmManager_LeftArmActuatorEvent;
@@ -590,8 +602,12 @@ namespace MistyCharacter
 
 		public void StopConversation(string speak = null)
 		{
-			InteractionQueue.Clear();
+			_interactionQueue.Clear();
 			IgnoreEvents();
+
+			Misty.StopFaceRecognition(null);
+			Misty.StopArTagDetector(null);
+			Misty.StopQrTagDetector(null);
 
 			Misty.Speak(string.IsNullOrWhiteSpace(speak) ? "Ending conversation." : speak, true, "InteractionTimeout", null);
 			ConversationEnded?.Invoke(this, DateTime.Now);
@@ -621,6 +637,8 @@ namespace MistyCharacter
 							{
 								return;
 							}
+
+							RegisterEvent(detail.Trigger);
 							LiveTriggers.Add(detail.Trigger);
 						}
 						StreamAndLogInteraction($"Listening to event type {detail.Trigger}");
@@ -631,6 +649,70 @@ namespace MistyCharacter
 
 				}
 			});
+		}
+		
+		private void RegisterEvent(string trigger)
+		{
+			//Register events and start services as needed if it is the first time we see this trigger
+			switch(trigger)
+			{
+				case Triggers.BumperPressed:
+				case Triggers.BumperReleased:
+					if(!_bumpSensorRegistered)
+					{
+						LogEventDetails(Misty.RegisterBumpSensorEvent(BumpSensorCallback, 50, true, null, "BumpSensor", null));
+						_bumpSensorRegistered = true;
+					}
+					break;				
+				case Triggers.CapReleased:
+				case Triggers.CapTouched:
+					if (!_capTouchRegistered)
+					{
+						LogEventDetails(Misty.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
+						_capTouchRegistered = true;
+					}
+					break;
+				case Triggers.ArTagSeen:
+					if (!_arTagRegistered)
+					{
+						Misty.StartArTagDetector(7, 140, null);
+						LogEventDetails(Misty.RegisterArTagDetectionEvent(ArTagCallback, 100, true, "ArTag", null));
+						_arTagRegistered = true;
+					}
+					break;
+
+				case Triggers.TimeOfFlightRange:
+					if (!_tofRegistered)
+					{
+						LogEventDetails(Misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 100, true, null, "TimeOfFlight", null));
+						_tofRegistered = true;
+					}
+					break;
+				case Triggers.QrTagSeen:
+					if (!_qrTagRegistered)
+					{
+						Misty.StartQrTagDetector(null);
+						LogEventDetails(Misty.RegisterQrTagDetectionEvent(QrTagCallback, 100, true, "QrTag", null));
+						_qrTagRegistered = true;
+					}
+					break;
+				case Triggers.SerialMessage:
+					if (!_serialMessageRegistered)
+					{
+						LogEventDetails(Misty.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
+						_serialMessageRegistered = true;
+					}
+					break;
+				case Triggers.FaceRecognized:
+					if (!_faceRecognitionRegistered)
+					{
+						Misty.StartFaceRecognition(null);
+						//Misty.StartFaceDetection(null);
+						LogEventDetails(Misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
+						_faceRecognitionRegistered = true;
+					}
+					break;
+			}
 		}
 
 		private void IgnoreEvent(TriggerDetail detail, int delayMs)
@@ -670,7 +752,6 @@ namespace MistyCharacter
 
 		private void IgnoreEvents()
 		{
-			StreamAndLogInteraction($"Ignoring interaction events");
 			lock (_eventsClearedLock)
 			{
 				LiveTriggers.Clear();
@@ -696,10 +777,10 @@ namespace MistyCharacter
 			CharacterState.KeyPhraseRecognitionOn = e;
 			KeyPhraseRecognitionOn?.Invoke(this, e);
 
-			if(e || (!e && !CurrentInteraction.StartListening))
-			{
+			//if(e || (!e && !CurrentInteraction.StartListening))
+			//{
 				//ManageListeningDisplay(e ? ListeningState.WaitingForKeyPhrase : ListeningState.Waiting);
-			}
+			//}
 		}
 
 		private ListeningState _listeningState = ListeningState.Waiting;
@@ -846,7 +927,7 @@ namespace MistyCharacter
 				triggerData.Trigger == Triggers.KeyPhraseRecognized
 			)
 			{
-				if (await ProcessAndVerifyTrigger(triggerData, conversationTriggerCheck))
+				if (ProcessAndVerifyTrigger(triggerData, conversationTriggerCheck))
 				{
 					StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Trigger | {triggerData.Trigger} - {triggerData.TriggerFilter} - {triggerData.Text}.");
 					return true;
@@ -1027,8 +1108,105 @@ namespace MistyCharacter
 			}
 		}
 
+		private TOFCounter _tofCountFrontRight = new TOFCounter();
+		private TOFCounter _tofCountFrontLeft = new TOFCounter();
+		private TOFCounter _tofCountFrontCenter = new TOFCounter();
+		private TOFCounter _tofCountBackRight = new TOFCounter();
+		private TOFCounter _tofCountBackLeft = new TOFCounter();
+		private TOFCounter _tofCountFrontRange = new TOFCounter();
+		private TOFCounter _tofCountBackRange = new TOFCounter();
+		private TOFCounter _tofCountFrontEdge = new TOFCounter();
+		private TOFCounter _tofCountBackEdge = new TOFCounter();
+
+		private bool IsTOFCounterMatch(TOFCounter tofCounter, int times, int durationMs)
+		{
+			tofCounter.Count++;
+			if (tofCounter.Count >= times)
+			{
+				if (times == 1 || durationMs <= 0)
+				{
+					tofCounter.Count = 0;
+					return true;
+				}
+				else if (tofCounter.Started < DateTime.Now.AddMilliseconds(durationMs))
+				{
+					tofCounter.Count = 0;
+					return true;
+				}
+				tofCounter.Count = 0;
+			}
+			else if (tofCounter.Count == 1)
+			{
+				tofCounter.Started = DateTime.Now;
+			}
+			return false;
+		}
+
+		private bool IsValidCompare(TriggerData triggerData, string sensor, string equality, double value, TOFCounter tofCounter, int times, int durationMs)
+		{
+			//Comes to comparison as...
+			//TriggerFilter = position
+			//Text = distance errorcode
+			bool validCompare = false;
+			string filter = triggerData.TriggerFilter.ToLower();
+			if (filter == sensor ||
+				(sensor == "frontrange" && (filter == "frontright" ||filter == "frontcenter" ||filter == "frontleft") ||
+				(sensor == "backrange" && (filter == "backright" ||filter == "backleft"))))
+			{
+				string distanceString = "";
+				string errorCode = "0";
+
+				string [] textField = triggerData.Text.Split(" ");
+				if(textField.Length == 1)
+				{
+					distanceString = textField[0].Trim();
+				}
+				else if (textField.Length == 2)
+				{
+					distanceString = textField[0].Trim();
+					errorCode = textField[1].Trim();
+				}
+				else
+				{
+					return false;
+				}
+
+				double distance = Convert.ToDouble(distanceString);
+				switch(equality)
+				{
+					case "<":
+						validCompare = distance < value && errorCode == "0";
+						break;
+					case "<=":
+						validCompare = distance <= value && errorCode == "0";
+						break;
+					case ">":
+						validCompare = distance > value && errorCode == "0";
+						break;
+					case ">=":
+						validCompare = distance >= value && errorCode == "0";
+						break;
+					case "==":
+						validCompare = value == distance && errorCode == "0";
+						break;
+					case "!=":
+						validCompare = value != distance && errorCode == "0";
+						break;
+					case "X":
+						validCompare = errorCode != "0";
+						break;
+				}
+
+				if (validCompare)
+				{
+					return IsTOFCounterMatch(tofCounter, times, durationMs);
+				}
+			}
+			return false;
+		}
+
 		//Fixing order of checking, conversation should not be checked until ALL local are checked, needs cleanup
-		private async Task<bool> ProcessAndVerifyTrigger(TriggerData triggerData, bool conversationTriggerCheck)
+		private bool ProcessAndVerifyTrigger(TriggerData triggerData, bool conversationTriggerCheck)
 		{
 			
 			_processingTriggersSemaphore.Wait();
@@ -1075,6 +1253,64 @@ namespace MistyCharacter
 									match = true;
 									break;
 								}
+								else if (triggerData.Trigger == Triggers.TimeOfFlightRange)
+								{
+									try
+									{
+										string[] fields = triggerDetail.TriggerFilter.Split(" ");
+										if (fields.Length == 5)
+										{
+											string sensor = fields[0].Trim().ToLower();
+											string equality = fields[1].Trim();
+											string valueString = fields[2].Trim();
+											string timesString = fields[3].Trim();
+											string durationMsString = fields[4].Trim();
+
+											double value = Convert.ToDouble(valueString);
+											int times = Convert.ToInt32(timesString);
+											int durationMs = Convert.ToInt32(durationMsString);
+
+											//FrontRange, BackRange, FrontRight, FrontCenter, FrontLeft, BackLeft, BackRight
+											//SensorName Equality value duration--> FrontRange == X 5 1000
+											//SensorName Eq
+
+											switch (sensor)
+											{
+												case "frontrange":
+													match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontRange, times, durationMs);													
+													break;
+												case "backrange":
+													match = IsValidCompare(triggerData, sensor, equality, value, _tofCountBackRange, times, durationMs);
+													break;
+												case "frontright":
+													match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontRight, times, durationMs);
+													break;
+												case "frontcenter":
+													match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontCenter, times, durationMs);
+													break;
+												case "frontleft":
+													match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontLeft, times, durationMs);
+													break;
+												case "backleft":
+													match = IsValidCompare(triggerData, sensor, equality, value, _tofCountBackLeft, times, durationMs);												
+													break;
+												case "backright":
+													match = IsValidCompare(triggerData, sensor, equality, value, _tofCountBackRight, times, durationMs);													
+													break;
+											}
+
+											if (match)
+											{
+												break;
+											}
+										}
+									}
+									catch
+									{
+										//Ignore bad parse as it is user created...
+										match = false;
+									}
+								}
 								else if (!string.IsNullOrWhiteSpace(triggerDetail.TriggerFilter))
 								{
 									match = string.Compare(triggerData.TriggerFilter?.Trim(), triggerDetail.TriggerFilter?.Trim(), true) == 0;
@@ -1094,6 +1330,7 @@ namespace MistyCharacter
 					else
 					{
 						//TOO SOON, should do this after all local checked first
+						//TODO DUPE CODE!!!
 
 						//If no match, and allowed, check for conversation triggers to handle this
 						if (!match && CurrentInteraction.AllowConversationTriggers && _currentConversationData.ConversationTriggerMap != null && _currentConversationData.ConversationTriggerMap.Count() > 0)
@@ -1113,6 +1350,81 @@ namespace MistyCharacter
 									{
 										match = true;
 										break;
+									}
+									else if (triggerData.Trigger == Triggers.TimeOfFlightRange)
+									{
+										//check if range is below value or?? do string parse with filter...
+
+										//Comes to comparison as...
+										//TriggerFilter = position
+										//Text = distance errorcode
+
+										//FrontEdge, BackEdge, FrontRight, FrontCenter, FrontLeft, BackLeft, BackRight
+										
+										//Filter example
+										//SensorName Equality value duration--> FrontRange X 0 5 1000  -- this many non status 0s
+										//SensorName Equality value times durationMs --> FrontRange <= 1 5 1000 -- seen 5 times in 1000 ms
+										//~100ms per tof event
+
+										//convert and compare
+
+										//Parse the triggerDetail
+
+										try
+										{
+											string[] fields = triggerDetail.TriggerFilter.Split(" ");
+											if (fields.Length == 5)
+											{
+												string sensor = fields[0].Trim().ToLower();
+												string equality = fields[1].Trim();
+												string valueString = fields[2].Trim();
+												string timesString = fields[3].Trim();
+												string durationMsString = fields[4].Trim();
+
+												double value = Convert.ToDouble(valueString);
+												int times = Convert.ToInt32(timesString);
+												int durationMs = Convert.ToInt32(durationMsString);
+
+												//FrontRange, BackRange, FrontRight, FrontCenter, FrontLeft, BackLeft, BackRight
+												//SensorName Equality value duration--> FrontRange == X 5 1000
+												//SensorName Eq
+
+												switch (sensor)
+												{
+													case "frontrange":
+														match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontRange, times, durationMs);
+														break;
+													case "backrange":
+														match = IsValidCompare(triggerData, sensor, equality, value, _tofCountBackRange, times, durationMs);
+														break;
+													case "frontright":
+														match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontRight, times, durationMs);
+														break;
+													case "frontcenter":
+														match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontCenter, times, durationMs);
+														break;
+													case "frontleft":
+														match = IsValidCompare(triggerData, sensor, equality, value, _tofCountFrontLeft, times, durationMs);
+														break;
+													case "backleft":
+														match = IsValidCompare(triggerData, sensor, equality, value, _tofCountBackLeft, times, durationMs);
+														break;
+													case "backright":
+														match = IsValidCompare(triggerData, sensor, equality, value, _tofCountBackRight, times, durationMs);
+														break;
+												}
+
+												if (match)
+												{
+													break;
+												}
+											}
+										}
+										catch
+										{
+											//Ignore bad parse as it is user created...
+											match = false;
+										}
 									}
 									else if (!string.IsNullOrWhiteSpace(triggerDetail.TriggerFilter))
 									{
@@ -1314,8 +1626,22 @@ namespace MistyCharacter
             }
             SpeechIntentEvent?.Invoke(this, speechIntent);
         }
-		
+
 		//More intent events registered in this class
+		
+		private async void TimeOfFlightCallback(ITimeOfFlightEvent timeOfFlightEvent)
+		{
+			if (CharacterState == null)
+			{
+				return;
+			}
+			CharacterState.TimeOfFlightEvent = (TimeOfFlightEvent)timeOfFlightEvent;
+			await SendManagedResponseEvent(new TriggerData(timeOfFlightEvent.DistanceInMeters.ToString(), timeOfFlightEvent.SensorPosition.ToString(), Triggers.TimeOfFlightRange));
+			TimeOfFlightEvent?.Invoke(this, timeOfFlightEvent);
+
+			//TODO Should we check across range for a period of time???
+		}
+
 		private async void ArTagCallback(IArTagDetectionEvent arTagEvent)
 		{
 			if (CharacterState == null ||
@@ -1695,10 +2021,10 @@ namespace MistyCharacter
 
 				while (!dequeued || interaction == null)
 				{
-					dequeued = InteractionPriorityQueue.TryDequeue(out interaction);
+					dequeued = _interactionPriorityQueue.TryDequeue(out interaction);
 					if (!dequeued)
 					{
-						dequeued = InteractionQueue.TryDequeue(out interaction);
+						dequeued = _interactionQueue.TryDequeue(out interaction);
 						if(dequeued)
 						{
 							break;
@@ -1777,7 +2103,32 @@ namespace MistyCharacter
 				CharacterState.CurrentMood = EmotionManager.GetNextEmotion(CharacterState.AnimationEmotion);
 				StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | New attitude adjustment:{animationRequest.Emotion} - Current mood:{CharacterState.CurrentMood}");
 
-				SpeechManager.SetListenTimingMs((int)(animationRequest.ListenTimeout*1000), (int)(animationRequest.SilenceTimeout * 1000));
+
+				IList<string> allowedTriggers = CurrentInteraction.TriggerMap.Keys.ToList();
+				if (CurrentInteraction.AllowConversationTriggers && _currentConversationData.ConversationTriggerMap != null && _currentConversationData.ConversationTriggerMap.Count > 0)
+				{
+					foreach(KeyValuePair<string, IList<TriggerActionOption>> actionOption in _currentConversationData.ConversationTriggerMap)
+					{
+						if(!allowedTriggers.Contains(actionOption.Key))
+						{
+							//don't re-add trigger if in interaction
+							allowedTriggers.Add(actionOption.Key);
+						}
+					}
+				}
+
+				IList<string> allowedUtterances = new List<string>();
+				foreach (string trigger in allowedTriggers)
+				{
+					//get utterances
+					TriggerDetail triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == trigger || x.Name == trigger));
+					if (triggerDetail != null && !allowedUtterances.Contains(triggerDetail.TriggerFilter))
+					{
+						allowedUtterances.Add(triggerDetail.TriggerFilter);
+					}
+				}
+
+				SpeechManager.SetInteractionDetails((int)(animationRequest.ListenTimeout*1000), (int)(animationRequest.SilenceTimeout * 1000), allowedUtterances);
 				
 				AnimationRequestProcessor(interaction);
 			}
@@ -1793,8 +2144,8 @@ namespace MistyCharacter
 			{
 				//Stop any running scripts from previous animations
 				//don't await completion of those commands?
-				_ = AnimationManager.StopRunningAnimationScripts();
-
+				await AnimationManager.StopRunningAnimationScripts();
+				
 				preSpeechAnimation.SpeakFileName = ConversationConstants.IgnoreCallback;
 				interaction.StartListening = false;
 
@@ -1818,7 +2169,7 @@ namespace MistyCharacter
 
 				await SpeechManager.UpdateKeyPhraseRecognition(interaction, hasAudio);
 
-				//Use image default if NULL , if EMPTY Speak (just whitespace), no new image
+				//Use image default if NULL , if EMPTY (just whitespace), no new image
 				if (preSpeechAnimation.ImageFile == null)
 				{
 					preSpeechAnimation.ImageFile = defaultAnimation.ImageFile;
@@ -2103,7 +2454,7 @@ namespace MistyCharacter
 
 				await SpeechManager.UpdateKeyPhraseRecognition(newInteraction, hasAudio);
 
-				//Use image default if NULL , if EMPTY Speak (just whitespace), no new image
+				//Use image default if NULL , if EMPTY (just whitespace), no new image
 				if (animationRequest.ImageFile == null)
 				{
 					animationRequest.ImageFile = defaultAnimation.ImageFile;
@@ -2525,7 +2876,7 @@ namespace MistyCharacter
 				{
 					Emotion = Emotions.Avoidance,
 					AudioFile = "",
-					ImageFile = "e_" + SystemImage.ContentLeft.ToString() + ".jpg"
+					ImageFile = ""
 				});
 
 			EmotionAnimations.TryAdd(Emotions.Excitement,
@@ -2624,6 +2975,7 @@ namespace MistyCharacter
 					AudioFile = "s_" + SystemSound.PhraseEvilAhHa.ToString() + ".wav",
 					ImageFile = "e_" + SystemImage.EcstacyStarryEyed.ToString() + ".jpg"
 				});
+
 		}
 
 		private void QueueInteraction(Interaction interaction)
@@ -2631,7 +2983,7 @@ namespace MistyCharacter
 			try
 			{
 				Misty.SkillLogger.Log($"QUEUEING NEXT INTERACTION : {interaction.Name}");
-				InteractionQueue.Enqueue(interaction);
+				_interactionQueue.Enqueue(interaction);
 
 				//We'll wait for an intent for the next animation
 				//Eventually the Timeout trigger will be sent if no other intents are handled...				
@@ -2654,6 +3006,7 @@ namespace MistyCharacter
 			{
 				if (disposing)
 				{
+					Misty.UpdateHazardSettings(new HazardSettings { RevertToDefault = true }, null);
 					IgnoreEvents();
 					_noInteractionTimer?.Dispose();
 					_triggerActionTimeoutTimer?.Dispose();
@@ -2691,4 +3044,5 @@ namespace MistyCharacter
 		#endregion
 	}
 }
+ 
  

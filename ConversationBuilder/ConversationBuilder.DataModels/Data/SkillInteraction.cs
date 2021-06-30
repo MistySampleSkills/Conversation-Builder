@@ -63,7 +63,8 @@ namespace ConversationBuilder.DataModels
 		public bool ConversationEntryPoint { get; set; }
 
 		public IList<string> SkillMessages { get; set; } = new List<string>();
-
+		
+		public IList<string> AllowedUtterances { get; set; } = new List<string>();
 		
 		public bool UsePreSpeech { get; set; } = true;
 		

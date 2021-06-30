@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Conversation.Common;
 using MistyRobotics.SDK.Events;
@@ -43,7 +44,7 @@ namespace MistyCharacter
 		int Volume { get; set; }
 		void Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
 		string GetLocaleName(string name);
-		void SetListenTimingMs(int listenTimeout, int silenceTimeout);
+		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
 		void AbortListening(string audioName);		
 		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);

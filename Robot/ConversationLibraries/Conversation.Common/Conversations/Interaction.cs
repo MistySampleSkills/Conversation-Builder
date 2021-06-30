@@ -67,7 +67,7 @@ namespace Conversation.Common
 		public string PreSpeechPhrases { get; set; }
 
 		public string PreSpeechAnimation { get; set; }
-		
+
 		public Interaction() { }
 
 		public Interaction(Interaction state)
@@ -97,7 +97,7 @@ namespace Conversation.Common
 
 				TriggerMap.Add(new KeyValuePair<string, IList<TriggerActionOption>>(triggerGroup.Key, actionList));
 			}
-			
+
 			foreach (string skillMessage in state.SkillMessages)
 			{
 				SkillMessages.Add(skillMessage);				

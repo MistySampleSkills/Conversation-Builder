@@ -59,7 +59,7 @@ namespace MistyCharacter
 		
 		protected void LogEventDetails(IEventDetails eventDetails)
 		{
-			Robot.SkillLogger.Log($"Registered event '{eventDetails.EventName}' at {DateTime.Now}.  Id = {eventDetails.EventId}, Type = {eventDetails.EventType}, KeepAlive = {eventDetails.KeepAlive}");
+			Robot.SkillLogger.LogInfo($"Registered event '{eventDetails.EventName}' at {DateTime.Now}.  Id = {eventDetails.EventId}, Type = {eventDetails.EventType}, KeepAlive = {eventDetails.KeepAlive}");
 		}
 	}
 }
