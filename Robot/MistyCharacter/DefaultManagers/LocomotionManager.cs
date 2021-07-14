@@ -306,10 +306,13 @@ namespace MistyCharacter
 		private bool TryGetAdjustedDistance(ITimeOfFlightEvent tofEvent, out double distance)
 		{
 			distance = 0;
+			// From Testing, using this pattern for return data
 			//   0 = valid range data
 			// 101 = sigma fail - lower confidence but most likely good
-			// 104 = Out of bounds - Distance returned is greater than distance we are confident about, but most likely good
-			if (tofEvent.Status == 0 || tofEvent.Status == 101 || tofEvent.Status == 104)
+			// 104 = Out of bounds - Distance returned is greater than distance we are confident about, but most likely good - error codes can be returned in distance field at this time :(  so ignore error code range
+			if (tofEvent.Status == 0 || 
+				(tofEvent.Status == 101 && tofEvent.DistanceInMeters >= 1) || 
+				tofEvent.Status == 104)
 			{
 				distance = tofEvent.DistanceInMeters;
 			}
@@ -376,45 +379,17 @@ namespace MistyCharacter
 		{
 			switch (bumpEvent.SensorPosition)
 			{
-				case BumpSensorPosition.FrontRight:
-					if (bumpEvent.IsContacted)
-					{
-						CurrentLocomotionState.FrontRightBumpContacted = true;
-					}
-					else
-					{
-						CurrentLocomotionState.FrontRightBumpContacted = false;
-					}
+				case BumpSensorPosition.FrontRight:					
+					CurrentLocomotionState.FrontRightBumpContacted = bumpEvent.IsContacted;
 					break;
 				case BumpSensorPosition.FrontLeft:
-					if (bumpEvent.IsContacted)
-					{
-						CurrentLocomotionState.FrontLeftBumpContacted = true;
-					}
-					else
-					{
-						CurrentLocomotionState.FrontLeftBumpContacted = false;
-					}
+					CurrentLocomotionState.FrontLeftBumpContacted = bumpEvent.IsContacted;
 					break;
 				case BumpSensorPosition.BackRight:
-					if (bumpEvent.IsContacted)
-					{
-						CurrentLocomotionState.BackRightBumpContacted = true;
-					}
-					else
-					{
-						CurrentLocomotionState.BackRightBumpContacted = false;
-					}
+					CurrentLocomotionState.BackRightBumpContacted = bumpEvent.IsContacted;
 					break;
 				case BumpSensorPosition.BackLeft:
-					if (bumpEvent.IsContacted)
-					{
-						CurrentLocomotionState.BackLeftBumpContacted = true;
-					}
-					else
-					{
-						CurrentLocomotionState.BackLeftBumpContacted = false;
-					}
+					CurrentLocomotionState.BackLeftBumpContacted = bumpEvent.IsContacted;
 					break;
 			}
 		}

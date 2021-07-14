@@ -97,10 +97,7 @@ namespace ConversationBuilder.Controllers
 					{	
 						SkillParameters skillParameters = await GenerateSkillConfiguration(id);	
 
-						//if they passed in an access id, get the robot information associated with it
-						
-						//3ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(id);
-
+						//TODO if they passed in an access id, get the robot information associated with it
 
 						string skillConfiguration = Newtonsoft.Json.JsonConvert.SerializeObject(skillParameters);
 						return Ok(skillConfiguration);

@@ -958,7 +958,6 @@ namespace ConversationBuilder.Controllers
 						conversation.Animations.Add(interaction.PreSpeechAnimation);
 					}
 
-
 					await _cosmosDbService.ContainerManager.ConversationData.UpdateAsync(conversation);
 					return RedirectToAction(nameof(Index), new {conversationId = interaction.ConversationId});
 				}

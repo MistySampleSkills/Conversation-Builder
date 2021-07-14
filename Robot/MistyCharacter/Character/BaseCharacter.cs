@@ -152,6 +152,18 @@ namespace MistyCharacter
 		private bool _serialMessageRegistered;
 		private bool _faceRecognitionRegistered;
 
+		private TOFCounter _tofCountFrontRight = new TOFCounter();
+		private TOFCounter _tofCountFrontLeft = new TOFCounter();
+		private TOFCounter _tofCountFrontCenter = new TOFCounter();
+		private TOFCounter _tofCountBackRight = new TOFCounter();
+		private TOFCounter _tofCountBackLeft = new TOFCounter();
+		private TOFCounter _tofCountFrontRange = new TOFCounter();
+		private TOFCounter _tofCountBackRange = new TOFCounter();
+		private TOFCounter _tofCountFrontEdge = new TOFCounter();
+		private TOFCounter _tofCountBackEdge = new TOFCounter();
+
+		bool _triggerHandled = false;
+
 		public BaseCharacter(IRobotMessenger misty, 
 			CharacterParameters characterParameters,
 			IDictionary<string, object> originalParameters,
@@ -220,23 +232,8 @@ namespace MistyCharacter
 				LogEventDetails(Misty.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
 				LogEventDetails(Misty.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
 
-				/*
-				LogEventDetails(Misty.RegisterBumpSensorEvent(BumpSensorCallback, 50, true, null, "BumpSensor", null));
-				LogEventDetails(Misty.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
-				LogEventDetails(Misty.RegisterArTagDetectionEvent(ArTagCallback, 100, true, "ArTag", null));
-				LogEventDetails(Misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 100, true, null, "TimeOfFlight", null));
-				LogEventDetails(Misty.RegisterQrTagDetectionEvent(QrTagCallback, 100, true, "QrTag", null));				
-				LogEventDetails(Misty.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));				
-				LogEventDetails(Misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
+				//Other events and their kick off calls are registered the first time they are used
 				
-				//TODO These should be configurable
-				Misty.StartFaceRecognition(null);
-				//Misty.StartFaceDetection(null);
-				Misty.StartArTagDetector(7, 140, null); 
-				Misty.StartQrTagDetector(null);
-				*/
-
-
 				ArmManager.RightArmActuatorEvent += ArmManager_RightArmActuatorEvent;
 				ArmManager.LeftArmActuatorEvent += ArmManager_LeftArmActuatorEvent;
 				HeadManager.HeadPitchActuatorEvent += HeadManager_HeadPitchActuatorEvent;
@@ -935,8 +932,6 @@ namespace MistyCharacter
 			}
 			return false;
 		}
-
-		bool _triggerHandled = false;
 		
 		private async Task GoToNextAnimation(IList<TriggerActionOption> possibleActions)
 		{
@@ -1108,16 +1103,6 @@ namespace MistyCharacter
 			}
 		}
 
-		private TOFCounter _tofCountFrontRight = new TOFCounter();
-		private TOFCounter _tofCountFrontLeft = new TOFCounter();
-		private TOFCounter _tofCountFrontCenter = new TOFCounter();
-		private TOFCounter _tofCountBackRight = new TOFCounter();
-		private TOFCounter _tofCountBackLeft = new TOFCounter();
-		private TOFCounter _tofCountFrontRange = new TOFCounter();
-		private TOFCounter _tofCountBackRange = new TOFCounter();
-		private TOFCounter _tofCountFrontEdge = new TOFCounter();
-		private TOFCounter _tofCountBackEdge = new TOFCounter();
-
 		private bool IsTOFCounterMatch(TOFCounter tofCounter, int times, int durationMs)
 		{
 			tofCounter.Count++;
@@ -1172,6 +1157,8 @@ namespace MistyCharacter
 				}
 
 				double distance = Convert.ToDouble(distanceString);
+
+				//TODO Deal with warning error codes that should be valid
 				switch(equality)
 				{
 					case "<":
@@ -1272,7 +1259,6 @@ namespace MistyCharacter
 
 											//FrontRange, BackRange, FrontRight, FrontCenter, FrontLeft, BackLeft, BackRight
 											//SensorName Equality value duration--> FrontRange == X 5 1000
-											//SensorName Eq
 
 											switch (sensor)
 											{
@@ -1387,7 +1373,6 @@ namespace MistyCharacter
 
 												//FrontRange, BackRange, FrontRight, FrontCenter, FrontLeft, BackLeft, BackRight
 												//SensorName Equality value duration--> FrontRange == X 5 1000
-												//SensorName Eq
 
 												switch (sensor)
 												{
@@ -1448,13 +1433,12 @@ namespace MistyCharacter
 					//if a match and it is mapped to something, go there, otherwise ignore as a trigger
 					if (match && triggerDetailMap != null && triggerDetailMap.Count() > 0)
 					{
-						_triggerHandled = true;
 						//this is it!
+						_triggerHandled = true;
 						_noInteractionTimer?.Dispose();
 						_triggerActionTimeoutTimer?.Dispose();
 						_timerTriggerTimer?.Dispose();
 						CharacterState.LatestTriggerMatched = new KeyValuePair<DateTime, TriggerData>(DateTime.Now, triggerData);
-						//_ = GoToNextAnimation(triggerDetailMap);
 						ResponseEventReceived?.Invoke(this, triggerData);
 						Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Valid intent {triggerData.Trigger} {triggerData.TriggerFilter}.");
 
@@ -1603,11 +1587,6 @@ namespace MistyCharacter
                     triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, utteranceData.Name, Triggers.SpeechHeard));                    
                 }
 
-                //if (!triggerSuccessful)
-                //{
-				//	triggerSuccessful = SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
-                //}
-
 				if(!triggerSuccessful)
 				{
 					if (!await SendManagedResponseEvent(new TriggerData(speechIntent.Text, speechIntent.TriggerFilter, Triggers.SpeechHeard), true))
@@ -1638,8 +1617,6 @@ namespace MistyCharacter
 			CharacterState.TimeOfFlightEvent = (TimeOfFlightEvent)timeOfFlightEvent;
 			await SendManagedResponseEvent(new TriggerData(timeOfFlightEvent.DistanceInMeters.ToString(), timeOfFlightEvent.SensorPosition.ToString(), Triggers.TimeOfFlightRange));
 			TimeOfFlightEvent?.Invoke(this, timeOfFlightEvent);
-
-			//TODO Should we check across range for a period of time???
 		}
 
 		private async void ArTagCallback(IArTagDetectionEvent arTagEvent)
@@ -1988,9 +1965,7 @@ namespace MistyCharacter
 					CharacterState.UnknownFaceSeen = false;
 					CharacterState.KnownFaceSeen = false;
 					CharacterState.Listening = false;
-					CharacterState.Saying = "";
-
-
+					CharacterState.Saying = "";					
 					_triggerHandled = false;
 					_ = ProcessNextAnimationRequest();
 				}
@@ -2476,7 +2451,7 @@ namespace MistyCharacter
 				}
 
 
-				//NEED TO REPROCESS TEXT FOR INTENT!!!
+				//TODO REPROCESS TEXT FOR NEW INTENTS
 
 				if (interaction.Retrigger &&
 					CharacterState.LatestTriggerMatched.Value != null &&
@@ -2499,8 +2474,6 @@ namespace MistyCharacter
 					{
 						switch (CharacterState.LatestTriggerMatched.Value.Trigger)
 						{
-							//Hmmm, so if the second one is listening for unknown, this will say it can't find it
-
 							case Triggers.SpeechHeard:
 								//send in unknown
 								if (await SendManagedResponseEvent(new TriggerData(CharacterState.LatestTriggerMatched.Value.Text, ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard), false))

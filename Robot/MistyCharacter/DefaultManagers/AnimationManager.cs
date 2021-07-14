@@ -240,23 +240,7 @@ namespace MistyCharacter
 					}
 
 					callSelf = isSelf && includeSelf;
-					/*
-					if (includeSelf && !robot.AllowCrossRobotCommunication)
-					{
-						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") != CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
-						{
-							continue;
-						}
-					}
-
-					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
-					{
-						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
-						{
-							continue;
-						}
-					}*/
-
+					
 					IDictionary<string, object> payload = new Dictionary<string, object>();
 					payload.Add("Trigger", trigger);
 					payload.Add("Filter", triggerFilter);
@@ -309,23 +293,7 @@ namespace MistyCharacter
 					}
 
 					callSelf = isSelf && includeSelf;
-
-				/*	if (includeSelf && !robot.AllowCrossRobotCommunication)
-					{
-						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") != CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
-						{
-							continue;
-						}
-					}
-
-					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
-					{
-						if (isSelf)
-						{
-							continue;
-						}
-					}*/
-
+					
 					IDictionary<string, object> payload = new Dictionary<string, object>();
 					payload.Add("Trigger", "SyncEvent");
 					payload.Add("TriggerFilter", syncName.Trim());
@@ -378,22 +346,6 @@ namespace MistyCharacter
 					}
 
 					callSelf = isSelf && includeSelf;
-
-					/*if (includeSelf && !robot.AllowCrossRobotCommunication)
-					{
-						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") != CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
-						{
-							continue;
-						}
-					}
-
-					if (!string.IsNullOrWhiteSpace(CharacterParameters.RobotIp) && !includeSelf)
-					{
-						if (robotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", "") == CharacterParameters.RobotIp.Trim().Replace("https://", "").Replace("http://", "").Replace("/", ""))
-						{
-							continue;
-						}
-					}*/
 					
 					IDictionary<string, object> payload = new Dictionary<string, object>();
 					payload.Add("Command", command);
