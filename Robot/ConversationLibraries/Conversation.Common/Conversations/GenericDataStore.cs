@@ -39,8 +39,9 @@ namespace Conversation.Common
 	{
 		public string Key { get; set; }
 		public string Value { get; set; }
-		public string Image { get; set; }
-		public string ScreenText { get; set; }		
+		public string DataAnimationScript { get; set; }
+		public string ScreenText { get; set; }
+		public int Priority { get; set; } = 1;
 	}
 
 	public class GenericDataStore
@@ -50,7 +51,7 @@ namespace Conversation.Common
 		public string Name { get; set; }
 		public string Description { get; set; }
 		public bool TreatKeyAsUtterance { get; set; }
-		public bool ExactMatchesOnly { get; set; }
+		public bool ExactPhraseMatchesOnly { get; set; }
 
 		public string WordMatchRule { get; set; } = "Exact";
 

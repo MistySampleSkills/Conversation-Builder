@@ -110,7 +110,7 @@ namespace Conversation.Common
 		public readonly static string UnknownPersonFaceLabel = "unknown person";
 		public readonly static string ConversationGroup = "ConversationGroup";
 		public readonly static string Payload = "Payload";		
-		public readonly static string IgnoreCallback = "IgnoreCallback_";
+		public readonly static string IgnoreCallback = "ignorecallback_";
 		public readonly static string ReloadAssets = "ReloadAssets";
 		public readonly static string CharacterSkillParameters = "CharacterSkillParameters";
 		public readonly static string AddLocaleToAudioNames = "AddLocaleToAudioNames";
@@ -123,5 +123,8 @@ namespace Conversation.Common
 		public readonly static string StartVolume = "StartVolume";
 		public readonly static string LargePrint = "LargePrint";
 		public readonly static string ShowListeningIndicator = "ShowListeningIndicator";
+		public readonly static string UsePreSpeech = "UsePreSpeech";
+		public readonly static string PreSpeechPhrases = "PreSpeechPhrases";
+		public readonly static string PreSpeechAnimation = "PreSpeechAnimation";
 	}
 }

@@ -48,13 +48,15 @@ namespace ConversationBuilder.ViewModels
 		public IList<SkillMessage> SkillMessages { get; set; } = new List<SkillMessage>();
 
 		public int Weight { get; set; } = 1;
+		public bool Retrigger { get; set; }
 		public string GoToConversation { get; set; }
 		public string GoToInteraction { get; set; }
 		public bool InterruptCurrentAction { get; set; } = true;
 		public IList<TriggerDetailViewModel> TriggerDetails { get; set; } = new List<TriggerDetailViewModel>();
 		public string SelectedTrigger { get; set; }
 		public string RemovedTriggerAction { get; set; }
-		public string Animation { get; set; }
+		public string Animation { get; set; }		
+		public string PreSpeechAnimation { get; set; }
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

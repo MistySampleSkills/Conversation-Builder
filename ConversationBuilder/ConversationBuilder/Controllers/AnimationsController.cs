@@ -60,8 +60,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.AnimationData.GetCountAsync();
-				IList<Animation> animations = await _cosmosDbService.ContainerManager.AnimationData.GetListAsync(startItem, totalItems);
+				int totalCount = await _cosmosDbService.ContainerManager.AnimationData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<Animation> animations = await _cosmosDbService.ContainerManager.AnimationData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
 
 				if (animations == null)
@@ -263,6 +263,8 @@ namespace ConversationBuilder.Controllers
 					loadedAnimation.SpeechRate = animation.SpeechRate;
 					loadedAnimation.OverrideVoice   = animation.OverrideVoice;
 					loadedAnimation.SpeakingStyle  = animation.SpeakingStyle;
+					loadedAnimation.AnimationScript = animation.AnimationScript;
+					loadedAnimation.RepeatScript = animation.RepeatScript;
 					loadedAnimation.Updated = DateTimeOffset.UtcNow;
 					
 					await _cosmosDbService.ContainerManager.AnimationData.UpdateAsync(loadedAnimation);

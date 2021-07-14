@@ -54,7 +54,7 @@ namespace CharacterTemplates
                     //Using default arm manager                    
                     null, 
                     // The head manager controls head actions including following faces and objects, starting experiment for better following
-                    new NewHeadManager(misty, originalParameters, characterParameters),
+                    null, //new NewHeadManager(misty, originalParameters, characterParameters),
                     //very beta and experimental Emotional system where Misty will traverse her emotional spectrum based upon animation emotions and other input
                     null,
                     //Allows users to plug in their own intent handling for the character

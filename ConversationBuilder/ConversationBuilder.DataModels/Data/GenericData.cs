@@ -47,10 +47,13 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Value for user data, may be used as speech text replacement")]				
 		public string Value { get; set; }
 
-		[Display(Name = "Optional image to display (beta)")]
-		public string Image { get; set; }
+		[Display(Name = "Optional animation script (beta)")]
+		public string DataAnimationScript { get; set; }
 
 		[Display(Name = "Optional text to display (beta)")]		
 		public string ScreenText { get; set; }		
+
+		[Display(Name = "Comparison Priority (beta)")]		
+		public int Priority { get; set; } = 1;
 	}
 }

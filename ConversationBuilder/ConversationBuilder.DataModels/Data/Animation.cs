@@ -219,13 +219,19 @@ namespace ConversationBuilder.DataModels
 		[JsonProperty(PropertyName = "LEDTransitionAction")]
 		public string LEDTransitionAction{ get; set; }	
 
+		[Display(Name = "Animation Script")]
+		[JsonProperty(PropertyName = "AnimationScript")]
+		public string AnimationScript { get; set; }
+
+		[Display(Name = "Repeat Animation Script")]		
+		public bool RepeatScript { get; set; }	
 
 		[Display(Name = "Created")]
 		[JsonProperty(PropertyName = "Created")]
 		public DateTimeOffset Created { get; set; }
 
 		[Display(Name = "CreatedBy")]
-		[JsonProperty(PropertyName = "Created By")]
+		[JsonProperty(PropertyName = "CreatedBy")]
 		public string CreatedBy { get; set; }
 		
 		[Display(Name = "Updated")]

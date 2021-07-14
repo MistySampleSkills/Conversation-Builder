@@ -49,6 +49,10 @@ namespace ConversationBuilder.DataModels
 
 		[Display(Name = "Show Beta Items")]	
 		public bool ShowBetaItems { get; set; }
+
+		[Display(Name = "Show All Conversations")]	
+		public bool ShowAllConversations { get; set; } = true;
+
 	
 		public DateTimeOffset Created { get; set; }	
 		public DateTimeOffset Updated { get; set; }

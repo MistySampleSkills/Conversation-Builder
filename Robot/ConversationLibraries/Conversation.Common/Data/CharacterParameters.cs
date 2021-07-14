@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using MistyRobotics.Common.Types;
+using System.Collections.Generic;
 
 namespace Conversation.Common
 {
@@ -45,8 +46,7 @@ namespace Conversation.Common
 
 		public string TextToSpeechService { get; set; } = "Misty";
 		public string SpeechRecognitionService { get; set; } = "Azure";
-
-
+		
 		public int FacePitchOffset { get; set; }
 		public double ObjectDetectionDebounce { get; set; } = 0.333;
 
@@ -74,6 +74,18 @@ namespace Conversation.Common
 
 		public string Payload { get; set; }
 
-		public string InitializationError { get; set; }
-    }
+		public string InitializationStatusMessage { get; set; }
+
+		public string InitializationErrorStatus { get; set; }
+
+		public string RobotIp { get; set; }
+
+		public bool UsePreSpeech { get; set; }
+
+		public IList<string> PreSpeechPhrases { get; set; } = new List<string>();
+
+		public IList<Robot> Robots { get; set; } = new List<Robot>();
+
+		public IList<Recipe> Recipes { get; set; } = new List<Recipe>();
+	}
 }

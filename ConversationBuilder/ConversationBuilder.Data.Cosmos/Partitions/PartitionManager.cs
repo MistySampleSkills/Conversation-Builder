@@ -90,28 +90,51 @@ namespace ConversationBuilder.Data.Cosmos
 			_ = await _container.UpsertItemAsync(data, new PartitionKey(_rootPartition.ToString()));
 		}
 
-		protected async Task<IEnumerable<TDataItem>> GetListAsync<TDataItem>(int startItem, int totalItems = 100, string conversationId = null)
+		protected async Task<IEnumerable<TDataItem>> GetListAsync<TDataItem>(int startItem, int totalItems = 100, string creatorFilter = null, string conversationId = null)
 		{
 			startItem = startItem < 1 ? 1 : startItem;
 			totalItems = totalItems < 1 ? 1 : totalItems;
 
 			FeedIterator<TDataItem> query = null;
-			if(conversationId == null)
+			if(string.IsNullOrWhiteSpace(creatorFilter))
 			{
-				query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
-					.WithParameter("@itemType", _rootPartition.ToString())				
-					.WithParameter("@start", startItem-1)
-					.WithParameter("@total", totalItems));		
+				if(string.IsNullOrWhiteSpace(conversationId))
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
+						.WithParameter("@itemType", _rootPartition.ToString())				
+						.WithParameter("@start", startItem-1)
+						.WithParameter("@total", totalItems));		
+				}
+				else
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
+						.WithParameter("@itemType", _rootPartition.ToString())				
+						.WithParameter("@conversationId", conversationId)				
+						.WithParameter("@start", startItem-1)
+						.WithParameter("@total", totalItems));		
+				}
 			}
 			else
 			{
-				query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
-					.WithParameter("@itemType", _rootPartition.ToString())				
-					.WithParameter("@conversationId", conversationId)				
-					.WithParameter("@start", startItem-1)
-					.WithParameter("@total", totalItems));		
+				if(string.IsNullOrWhiteSpace(conversationId))
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND (t.createdBy = null OR t.createdBy = @creatorFilter) ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
+						.WithParameter("@itemType", _rootPartition.ToString())
+						.WithParameter("@creatorFilter", creatorFilter)
+						.WithParameter("@start", startItem-1)
+						.WithParameter("@total", totalItems));		
+				}
+				else
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND (t.createdBy = null OR t.createdBy = @creatorFilter) ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
+						.WithParameter("@itemType", _rootPartition.ToString())
+						.WithParameter("@conversationId", conversationId)
+						.WithParameter("@creatorFilter", creatorFilter)
+						.WithParameter("@start", startItem-1)
+						.WithParameter("@total", totalItems));		
+				}
 			}
-			
+
 			List<TDataItem> results = new List<TDataItem>();
 			while (query.HasMoreResults)
 			{
@@ -123,7 +146,7 @@ namespace ConversationBuilder.Data.Cosmos
 			return results;
 		}
 
-		protected async Task<IEnumerable<TDataItem>> GetListByDateAsync<TDataItem>(DateTimeOffset startDate, DateTimeOffset? endDate = null, string conversationId = null)
+		protected async Task<IEnumerable<TDataItem>> GetListByDateAsync<TDataItem>(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null, string conversationId = null)
 		{
 			FeedIterator<TDataItem> query = null;
 			if (endDate == null)
@@ -136,20 +159,43 @@ namespace ConversationBuilder.Data.Cosmos
 			string endDtAs24 = ((DateTimeOffset)endDate).ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
 			string startDtAs24 = startDate.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
 
-			if(conversationId == null)
+			if(string.IsNullOrWhiteSpace(creatorFilter))
 			{
-				query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
-					.WithParameter("@itemType", _rootPartition.ToString())		
-					.WithParameter("@startDate", startDtAs24)
-					.WithParameter("@endDate", endDtAs24));
+				if(string.IsNullOrWhiteSpace(conversationId))
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
+						.WithParameter("@itemType", _rootPartition.ToString())		
+						.WithParameter("@startDate", startDtAs24)
+						.WithParameter("@endDate", endDtAs24));
+				}
+				else
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
+						.WithParameter("@itemType", _rootPartition.ToString())			
+						.WithParameter("@conversationId", conversationId)		
+						.WithParameter("@startDate", startDtAs24)
+						.WithParameter("@endDate", endDtAs24));	
+				}
 			}
 			else
 			{
-				query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
-					.WithParameter("@itemType", _rootPartition.ToString())			
-					.WithParameter("@conversationId", conversationId)		
-					.WithParameter("@startDate", startDtAs24)
-					.WithParameter("@endDate", endDtAs24));	
+				if(string.IsNullOrWhiteSpace(conversationId))
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND (t.createdBy = null OR t.createdBy = @creatorFilter) AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
+						.WithParameter("@itemType", _rootPartition.ToString())		
+						.WithParameter("@creatorFilter", creatorFilter)
+						.WithParameter("@startDate", startDtAs24)
+						.WithParameter("@endDate", endDtAs24));
+				}
+				else
+				{
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND (t.createdBy = null OR t.createdBy = @creatorFilter) AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
+						.WithParameter("@itemType", _rootPartition.ToString())			
+						.WithParameter("@conversationId", conversationId)		
+						.WithParameter("@creatorFilter", creatorFilter)
+						.WithParameter("@startDate", startDtAs24)
+						.WithParameter("@endDate", endDtAs24));	
+				}
 			}
 
 			List<TDataItem> results = new List<TDataItem>();
@@ -163,19 +209,39 @@ namespace ConversationBuilder.Data.Cosmos
 			return results;
 		}
 
-		public async Task<int> GetCountAsync(string conversationId)
+		public async Task<int> GetCountAsync(string conversationId, string creatorFilter = null)
 		{
 			FeedIterator<int> screenIdIterator = null;
-			if(conversationId == null)
-			{
-				screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType") 
-					.WithParameter("@itemType", _rootPartition.ToString()));
+			if(string.IsNullOrWhiteSpace(creatorFilter))
+			{				
+				if(string.IsNullOrEmpty(conversationId))
+				{
+					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType") 
+						.WithParameter("@itemType", _rootPartition.ToString()));
+				}
+				else
+				{
+					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND c.conversationId = @conversationId") 
+						.WithParameter("@itemType", _rootPartition.ToString())
+						.WithParameter("@conversationId", conversationId));					
+				}
 			}
 			else
-			{
-				screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND c.conversationId = @conversationId") 
-					.WithParameter("@itemType", _rootPartition.ToString())
-					.WithParameter("@conversationId", conversationId));					
+			{			
+				if(string.IsNullOrEmpty(conversationId))
+				{
+					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND (t.createdBy = null OR t.createdBy = @creatorFilter)") 
+						.WithParameter("@itemType", _rootPartition.ToString())
+						.WithParameter("@creatorFilter", creatorFilter));
+				}
+				else
+				{
+					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND c.conversationId = @conversationId AND (c.createdBy = null OR c.createdBy = @creatorFilter)") 
+						.WithParameter("@itemType", _rootPartition.ToString())
+						.WithParameter("@conversationId", conversationId)
+						.WithParameter("@creatorFilter", creatorFilter));	
+				}
+
 			}
 
 			while (screenIdIterator.HasMoreResults)
@@ -186,11 +252,20 @@ namespace ConversationBuilder.Data.Cosmos
 			return 0;
 		}
 
-		public async Task<int> GetCountAsync()
+		public async Task<int> GetCountAsync(string creatorFilter = "")
 		{
 			FeedIterator<int> screenIdIterator = null;
-			screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType") 
-					.WithParameter("@itemType", _rootPartition.ToString()));
+			if(string.IsNullOrWhiteSpace(creatorFilter))
+			{
+				screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType") 
+						.WithParameter("@itemType", _rootPartition.ToString()));
+			}
+			else
+			{
+				screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND (c.createdBy = null OR c.createdBy = @creatorFilter)") 
+						.WithParameter("@itemType", _rootPartition.ToString())
+						.WithParameter("@creatorFilter", creatorFilter));	
+			}
 					
 			while (screenIdIterator.HasMoreResults)
 			{

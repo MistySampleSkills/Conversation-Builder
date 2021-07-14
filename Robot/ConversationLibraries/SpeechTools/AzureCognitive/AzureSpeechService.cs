@@ -224,7 +224,7 @@ namespace SpeechTools.AzureCognitive
 				}
 				else
 				{
-					_robot.SkillLogger.Log($"Azure Translation. '{result.Reason}': {result.Text}");
+					_robot.SkillLogger.LogInfo($"Azure Translation. '{result.Reason}': {result.Text}");
 				}
 
 				IDictionary<string, string> translations = result.Translations.ToDictionary(x => x.Key, y => y.Value);				
@@ -311,7 +311,7 @@ namespace SpeechTools.AzureCognitive
 				}
 				else if (result.Reason == ResultReason.TranslatedSpeech)
 				{
-					_robot.SkillLogger.Log($"Azure Translation. '{result.Reason}': {result.Text}");
+					_robot.SkillLogger.LogInfo($"Azure Translation. '{result.Reason}': {result.Text}");
 				}
 
 				IDictionary<string, string> translations = result.Translations.ToDictionary(x => x.Key, y => y.Value);
@@ -400,7 +400,7 @@ namespace SpeechTools.AzureCognitive
 							return null;
 						}
 
-						_robot.SkillLogger.Log($"Audio Received. '{result.Reason}'");	
+						_robot.SkillLogger.LogInfo($"Audio Received. '{result.Reason}'");	
 						
 						//TODO Text to audio translate in cognitive?
 						/*if(_speechConfig.SpeechSynthesisLanguage != "en" || _speechConfig.SpeechSynthesisLanguage != "en-US")

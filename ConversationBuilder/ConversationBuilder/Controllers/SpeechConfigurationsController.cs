@@ -60,8 +60,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetCountAsync();
-				IList<SpeechConfiguration> speechConfigurations = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetListAsync(startItem, totalItems);
+				int totalCount = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<SpeechConfiguration> speechConfigurations = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
 
 				if (speechConfigurations == null)

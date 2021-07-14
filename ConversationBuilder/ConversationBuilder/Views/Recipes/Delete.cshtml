@@ -1,0 +1,80 @@
+﻿@model ConversationBuilder.DataModels.Recipe
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of recipe " + Model.Name + "?";
+	}
+	else
+	{
+		
+		msg = "Recipe " + Model.Name + " is in use in conversation group mappings and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+<hr />
+<h5 style="color:red">@ViewBag.Message</h5>
+
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Name)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Name)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Description)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Description)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Script)
+		</dt>
+		<dd>
+			<textarea style="width:100%" rows=5 readonly=true>@Html.DisplayFor(model => model.Script)</textarea>						
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Notes)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Notes)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+
+	<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+	</form>
+</div>
+
+@Html.ActionLink("Back to List", "Index",  "Recipes")

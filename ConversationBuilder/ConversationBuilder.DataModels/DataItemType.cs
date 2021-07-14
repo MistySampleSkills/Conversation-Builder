@@ -51,6 +51,8 @@ namespace ConversationBuilder.DataModels
 		SkillMessage = 16,
 		GenericDataStore = 17,
 		SkillAuthorization = 18,
-		UserConfiguration = 19
+		UserConfiguration = 19,
+		Robot = 20,
+		Recipe = 21
 	}
 }

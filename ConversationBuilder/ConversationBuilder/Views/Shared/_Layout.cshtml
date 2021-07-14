@@ -23,33 +23,73 @@
 					<partial name="_LoginPartial" />
 					<ul class="navbar-nav flex-grow-1">
 						<li class="nav-item">
-							@if(User.IsInRole(Roles.SiteAdministrator))
-							{
-								<a class="nav-link" asp-area="" asp-controller="Home" asp-action="AdminPage">Home</a>
-							}
-							else
-							{
-								<a class="nav-link" asp-area="" asp-controller="Home" asp-action="UserPage">Home</a>
-							}
-						</li>
-						<li class="nav-item">
 							<a class="nav-link" href= "https://community.mistyrobotics.com/">Community</a>
 						</li>
 					</ul>
 				</div>
 			</div>
 		</nav>
+		<hr />	
 	</header>
 	<div class="container">
 		<main role="main" class="pb-3">
 			@RenderBody()
 		</main>
 	</div>
+	<div class="container">
+		@if(User.IsInRole(ConversationBuilder.Roles.SiteAdministrator) || User.IsInRole(ConversationBuilder.Roles.Customer))
+		{
+			<div class="container" style = "text-align: center;">
+				<nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
+				<div class="container">				
+					<div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+						<ul class="navbar-nav flex-grow-1">
+							<li class="nav-item">							
+								<a class="nav-link"asp-action="index" asp-controller="armlocations">Arms</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="headlocations">Head</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="lEDTransitionActions">LEDs</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="animations">Animations</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="triggers">Triggers</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="speechHandlers">Speech Handlers</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="conversations">Conversations</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="conversationGroups">Conversation Groups</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="genericDataStores">Data</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link"asp-action="index" asp-controller="skillMessages">Skills</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" asp-area="" asp-controller="Home" asp-action="Administrative">Administrative</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+				</nav>
+			</div>
+		}
+	</div>
 
-	<footer class="border-top footer text-muted">
-		<div class="container">
-			&copy; 2021 - <a href= "https://www.mistyrobotics.com">Misty Robotics</a> - <a href= "https://www.mistyrobotics.com/legal">Legal</a> - <a href= "https://github.com/MistySampleSkills/Conversation-Builder">Code</a>
+	<footer class="border-top footer text-muted">		
+		<div class="container text-center">
+			&copy; 2021 - <a href= "https://www.mistyrobotics.com">Misty Robotics</a> - <a href= "https://www.mistyrobotics.com/legal">Legal</a> - <a href= "https://github.com/MistySampleSkills/Conversation-Builder">Code</a> - Version 0.9.0			
 		</div>
+
 	</footer>
 	<script src="~/lib/jquery/dist/jquery.min.js"></script>
 	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

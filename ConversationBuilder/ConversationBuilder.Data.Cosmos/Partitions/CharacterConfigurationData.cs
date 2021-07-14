@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface ICharacterConfigurationData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<CharacterConfiguration> GetAsync(string id);
 		Task UpdateAsync(CharacterConfiguration data);
 		Task<ItemResponse<CharacterConfiguration>> AddAsync(CharacterConfiguration data);		
 		Task DeleteAsync(string id);
-		Task<IList<CharacterConfiguration>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<CharacterConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<CharacterConfiguration>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<CharacterConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class CharacterConfigurationData : PartitionManager, ICharacterConfigurationData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<CharacterConfiguration>(id);
 		}
 
-		public async Task<IList<CharacterConfiguration>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<CharacterConfiguration>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<CharacterConfiguration>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<CharacterConfiguration>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<CharacterConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<CharacterConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<CharacterConfiguration>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<CharacterConfiguration>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

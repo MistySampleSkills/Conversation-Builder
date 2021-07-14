@@ -1,0 +1,106 @@
+﻿@model ConversationBuilder.DataModels.Robot
+
+@{
+	ViewData["Title"] = "Delete";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+@{
+	var msg = "";
+	if(ViewBag.CanBeDeleted)
+	{
+		msg = "Please confirm deletion of robot " + Model.RobotName + "?";
+	}
+	else
+	{
+		
+		msg = "Robot " + Model.RobotName + " is in use in conversation group mappings and cannot be deleted.";
+	}
+}
+
+<h3>@msg</h3>
+<hr />
+<h5 style="color:red">@ViewBag.Message</h5>
+
+
+<div>
+	<dl class="dl-horizontal">
+		<dt>
+			@Html.DisplayNameFor(model => model.Id)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Id)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.SerialNumber)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.SerialNumber)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.DeviceId)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.DeviceId)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RobotName)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RobotName)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.RobotConfig)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.RobotConfig)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IsValidConfig)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IsValidConfig)
+		@* </dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IsProvisioned)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IsProvisioned)
+		</dd> *@
+		<dt>
+			@Html.DisplayNameFor(model => model.AllowCrossRobotCommunication)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.AllowCrossRobotCommunication)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.IP)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.IP)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.Updated)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Updated)
+		</dd>
+
+		<dt>
+			@Html.DisplayNameFor(model => model.Created)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.Created)
+		</dd>ml.DisplayFor(model => model.Created)
+		</dd>
+	</dl>
+
+	<form asp-action="Delete">
+		<input type="submit" value="Delete" class="btn btn-default" /> |
+	</form>
+</div>
+
+@Html.ActionLink("Back to List", "Index",  "Robots")

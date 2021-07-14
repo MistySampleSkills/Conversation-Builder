@@ -61,8 +61,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetCountAsync();
-				IList<LEDTransitionAction> ledTransitionActions = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetListAsync(startItem, totalItems);
+				int totalCount = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<LEDTransitionAction> ledTransitionActions = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
 
 				if (ledTransitionActions == null)

@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface IUserConfigurationData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<UserConfiguration> GetAsync(string id);
 		Task UpdateAsync(UserConfiguration data);
 		Task<ItemResponse<UserConfiguration>> AddAsync(UserConfiguration data);		
 		Task DeleteAsync(string id);
-		Task<IList<UserConfiguration>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<UserConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<UserConfiguration>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<UserConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class UserConfigurationData : PartitionManager, IUserConfigurationData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<UserConfiguration>(id);
 		}
 
-		public async Task<IList<UserConfiguration>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<UserConfiguration>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<UserConfiguration>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<UserConfiguration>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<UserConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<UserConfiguration>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<UserConfiguration>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<UserConfiguration>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

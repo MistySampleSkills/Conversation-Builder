@@ -60,6 +60,14 @@ namespace Conversation.Common
 
 		public IList<string> SkillMessages { get; set; } = new List<string>();
 
+		public bool Retrigger { get; set; }
+
+		public bool UsePreSpeech { get; set; } = true;
+
+		public string PreSpeechPhrases { get; set; }
+
+		public string PreSpeechAnimation { get; set; }
+
 		public Interaction() { }
 
 		public Interaction(Interaction state)
@@ -68,6 +76,10 @@ namespace Conversation.Common
 			Name = state.Name;
 			Animation = state.Animation;
 			InteractionFailedTimeout = state.InteractionFailedTimeout;
+			PreSpeechPhrases = state.PreSpeechPhrases;
+			PreSpeechAnimation = state.PreSpeechAnimation;
+			Retrigger = state.Retrigger;
+			UsePreSpeech = state.UsePreSpeech;
 			StartListening = state.StartListening;
 			AllowConversationTriggers = state.AllowConversationTriggers;
 			AllowKeyPhraseRecognition = state.AllowKeyPhraseRecognition;
@@ -85,7 +97,7 @@ namespace Conversation.Common
 
 				TriggerMap.Add(new KeyValuePair<string, IList<TriggerActionOption>>(triggerGroup.Key, actionList));
 			}
-			
+
 			foreach (string skillMessage in state.SkillMessages)
 			{
 				SkillMessages.Add(skillMessage);				

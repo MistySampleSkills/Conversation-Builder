@@ -61,8 +61,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetCountAsync();
-				IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync(startItem, totalItems);
+				int totalCount = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
 
 				if (genericDataStores == null)
@@ -212,7 +212,7 @@ namespace ConversationBuilder.Controllers
 					loadedGenericDataStore.Description = genericDataStore.Description;
 					loadedGenericDataStore.ManagementAccess = genericDataStore.ManagementAccess;
 					loadedGenericDataStore.TreatKeyAsUtterance = genericDataStore.TreatKeyAsUtterance;
-					loadedGenericDataStore.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+					loadedGenericDataStore.ExactPhraseMatchesOnly = genericDataStore.ExactPhraseMatchesOnly;
 					loadedGenericDataStore.WordMatchRule = genericDataStore.WordMatchRule;
 					loadedGenericDataStore.Updated = DateTimeOffset.UtcNow;
 					await _cosmosDbService.ContainerManager.GenericDataStoreData.UpdateAsync(loadedGenericDataStore);
@@ -304,7 +304,7 @@ namespace ConversationBuilder.Controllers
 					genericDataViewModel.Data = genericDataStore.Data;
 					genericDataViewModel.Description = genericDataStore.Description;
 					genericDataViewModel.TreatKeyAsUtterance = genericDataStore.TreatKeyAsUtterance;
-					genericDataViewModel.ExactMatchesOnly = genericDataStore.ExactMatchesOnly;
+					genericDataViewModel.ExactPhraseMatchesOnly = genericDataStore.ExactPhraseMatchesOnly;
 					genericDataViewModel.WordMatchRule = genericDataStore.WordMatchRule;
 					genericDataViewModel.Name = genericDataStore.Name;
 					genericDataViewModel.Id = genericDataStore.Id;
@@ -335,8 +335,9 @@ namespace ConversationBuilder.Controllers
 					genericData.Id = Guid.NewGuid().ToString();
 					genericData.Key = model.Key;
 					genericData.Value = model.Value;
-					genericData.Image = model.Image;
+					genericData.DataAnimationScript = model.DataAnimationScript;
 					genericData.ScreenText = model.ScreenText;
+					genericData.Priority = model.Priority;
 					genericDataStore.Data.Remove(genericData.Id);
 					genericDataStore.Data.Add(genericData.Id, genericData);
 					await _cosmosDbService.ContainerManager.GenericDataStoreData.UpdateAsync(genericDataStore);
@@ -379,8 +380,9 @@ namespace ConversationBuilder.Controllers
 						genericDataViewModel.DataId = genericData.Value.Id;
 						genericDataViewModel.Key = genericData.Value.Key;
 						genericDataViewModel.Value = genericData.Value.Value;
-						genericDataViewModel.Image = genericData.Value.Image;
+						genericDataViewModel.DataAnimationScript = genericData.Value.DataAnimationScript;
 						genericDataViewModel.ScreenText = genericData.Value.ScreenText;
+						genericDataViewModel.Priority = genericData.Value.Priority;
 
 						return View(genericDataViewModel);
 					}
@@ -415,8 +417,9 @@ namespace ConversationBuilder.Controllers
 					{
 						genericData.Value.Key = model.Key;
 						genericData.Value.Value = model.Value;
-						genericData.Value.Image = model.Image;
+						genericData.Value.DataAnimationScript = model.DataAnimationScript;
 						genericData.Value.ScreenText = model.ScreenText;
+						genericData.Value.Priority = model.Priority;
 						genericDataStore.Data.Remove(model.DataId);
 						genericDataStore.Data.Add(model.DataId, genericData.Value);
 						await _cosmosDbService.ContainerManager.GenericDataStoreData.UpdateAsync(genericDataStore);

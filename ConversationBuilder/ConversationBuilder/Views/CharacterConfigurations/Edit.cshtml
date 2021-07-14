@@ -79,7 +79,21 @@
 					</label>
 				</div>
 			</div>
-				<div class="form-group">
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="UsePreSpeech" /> @Html.DisplayNameFor(model => model.UsePreSpeech)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="PreSpeechPhrases" class="control-label"></label>
+				<textarea rows=5 asp-for="PreSpeechPhrases" class="form-control" > </textarea>
+				<label title="Semicolon separated list of pre speech-phrases.">ℹ️</label>					
+				<span asp-validation-for="PreSpeechPhrases" class="text-danger"></span>
+			</div>
+			
+			<div class="form-group">
 				<div class="checkbox">
 					<label>
 						<input asp-for="StreamInteraction" /> @Html.DisplayNameFor(model => model.StreamInteraction)

@@ -41,6 +41,7 @@ namespace ConversationBuilder.DataModels
 		public string Id { get; set; }
 		public string ItemType { get; set; } = DataItemType.TriggerActionOption.ToString();
 		public int Weight { get; set; } = 1;
+		public bool Retrigger { get; set; }
 
 		[Display(Name = "Go To Conversation")]
 		public string GoToConversation { get; set; }

@@ -20,6 +20,8 @@ Allow Conversation Triggers: @Model.AllowConversationTriggers
 Allow Key Phrase Recognition: @Model.AllowKeyPhraseRecognition
 <br />
 Entry Point: @Model.ConversationEntryPoint
+<br />
+Uses Pre-speech: @Model.UsePreSpeech
 </p>
 
 <hr />
@@ -128,7 +130,13 @@ Entry Point: @Model.ConversationEntryPoint
 				Animation
 			</th>
 			<th>
+				PreSpeech Animation
+			</th>
+			<th>
 				Weight
+			</th>
+			<th>
+				Retrigger
 			</th>
 			<th></th>
 		</tr>
@@ -147,6 +155,8 @@ Entry Point: @Model.ConversationEntryPoint
 			</td>
 			<td>
 				
+			<td></td>
+			<td></td>	
 			</td>
 			<td></td>	
 			<td></td>	
@@ -212,8 +222,26 @@ Entry Point: @Model.ConversationEntryPoint
 					</td>
 					<td>
 					<div class="form-group">
+						<select asp-for="PreSpeechAnimation" class="form-control">
+							@foreach (KeyValuePair<string, string> animation in @ViewBag.Animations)
+							{
+								<option value="@animation.Key">@animation.Value</option>
+							}
+							<option value="PreSpeech Default" >PreSpeech Default</option>
+							<option value="None" selected>None</option>								
+						</select>
+					</div>
+					</td>
+					<td>
+					<div class="form-group">
 						<input asp-for="Weight" class="form-control" />
 						<span asp-validation-for="Weight" class="text-danger"></span>
+					</div>
+					</td>
+					<td>
+					<div class="form-group">
+						<input asp-for="Retrigger" class="form-control" />
+						<span asp-validation-for="Retrigger" class="text-danger"></span>
 					</div>
 					</td>
 					
@@ -252,12 +280,31 @@ Entry Point: @Model.ConversationEntryPoint
 					{
 						animationName = "Animation Default";
 					}
+
+					string prespeechAnimationName = "PreSpeech Default";
+					if(ViewBag.InteractionPreSpeechAnimationList.TryGetValue(intentAction.Id, out string prespeechAnimation))
+					{
+						if(prespeechAnimation == "None")
+						{
+							prespeechAnimationName = "None";
+						}
+						else if(!@ViewBag.Animations.TryGetValue(prespeechAnimation, out prespeechAnimationName))
+						{
+							prespeechAnimationName = "PreSpeech Default";
+						}
+					}
+					else
+					{
+						prespeechAnimationName = "PreSpeech Default";
+					}
 				}
 
 				<td>@goToInteractionName</td>
 				<td>@intentAction.InterruptCurrentAction</td>
 				<td>@animationName</td>
+				<td>@prespeechAnimationName</td>
 				<td>@intentAction.Weight</td>
+				<td>@intentAction.Retrigger</td>
 				<td>@Html.ActionLink("Remove", "RemoveResponseHandler", new { interactionId = @Model.Id, conversationId = @Model.ConversationId, selectedTriggerId = @item.Id, removedTriggerAction = @intentAction.Id})</td>
 				</tr>
 			}

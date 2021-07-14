@@ -61,8 +61,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetCountAsync();
-				IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(startItem, totalItems);
+				int totalCount = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
 				if (speechHandlers == null)
 				{
@@ -96,7 +96,7 @@ namespace ConversationBuilder.Controllers
 				speechHandlerViewModel.Description = speechHandler.Description;
 				speechHandlerViewModel.Id = speechHandler.Id;
 				speechHandlerViewModel.Name = speechHandler.Name;
-				speechHandlerViewModel.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+				speechHandlerViewModel.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;
 				speechHandlerViewModel.WordMatchRule = speechHandler.WordMatchRule;
 				speechHandlerViewModel.ItemType = speechHandler.ItemType;
 				speechHandlerViewModel.Updated = speechHandler.Updated;
@@ -177,7 +177,7 @@ namespace ConversationBuilder.Controllers
 						speechHandler.Utterances.Add(newUtterance);
 					}
 					speechHandler.Name = model.Name;
-					speechHandler.ExactMatchesOnly = model.ExactMatchesOnly;
+					speechHandler.ExactPhraseMatchesOnly = model.ExactPhraseMatchesOnly;
 					speechHandler.WordMatchRule = model.WordMatchRule;
 					speechHandler.Description = model.Description;
 
@@ -218,7 +218,7 @@ namespace ConversationBuilder.Controllers
 					speechHandlerViewModel.Id = speechHandler.Id;
 					speechHandlerViewModel.Name = speechHandler.Name;
 					speechHandlerViewModel.ManagementAccess = speechHandler.ManagementAccess;
-					speechHandlerViewModel.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+					speechHandlerViewModel.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;
 					speechHandlerViewModel.WordMatchRule = speechHandler.WordMatchRule;
 					speechHandlerViewModel.ItemType = speechHandler.ItemType;
 					speechHandlerViewModel.Updated = speechHandler.Updated;
@@ -254,7 +254,7 @@ namespace ConversationBuilder.Controllers
 					SpeechHandler loadedSpeechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(speechHandler.Id);
 					loadedSpeechHandler.Name = speechHandler.Name;
 					loadedSpeechHandler.Description = speechHandler.Description;
-					loadedSpeechHandler.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+					loadedSpeechHandler.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;
 					loadedSpeechHandler.WordMatchRule = speechHandler.WordMatchRule;
 					//TODO More cleanup and better UI
 					loadedSpeechHandler.Utterances = speechHandler.UtteranceString.Split(',').ToList();

@@ -71,10 +71,20 @@ namespace MistyConversation
 				return null;
 			}
 
-			_misty.DisplayText($"Loading conversation.", "Text", null);
 			CharacterParameters = await _parameterManager.Initialize();			
-			if (CharacterParameters != null && string.IsNullOrWhiteSpace(CharacterParameters.InitializationError))
+			if (CharacterParameters != null && CharacterParameters.InitializationErrorStatus != "Error")
 			{
+				if(CharacterParameters.InitializationErrorStatus == "Warning")
+				{
+					_misty.DisplayText(CharacterParameters.InitializationStatusMessage ?? "Initialization Warning.", "Text", null);
+					await _misty.TransitionLEDAsync(255, 39, 18, 240, 255, 48, MistyRobotics.Common.Types.LEDTransition.Breathe, 1000);					
+				}
+				else
+				{
+					_misty.DisplayText($"Loading conversation.", "Text", null);
+					await _misty.TransitionLEDAsync(0, 255, 0, 30, 144, 255, MistyRobotics.Common.Types.LEDTransition.Breathe, 1000);
+				}
+				
 				switch (CharacterParameters.Character?.ToLower())
 				{
 					case Experimental:					
@@ -94,8 +104,9 @@ namespace MistyConversation
 				return _characterManagerLoader;
 			}
 
-			_misty.DisplayText(CharacterParameters.InitializationError ?? "Failed initialization.", "Text", null);
-			_misty.SkillLogger.Log(CharacterParameters.InitializationError);
+			_misty.DisplayText(CharacterParameters.InitializationStatusMessage ?? "Failed initialization.", "Text", null);
+			await _misty.TransitionLEDAsync(255, 0, 0, 233, 116, 81, MistyRobotics.Common.Types.LEDTransition.Breathe, 1000);
+			_misty.SkillLogger.Log(CharacterParameters.InitializationStatusMessage);
 			_misty.SkillLogger.Log($"Failed misty conversation skill initialization.  Cancelling skill.");
 			_misty.SkillCompleted();
 			return null;

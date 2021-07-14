@@ -50,7 +50,7 @@ namespace ConversationBuilder.DataModels
 
 		[Required]
 		[Display(Name = "Exact Phrase Matches Only")]
-		public bool ExactMatchesOnly { get; set; }
+		public bool ExactPhraseMatchesOnly { get; set; }
 
 		[Required]
 		[Display(Name = "Word Match Rule")]

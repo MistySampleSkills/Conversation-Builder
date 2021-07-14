@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface ILEDTransitionActionData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<LEDTransitionAction> GetAsync(string id);
 		Task UpdateAsync(LEDTransitionAction data);
 		Task<ItemResponse<LEDTransitionAction>> AddAsync(LEDTransitionAction data);		
 		Task DeleteAsync(string id);
-		Task<IList<LEDTransitionAction>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<LEDTransitionAction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<LEDTransitionAction>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<LEDTransitionAction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class LEDTransitionActionData : PartitionManager, ILEDTransitionActionData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<LEDTransitionAction>(id);
 		}
 
-		public async Task<IList<LEDTransitionAction>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<LEDTransitionAction>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<LEDTransitionAction>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<LEDTransitionAction>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<LEDTransitionAction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<LEDTransitionAction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<LEDTransitionAction>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<LEDTransitionAction>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }
