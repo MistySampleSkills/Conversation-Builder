@@ -162,7 +162,8 @@ namespace MistyCharacter
 		private TOFCounter _tofCountFrontEdge = new TOFCounter();
 		private TOFCounter _tofCountBackEdge = new TOFCounter();
 
-		bool _triggerHandled = false;
+		private bool _triggerHandled = false;
+		private IList<string> _allowedUtterances = new List<string>();
 
 		public BaseCharacter(IRobotMessenger misty, 
 			CharacterParameters characterParameters,
@@ -187,17 +188,8 @@ namespace MistyCharacter
 				_conversationGroup = CharacterParameters.ConversationGroup;
 				_genericDataStores = CharacterParameters.ConversationGroup.GenericDataStores;
 				
-				Misty.UnregisterAllEvents(null);
-                await Task.Delay(1000);
-				/*Misty.UnregisterEvent("BumpSensor", null);
-				Misty.UnregisterEvent("CapTouch", null);
-				Misty.UnregisterEvent("Battery", null);
-				Misty.UnregisterEvent("ArTag", null);
-				Misty.UnregisterEvent("QrTag", null);
-				Misty.UnregisterEvent("SerialMessage", null);
-				Misty.UnregisterEvent("FaceRecognition", null);
-				Misty.UnregisterEvent("TimeOfFlightEvent", null);				
-				Misty.UnregisterEvent("ExternalEvent", null);*/
+				Misty.UnregisterAllEvents(null); //in case last run was stopped abnormally (via debugger)
+                await Task.Delay(200); //time for unreg to happen before we rereg
 
 				AssetWrapper = new AssetWrapper(Misty);
 				_ = RefreshAssetLists();
@@ -583,10 +575,11 @@ namespace MistyCharacter
 							Misty.RunSkill(skillMessage.Skill, payloadData, null);
 
 							StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Running skill {skillMessage.Skill}.");
-							await Task.Delay(3000);
+							await Task.Delay(1000);
 						}
 					}
 
+					//Give skills proper time to start as they may need to start background tasks, only happens once at start of conversation if it uses skills
 					await Task.Delay(5000);
 				}
 
@@ -1021,21 +1014,20 @@ namespace MistyCharacter
 					SpeechManager.AbortListening(_currentAnimation.SpeakFileName ?? _currentAnimation.AudioFile);
 					if (selectedAction.InterruptCurrentAction )
 					{
-						//So hacky, stop it
+						//TODO Hacky fix for not interupting prespeech with interrupt flag set
 						int sanity = 0;
-						while (_waitingOnPrespeech && sanity < 10)
+						while (_waitingOnPrespeech && sanity < 30) //3 seconds max wait on prespeech flag
 						{
 							sanity++;
 							await Task.Delay(100);
 						}
 						Misty.StopSpeaking(null);
-						await Task.Delay(25);
 						Misty.StopAudio(null);
 						await Task.Delay(25);
 					}
 					else if (!string.IsNullOrWhiteSpace(_currentAnimation.Speak) || !string.IsNullOrWhiteSpace(_currentAnimation.AudioFile))
 					{
-						//So hacky, stop it
+						//this shouldn't be necessary
 						int sanity = 0;
 						while (CharacterState.Speaking && sanity < 6000)
 						{
@@ -1044,7 +1036,7 @@ namespace MistyCharacter
 						}
 						if(sanity == 6000)
 						{
-							Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Possible error managing speech, unless Misty has actually been talking in one interaction for a long time.");
+							Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Possible error managing speech, unless Misty has actually been speaking in one interaction for a minute.");
 						}
 					}
 
@@ -2092,18 +2084,18 @@ namespace MistyCharacter
 					}
 				}
 
-				IList<string> allowedUtterances = new List<string>();
+				_allowedUtterances.Clear();
 				foreach (string trigger in allowedTriggers)
 				{
 					//get utterances
 					TriggerDetail triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == trigger || x.Name == trigger));
-					if (triggerDetail != null && !allowedUtterances.Contains(triggerDetail.TriggerFilter))
+					if (triggerDetail != null && !_allowedUtterances.Contains(triggerDetail.TriggerFilter))
 					{
-						allowedUtterances.Add(triggerDetail.TriggerFilter);
+						_allowedUtterances.Add(triggerDetail.TriggerFilter);
 					}
 				}
 
-				SpeechManager.SetInteractionDetails((int)(animationRequest.ListenTimeout*1000), (int)(animationRequest.SilenceTimeout * 1000), allowedUtterances);
+				SpeechManager.SetInteractionDetails((int)(animationRequest.ListenTimeout*1000), (int)(animationRequest.SilenceTimeout * 1000), _allowedUtterances);
 				
 				AnimationRequestProcessor(interaction);
 			}
@@ -2449,23 +2441,17 @@ namespace MistyCharacter
 				{
 					SpeechManager.Volume = (int)defaultAnimation.Volume;
 				}
-
-
-				//TODO REPROCESS TEXT FOR NEW INTENTS
-
+				
 				if (interaction.Retrigger &&
 					CharacterState.LatestTriggerMatched.Value != null &&
 					CharacterState.LatestTriggerMatched.Value.Trigger == Triggers.SpeechHeard) //for now
 				{
-					await Task.Delay(100);
-					//SpeechMatchData data = SpeechIntentManager.GetIntent(CharacterState.LatestTriggerMatched.Value.Text);
-					//SpeechManager_SpeechIntent(this, );
-
-					//SendManagedResponseEvent(TriggerData triggerData, bool conversationTriggerCheck)
-					//if (ProcessAndVerifyTrigger(new TriggerData(CharacterState.LatestTriggerMatched.Value.Text, data.Id)))
-
-					//need to really call each appropriate method to trigger all
-					if (await SendManagedResponseEvent(new TriggerData(CharacterState.LatestTriggerMatched.Value.Text, CharacterState.LatestTriggerMatched.Value.TriggerFilter), false))
+					//await Task.Delay(100);
+					SpeechMatchData data = SpeechIntentManager.GetIntent(CharacterState.LatestTriggerMatched.Value.Text, _allowedUtterances);
+					
+					//Retrigger only works with speech, also ignores conversation triggers
+					//This may change
+					if (await SendManagedResponseEvent(new TriggerData(CharacterState.LatestTriggerMatched.Value.Text, data.Id), false))
 					{
 						StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Retrigger | {CharacterState.LatestTriggerMatched.Value.Trigger} - {CharacterState.LatestTriggerMatched.Value.TriggerFilter} - {CharacterState.LatestTriggerMatched.Value.Text}.");
 						return;

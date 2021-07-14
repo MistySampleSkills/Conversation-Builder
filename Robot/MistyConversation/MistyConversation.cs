@@ -178,7 +178,7 @@ namespace MistyConversation
 				Misty.DisplayText($"Failed Initialization", "Text", null);
 				Misty.SkillLogger.Log($"Failed to initialize the skill.", ex);
 				Misty.Speak("Sorry, I am unable to initialize the skill. You need to restart the skill or the robot.", true, null, null);
-				await Task.Delay(2000);
+				await Task.Delay(5000);
 			}
 		}
 
