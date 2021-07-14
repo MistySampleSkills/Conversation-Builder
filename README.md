@@ -111,76 +111,145 @@ NOTE!  Parameters are currently comma delimited, that means for now if you want 
 Semi-colon delimited  (;)
 
 ARMS:leftDegrees,rightDegrees,timeMs;
+
 ARMS-V:leftDegrees,rightDegrees,velocity;
+
 ARMS-OFFSET:leftDegrees,rightDegrees,timeMs; //offset commands are based off current actuator values
+
 ARMS-OFFSET-V:leftDegrees,rightDegrees,velocity;
+
 ARM:left/right,degrees,timeMs;
+
 ARM-V:left/right,degrees,velocity;
+
 ARM-OFFSET:left/right,degrees,timeMs;
+
 ARM-OFFSET-V:left/right,degrees,velocity;
-HEAD:pitch,roll,yaw,timeMs;  //use null to not change a degree in head commands
-HEAD-OFFSET:pitch,roll,yaw,timeMs; //use 0 to not change a degree in head commands
-HEAD-V:pitch,roll,yaw,velocity; //use null to not change a degree in head commands
-HEAD-OFFSET-V:pitch,roll,yaw,velocity; //use 0 to not change a degree in head commands
+
+HEAD:pitch,roll,yaw,timeMs;  //use null to not change a degree
+
+HEAD-OFFSET:pitch,roll,yaw,timeMs; //use 0 to not change a degree
+
+HEAD-V:pitch,roll,yaw,velocity; //use null to not change a degree
+
+HEAD-OFFSET-V:pitch,roll,yaw,velocity; //use 0 to not change a degree
+
 PAUSE:timeMs;
+
 VOLUME:newDefaultVolume;
+
 DEBUG: User websocket message to send if skill is debug level;
+
 PUBLISH: User websocket message to send;
+
 LIGHT:true/false/on/off;
-PICTURE:image-name-to-save-to,display-on-screen[,width,height]; optional width and height resize
+
+PICTURE:image-name-to-save-to,display-on-screen[,width,height]; //optional width and height resize
+
 SERIAL:write to the serial stream;
+
 STOP;
+
 RESET-LAYERS;  //clear user defined web, video, text and image layers
+
 RESET-EYES; //reset eyes and blinking to system defaults
+
 HALT;
+
 IMAGE:imageNameToDisplay.jpg;  //displays on default eye layer
+
 IMAGE-URL:http://URL-to-display.jpg;  //displays on default eye layer
+
 TEXT:text to display on the screen;
+
 CLEAR-TEXT;
+
 SPEAK:What to say;  //can use generic data and inline speech, like 'Speak' in animations
+
 AUDIO:audio-file-name.wav;
+
 VIDEO:videoName.mp4;
+
 VIDEO-URL:http://videoName-to-play.mp4;
+
 CLEAR-VIDEO;
+
 WEB:http://site-name;
+
 CLEAR-WEB;
+
 LED:red,green,blue;
+
 LED-PATTERN:red1,green1,blue1,red2,green2,blue2,durationMs,blink/breathe/transit;
+
 START-LISTEN;  //starts trying to capture speech
+
 SPEAK-AND-LISTEN;  
+
 AllOW-KEYPHRASE; //"Allows" keyphrase to work, but won't start if Misty is speaking or already listening and will wait until she can to allow keyphrase for the interaction
+
 CANCEL-KEYPHRASE; //turn off keyphrase rec
+
 SPEAK-AND-WAIT:What to say, timeoutMs;
+
 SPEAK-AND-SYNC:What to say,SyncName;
+
 SPEAK-AND-EVENT:What to say,trigger,triggerFilter,text;
+
 SPEAK-AND-LISTEN:What to say; //starts listening after speaking the text
+
 FOLLOW-FACE;
+
 FOLLOW-OBJECT:objectName;
+
 STOP-FOLLOW;
+
 DRIVE:distanceMeters,timeMs,true/false(reverse);
+
 HEADING:heading,distanceMeters,timeMs,true/false(reverse);
+
 TURN:degrees,timeMs,right/left;
+
 ARC:heading,radius,timeMs,true/false(reverse);
+
 TURN-HEADING:heading,timeMs,right/left;
+
 RESPONSIVE-STATE:true/on/false/off;  //if true, this interaction will respond to external bot events and commands, defaults to on
+
 HAZARDS-OFF;
+
 HAZARDS-ON;
+
 START-SKILL: skillId;
+
 STOP-SKILL: skillId;
+
 AWAIT-ANY:timeoutMs/-1;  // await any sync event
+
 AWAIT-SYNC:syncName,timeoutMs/-1; // await a specific sync event
+
 SYNC:syncName; //send a sync event
+
 EVENT:trigger,triggerFilter,text;// send an event
 
+
 Any commands starting with # are ignored during 'normal' animation and treated as "clean up" commands to run when animation is complete 
+
 since it is possible the interaction may move on and choose a new animation before this one actually completes all of it's actions.
+
 eg:
+
 #RESET-EYES;
+
 #RESET-LAYERS;
 
+
 Any commands starting with * are guaranteed to run only one time at the start
+
 eg:
+
 *HAZARDS-OFF;
+
 *IMAGE:e_Terror.jpg;
 
 other decorators
@@ -188,14 +257,17 @@ other decorators
 {x} if the animation flag is set to loop, will only run these commands in the loop x many times (unless a * command)
 
 $ send command to other bots in shared group, but not self.  Do not await an ack from the rbot
+
 $% send command to other bots in shared group, including self.  Do not await an ack from the robot before continuing
 
 $$ send command to other bots in shared group, but not self.  Await an ack from the robot before continuing
+
 $$% send command to other bots in shared group, including self.  Await an ack from the robot before continuing
 
 [robotName1,roboName2] only send to group bots in ip list, otherwise sends to all when using $ notation
 
 eg:
+
 $$%[Zoinks,Jinkies]HAZARDS-ON;
 
 In the animation there is a RepeatScript flag you can check to have the animation repeat until the interaction is over.
