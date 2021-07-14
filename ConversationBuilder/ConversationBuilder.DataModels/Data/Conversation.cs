@@ -76,6 +76,8 @@ namespace ConversationBuilder.DataModels
 
 		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
 
+		public IDictionary<string,string> InteractionPreSpeechAnimations { get; set; } = new Dictionary<string, string>();
+
 		//key is interaction id
 		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();
 

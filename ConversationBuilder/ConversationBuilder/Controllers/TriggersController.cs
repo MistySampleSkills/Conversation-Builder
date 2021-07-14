@@ -61,8 +61,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.TriggerDetailData.GetCountAsync();
-				IList<TriggerDetail> triggers = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync(startItem, totalItems);
+				int totalCount = await _cosmosDbService.ContainerManager.TriggerDetailData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<TriggerDetail> triggers = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
 				foreach(TriggerDetail trigger in triggers.Where(x => x.Trigger == "SpeechHeard" && !string.IsNullOrWhiteSpace(x.TriggerFilter)))
 				{
 					//TODO performance

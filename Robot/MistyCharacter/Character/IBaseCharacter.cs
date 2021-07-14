@@ -65,6 +65,11 @@ namespace MistyCharacter
 		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		
 		/// <summary>
+		/// Triggered when voice data processing has started
+		/// </summary>
+		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+
+		/// <summary>
 		/// Triggered when any face recognition event occurs
 		/// It may or may not be handled as a trigger depending on the interaction settings
 		/// </summary>
@@ -98,6 +103,12 @@ namespace MistyCharacter
 		/// It may or may not be handled as a trigger depending on the interaction settings
 		/// </summary>
 		event EventHandler<IArTagDetectionEvent> ArTagEvent;
+		
+		/// <summary>
+		/// Triggered when a TOF event occurs
+		/// It may or may not be handled as a trigger depending on the interaction settings
+		/// </summary>
+		event EventHandler<ITimeOfFlightEvent> TimeOfFlightEvent;
 
 		/// <summary>
 		/// Triggered when any serial messge event occurs

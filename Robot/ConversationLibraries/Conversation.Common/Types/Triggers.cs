@@ -66,5 +66,9 @@ namespace Conversation.Common
 
 		//To immediately trigger a start or stop or go to next animation after Misty speaks or plays audio
 		public const string AudioCompleted = "AudioCompleted";
+
+		public const string SyncEvent = "SyncEvent";
+
+		public const string TimeOfFlightRange = "TimeOfFlightRange";		
 	}	
 }

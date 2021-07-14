@@ -46,8 +46,8 @@ namespace ConversationBuilder.Data.Cosmos
 		Task UpdateAsync(Interaction data);
 		Task<ItemResponse<Interaction>> AddAsync(Interaction data);		
 		Task DeleteAsync(string id);
-		Task<IList<Interaction>> GetListAsync(int startItem = 1, int totalItems = 100, string conversationId = null);
-		Task<IList<Interaction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string conversationId = null);
+		Task<IList<Interaction>> GetListAsync(int startItem = 1, int totalItems = 1000, string conversationId = null, string creatorFilter = null);
+		Task<IList<Interaction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string conversationId = null, string creatorFilter = null);
 	}
 
 	public class InteractionData : PartitionManager, IInteractionData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<Interaction>(id);
 		}
 
-		public async Task<IList<Interaction>> GetListAsync(int startItem = 1, int totalItems = 100, string conversationid = null)
+		public async Task<IList<Interaction>> GetListAsync(int startItem = 1, int totalItems = 1000, string conversationid = null, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<Interaction>(startItem, totalItems, conversationid)).OrderByDescending(x => x.Name).ToList();
+			return (await base.GetListAsync<Interaction>(startItem, totalItems, creatorFilter, conversationid)).OrderByDescending(x => x.Name).ToList();
 		}
 
-		public async Task<IList<Interaction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string conversationid = null)
+		public async Task<IList<Interaction>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string conversationid = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<Interaction>(startDate, endDate, conversationid)).ToList();
+			return (await base.GetListByDateAsync<Interaction>(startDate, endDate, creatorFilter, conversationid)).ToList();
 		}
 
 		public async new Task<int> GetCountAsync(string conversationId)

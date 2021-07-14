@@ -72,8 +72,10 @@ namespace ConversationBuilder.Controllers
 
 		protected readonly ICosmosDbService _cosmosDbService;
 		protected readonly UserManager<ApplicationUser> _userManager;
+		protected UserConfiguration _userConfiguration;
 
 		private UserInformation _userInformation = null;
+
 
 		public AdminToolController(ICosmosDbService cosmosDbService, UserManager<ApplicationUser> userManager)
 		{
@@ -120,7 +122,6 @@ namespace ConversationBuilder.Controllers
 							{
 								skillConversationGroup.GenericDataStores.Add(genericDataStore);
 							}
-							
 						}
 					}
 
@@ -165,7 +166,6 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 
-
 					foreach(string triggerId in conversation.Triggers)
 					{
 						if(!skillConversation.Triggers.Any(x => x.Id == triggerId))
@@ -184,7 +184,7 @@ namespace ConversationBuilder.Controllers
 											UtteranceData utteranceData = new UtteranceData();
 											utteranceData.Name = speechHandler.Name;
 											utteranceData.Description = speechHandler.Description;
-											utteranceData.ExactMatchesOnly = speechHandler.ExactMatchesOnly;
+											utteranceData.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;
 											utteranceData.WordMatchRule = speechHandler.WordMatchRule;
 											utteranceData.Id = speechHandler.Id;
 											utteranceData.Utterances = speechHandler.Utterances;
@@ -205,7 +205,7 @@ namespace ConversationBuilder.Controllers
 												UtteranceData utteranceData = new UtteranceData();
 												utteranceData.Name = speechHandler.Name;
 												utteranceData.Description = speechHandler.Description;
-												utteranceData.ExactMatchesOnly = speechHandler.ExactMatchesOnly;												
+												utteranceData.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;												
 												utteranceData.WordMatchRule = speechHandler.WordMatchRule;
 												utteranceData.Id = speechHandler.Id;
 												utteranceData.Utterances = speechHandler.Utterances;
@@ -238,9 +238,13 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 								skillInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
 								skillInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;								
+								skillInteraction.UsePreSpeech = interaction.UsePreSpeech;					
+								skillInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;					
 								skillInteraction.SilenceTimeout = interaction.SilenceTimeout;
 								skillInteraction.ListenTimeout = interaction.ListenTimeout;
 								skillInteraction.Animation = interaction.Animation;
+								skillInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
+
 								skillConversation.Interactions.Remove(skillInteraction);
 								skillConversation.Interactions.Add(skillInteraction);
 
@@ -265,8 +269,9 @@ namespace ConversationBuilder.Controllers
 					}
 					
 					skillConversation.ConversationDeparturePoints = conversation.ConversationDeparturePoints;
-					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;
+					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;					
 					skillConversation.InteractionAnimations = conversation.InteractionAnimations;
+					skillConversation.InteractionPreSpeechAnimations = conversation.InteractionPreSpeechAnimations;
 					skillConversation.Description = conversation.Description;
 					skillConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
 					skillConversation.Name = conversation.Name;
@@ -292,6 +297,8 @@ namespace ConversationBuilder.Controllers
 						skillParameters.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
 						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;						
 						skillParameters.StartVolume = characterConfiguration.StartVolume;
+						skillParameters.UsePreSpeech = characterConfiguration.UsePreSpeech;
+						skillParameters.PreSpeechPhrases = characterConfiguration.PreSpeechPhrases;
 						skillParameters.Payload = characterConfiguration.Payload;
 						skillParameters.LogLevel = characterConfiguration.LogLevel;
 						skillParameters.ObjectDetectionDebounce = characterConfiguration.ObjectDetectionDebounce;
@@ -358,7 +365,7 @@ namespace ConversationBuilder.Controllers
 							speechHandler.Updated = now;
 							speechHandler.Created = now;
 							speechHandler.ManagementAccess = "Public";
-							speechHandler.ExactMatchesOnly = utterance.Value.ExactMatchesOnly;							
+							speechHandler.ExactPhraseMatchesOnly = utterance.Value.ExactPhraseMatchesOnly;							
 							speechHandler.WordMatchRule = utterance.Value.WordMatchRule;
 							speechHandler.Utterances = utterance.Value.Utterances;
 							speechHandler.CreatedBy = _userInformation?.AccessId;
@@ -503,6 +510,8 @@ namespace ConversationBuilder.Controllers
 						newInteraction.InteractionFailedTimeout = interaction.InteractionFailedTimeout;
 						newInteraction.Name = interaction.Name;
 						newInteraction.Animation = interaction.Animation;
+						newInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
+						newInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;
 						newInteraction.SkillMessages = interaction.SkillMessages;
 						newInteraction.ConversationId = newConversation.Id;
 						newInteraction.Updated = now;
@@ -527,6 +536,7 @@ namespace ConversationBuilder.Controllers
 									newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
 									newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
 								}
+								newTriggerActionOption.Retrigger = triggerActionOption.Retrigger;
 								newTriggerActionOption.Weight = triggerActionOption.Weight;
 								newTriggerActionOption.Id = Guid.NewGuid().ToString();
 								newTriggerOptions.Add(newTriggerActionOption);
@@ -534,6 +544,11 @@ namespace ConversationBuilder.Controllers
 								if(conversation.InteractionAnimations.ContainsKey(triggerActionOption.Id))
 								{
 									newConversation.InteractionAnimations.Add(newTriggerActionOption.Id, conversation.InteractionAnimations[triggerActionOption.Id]);
+								}
+
+								if(conversation.InteractionPreSpeechAnimations.ContainsKey(triggerActionOption.Id))
+								{
+									newConversation.InteractionPreSpeechAnimations.Add(newTriggerActionOption.Id, conversation.InteractionPreSpeechAnimations[triggerActionOption.Id]);
 								}
 							}
 							newInteraction.TriggerMap.Add(triggerOption.Key, newTriggerOptions);
@@ -565,6 +580,7 @@ namespace ConversationBuilder.Controllers
 							}
 							
 							newTriggerActionOption.Weight = triggerActionOption.Weight;
+							newTriggerActionOption.Retrigger = triggerActionOption.Retrigger;
 							newTriggerActionOption.Id = Guid.NewGuid().ToString();
 							newTriggerOptions.Add(newTriggerActionOption);
 						}
@@ -599,18 +615,18 @@ namespace ConversationBuilder.Controllers
 			return foundValue ?? triggerFilter;
 		}
 
-		protected async Task SetViewBagData(string message = null)
+		protected async Task<UserConfiguration> SetViewBagData(string message = null)
 		{
 			if (_userInformation == null)
 			{
 				await GetUserInformation();
 			}
 
-			UserConfiguration userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
-			ViewBag.ShowBetaItems = userConfiguration?.ShowBetaItems ?? false;
-			if(!string.IsNullOrWhiteSpace(userConfiguration?.OverrideCssFile))
+			_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
+			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? false;
+			if(!string.IsNullOrWhiteSpace(_userConfiguration?.OverrideCssFile))
 			{
-				ViewBag.CssFile = userConfiguration.OverrideCssFile + (userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");				
+				ViewBag.CssFile = _userConfiguration.OverrideCssFile + (_userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");				
 			}
 			else
 			{
@@ -619,6 +635,8 @@ namespace ConversationBuilder.Controllers
 			
 			ViewBag.Message = message ?? "";
 			ViewBag.Data = new CommonViewData(_userInformation);
+			ViewBag.ShowAllConversations = _userConfiguration.ShowAllConversations;
+			return _userConfiguration;
 		}
 
 		protected void SetFilterAndPagingViewData(int startItem, string filterName, int total, int count = 50)
@@ -749,11 +767,24 @@ namespace ConversationBuilder.Controllers
 			return "";
 		}
 		
+		protected async Task VerifyUserData()
+		{
+			if(_userConfiguration == null)
+			{
+				_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
+			}
+
+			if(_userInformation == null)
+			{
+				await GetUserInformation();
+			} 
+		}
 		protected async Task<IDictionary<string, string>> GenericDataStores()
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync();
+			await VerifyUserData();
+			IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(GenericDataStore genericDataStore in genericDataStores.OrderBy(x => x.Name))
 			{
 				list.Add(genericDataStore.Id, genericDataStore.Name);
@@ -765,7 +796,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync();
+			await VerifyUserData();
+			IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(SpeechHandler speechHandler in speechHandlers.OrderBy(x => x.Name))
 			{
 				list.Add(speechHandler.Id, speechHandler.Name);
@@ -777,7 +809,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<SkillMessage> skillMessages = await _cosmosDbService.ContainerManager.SkillMessageData.GetListAsync();
+			await VerifyUserData();
+			IList<SkillMessage> skillMessages = await _cosmosDbService.ContainerManager.SkillMessageData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(SkillMessage skillMessage in skillMessages.OrderBy(x => x.Name))
 			{
 				list.Add(skillMessage.Id, skillMessage.Name);
@@ -789,7 +822,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<Animation> animations = await _cosmosDbService.ContainerManager.AnimationData.GetListAsync();
+			await VerifyUserData();
+			IList<Animation> animations = await _cosmosDbService.ContainerManager.AnimationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(Animation animation in animations.OrderBy(x => x.Name))
 			{
 				list.Add(animation.Id, animation.Name);
@@ -801,7 +835,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<ArmLocation> armLocations = await _cosmosDbService.ContainerManager.ArmLocationData.GetListAsync();
+			await VerifyUserData();
+			IList<ArmLocation> armLocations = await _cosmosDbService.ContainerManager.ArmLocationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(ArmLocation armLocation in armLocations.OrderBy(x => x.Name))
 			{
 				list.Add(armLocation.Id, armLocation.Name);
@@ -813,7 +848,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<SpeechConfiguration> speechConfigurations = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetListAsync();
+			await VerifyUserData();
+			IList<SpeechConfiguration> speechConfigurations = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(SpeechConfiguration speechConfiguration in speechConfigurations.OrderBy(x => x.Name))
 			{
 				list.Add(speechConfiguration.Id, speechConfiguration.Name);
@@ -825,7 +861,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<LEDTransitionAction> ledTransitionActions = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetListAsync();
+			await VerifyUserData();
+			IList<LEDTransitionAction> ledTransitionActions = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(LEDTransitionAction ledTransitionAction in ledTransitionActions.OrderBy(x => x.Name))
 			{
 				list.Add(ledTransitionAction.Id, ledTransitionAction.Name);
@@ -837,7 +874,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<HeadLocation> headLocations = await _cosmosDbService.ContainerManager.HeadLocationData.GetListAsync();
+			await VerifyUserData();
+			IList<HeadLocation> headLocations = await _cosmosDbService.ContainerManager.HeadLocationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(HeadLocation headLocation in headLocations.OrderBy(x => x.Name))
 			{
 				list.Add(headLocation.Id, headLocation.Name);
@@ -849,7 +887,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<TriggerDetail> triggerDetails = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync();
+			await VerifyUserData();
+			IList<TriggerDetail> triggerDetails = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(TriggerDetail triggerDetail in triggerDetails.OrderBy(x => x.Name))
 			{
 				list.Add(triggerDetail.Id, $"{triggerDetail.Name}");
@@ -862,7 +901,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			Dictionary<string, string> conversationInteractions = new Dictionary<string, string>();
-			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId);
+			await VerifyUserData();
+			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			
 			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
@@ -887,13 +927,29 @@ namespace ConversationBuilder.Controllers
 			return interactionAnimations ?? new Dictionary<string, string>();
 		}
 
+		protected async Task<Dictionary<string, string>> InteractionPreSpeechAnimationList(string conversationId)
+		{
+			//TODO Deal with performance reloading and paging
+			Dictionary<string, string> interactionAnimations = new Dictionary<string, string>();
+			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+			
+			foreach(KeyValuePair<string, string> interactionAnimation in conversation.InteractionPreSpeechAnimations)
+			{
+				if(interactionAnimation.Value == null) continue;
+
+				interactionAnimations.TryAdd(interactionAnimation.Key, interactionAnimation.Value);
+			}
+			return interactionAnimations ?? new Dictionary<string, string>();
+		}
+
 		protected async Task<IDictionary<string, Dictionary<string, string>>> FullInteractionAndOptionList(string conversationId)
 		{
 			//Get conversations from this group
 			IDictionary<string, Dictionary<string, string>> conversationInteractions = new Dictionary<string, Dictionary<string, string>>();
 	
 			Dictionary<string, string> interactionList = new Dictionary<string, string>();
-			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId);
+			await VerifyUserData();
+			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
 				if(interaction?.Id != null && !interactionList.ContainsKey(interaction.Id))
@@ -930,11 +986,14 @@ namespace ConversationBuilder.Controllers
 						interactionViewModel.ItemType = interaction.ItemType;
 						interactionViewModel.Name = interaction.Name;
 						interactionViewModel.Animation = interaction.Animation;
+						interactionViewModel.PreSpeechAnimation = interaction.PreSpeechAnimation;
 
 						interactionViewModel.StartListening = interaction.StartListening;
 						interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;
 						interactionViewModel.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
-						interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;					
+						interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;			
+						interactionViewModel.UsePreSpeech = interaction.UsePreSpeech;					
+						interactionViewModel.PreSpeechPhrases = interaction.PreSpeechPhrases;															
 						interactionViewModel.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 						interactionViewModel.ListenTimeout = interaction.ListenTimeout;
 						interactionViewModel.SilenceTimeout = interaction.SilenceTimeout;
@@ -1030,7 +1089,9 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<Conversation> conversations = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync();
+			
+			await VerifyUserData();
+			IList<Conversation> conversations = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(Conversation conversation in conversations.OrderBy(x => x.Name))
 			{
 				list.Add(conversation.Id, conversation.Name);
@@ -1042,7 +1103,8 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			IList<CharacterConfiguration> conversations = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetListAsync();
+			await VerifyUserData();
+			IList<CharacterConfiguration> conversations = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
 			foreach(CharacterConfiguration characterConfiguration in conversations.OrderBy(x => x.Name))
 			{
 				list.Add(characterConfiguration.Id, characterConfiguration.Name);

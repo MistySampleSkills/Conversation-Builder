@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface IHeadLocationData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<HeadLocation> GetAsync(string id);
 		Task UpdateAsync(HeadLocation data);
 		Task<ItemResponse<HeadLocation>> AddAsync(HeadLocation data);		
 		Task DeleteAsync(string id);
-		Task<IList<HeadLocation>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<HeadLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<HeadLocation>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = "");
+		Task<IList<HeadLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = "");
 	}
 
 	public class HeadLocationData : PartitionManager, IHeadLocationData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<HeadLocation>(id);
 		}
 
-		public async Task<IList<HeadLocation>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<HeadLocation>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = "")
 		{
-			return (await base.GetListAsync<HeadLocation>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<HeadLocation>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<HeadLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<HeadLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = "")
 		{
-			return (await base.GetListByDateAsync<HeadLocation>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<HeadLocation>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

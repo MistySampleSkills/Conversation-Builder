@@ -21,8 +21,11 @@ namespace ConversationBuilder.ViewModels
 		public string Name { get; set; }
 
 		public string Animation { get; set; }
+		public string PreSpeechAnimation { get; set; }
 
 		public Animation AnimationData { get; set; }
+		
+		public Animation PreSpeechAnimationData { get; set; }
 		
 		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 
@@ -40,6 +43,7 @@ namespace ConversationBuilder.ViewModels
 		public string ConversationId { get; set; }
 
 		public int Weight { get; set; } = 1;
+		public bool Retrigger { get; set; }
 		public string GoToConversation { get; set; }
 		public string GoToInteraction { get; set; }
 		public bool InterruptCurrentAction { get; set; } = true;
@@ -62,5 +66,13 @@ namespace ConversationBuilder.ViewModels
 		[Display(Name = "Conversation Entry Point")]
 		public bool ConversationEntryPoint { get; set; }
 		public string ConversationName { get; set; }
+
+		[Display(Name = "Use prespeech for speech intent processing")]
+		public bool UsePreSpeech { get; set; } = true;
+		
+
+		[Display(Name = "Override PreSpeech Phrases")]
+		public string PreSpeechPhrases { get; set; }
+
 	}
 }

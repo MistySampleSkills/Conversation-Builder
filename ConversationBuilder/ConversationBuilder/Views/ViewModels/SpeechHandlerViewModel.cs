@@ -31,11 +31,11 @@ namespace ConversationBuilder.ViewModels
 		[Required]
 		public string UtteranceString { get; set; }
 		
-		public bool ExactMatchesOnly { get; set; }
+		public bool ExactPhraseMatchesOnly { get; set; }
 		
 		[Required]
 		
-		[Display(Name = "Word Match Rule")]
+		[Display(Name = "Word Match Rule (utterance)")]
 		public string WordMatchRule { get; set; }
 		public string ManagementAccess { get; set; } = "Public";
 		public DateTimeOffset Created { get; set; }

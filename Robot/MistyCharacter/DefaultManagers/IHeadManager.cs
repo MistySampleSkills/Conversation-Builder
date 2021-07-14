@@ -40,6 +40,7 @@ namespace MistyCharacter
 	public interface IHeadManager
 	{
 		Task<bool> Initialize();
+		void HandleHeadAction(HeadLocation headLocation);
 		void HandleHeadAction(AnimationRequest animationRequest, ConversationData conversation);
 		event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
 		event EventHandler<IActuatorEvent> HeadYawActuatorEvent;

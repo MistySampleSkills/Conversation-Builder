@@ -89,8 +89,20 @@
 			</dt>
 			<dd>
 				@Html.DisplayFor(model => model.StartVolume)
+			</dd>		
+			<dt>
+				@Html.DisplayNameFor(model => model.UsePreSpeech)
+			</dt>
+			<dd>
+				@Html.DisplayFor(model => model.UsePreSpeech)
 			</dd>
-				
+					
+			<dt>
+				@Html.DisplayNameFor(model => model.PreSpeechPhrases)
+			</dt>
+			<dd>
+				<textarea style="width:100%" rows=5 readonly=true>@Html.DisplayFor(model => model.PreSpeechPhrases)</textarea>						
+			</dd>
 			<dt>
 				@Html.DisplayNameFor(model => model.Payload)
 			</dt>
@@ -136,7 +148,7 @@
 			</dt>
 			<dd>
 				@Html.DisplayFor(model => model.ShowListeningIndicator)
-			</dd>
+			</dd>		
 			<dt>
 				@Html.DisplayNameFor(model => model.Updated)
 			</dt>

@@ -66,10 +66,10 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Stream Interaction, check to publish conversation checkpoints to websockets (beta)")]
 		public bool StreamInteraction { get; set; }
 		
-		[Display(Name = "Display Heard Speech, check to show the words Misty hears on the screen (beta)")]
+		[Display(Name = "Display heard speech on the screen (beta)")]
 		public bool HeardSpeechToScreen { get; set; }
 		
-		[Display(Name = "Display Spoken, check to show the words Misty says on the screen (beta)")]
+		[Display(Name = "Display spoken words on screen (beta)")]
 		public bool DisplaySpoken { get; set; }		
 		
 		[Display(Name = "Large Print, check to show the words Misty says in large print (beta)")]
@@ -79,8 +79,14 @@ namespace ConversationBuilder.DataModels
 		public bool ShowListeningIndicator { get; set; } = true;
 
 		[Display(Name = "Starting volume of Misty")]
-		public int? StartVolume { get; set; }
-		
+		public int? StartVolume { get; set; }		
+
+		[Display(Name = "Use prespeech for speech intent processing")]
+		public bool UsePreSpeech { get; set; }
+
+		[Display(Name = "PreSpeech Phrases")]
+		public string PreSpeechPhrases { get; set; }
+
 		[Display(Name = "Only change if using a different, home-made Misty Conversation Skill")]
 		public string Skill { get; set; }
 		

@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface ISpeechHandlerData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<SpeechHandler> GetAsync(string id);
 		Task UpdateAsync(SpeechHandler data);
 		Task<ItemResponse<SpeechHandler>> AddAsync(SpeechHandler data);		
 		Task DeleteAsync(string id);
-		Task<IList<SpeechHandler>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<SpeechHandler>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<SpeechHandler>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<SpeechHandler>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class SpeechHandlerData : PartitionManager, ISpeechHandlerData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<SpeechHandler>(id);
 		}
 
-		public async Task<IList<SpeechHandler>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<SpeechHandler>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<SpeechHandler>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<SpeechHandler>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<SpeechHandler>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<SpeechHandler>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<SpeechHandler>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<SpeechHandler>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

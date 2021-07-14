@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface ITriggerDetailData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<TriggerDetail> GetAsync(string id);
 		Task UpdateAsync(TriggerDetail data);
 		Task<ItemResponse<TriggerDetail>> AddAsync(TriggerDetail data);		
 		Task DeleteAsync(string id);
-		Task<IList<TriggerDetail>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<TriggerDetail>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<TriggerDetail>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<TriggerDetail>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class TriggerDetailData : PartitionManager, ITriggerDetailData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<TriggerDetail>(id);
 		}
 
-		public async Task<IList<TriggerDetail>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<TriggerDetail>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<TriggerDetail>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<TriggerDetail>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<TriggerDetail>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<TriggerDetail>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<TriggerDetail>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<TriggerDetail>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

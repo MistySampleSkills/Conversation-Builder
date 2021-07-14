@@ -69,6 +69,8 @@ namespace Conversation.Common
 
 		public bool InitiateSkillsAtConversationStart { get; set; }
 		public IDictionary<string, string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string, string> InteractionPreSpeechAnimations { get; set; } = new Dictionary<string, string>();
+
 		public IDictionary<string, IList<TriggerActionOption>> ConversationTriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 
         public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();

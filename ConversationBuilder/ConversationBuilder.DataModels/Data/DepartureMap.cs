@@ -39,5 +39,6 @@ namespace ConversationBuilder.DataModels
 		public string ConversationId {get; set;}
 		public string InteractionId {get; set;}
 		public string AnimationId {get; set;}
+		public string PreSpeechAnimationId {get; set;}		
 	}
 }

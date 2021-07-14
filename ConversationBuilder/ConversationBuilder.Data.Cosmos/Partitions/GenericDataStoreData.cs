@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface IGenericDataStoreData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<GenericDataStore> GetAsync(string id);
 		Task UpdateAsync(GenericDataStore data);
 		Task<ItemResponse<GenericDataStore>> AddAsync(GenericDataStore data);		
 		Task DeleteAsync(string id);
-		Task<IList<GenericDataStore>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<GenericDataStore>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<GenericDataStore>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<GenericDataStore>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class GenericDataStoreData : PartitionManager, IGenericDataStoreData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<GenericDataStore>(id);
 		}
 
-		public async Task<IList<GenericDataStore>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<GenericDataStore>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<GenericDataStore>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<GenericDataStore>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<GenericDataStore>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<GenericDataStore>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<GenericDataStore>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<GenericDataStore>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }

@@ -61,11 +61,11 @@ namespace MistyCharacter
 			//Arm Actuators
 			IList<ActuatorPositionValidation> actuatorLeftArmValidations = new List<ActuatorPositionValidation>();
 			actuatorLeftArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.LeftArm));
-			LogEventDetails(Robot.RegisterActuatorEvent(LeftArmCallback, 500, true, actuatorLeftArmValidations, "LeftArm", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(LeftArmCallback, 50, true, actuatorLeftArmValidations, "LeftArm", null));
 
 			IList<ActuatorPositionValidation> actuatorRightArmValidations = new List<ActuatorPositionValidation>();
 			actuatorRightArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.RightArm));
-			LogEventDetails(Robot.RegisterActuatorEvent(RightArmCallback, 500, true, actuatorRightArmValidations, "RightArm", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(RightArmCallback, 50, true, actuatorRightArmValidations, "RightArm", null));
 		}
 
 		private void LeftArmCallback(IActuatorEvent leftArmEvent)
@@ -228,7 +228,6 @@ namespace MistyCharacter
 				}
 			}
 		}
-		
 		
 		private bool _isDisposed = false;
 

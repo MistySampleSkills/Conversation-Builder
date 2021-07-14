@@ -60,8 +60,8 @@ namespace ConversationBuilder.Controllers
 				}
 
 				await SetViewBagData();
-				int totalCount = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetCountAsync();
-				IList<CharacterConfiguration> characterConfigurations = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetListAsync(startItem, totalItems);
+				int totalCount = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetCountAsync(_userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
+				IList<CharacterConfiguration> characterConfigurations = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetListAsync(startItem, totalItems, _userConfiguration.ShowAllConversations ? "" : userInfo.AccessId);
 				SetFilterAndPagingViewData(1, null, totalCount, totalItems);
 				if (characterConfigurations == null)
 				{
@@ -226,6 +226,8 @@ namespace ConversationBuilder.Controllers
 					loadedCharacterConfiguration.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
 					loadedCharacterConfiguration.DisplaySpoken = characterConfiguration.DisplaySpoken;					
 					loadedCharacterConfiguration.StartVolume = characterConfiguration.StartVolume;
+					loadedCharacterConfiguration.PreSpeechPhrases = characterConfiguration.PreSpeechPhrases;
+					loadedCharacterConfiguration.UsePreSpeech = characterConfiguration.UsePreSpeech;
 					loadedCharacterConfiguration.Payload = characterConfiguration.Payload;
 					loadedCharacterConfiguration.ManagementAccess = characterConfiguration.ManagementAccess;
 					loadedCharacterConfiguration.StreamInteraction = characterConfiguration.StreamInteraction;

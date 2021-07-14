@@ -193,6 +193,8 @@ namespace ConversationBuilder.DataModels
 			AllItems.TryAdd(SerialMessage, SerialMessage);
 			AllItems.TryAdd(ObjectSeen, ObjectSeen);
 			AllItems.TryAdd(ExternalEvent, ExternalEvent);
+			AllItems.TryAdd(SyncEvent, SyncEvent);
+			AllItems.TryAdd(TimeOfFlightRange, TimeOfFlightRange);
 			AllItems.TryAdd(AudioCompleted, AudioCompleted);
 		}
 
@@ -220,6 +222,10 @@ namespace ConversationBuilder.DataModels
 
 		//trigger due to external event call into robot skill
 		public const string ExternalEvent = "ExternalEvent";
+
+		public const string SyncEvent = "SyncEvent";
+		
+		public const string TimeOfFlightRange = "TimeOfFlightRange";
 
 		//To immediately trigger a start or stop trigger or go to next animation after Misty speaks plays audio
 		public const string AudioCompleted = "AudioCompleted";

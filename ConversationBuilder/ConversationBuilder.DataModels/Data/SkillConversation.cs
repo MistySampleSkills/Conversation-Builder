@@ -57,7 +57,9 @@ namespace ConversationBuilder.DataModels
 		public IList<ArmLocation> ArmLocations { get; set; } = new List<ArmLocation> ();
 		
 		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionPreSpeechAnimations { get; set; } = new Dictionary<string, string>();
 		public IList<SkillMessage> SkillMessages { get; set; } = new List<SkillMessage> ();
+		public IList<SkillMessage> AllowedUtterancess { get; set; } = new List<SkillMessage> ();
 
 		public IList<TriggerDetail> Triggers { get; set; } = new List<TriggerDetail>();
 		public IList<LEDTransitionAction> LEDTransitionActions { get; set; } = new List<LEDTransitionAction>();
@@ -66,7 +68,6 @@ namespace ConversationBuilder.DataModels
 		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();
 
 		//key is trigger action option id
-		public IDictionary<string, DepartureMap> ConversationDeparturePoints { get; set; } = new Dictionary<string, DepartureMap>();
-		
+		public IDictionary<string, DepartureMap> ConversationDeparturePoints { get; set; } = new Dictionary<string, DepartureMap>();		
 	}
 }

@@ -41,9 +41,9 @@ namespace MistyCharacter
 {
 	public abstract class BaseManager
 	{
-		protected IDictionary<string, object> Parameters;
-		protected IRobotMessenger Robot;
-		protected CharacterParameters CharacterParameters;
+		protected IDictionary<string, object> Parameters { get; set; }
+		protected IRobotMessenger Robot { get; set; }
+		protected CharacterParameters CharacterParameters { get; set; }
 
 		public BaseManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 		{
@@ -59,7 +59,7 @@ namespace MistyCharacter
 		
 		protected void LogEventDetails(IEventDetails eventDetails)
 		{
-			Robot.SkillLogger.Log($"Registered event '{eventDetails.EventName}' at {DateTime.Now}.  Id = {eventDetails.EventId}, Type = {eventDetails.EventType}, KeepAlive = {eventDetails.KeepAlive}");
+			Robot.SkillLogger.LogInfo($"Registered event '{eventDetails.EventName}' at {DateTime.Now}.  Id = {eventDetails.EventId}, Type = {eventDetails.EventType}, KeepAlive = {eventDetails.KeepAlive}");
 		}
 	}
 }

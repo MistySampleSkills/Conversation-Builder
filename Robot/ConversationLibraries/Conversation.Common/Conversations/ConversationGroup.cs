@@ -56,6 +56,6 @@ namespace Conversation.Common
 		public IList<GenericDataStore> GenericDataStores { get; set; } = new List<GenericDataStore>();
 
         public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
-        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
-    }
+        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();	
+	}
 }

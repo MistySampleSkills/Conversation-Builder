@@ -71,7 +71,9 @@ namespace Conversation.Common
 			SpeakFileName = state.SpeakFileName;
 			ArmActionDelay = state.ArmActionDelay;
 			HeadActionDelay = state.HeadActionDelay;
-			LEDActionDelay = state.LEDActionDelay;			
+			LEDActionDelay = state.LEDActionDelay;
+			AnimationScript = state.AnimationScript;
+			RepeatScript = state.RepeatScript;
 			LEDTransitionAction = state.LEDTransitionAction;
 		}
 
@@ -227,5 +229,15 @@ namespace Conversation.Common
         /// LED transition action to perform during animation
         /// </summary>
         public string LEDTransitionAction { get; set; }
+
+		/// <summary>
+		/// Optional animation script
+		/// </summary>
+		public string AnimationScript { get; set; }
+
+		/// <summary>
+		/// If the script should be repeated until the interation is over
+		/// </summary>
+		public bool RepeatScript { get; set; }		
 	}
 }

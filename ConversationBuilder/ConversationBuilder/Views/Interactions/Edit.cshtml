@@ -37,6 +37,18 @@
 			</div>
 
 			<div class="form-group">
+				<label asp-for="PreSpeechAnimation"></label>
+				<label title="Pick one from the list of animations you have already created.">ℹ️</label>
+				<select asp-for="PreSpeechAnimation" class="form-control">
+					<option value=""></option>	
+					@foreach (KeyValuePair<string, string> item in @ViewBag.Animations)
+					{
+						<option value="@item.Key">@item.Value</option>
+					}
+				</select>
+			</div>
+
+			<div class="form-group">
 				<input asp-for="ConversationId" class="form-control" value="@Model.ConversationId" type="hidden"> </input>
 			</div>
 			<div class="form-group">
@@ -57,7 +69,7 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="AllowKeyPhraseRecognition" /> @Html.DisplayNameFor(model => model.AllowKeyPhraseRecognition)
-						<label title="Allow 'Hey Misty' requests to be handled as speech intents if Misty isn't speaking or already listening.">ℹ️</label>
+						<label title="Allow 'Hey Misty' requests to be handled as speech triggers if Misty isn't speaking or already listening.">ℹ️</label>
 					</label>
 				</div>
 			</div>
@@ -99,6 +111,20 @@
 			
 			@if(ViewBag.ShowBetaItems)
 			{
+				<div class="form-group">
+					<div class="checkbox">
+						<label>
+							<input asp-for="UsePreSpeech" /> @Html.DisplayNameFor(model => model.UsePreSpeech)
+						</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<label asp-for="PreSpeechPhrases" class="control-label"></label>
+					<textarea rows=5 asp-for="PreSpeechPhrases" class="form-control" > </textarea>
+					<label title="Semicolon separated list of pre speech-phrases.">ℹ️</label>					
+					<span asp-validation-for="PreSpeechPhrases" class="text-danger"></span>
+				</div>
+				
 				<div class="form-group">
 					<div class="checkbox">
 						<label>

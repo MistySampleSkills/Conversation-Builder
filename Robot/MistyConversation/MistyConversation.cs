@@ -57,7 +57,7 @@ namespace MistyConversation
 			Skill = new NativeRobotSkill("Misty Conversation", "8be20a90-1150-44ac-a756-ebe4de30689e")
 			{
 				TimeoutInSeconds = -1,
-				AllowedCleanupTimeInMs = 5000,
+				AllowedCleanupTimeInMs = 10000,
 				StartupRules = new List<NativeStartupRule> { NativeStartupRule.Manual }
 			};
 		}
@@ -74,7 +74,7 @@ namespace MistyConversation
                 //Unregister events in case didn't shut down cleanly last time
 				Misty.UnregisterAllEvents(null);
 
-                //Revert display to defaults before starting...
+				//Revert display to defaults before starting...
 				await Misty.SetDisplaySettingsAsync(true);
 				Misty.SetBlinkSettings(true, null, null, null, null, null, null);
 
@@ -83,7 +83,7 @@ namespace MistyConversation
 					Wrap = true,
 					Visible = true,
 					Weight = 15,
-					Size = 25,
+					Size = 20,
 					HorizontalAlignment = ImageHorizontalAlignment.Center,
 					VerticalAlignment = ImageVerticalAlignment.Bottom,
 					Red = 255,
@@ -91,9 +91,9 @@ namespace MistyConversation
 					Blue = 255,
 					PlaceOnTop = true,
 					FontFamily = "Courier New",
-					Height = 30
+					Height = 45
 				});
-
+				
 				Misty.DisplayText("Hello...", "Text", null);
 				Misty.ChangeLED(0, 255, 255, null);
 				Misty.MoveArms(65.0, 65.0, 20, 20, null, AngularUnit.Degrees, null);
@@ -178,7 +178,7 @@ namespace MistyConversation
 				Misty.DisplayText($"Failed Initialization", "Text", null);
 				Misty.SkillLogger.Log($"Failed to initialize the skill.", ex);
 				Misty.Speak("Sorry, I am unable to initialize the skill. You need to restart the skill or the robot.", true, null, null);
-				await Task.Delay(2000);
+				await Task.Delay(5000);
 			}
 		}
 
@@ -192,12 +192,13 @@ namespace MistyConversation
 			OnStart(sender, parameters);
 		}
 
-		public async void OnCancel(object sender, IDictionary<string, object> parameters)
+		public void OnCancel(object sender, IDictionary<string, object> parameters)
 		{
-			Misty.Speak("Misty conversation skill cancelling.", true, null, null);
-			await Misty.SetBlinkSettingsAsync(true, null, null, null, null, null);
-			Misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
 			_characterManagerLoader?.Dispose();
+
+			Misty.Speak("Misty conversation skill cancelling.", true, null, null);
+			Misty.SetBlinkSettings(true, null, null, null, null, null, null);
+			Misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
 		}
 
 		public void OnTimeout(object sender, IDictionary<string, object> parameters)

@@ -33,11 +33,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
 using MistyCharacter.SpeechIntent;
 using MistyRobotics.Common.Types;
+using MistyRobotics.SDK;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
 using MistyRobotics.SDK.Responses;
@@ -52,6 +54,7 @@ namespace MistyCharacter
 	{
 		public event EventHandler<string> StartedSpeaking;
 		public event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
+		public event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
 		public event EventHandler<DateTime> StartedListening;
 		public event EventHandler<IVoiceRecordEvent> StoppedListening;
 		public event EventHandler<TriggerData> SpeechIntent;		
@@ -59,7 +62,9 @@ namespace MistyCharacter
 		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
 		public event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+		public event EventHandler<string> UserDataAnimationScript;
 
+		private const string MissingInlineData = "Missing";
 		private const string TTSNamePreface = "misty-en-";		
 		private IList<string> _audioTags = new List<string>();
 		private ISpeechIntentManager _speechIntentManager;
@@ -76,10 +81,19 @@ namespace MistyCharacter
 		private bool _listenAborted;
 		private int _silenceTimeout = 6000;
 		private int _listenTimeout = 6000;
+		private IList<string> _allowedTriggers = new List<string>();
 		private bool _keyPhraseTriggered;
 		private bool _keyPhraseOn;
 		private bool _processingAudioCallback;
 		private SemaphoreSlim _keyPhraseOnSlim = new SemaphoreSlim(1, 1);
+		private Random _random = new Random();
+		private IList<string> _replacementValues = new List<string> { "face", "filter", "qrcode", "arcode", "text", "intent", "time", "robotname" };
+		private IList<GenericDataStore> _genericDataStores = new List<GenericDataStore>();
+		private string _robotName = "Misty";
+
+		private CharacterState _characterState;
+		private CharacterState _stateAtAnimationStart;
+		private CharacterState _previousState;
 
 		private int _volume;
 		public int Volume
@@ -118,10 +132,11 @@ namespace MistyCharacter
 			return AssetHelper.AddMissingWavExtension(name);
 		}
 
-		public void SetListenTimingMs(int listenTimeout, int silenceTimeout)
+		public void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances)
 		{
 			_listenTimeout = listenTimeout >= 1000 ? listenTimeout : 1000;
-			_listenTimeout = silenceTimeout >= 1000 ? listenTimeout : 1000;			
+			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;
+			_allowedTriggers = allowedUtterances;
 		}
 
 		public override async Task<bool> Initialize()
@@ -185,7 +200,7 @@ namespace MistyCharacter
 					
 			return true;
 		}
-		
+
 		/// <summary>
 		/// Called when the POTENTIAL to start key phrase rec has been triggered (basically not listening already or speaking/playing audio)
 		/// </summary>
@@ -220,10 +235,15 @@ namespace MistyCharacter
 			return _keyPhraseOn;
 		}
 
-		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechIntentManager speechIntentManager = null)
+		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, CharacterState stateAtAnimationStart, CharacterState previousState, IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)
 			: base(misty, parameters, characterParameters)
 		{
+			_robotName = characterParameters.ConversationGroup.RobotName ?? "Misty";
+			_genericDataStores = genericDataStores;
 			_speechIntentManager = speechIntentManager;
+			_characterState = characterState;
+			_stateAtAnimationStart = stateAtAnimationStart;
+			_previousState = previousState;
 		}
 
 		public void AbortListening(string audioName)
@@ -260,7 +280,7 @@ namespace MistyCharacter
 
 				if (string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
-					Robot.SkillLogger.Log("No text passed in to Speak command.");
+					Robot.SkillLogger.LogWarning("No text passed in to Speak command.");
 					return;
 				}
 				
@@ -288,7 +308,7 @@ namespace MistyCharacter
 						}
 					}
 
-					Robot.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
+					Robot.Speak(currentAnimation.Speak, CharacterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
 				}
@@ -318,21 +338,15 @@ namespace MistyCharacter
 							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, CharacterParameters.AddLocaleToAudioNames)).Any())
 						)
 						{
-							if (CharacterParameters.LogLevel == SkillLogLevel.Verbose || CharacterParameters.LogLevel == SkillLogLevel.Info)
-							{
-								Robot.SkillLogger.Log($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-								Robot.SkillLogger.Log(currentAnimation.Speak);
-							}
+							Robot.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							Robot.SkillLogger.LogVerbose(currentAnimation.Speak);							
 							Robot.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
 						}
 						else
 						{
-							if (CharacterParameters.LogLevel == SkillLogLevel.Verbose || CharacterParameters.LogLevel == SkillLogLevel.Info)
-							{
-								Robot.SkillLogger.Log($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-								Robot.SkillLogger.Log(currentAnimation.Speak);
-							}
-                            
+							Robot.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							Robot.SkillLogger.LogVerbose(currentAnimation.Speak);
+							
 							switch (CharacterParameters.TextToSpeechService)
 							{
 								case "Google":
@@ -453,7 +467,7 @@ namespace MistyCharacter
 
 		protected void TTSCallback(ITextToSpeechCompleteEvent ttsComplete)
 		{
-			Robot.SkillLogger.Log($"TTS Callback: UtteranceId: {ttsComplete.UttteranceId}");
+			Robot.SkillLogger.LogVerbose($"TTS Callback: UtteranceId: {ttsComplete.UttteranceId}");
 
 			AudioCallback(new AudioPlayCompleteEvent(ttsComplete.UttteranceId, -1));
 		}
@@ -463,29 +477,38 @@ namespace MistyCharacter
 			try
 			{
 				_recording = false;
-				Robot.SkillLogger.Log($"Audio Callback. Name: {audioComplete.Name}");
+				Robot.SkillLogger.LogVerbose($"Audio Callback. Name: {audioComplete.Name}");
 				if(_processingAudioCallback)
 				{
+					Robot.SkillLogger.LogWarning($"Audio Callback ignored as system is still processing previous callback. Name: {audioComplete.Name}");
 					return;
 				}
 				_processingAudioCallback = true;
-
-				StoppedSpeaking?.Invoke(this, audioComplete);
+				
+				if (audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
+				{
+					PreSpeechCompleted?.Invoke(this, audioComplete);
+					Robot.SkillLogger.LogVerbose($"Prespeech complete. Name: {audioComplete.Name}");
+					return;
+				}
+				else
+				{
+					StoppedSpeaking?.Invoke(this, audioComplete);
+				}
 				lock (_lockListenerData)
 				{
 					if (!_recording && !_listenAborted && (_listeningCallbacks.Remove(audioComplete.Name) || _listeningCallbacks.Remove(audioComplete.Name+".wav")))
 					{
 						_recording = true;
 
-						Robot.SkillLogger.Log("Capture Speech called.");
+						Robot.SkillLogger.LogVerbose("Capture Speech called.");
 						switch (CharacterParameters.SpeechRecognitionService)
 						{
-							//Add back in once new nuget released... foreshadowing ;)
 							case "GoogleOnboard":
-								//_ = Robot.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
+								_ = Robot.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
 								return;
 							case "AzureOnboard":
-								//_ = Robot.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
+								_ = Robot.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.Region, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
 								return;
 							default:
 								_ = Robot.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
@@ -501,7 +524,10 @@ namespace MistyCharacter
 			finally
 			{
 				_processingAudioCallback = false;
-				StartedListening?.Invoke(this, DateTime.Now);
+				if(_recording)
+				{
+					StartedListening?.Invoke(this, DateTime.Now);
+				}
 			}
 		}
 
@@ -509,7 +535,7 @@ namespace MistyCharacter
 		{ 
 			try
 			{
-				Robot.SkillLogger.Log("Key Phrase Callback called, calling capture speech.");
+				Robot.SkillLogger.LogVerbose("Key Phrase Callback called, calling capture speech.");
 				if (_recording)
 				{
 					return;
@@ -535,28 +561,27 @@ namespace MistyCharacter
 			try
 			{
 				_recording = false;
+				StoppedListening?.Invoke(this, voiceRecordEvent);
 				if (_listenAborted)
 				{
-					Robot.SkillLogger.Log("Voice Record Callback called while processing, ignoring.");
+					Robot.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
 					return;
 				}
 
-				Robot.SkillLogger.Log("Voice Record Callback - processing");
-
+				Robot.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
-
-				StoppedListening?.Invoke(this, voiceRecordEvent);
-				if (voiceRecordEvent.ErrorCode == 3)
-				{
-					Robot.SkillLogger.Log("Didn't hear anything or can no longer translate. Error 3");
-					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));					
-					return;
-				}
 
 				if (CharacterParameters.SpeechRecognitionService == "GoogleOnboard" ||
 					CharacterParameters.SpeechRecognitionService == "AzureOnboard")
 				{
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
+					return;
+				}
+
+				if (voiceRecordEvent.ErrorCode == 3)
+				{
+					Robot.SkillLogger.Log("Didn't hear anything with microphone.");
+					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));					
 					return;
 				}
 
@@ -566,7 +591,7 @@ namespace MistyCharacter
 				if(audioResponse.Status != ResponseStatus.Success)
 				{
 					Robot.SkillLogger.Log($"Failed to retrieve file 'capture_Dialogue.wav', received {audioResponse.Status}.  Ignoring speech intent.");
-					//?? SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
+					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 					return;
 				}
 				else if (audioResponse?.Data?.Audio == null)
@@ -583,7 +608,6 @@ namespace MistyCharacter
 				}
 
 				SpeechToTextData description = new SpeechToTextData();
-				
 				switch (CharacterParameters.SpeechRecognitionService)
 				{
 					case "Google":
@@ -607,24 +631,352 @@ namespace MistyCharacter
 				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
 			}
 		}
-
+		
 		private void HandleSpeechResponse(string text)
 		{
 			if (!string.IsNullOrWhiteSpace(text))
 			{
-                SpeechMatchData intent = _speechIntentManager.GetIntent(text, null);
+                SpeechMatchData intent = _speechIntentManager.GetIntent(text, _allowedTriggers);
 
                 //Old conversations trigger on name, new ones on id
-
 				SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
-				Robot.SkillLogger.Log($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent}");
+				Robot.SkillLogger.LogInfo($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
 			}
 			else
 			{
-				Robot.SkillLogger.Log("Didn't hear anything or can no longer translate.");
+				Robot.SkillLogger.LogInfo("Didn't hear anything or can no longer translate.");
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 			}
 		}
+
+
+		public bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText)
+		{
+			newText = text;
+			if (_characterState == null)
+			{
+				return false;
+			}
+
+			if (newText.Contains("{{") && newText.Contains("}}"))
+			{
+				int replacementItemCount = Regex.Matches(newText, "{{").Count;
+
+				//Loop through all inline text groups
+				for (int i = 0; i < replacementItemCount; i++)
+				{
+
+					int indexOpen = 0;
+					int indexClose = 0;
+					string replacementTextList = "";
+
+					indexOpen = newText.IndexOf("{{");
+					indexClose = newText.IndexOf("}}");
+
+					if (indexClose - 2 <= indexOpen)
+					{
+						continue;
+					}
+
+					replacementTextList = newText.Substring(indexOpen + 2, (indexClose - 2) - indexOpen);
+
+					if (string.IsNullOrWhiteSpace(replacementTextList))
+					{
+						continue;
+					}
+
+					IList<string> optionList = new List<string>();
+					if (!replacementTextList.Contains("||"))
+					{
+						optionList.Add(replacementTextList);
+					}
+
+					if (replacementTextList.Contains("||"))
+					{
+						string[] dataArray = replacementTextList.ToLower().Trim().Split("||");
+						if (dataArray != null && dataArray.Count() > 0)
+						{
+							foreach (string option in dataArray)
+							{
+								if (!optionList.Contains(option))
+								{
+									optionList.Add(option);
+								}
+							}
+						}
+					}
+
+					//Loop through the options to find match
+					int optionCount = 0;
+					bool textChanged = false;
+					foreach (string option in optionList)
+					{
+						if (textChanged)
+						{
+							break;
+						}
+
+						//Extract the replacement Name/Key pair if it exists - old format vs new format
+						int nameKeyIndexOpen = option.IndexOf("[[");
+						int nameKeyIndexClose = option.IndexOf("]]");
+
+						string replacementNameKey;
+						if (nameKeyIndexClose - 2 <= nameKeyIndexOpen)
+						{
+							replacementNameKey = option;
+						}
+						else
+						{
+							replacementNameKey = option.Substring(nameKeyIndexOpen + 2, (nameKeyIndexClose - 2) - nameKeyIndexOpen);
+						}
+
+						if (string.IsNullOrWhiteSpace(replacementNameKey))
+						{
+							continue;
+						}
+
+						optionCount++;
+						//does it contain a :
+						if (replacementNameKey.Contains(":"))
+						{
+							string[] dataArray = replacementNameKey.ToLower().Trim().Split(":");
+							if (dataArray != null && dataArray.Count() == 2)
+							{
+								string userDataName = dataArray[0].Trim().ToLower();
+
+								if (_replacementValues != null &&
+								   _replacementValues.Count() > 0 &&
+								   _replacementValues.Contains(userDataName))
+								{
+									//if it is a built in item in the FIRST position, it replaces the NAME with the lookup item
+									//{ { face: team} }
+									//looks up as { { Brad: team} }
+									//where face/ Brad is the Name of the user data and team is the key
+
+									string newData = GetBuiltInReplacement(userDataName);
+									if (newData == MissingInlineData)
+									{
+										newData = userDataName;
+									}
+
+									//try looking up the user data by name now
+									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.ToLower().Trim());
+									if (dataStore != null)
+									{
+										//found a match for the name, now look up the key 2nd position
+
+										string dataKey = dataArray[1].Trim().ToLower();
+										string newKey = dataKey;
+
+										if (_replacementValues.Contains(dataKey))
+										{
+											newKey = GetBuiltInReplacement(dataKey);
+										}
+										if (newKey == MissingInlineData)
+										{
+											newKey = dataKey;
+										}
+
+										if (dataKey == "random")
+										{
+											//grab a random user data item from this group
+											//{{Greetings:random}}
+											GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+											if (genericDataStore != null)
+											{
+												int dataCount = genericDataStore.Data.Count();
+												int randomItem = _random.Next(optionCount, dataCount);
+												GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
+												if (genericData?.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+												}
+											}
+										}
+										else if (dataStore.TreatKeyAsUtterance)
+										{
+											GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
+											if (genericData.Value != null)
+											{
+												textChanged = true;
+												ProcessUserDataUpdates(genericData);
+												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+											}
+										}
+										else
+										{
+											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key.ToLower().Trim() == newKey.ToLower().Trim());
+											if (genericData.Value != null)
+											{
+												textChanged = true;
+												ProcessUserDataUpdates(genericData.Value);
+												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+											}
+										}
+									}
+								}
+								else
+								{
+									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == userDataName);
+									if (dataStore != null)
+									{
+										//found a match for the name, now look up the key 2nd position
+										string dataKey = dataArray[1].Trim().ToLower();
+										string newKey = dataKey;
+										if (_replacementValues.Contains(dataKey))
+										{
+											newKey = GetBuiltInReplacement(dataKey);
+										}
+										if (newKey == MissingInlineData)
+										{
+											newKey = dataKey;
+										}
+
+										if (dataKey == "random")
+										{
+											//grab a random user data item from this group
+											//{{Greetings:random}}
+											GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+											if (genericDataStore != null)
+											{
+												int dataCount = genericDataStore.Data.Count();
+												int randomItem = _random.Next(optionCount, dataCount);
+												GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
+												if (genericData?.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+												}
+											}
+										}
+										else if (dataStore.TreatKeyAsUtterance)
+										{
+											GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
+											if (genericData.Value != null)
+											{
+												textChanged = true;
+												ProcessUserDataUpdates(genericData);
+												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+											}
+										}
+										else
+										{
+											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key == newKey);
+											if (genericData.Value != null)
+											{
+												textChanged = true;
+												ProcessUserDataUpdates(genericData.Value);
+												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+											}
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							//no, then check for a replacement value
+							if (_replacementValues != null &&
+							_replacementValues.Count() > 0 &&
+							_replacementValues.Contains(replacementNameKey))
+							{
+								string newData = GetBuiltInReplacement(replacementNameKey);
+								if (newData != MissingInlineData)
+								{
+									textChanged = true;
+									newText = newText.Replace("{{" + replacementTextList + "}}", newData);
+								}
+							}
+							else
+							{
+								//replace it with this option as is
+								textChanged = true;
+								newText = newText.Replace("{{" + replacementTextList + "}}", replacementNameKey);
+							}
+						}
+					}
+				}
+				return true;
+			}
+			return false;
+		}
+
+
+		public void ProcessUserDataUpdates(GenericData genericData)
+		{
+			//get rid of this now that there is an animations script
+			if (!string.IsNullOrWhiteSpace(genericData.ScreenText))
+			{
+				_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+				{
+					Wrap = true,
+					Visible = true,
+					Weight = 25,
+					Size = 30,
+					HorizontalAlignment = ImageHorizontalAlignment.Center,
+					VerticalAlignment = ImageVerticalAlignment.Bottom,
+					Red = 255,
+					Green = 255,
+					Blue = 255,
+					PlaceOnTop = true,
+					FontFamily = "Courier New",
+					Height = 50
+				});
+
+				Robot.DisplayText(genericData.ScreenText, "UserDataText", null);
+			}
+
+			if(!string.IsNullOrWhiteSpace(genericData.DataAnimationScript))
+			{
+				UserDataAnimationScript?.Invoke(this, genericData.DataAnimationScript);
+			}
+		}
+
+		private string GetBuiltInReplacement(string option)
+		{
+			string newData = "";
+			switch (option.ToLower().Trim())
+			{
+				case "face":
+					newData = _characterState.LastKnownFaceSeen ??
+						_characterState.FaceRecognitionEvent?.Label ??
+						_stateAtAnimationStart?.FaceRecognitionEvent?.Label ??
+						_previousState?.FaceRecognitionEvent?.Label ?? MissingInlineData;
+					break;
+				case "qrcode":
+					newData = _characterState.QrTagEvent?.DecodedInfo ??
+						_stateAtAnimationStart?.QrTagEvent?.DecodedInfo ??
+						_previousState?.QrTagEvent?.DecodedInfo ?? MissingInlineData;
+					break;
+				case "arcode":
+					newData = _characterState.ArTagEvent?.TagId.ToString() ??
+						_stateAtAnimationStart?.ArTagEvent?.TagId.ToString() ??
+						_previousState?.ArTagEvent?.TagId.ToString() ?? MissingInlineData;
+					break;
+				case "text":
+					newData = _characterState.SpeechResponseEvent?.Text ??
+						_stateAtAnimationStart?.SpeechResponseEvent?.Text ??
+						_previousState?.SpeechResponseEvent?.Text ?? MissingInlineData;
+					break;
+				case "intent":
+					newData = _characterState.SpeechResponseEvent?.TriggerFilter ??
+						_stateAtAnimationStart?.SpeechResponseEvent?.TriggerFilter ??
+						_previousState?.SpeechResponseEvent?.TriggerFilter ?? MissingInlineData;
+					break;
+				case "robotname":
+					newData = string.IsNullOrWhiteSpace(_robotName) ? "Misty" : _robotName;
+					break;
+				case "time":
+					newData = _timeManager.GetTimeObject().SpokenTime ?? MissingInlineData;
+					break;
+			}
+			return newData;
+
+		}
+
 
 		private bool _isDisposed = false;
 

@@ -1,0 +1,78 @@
+﻿@model ConversationBuilder.DataModels.Robot
+
+@{
+	ViewData["Title"] = "Edit";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	TempData.Keep("Message");
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+
+<h3>Editing @Html.DisplayFor(model => model.RobotName)</h3>
+<hr />
+<h3 style="color:red">@ViewBag.Message</h3>
+<div class="row">
+	<div class="col-md-4">
+		<form asp-action="Edit">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<input asp-for="Id" class="form-control" hidden="true" />
+			<div class="form-group">
+				<label asp-for="SerialNumber" class="control-label">Serial Number</label>
+				<input asp-for="SerialNumber" class="form-control"/>
+				<span asp-validation-for="SerialNumber" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="RobotName" class="control-label">Name</label>
+				<input asp-for="RobotName" class="form-control" />
+				<span asp-validation-for="RobotName" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="DeviceId" class="control-label">Device Id</label>
+				<textarea asp-for="DeviceId" class="form-control"></textarea>
+				<span asp-validation-for="DeviceId" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="RobotConfig" class="control-label">Configuration</label>
+				<textarea asp-for="RobotConfig" class="form-control"></textarea>
+				<span asp-validation-for="RobotConfig" class="text-danger"></span>
+			</div>
+			@* <div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IsProvisioned" /> @Html.DisplayNameFor(model => model.IsProvisioned)
+					</label>
+				</div>
+			</div> *@			
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="AllowCrossRobotCommunication" /> @Html.DisplayNameFor(model => model.AllowCrossRobotCommunication)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="IP" class="control-label">IP</label>
+				<textarea asp-for="IP" class="form-control"></textarea>
+				<span asp-validation-for="IP" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="Notes" class="control-label">Notes</label>
+				<textarea asp-for="Notes" class="form-control"></textarea>
+				<span asp-validation-for="Notes" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Save" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div>
+	@Html.ActionLink("Back to List", "Index",  "Robots")
+</div>
+
+@section Scripts {
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

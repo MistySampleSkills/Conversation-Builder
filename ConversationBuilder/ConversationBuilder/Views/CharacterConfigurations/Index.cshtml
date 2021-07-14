@@ -15,7 +15,10 @@
 <p>
 	@Html.ActionLink("Create New", "Create",  "CharacterConfigurations")
 </p>
-
+@if(!ViewBag.ShowAllConversations)
+{
+	<h5>Showing filtered data.</h5>
+}
 <table class="table">
 	<thead>
 		<tr>
@@ -28,6 +31,15 @@
 			<th>
 				@Html.DisplayNameFor(model => model.LogLevel)
 			</th>
+			<td>
+				@Html.DisplayNameFor(model => model.DisplaySpoken)
+			</td>
+			<td>
+				@Html.DisplayNameFor(model => model.HeardSpeechToScreen)
+			</td>
+			<td>
+				@Html.DisplayNameFor(model => model.StartVolume)
+			</td>
 			<th></th>
 		</tr>
 	</thead>
@@ -42,6 +54,15 @@
 			</td>
 			<td>
 				@Html.DisplayFor(modelItem => item.LogLevel)
+			</td>
+			<td>
+				@Html.DisplayFor(modelItem => item.DisplaySpoken)
+			</td>
+			<td>
+				@Html.DisplayFor(modelItem => item.HeardSpeechToScreen)
+			</td>
+			<td>
+				@Html.DisplayFor(modelItem => item.StartVolume)
 			</td>
 			<td>
 				@Html.ActionLink("Edit", "Edit", new { id=item.Id }) |

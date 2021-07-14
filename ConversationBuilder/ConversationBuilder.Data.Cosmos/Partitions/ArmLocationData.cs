@@ -41,13 +41,13 @@ namespace ConversationBuilder.Data.Cosmos
 {
 	public interface IArmLocationData
 	{
-		Task<int> GetCountAsync();
+		Task<int> GetCountAsync(string creatorFilter);
 		Task<ArmLocation> GetAsync(string id);
 		Task UpdateAsync(ArmLocation data);
 		Task<ItemResponse<ArmLocation>> AddAsync(ArmLocation data);		
 		Task DeleteAsync(string id);
-		Task<IList<ArmLocation>> GetListAsync(int startItem = 1, int totalItems = 100);
-		Task<IList<ArmLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null);
+		Task<IList<ArmLocation>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null);
+		Task<IList<ArmLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null);
 	}
 
 	public class ArmLocationData : PartitionManager, IArmLocationData
@@ -74,14 +74,14 @@ namespace ConversationBuilder.Data.Cosmos
 			await base.DeleteAsync<ArmLocation>(id);
 		}
 
-		public async Task<IList<ArmLocation>> GetListAsync(int startItem = 1, int totalItems = 100)
+		public async Task<IList<ArmLocation>> GetListAsync(int startItem = 1, int totalItems = 1000, string creatorFilter = null)
 		{
-			return (await base.GetListAsync<ArmLocation>(startItem, totalItems)).ToList();
+			return (await base.GetListAsync<ArmLocation>(startItem, totalItems, creatorFilter)).ToList();
 		}
 
-		public async Task<IList<ArmLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null)
+		public async Task<IList<ArmLocation>> GetListByDateAsync(DateTimeOffset startDate, DateTimeOffset? endDate = null, string creatorFilter = null)
 		{
-			return (await base.GetListByDateAsync<ArmLocation>(startDate, endDate)).ToList();
+			return (await base.GetListByDateAsync<ArmLocation>(startDate, endDate, creatorFilter)).ToList();
 		}
 	}
 }
