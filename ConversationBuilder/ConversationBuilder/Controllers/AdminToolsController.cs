@@ -67,7 +67,7 @@ namespace ConversationBuilder.Controllers
 		protected const string UserNotFoundMessage = "Sorry, I failed to find your user information.";
 		protected const string NoOrgAccessMessage = "Sorry, you can't access the requested page.";
 		protected const string FailedCreatingMessage = "Sorry, we encountered an error while creating.";
-		protected const string FailedUpdatingMessage = "Sorry, we encountered an error while updating.";		
+		protected const string FailedUpdatingMessage = "Sorry, we encountered an error while updating.";
 		protected const string ConversationDeparturePoint = "* Conversation Departure Point";
 
 		protected readonly ICosmosDbService _cosmosDbService;
@@ -88,7 +88,7 @@ namespace ConversationBuilder.Controllers
 			SkillParameters skillParameters = new SkillParameters();
 			SkillConversationGroup skillConversationGroup = new SkillConversationGroup();
 			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(id);
-			
+
 			if (conversationGroup == null)
 			{
 				return null;
@@ -101,24 +101,24 @@ namespace ConversationBuilder.Controllers
 				skillConversationGroup.RobotName = conversationGroup.RobotName;
 				skillConversationGroup.KeyPhraseRecognizedAudio = conversationGroup.KeyPhraseRecognizedAudio;
 				skillConversationGroup.CharacterConfiguration = conversationGroup.CharacterConfiguration;
-				skillConversationGroup.StartupConversation = conversationGroup.StartupConversation;				
+				skillConversationGroup.StartupConversation = conversationGroup.StartupConversation;
 				skillConversationGroup.ConversationMappings = conversationGroup.ConversationMappings;
 
 				IList<SpeechHandler> allSpeechHandlers = null;
-				foreach(string conversationId in conversationGroup.Conversations)
+				foreach (string conversationId in conversationGroup.Conversations)
 				{
 					Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
-					if(conversation == null)
+					if (conversation == null)
 					{
 						continue;
 					}
 
-					foreach(string genericDataStoreId in conversation.GenericDataStores)
+					foreach (string genericDataStoreId in conversation.GenericDataStores)
 					{
-						if(genericDataStoreId != null && !skillConversationGroup.GenericDataStores.Any(x => x.Id == genericDataStoreId))
+						if (genericDataStoreId != null && !skillConversationGroup.GenericDataStores.Any(x => x.Id == genericDataStoreId))
 						{
-							GenericDataStore genericDataStore = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetAsync(genericDataStoreId);							
-							if(genericDataStore != null)
+							GenericDataStore genericDataStore = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetAsync(genericDataStoreId);
+							if (genericDataStore != null)
 							{
 								skillConversationGroup.GenericDataStores.Add(genericDataStore);
 							}
@@ -127,35 +127,35 @@ namespace ConversationBuilder.Controllers
 
 					SkillConversation skillConversation = new SkillConversation();
 
-					foreach(string animationId in conversation.Animations)
+					foreach (string animationId in conversation.Animations)
 					{
-						if(animationId != null && !skillConversation.Animations.Any(x => x.Id == animationId))
+						if (animationId != null && !skillConversation.Animations.Any(x => x.Id == animationId))
 						{
 							Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(animationId);
-							if(animation != null)
+							if (animation != null)
 							{
-								if(!string.IsNullOrWhiteSpace(animation.HeadLocation))
+								if (!string.IsNullOrWhiteSpace(animation.HeadLocation))
 								{
 									HeadLocation headLocation = await _cosmosDbService.ContainerManager.HeadLocationData.GetAsync(animation.HeadLocation);
-									if(headLocation != null && !skillConversation.HeadLocations.Any(x => x.Id == animation.HeadLocation))
+									if (headLocation != null && !skillConversation.HeadLocations.Any(x => x.Id == animation.HeadLocation))
 									{
 										skillConversation.HeadLocations.Add(headLocation);
 									}
 								}
 
-								if(!string.IsNullOrWhiteSpace(animation.ArmLocation))
+								if (!string.IsNullOrWhiteSpace(animation.ArmLocation))
 								{
 									ArmLocation armLocation = await _cosmosDbService.ContainerManager.ArmLocationData.GetAsync(animation.ArmLocation);
-									if(armLocation != null && !skillConversation.ArmLocations.Any(x => x.Id == animation.ArmLocation))
+									if (armLocation != null && !skillConversation.ArmLocations.Any(x => x.Id == animation.ArmLocation))
 									{
 										skillConversation.ArmLocations.Add(armLocation);
 									}
 								}
 
-								if(!string.IsNullOrWhiteSpace(animation.LEDTransitionAction))
+								if (!string.IsNullOrWhiteSpace(animation.LEDTransitionAction))
 								{
 									LEDTransitionAction ledTransitionAction = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetAsync(animation.LEDTransitionAction);
-									if(ledTransitionAction != null && !skillConversation.LEDTransitionActions.Any(x => x.Id == animation.LEDTransitionAction))
+									if (ledTransitionAction != null && !skillConversation.LEDTransitionActions.Any(x => x.Id == animation.LEDTransitionAction))
 									{
 										skillConversation.LEDTransitionActions.Add(ledTransitionAction);
 									}
@@ -166,20 +166,20 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 
-					foreach(string triggerId in conversation.Triggers)
+					foreach (string triggerId in conversation.Triggers)
 					{
-						if(!skillConversation.Triggers.Any(x => x.Id == triggerId))
+						if (!skillConversation.Triggers.Any(x => x.Id == triggerId))
 						{
 							TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(triggerId);
-							if(triggerDetail!= null && !skillConversation.Triggers.Any(x => x.Id == triggerId))
+							if (triggerDetail != null && !skillConversation.Triggers.Any(x => x.Id == triggerId))
 							{
 								skillConversation.Triggers.Add(triggerDetail);
-								if(triggerDetail.Trigger == "SpeechHeard" && !string.IsNullOrWhiteSpace(triggerDetail.TriggerFilter))
+								if (triggerDetail.Trigger == "SpeechHeard" && !string.IsNullOrWhiteSpace(triggerDetail.TriggerFilter))
 								{
-									if(Guid.TryParse(triggerDetail.TriggerFilter, out Guid guid))
+									if (Guid.TryParse(triggerDetail.TriggerFilter, out Guid guid))
 									{
 										SpeechHandler speechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(triggerDetail.TriggerFilter);
-										if(speechHandler != null)
+										if (speechHandler != null)
 										{
 											UtteranceData utteranceData = new UtteranceData();
 											utteranceData.Name = speechHandler.Name;
@@ -193,26 +193,26 @@ namespace ConversationBuilder.Controllers
 									}
 									else //TODO Hacky legacy to remove once all speech keys updates to Ids by editing them properly
 									{
-										if(allSpeechHandlers == null)
+										if (allSpeechHandlers == null)
 										{
 											allSpeechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000) ?? new List<SpeechHandler>();
 										}
-										if(allSpeechHandlers != null && allSpeechHandlers.Count > 0)
+										if (allSpeechHandlers != null && allSpeechHandlers.Count > 0)
 										{
 											SpeechHandler speechHandler = allSpeechHandlers.FirstOrDefault(x => x.Name == triggerDetail.TriggerFilter);
-											if(speechHandler != null)
+											if (speechHandler != null)
 											{
 												UtteranceData utteranceData = new UtteranceData();
 												utteranceData.Name = speechHandler.Name;
 												utteranceData.Description = speechHandler.Description;
-												utteranceData.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;												
+												utteranceData.ExactPhraseMatchesOnly = speechHandler.ExactPhraseMatchesOnly;
 												utteranceData.WordMatchRule = speechHandler.WordMatchRule;
 												utteranceData.Id = speechHandler.Id;
 												utteranceData.Utterances = speechHandler.Utterances;
 												skillConversationGroup.IntentUtterances.TryAdd(speechHandler.Id, utteranceData);
 											}
 										}
-										
+
 									}
 
 								}
@@ -220,12 +220,12 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 
-					foreach(string interactionId in conversation.Interactions)
+					foreach (string interactionId in conversation.Interactions)
 					{
-						if(!skillConversation.Interactions.Any(x => x.Id == interactionId))
+						if (!skillConversation.Interactions.Any(x => x.Id == interactionId))
 						{
 							Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interactionId);
-							if(interaction != null)
+							if (interaction != null)
 							{
 								SkillInteraction skillInteraction = new SkillInteraction();
 								skillInteraction.Id = interaction.Id;
@@ -237,9 +237,9 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.StartListening = interaction.StartListening;
 								skillInteraction.AllowConversationTriggers = interaction.AllowConversationTriggers;
 								skillInteraction.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
-								skillInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;								
-								skillInteraction.UsePreSpeech = interaction.UsePreSpeech;					
-								skillInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;					
+								skillInteraction.ConversationEntryPoint = interaction.ConversationEntryPoint;
+								skillInteraction.UsePreSpeech = interaction.UsePreSpeech;
+								skillInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;
 								skillInteraction.SilenceTimeout = interaction.SilenceTimeout;
 								skillInteraction.ListenTimeout = interaction.ListenTimeout;
 								skillInteraction.Animation = interaction.Animation;
@@ -248,18 +248,18 @@ namespace ConversationBuilder.Controllers
 								skillConversation.Interactions.Remove(skillInteraction);
 								skillConversation.Interactions.Add(skillInteraction);
 
-								if(interaction.SkillMessages != null)
+								if (interaction.SkillMessages != null)
 								{
 									//Move this to group for json?
-									foreach(string skillMessageId in interaction.SkillMessages)
-									{					
+									foreach (string skillMessageId in interaction.SkillMessages)
+									{
 										skillInteraction.SkillMessages.Add(skillMessageId);
-										if(!skillConversation.SkillMessages.Any(x => x.Id == skillMessageId))
+										if (!skillConversation.SkillMessages.Any(x => x.Id == skillMessageId))
 										{
 											SkillMessage skillMessage = await _cosmosDbService.ContainerManager.SkillMessageData.GetAsync(skillMessageId);
-											if(skillMessage!= null)
+											if (skillMessage != null)
 											{
-												skillConversation.SkillMessages.Add(skillMessage);													
+												skillConversation.SkillMessages.Add(skillMessage);
 											}
 										}
 									}
@@ -267,9 +267,9 @@ namespace ConversationBuilder.Controllers
 							}
 						}
 					}
-					
+
 					skillConversation.ConversationDeparturePoints = conversation.ConversationDeparturePoints;
-					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;					
+					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;
 					skillConversation.InteractionAnimations = conversation.InteractionAnimations;
 					skillConversation.InteractionPreSpeechAnimations = conversation.InteractionPreSpeechAnimations;
 					skillConversation.Description = conversation.Description;
@@ -280,22 +280,22 @@ namespace ConversationBuilder.Controllers
 					skillConversation.StartupInteraction = conversation.StartupInteraction;
 					skillConversation.NoTriggerInteraction = conversation.NoTriggerInteraction;
 					skillConversation.ConversationTriggerMap = conversation.ConversationTriggerMap;
-					skillConversationGroup.Conversations.Add(skillConversation);	
+					skillConversationGroup.Conversations.Add(skillConversation);
 				}
 
 				skillParameters.ConversationGroup = skillConversationGroup;
-				
-				if(!string.IsNullOrWhiteSpace(conversationGroup.CharacterConfiguration))
+
+				if (!string.IsNullOrWhiteSpace(conversationGroup.CharacterConfiguration))
 				{
 					CharacterConfiguration characterConfiguration = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetAsync(conversationGroup.CharacterConfiguration);
-					if(characterConfiguration != null)
+					if (characterConfiguration != null)
 					{
 						skillParameters.FacePitchOffset = characterConfiguration.FacePitchOffset;
 						skillParameters.LogInteraction = characterConfiguration.LogInteraction;
 						skillParameters.HeardSpeechToScreen = characterConfiguration.HeardSpeechToScreen;
 						skillParameters.LargePrint = characterConfiguration.LargePrint;
 						skillParameters.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
-						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;						
+						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;
 						skillParameters.StartVolume = characterConfiguration.StartVolume;
 						skillParameters.UsePreSpeech = characterConfiguration.UsePreSpeech;
 						skillParameters.PreSpeechPhrases = characterConfiguration.PreSpeechPhrases;
@@ -306,11 +306,11 @@ namespace ConversationBuilder.Controllers
 						skillParameters.StreamInteraction = characterConfiguration.StreamInteraction;
 						skillParameters.Skill = characterConfiguration.Skill ?? "8be20a90-1150-44ac-a756-ebe4de30689e";
 						skillParameters.Character = characterConfiguration.Character ?? "basic";
-					
-						if(!string.IsNullOrEmpty(characterConfiguration.SpeechConfiguration))
+
+						if (!string.IsNullOrEmpty(characterConfiguration.SpeechConfiguration))
 						{
 							SpeechConfiguration speechConfiguration = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetAsync(characterConfiguration.SpeechConfiguration);
-							if(speechConfiguration != null)
+							if (speechConfiguration != null)
 							{
 								skillParameters.SpeechConfiguration = speechConfiguration;
 							}
@@ -341,23 +341,23 @@ namespace ConversationBuilder.Controllers
 					try
 					{
 						skillParameters = Newtonsoft.Json.JsonConvert.DeserializeObject<SkillParameters>(conversationGroupJson);
-				
+
 					}
 					catch (Exception)
 					{
 						return false;
 					}
 				}
-				
+
 				SkillConversationGroup skillConversationGroup = skillParameters.ConversationGroup;
 
 				DateTimeOffset now = DateTime.Now;
 				IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000);//TODO
-				if(speechHandlers != null && speechHandlers.Count > 0)
+				if (speechHandlers != null && speechHandlers.Count > 0)
 				{
-					foreach(KeyValuePair<string, UtteranceData> utterance in skillConversationGroup.IntentUtterances) 
+					foreach (KeyValuePair<string, UtteranceData> utterance in skillConversationGroup.IntentUtterances)
 					{
-						if(speechHandlers?.FirstOrDefault(x => x.Id == utterance.Key) == null)
+						if (speechHandlers?.FirstOrDefault(x => x.Id == utterance.Key) == null)
 						{
 							SpeechHandler speechHandler = new SpeechHandler();
 							speechHandler.Id = utterance.Value.Id;
@@ -365,7 +365,7 @@ namespace ConversationBuilder.Controllers
 							speechHandler.Updated = now;
 							speechHandler.Created = now;
 							speechHandler.ManagementAccess = "Public";
-							speechHandler.ExactPhraseMatchesOnly = utterance.Value.ExactPhraseMatchesOnly;							
+							speechHandler.ExactPhraseMatchesOnly = utterance.Value.ExactPhraseMatchesOnly;
 							speechHandler.WordMatchRule = utterance.Value.WordMatchRule;
 							speechHandler.Utterances = utterance.Value.Utterances;
 							speechHandler.CreatedBy = _userInformation?.AccessId;
@@ -373,24 +373,24 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 				}
-				
+
 				IDictionary<string, string> conversationGuidMap = new Dictionary<string, string>();
 				IDictionary<string, string> interactionGuidMap = new Dictionary<string, string>();
-				foreach(SkillConversation conversation in skillConversationGroup.Conversations)
+				foreach (SkillConversation conversation in skillConversationGroup.Conversations)
 				{
 					conversationGuidMap.Add(conversation.Id, Guid.NewGuid().ToString());
 
-					foreach(SkillInteraction interaction in conversation.Interactions)
+					foreach (SkillInteraction interaction in conversation.Interactions)
 					{
 						interactionGuidMap.Add(interaction.Id, Guid.NewGuid().ToString());
 					}
 				}
-				
-				foreach(SkillConversation conversation in skillConversationGroup.Conversations)
+
+				foreach (SkillConversation conversation in skillConversationGroup.Conversations)
 				{
 					//Make a new conversation with the same data
 					Conversation newConversation = new Conversation();
-					newConversation.Id = conversationGuidMap[conversation.Id];					
+					newConversation.Id = conversationGuidMap[conversation.Id];
 					newConversation.Name = conversation.Name + $" [Imported on {now}]";
 					newConversation.Description = conversation.Description;
 					newConversation.Updated = now;
@@ -400,11 +400,11 @@ namespace ConversationBuilder.Controllers
 					newConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
 					newConversation.CreatedBy = _userInformation?.AccessId;
 					//go through top level items and add them if needed (id doesn't exist)
-					
+
 					//arm movement
-					foreach(ArmLocation newData in conversation.ArmLocations)
+					foreach (ArmLocation newData in conversation.ArmLocations)
 					{
-						if(await _cosmosDbService.ContainerManager.ArmLocationData.GetAsync(newData.Id) == null)
+						if (await _cosmosDbService.ContainerManager.ArmLocationData.GetAsync(newData.Id) == null)
 						{
 							newData.Name = newData.Name + " [Imported]";
 							newData.ManagementAccess = "Public";
@@ -414,9 +414,9 @@ namespace ConversationBuilder.Controllers
 						}
 					}
 					//head movement
-					foreach(HeadLocation newData in conversation.HeadLocations)
+					foreach (HeadLocation newData in conversation.HeadLocations)
 					{
-						if(await _cosmosDbService.ContainerManager.HeadLocationData.GetAsync(newData.Id) == null)
+						if (await _cosmosDbService.ContainerManager.HeadLocationData.GetAsync(newData.Id) == null)
 						{
 							newData.Name = newData.Name + " [Imported]";
 							newData.ManagementAccess = "Public";
@@ -428,9 +428,9 @@ namespace ConversationBuilder.Controllers
 					}
 
 					//led
-					foreach(LEDTransitionAction newData in conversation.LEDTransitionActions)
+					foreach (LEDTransitionAction newData in conversation.LEDTransitionActions)
 					{
-						if(await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetAsync(newData.Id) == null)
+						if (await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetAsync(newData.Id) == null)
 						{
 							newData.Name = newData.Name + " [Imported]";
 							newData.ManagementAccess = "Public";
@@ -440,11 +440,11 @@ namespace ConversationBuilder.Controllers
 							await _cosmosDbService.ContainerManager.LEDTransitionActionData.AddAsync(newData);
 						}
 					}
-					
+
 					//animations
-					foreach(Animation newData in conversation.Animations)
+					foreach (Animation newData in conversation.Animations)
 					{
-						if(await _cosmosDbService.ContainerManager.AnimationData.GetAsync(newData.Id) == null)
+						if (await _cosmosDbService.ContainerManager.AnimationData.GetAsync(newData.Id) == null)
 						{
 							newData.Name = newData.Name + " [Imported]";
 							newData.ManagementAccess = "Public";
@@ -453,16 +453,16 @@ namespace ConversationBuilder.Controllers
 							newData.CreatedBy = _userInformation?.AccessId;
 							await _cosmosDbService.ContainerManager.AnimationData.AddAsync(newData);
 						}
-						if(!newConversation.Animations.Contains(newData.Id))
+						if (!newConversation.Animations.Contains(newData.Id))
 						{
 							newConversation.Animations.Add(newData.Id);
 						}
 					}
 
 					//triggers
-					foreach(TriggerDetail newData in conversation.Triggers)
+					foreach (TriggerDetail newData in conversation.Triggers)
 					{
-						if(await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(newData.Id) == null)
+						if (await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(newData.Id) == null)
 						{
 							newData.Name = newData.Name + " [Imported]";
 							newData.ManagementAccess = "Public";
@@ -471,17 +471,17 @@ namespace ConversationBuilder.Controllers
 							newData.CreatedBy = _userInformation?.AccessId;
 							await _cosmosDbService.ContainerManager.TriggerDetailData.AddAsync(newData);
 						}
-						
-						if(!newConversation.Triggers.Contains(newData.Id))
+
+						if (!newConversation.Triggers.Contains(newData.Id))
 						{
 							newConversation.Triggers.Add(newData.Id);
 						}
 					}
 
 					//skill messages
-					foreach(SkillMessage newData in conversation.SkillMessages)
+					foreach (SkillMessage newData in conversation.SkillMessages)
 					{
-						if(await _cosmosDbService.ContainerManager.SkillMessageData.GetAsync(newData.Id) == null)
+						if (await _cosmosDbService.ContainerManager.SkillMessageData.GetAsync(newData.Id) == null)
 						{
 							newData.Name = newData.Name + " [Imported]";
 							newData.ManagementAccess = "Public";
@@ -490,20 +490,20 @@ namespace ConversationBuilder.Controllers
 							newData.CreatedBy = _userInformation?.AccessId;
 							await _cosmosDbService.ContainerManager.SkillMessageData.AddAsync(newData);
 						}
-						if(!newConversation.SkillMessages.Contains(newData.Id))
+						if (!newConversation.SkillMessages.Contains(newData.Id))
 						{
 							newConversation.SkillMessages.Add(newData.Id);
 						}
 					}
-					
+
 					//NOT user data, character configs speech configs
 					//users need to add those to conversations and groups
 
-					//loop through skill interactions and create NEW matching interactions 
-					foreach(SkillInteraction interaction in conversation.Interactions)
+					//loop through skill interactions and create NEW matching interactions
+					foreach (SkillInteraction interaction in conversation.Interactions)
 					{
 						Interaction newInteraction = new Interaction();
-						newInteraction.Id = interactionGuidMap[interaction.Id];						
+						newInteraction.Id = interactionGuidMap[interaction.Id];
 						newInteraction.ListenTimeout = interaction.ListenTimeout;
 						newInteraction.SilenceTimeout = interaction.SilenceTimeout;
 						newInteraction.StartListening = interaction.StartListening;
@@ -519,15 +519,15 @@ namespace ConversationBuilder.Controllers
 						newInteraction.CreatedBy = _userInformation?.AccessId;
 
 						//loop though action options and add and point to NEW interaction id
-						foreach(KeyValuePair<string, IList<TriggerActionOption>> triggerOption in interaction.TriggerMap)
+						foreach (KeyValuePair<string, IList<TriggerActionOption>> triggerOption in interaction.TriggerMap)
 						{
 							IList<TriggerActionOption> newTriggerOptions = new List<TriggerActionOption>();
-							foreach(TriggerActionOption triggerActionOption in triggerOption.Value)
+							foreach (TriggerActionOption triggerActionOption in triggerOption.Value)
 							{
 								TriggerActionOption newTriggerActionOption = new TriggerActionOption();
 								newTriggerActionOption.InterruptCurrentAction = triggerActionOption.InterruptCurrentAction;
-								if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
-								{	
+								if (triggerActionOption.GoToConversation == ConversationDeparturePoint)
+								{
 									newTriggerActionOption.GoToConversation = ConversationDeparturePoint;
 									newTriggerActionOption.GoToInteraction = ConversationDeparturePoint;
 								}
@@ -541,19 +541,19 @@ namespace ConversationBuilder.Controllers
 								newTriggerActionOption.Id = Guid.NewGuid().ToString();
 								newTriggerOptions.Add(newTriggerActionOption);
 
-								if(conversation.InteractionAnimations.ContainsKey(triggerActionOption.Id))
+								if (conversation.InteractionAnimations.ContainsKey(triggerActionOption.Id))
 								{
 									newConversation.InteractionAnimations.Add(newTriggerActionOption.Id, conversation.InteractionAnimations[triggerActionOption.Id]);
 								}
 
-								if(conversation.InteractionPreSpeechAnimations.ContainsKey(triggerActionOption.Id))
+								if (conversation.InteractionPreSpeechAnimations.ContainsKey(triggerActionOption.Id))
 								{
 									newConversation.InteractionPreSpeechAnimations.Add(newTriggerActionOption.Id, conversation.InteractionPreSpeechAnimations[triggerActionOption.Id]);
 								}
 							}
 							newInteraction.TriggerMap.Add(triggerOption.Key, newTriggerOptions);
 						}
-						
+
 						await _cosmosDbService.ContainerManager.InteractionData.AddAsync(newInteraction);
 
 						newConversation.StartupInteraction = conversation.StartupInteraction == null ? null : interactionGuidMap[conversation.StartupInteraction];
@@ -561,24 +561,24 @@ namespace ConversationBuilder.Controllers
 						newConversation.Interactions.Add(newInteraction.Id);
 					}
 
-					foreach(KeyValuePair<string, IList<TriggerActionOption>> triggerOption in conversation.ConversationTriggerMap)
+					foreach (KeyValuePair<string, IList<TriggerActionOption>> triggerOption in conversation.ConversationTriggerMap)
 					{
 						IList<TriggerActionOption> newTriggerOptions = new List<TriggerActionOption>();
-						foreach(TriggerActionOption triggerActionOption in triggerOption.Value)
+						foreach (TriggerActionOption triggerActionOption in triggerOption.Value)
 						{
 							TriggerActionOption newTriggerActionOption = new TriggerActionOption();
 							newTriggerActionOption.InterruptCurrentAction = triggerActionOption.InterruptCurrentAction;
-							if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
+							if (triggerActionOption.GoToConversation == ConversationDeparturePoint)
 							{
 								newTriggerActionOption.GoToConversation = ConversationDeparturePoint;
-								newTriggerActionOption.GoToInteraction = ConversationDeparturePoint;							
+								newTriggerActionOption.GoToInteraction = ConversationDeparturePoint;
 							}
 							else
 							{
 								newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
-								newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];	
+								newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
 							}
-							
+
 							newTriggerActionOption.Weight = triggerActionOption.Weight;
 							newTriggerActionOption.Retrigger = triggerActionOption.Retrigger;
 							newTriggerActionOption.Id = Guid.NewGuid().ToString();
@@ -600,12 +600,12 @@ namespace ConversationBuilder.Controllers
 
 		protected async Task<string> GetTriggerFilterDisplayName(string trigger, string triggerFilter, IDictionary<string, string> knownFilters)
 		{
-			if(trigger == "SpeechHeard")
+			if (trigger == "SpeechHeard")
 			{
 				IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 1000);//TODO
-				foreach(var speechHandler in speechHandlers)
+				foreach (var speechHandler in speechHandlers)
 				{
-					if(speechHandler.Id == triggerFilter || speechHandler.Name == triggerFilter /*old conversations*/)
+					if (speechHandler.Id == triggerFilter || speechHandler.Name == triggerFilter /*old conversations*/)
 					{
 						return "SpeechHeard: " + speechHandler.Name;
 					}
@@ -623,16 +623,33 @@ namespace ConversationBuilder.Controllers
 			}
 
 			_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
-			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? false;
-			if(!string.IsNullOrWhiteSpace(_userConfiguration?.OverrideCssFile))
+
+			if (_userConfiguration == null)
 			{
-				ViewBag.CssFile = _userConfiguration.OverrideCssFile + (_userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");				
+				_userConfiguration = new UserConfiguration
+				{
+					Id = _userInformation.AccessId,
+					Created = DateTime.UtcNow,
+					CreatedBy = _userInformation.AccessId,
+					Updated = DateTime.UtcNow,
+					ShowAllConversations = true,
+					UserName = _userInformation.AccessId
+				};
+
+				await _cosmosDbService.ContainerManager.UserConfigurationData.AddAsync(_userConfiguration);
+				_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
+			}
+
+			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? false;
+			if (!string.IsNullOrWhiteSpace(_userConfiguration?.OverrideCssFile))
+			{
+				ViewBag.CssFile = _userConfiguration.OverrideCssFile + (_userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");
 			}
 			else
 			{
 				ViewBag.CssFile = "lite.css";
 			}
-			
+
 			ViewBag.Message = message ?? "";
 			ViewBag.Data = new CommonViewData(_userInformation);
 			ViewBag.ShowAllConversations = _userConfiguration.ShowAllConversations;
@@ -655,7 +672,7 @@ namespace ConversationBuilder.Controllers
 			}
 
 			ViewBag.ForwardStartItem = startItem + count > total ? -1 : startItem + count;
-			if (startItem < 1 || startItem > total+1)
+			if (startItem < 1 || startItem > total + 1)
 			{
 				startItem = 1;
 			}
@@ -675,7 +692,7 @@ namespace ConversationBuilder.Controllers
 
 			if (total > count)
 			{
-				int endItem = startItem + count > total ? total : startItem + (count-1);
+				int endItem = startItem + count > total ? total : startItem + (count - 1);
 				ViewBag.PagingInfo = $"Viewing {startItem} to {endItem} of {total} items.";
 			}
 			else
@@ -710,7 +727,7 @@ namespace ConversationBuilder.Controllers
 		public async Task<string> GetConversationName(string id)
 		{
 			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(id);
-			if(conversation != null)
+			if (conversation != null)
 			{
 				return conversation.Name;
 			}
@@ -720,7 +737,7 @@ namespace ConversationBuilder.Controllers
 		public async Task<string> GetAnimationName(string id)
 		{
 			Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(id);
-			if(animation != null)
+			if (animation != null)
 			{
 				return animation.Name;
 			}
@@ -730,7 +747,7 @@ namespace ConversationBuilder.Controllers
 		public async Task<string> GetTriggerDetailName(string id)
 		{
 			TriggerDetail intentDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(id);
-			if(intentDetail != null)
+			if (intentDetail != null)
 			{
 				return intentDetail.Name;
 			}
@@ -740,7 +757,7 @@ namespace ConversationBuilder.Controllers
 		public async Task<string> GetConversationGroupName(string id)
 		{
 			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(id);
-			if(conversationGroup != null)
+			if (conversationGroup != null)
 			{
 				return conversationGroup.Name;
 			}
@@ -750,7 +767,7 @@ namespace ConversationBuilder.Controllers
 		public async Task<string> GetSpeechHandlerName(string id)
 		{
 			SpeechHandler speechHandler = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetAsync(id);
-			if(speechHandler != null)
+			if (speechHandler != null)
 			{
 				return speechHandler.Name;
 			}
@@ -760,24 +777,24 @@ namespace ConversationBuilder.Controllers
 		public async Task<string> GetInteractionName(string id)
 		{
 			Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(id);
-			if(interaction != null)
+			if (interaction != null)
 			{
 				return interaction.Name;
 			}
 			return "";
 		}
-		
+
 		protected async Task VerifyUserData()
 		{
-			if(_userConfiguration == null)
+			if (_userConfiguration == null)
 			{
 				_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
 			}
 
-			if(_userInformation == null)
+			if (_userInformation == null)
 			{
 				await GetUserInformation();
-			} 
+			}
 		}
 		protected async Task<IDictionary<string, string>> GenericDataStores()
 		{
@@ -785,7 +802,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<GenericDataStore> genericDataStores = await _cosmosDbService.ContainerManager.GenericDataStoreData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(GenericDataStore genericDataStore in genericDataStores.OrderBy(x => x.Name))
+			foreach (GenericDataStore genericDataStore in genericDataStores.OrderBy(x => x.Name))
 			{
 				list.Add(genericDataStore.Id, genericDataStore.Name);
 			}
@@ -798,7 +815,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<SpeechHandler> speechHandlers = await _cosmosDbService.ContainerManager.SpeechHandlerData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(SpeechHandler speechHandler in speechHandlers.OrderBy(x => x.Name))
+			foreach (SpeechHandler speechHandler in speechHandlers.OrderBy(x => x.Name))
 			{
 				list.Add(speechHandler.Id, speechHandler.Name);
 			}
@@ -811,7 +828,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<SkillMessage> skillMessages = await _cosmosDbService.ContainerManager.SkillMessageData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(SkillMessage skillMessage in skillMessages.OrderBy(x => x.Name))
+			foreach (SkillMessage skillMessage in skillMessages.OrderBy(x => x.Name))
 			{
 				list.Add(skillMessage.Id, skillMessage.Name);
 			}
@@ -824,7 +841,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<Animation> animations = await _cosmosDbService.ContainerManager.AnimationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(Animation animation in animations.OrderBy(x => x.Name))
+			foreach (Animation animation in animations.OrderBy(x => x.Name))
 			{
 				list.Add(animation.Id, animation.Name);
 			}
@@ -837,7 +854,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<ArmLocation> armLocations = await _cosmosDbService.ContainerManager.ArmLocationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(ArmLocation armLocation in armLocations.OrderBy(x => x.Name))
+			foreach (ArmLocation armLocation in armLocations.OrderBy(x => x.Name))
 			{
 				list.Add(armLocation.Id, armLocation.Name);
 			}
@@ -850,7 +867,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<SpeechConfiguration> speechConfigurations = await _cosmosDbService.ContainerManager.SpeechConfigurationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(SpeechConfiguration speechConfiguration in speechConfigurations.OrderBy(x => x.Name))
+			foreach (SpeechConfiguration speechConfiguration in speechConfigurations.OrderBy(x => x.Name))
 			{
 				list.Add(speechConfiguration.Id, speechConfiguration.Name);
 			}
@@ -863,7 +880,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<LEDTransitionAction> ledTransitionActions = await _cosmosDbService.ContainerManager.LEDTransitionActionData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(LEDTransitionAction ledTransitionAction in ledTransitionActions.OrderBy(x => x.Name))
+			foreach (LEDTransitionAction ledTransitionAction in ledTransitionActions.OrderBy(x => x.Name))
 			{
 				list.Add(ledTransitionAction.Id, ledTransitionAction.Name);
 			}
@@ -876,7 +893,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<HeadLocation> headLocations = await _cosmosDbService.ContainerManager.HeadLocationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(HeadLocation headLocation in headLocations.OrderBy(x => x.Name))
+			foreach (HeadLocation headLocation in headLocations.OrderBy(x => x.Name))
 			{
 				list.Add(headLocation.Id, headLocation.Name);
 			}
@@ -889,7 +906,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<TriggerDetail> triggerDetails = await _cosmosDbService.ContainerManager.TriggerDetailData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(TriggerDetail triggerDetail in triggerDetails.OrderBy(x => x.Name))
+			foreach (TriggerDetail triggerDetail in triggerDetails.OrderBy(x => x.Name))
 			{
 				list.Add(triggerDetail.Id, $"{triggerDetail.Name}");
 			}
@@ -903,10 +920,10 @@ namespace ConversationBuilder.Controllers
 			Dictionary<string, string> conversationInteractions = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			
-			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
+
+			foreach (Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
-				if(interaction.ConversationId == null) continue;  //temp hack for old data
+				if (interaction.ConversationId == null) continue;  //temp hack for old data
 				conversationInteractions.TryAdd(interaction.Id, interaction.Name);
 			}
 			return conversationInteractions ?? new Dictionary<string, string>();
@@ -917,10 +934,10 @@ namespace ConversationBuilder.Controllers
 			//TODO Deal with performance reloading and paging
 			Dictionary<string, string> interactionAnimations = new Dictionary<string, string>();
 			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
-			
-			foreach(KeyValuePair<string, string> interactionAnimation in conversation.InteractionAnimations)
+
+			foreach (KeyValuePair<string, string> interactionAnimation in conversation.InteractionAnimations)
 			{
-				if(interactionAnimation.Value == null) continue;
+				if (interactionAnimation.Value == null) continue;
 
 				interactionAnimations.TryAdd(interactionAnimation.Key, interactionAnimation.Value);
 			}
@@ -932,10 +949,10 @@ namespace ConversationBuilder.Controllers
 			//TODO Deal with performance reloading and paging
 			Dictionary<string, string> interactionAnimations = new Dictionary<string, string>();
 			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
-			
-			foreach(KeyValuePair<string, string> interactionAnimation in conversation.InteractionPreSpeechAnimations)
+
+			foreach (KeyValuePair<string, string> interactionAnimation in conversation.InteractionPreSpeechAnimations)
 			{
-				if(interactionAnimation.Value == null) continue;
+				if (interactionAnimation.Value == null) continue;
 
 				interactionAnimations.TryAdd(interactionAnimation.Key, interactionAnimation.Value);
 			}
@@ -946,18 +963,18 @@ namespace ConversationBuilder.Controllers
 		{
 			//Get conversations from this group
 			IDictionary<string, Dictionary<string, string>> conversationInteractions = new Dictionary<string, Dictionary<string, string>>();
-	
+
 			Dictionary<string, string> interactionList = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(1, 10000, conversationId, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
+			foreach (Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
-				if(interaction?.Id != null && !interactionList.ContainsKey(interaction.Id))
+				if (interaction?.Id != null && !interactionList.ContainsKey(interaction.Id))
 				{
-					interactionList.Add(interaction.Id, interaction.Name);				
-				}							
+					interactionList.Add(interaction.Id, interaction.Name);
+				}
 			}
-			interactionList.Add(ConversationDeparturePoint, ConversationDeparturePoint);				
+			interactionList.Add(ConversationDeparturePoint, ConversationDeparturePoint);
 			conversationInteractions.Add(conversationId, interactionList);
 
 			conversationInteractions.OrderByDescending(x => x.Key);
@@ -968,14 +985,14 @@ namespace ConversationBuilder.Controllers
 		{
 			IDictionary<string, InteractionViewModel> data = new Dictionary<string, InteractionViewModel>();
 			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(conversationGroupId);
-			
-			foreach(string conversationId in conversationGroup.Conversations.Where(x => x != null))
+
+			foreach (string conversationId in conversationGroup.Conversations.Where(x => x != null))
 			{
-				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
-				foreach(string interactionId in conversation.Interactions.Where(x => x != null))
-				{	
+				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+				foreach (string interactionId in conversation.Interactions.Where(x => x != null))
+				{
 					Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interactionId);
-					if(interaction.ConversationEntryPoint)
+					if (interaction.ConversationEntryPoint)
 					{
 						InteractionViewModel interactionViewModel = new InteractionViewModel();
 						interactionViewModel.ConversationName = conversation.Name;
@@ -991,15 +1008,15 @@ namespace ConversationBuilder.Controllers
 						interactionViewModel.StartListening = interaction.StartListening;
 						interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;
 						interactionViewModel.AllowKeyPhraseRecognition = interaction.AllowKeyPhraseRecognition;
-						interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;			
-						interactionViewModel.UsePreSpeech = interaction.UsePreSpeech;					
-						interactionViewModel.PreSpeechPhrases = interaction.PreSpeechPhrases;															
+						interactionViewModel.ConversationEntryPoint = interaction.ConversationEntryPoint;
+						interactionViewModel.UsePreSpeech = interaction.UsePreSpeech;
+						interactionViewModel.PreSpeechPhrases = interaction.PreSpeechPhrases;
 						interactionViewModel.AllowVoiceProcessingOverride = interaction.AllowVoiceProcessingOverride;
 						interactionViewModel.ListenTimeout = interaction.ListenTimeout;
 						interactionViewModel.SilenceTimeout = interaction.SilenceTimeout;
 
 						data.Add(interactionId, interactionViewModel);
-					}	
+					}
 				}
 			}
 			return data;
@@ -1009,29 +1026,29 @@ namespace ConversationBuilder.Controllers
 		{
 			IDictionary<string, TriggerActionOption> data = new Dictionary<string, TriggerActionOption>();
 			ConversationGroup conversationGroup = await _cosmosDbService.ContainerManager.ConversationGroupData.GetAsync(conversationGroupId);
-			
-			foreach(string conversationId in conversationGroup.Conversations.Where(x => x != null))
+
+			foreach (string conversationId in conversationGroup.Conversations.Where(x => x != null))
 			{
-				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);	
-				foreach(IList<TriggerActionOption> triggerActionOptions in conversation.ConversationTriggerMap.Values)
+				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+				foreach (IList<TriggerActionOption> triggerActionOptions in conversation.ConversationTriggerMap.Values)
 				{
-					foreach(TriggerActionOption triggerActionOption in triggerActionOptions)
+					foreach (TriggerActionOption triggerActionOption in triggerActionOptions)
 					{
-						if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
+						if (triggerActionOption.GoToConversation == ConversationDeparturePoint)
 						{
 							data.Add(triggerActionOption.Id, triggerActionOption);
 						}
 					}
 				}
-				
-				foreach(string interactionId in conversation.Interactions.Where(x => x != null))
-				{	
+
+				foreach (string interactionId in conversation.Interactions.Where(x => x != null))
+				{
 					Interaction interaction = await _cosmosDbService.ContainerManager.InteractionData.GetAsync(interactionId);
-					foreach(IList<TriggerActionOption> triggerActionOptions in interaction.TriggerMap.Values)
+					foreach (IList<TriggerActionOption> triggerActionOptions in interaction.TriggerMap.Values)
 					{
-						foreach(TriggerActionOption triggerActionOption in triggerActionOptions)
+						foreach (TriggerActionOption triggerActionOption in triggerActionOptions)
 						{
-							if(triggerActionOption.GoToConversation == ConversationDeparturePoint)
+							if (triggerActionOption.GoToConversation == ConversationDeparturePoint)
 							{
 								data.Add(triggerActionOption.Id, triggerActionOption);
 							}
@@ -1046,7 +1063,7 @@ namespace ConversationBuilder.Controllers
 		{
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			IList<Interaction> interactions = await _cosmosDbService.ContainerManager.InteractionData.GetListAsync(0, 1000, conversationId);//TODO
-			foreach(Interaction interaction in interactions.OrderBy(x => x.Name))
+			foreach (Interaction interaction in interactions.OrderBy(x => x.Name))
 			{
 				list.Add(interaction.Id, interaction.Name);
 			}
@@ -1057,29 +1074,29 @@ namespace ConversationBuilder.Controllers
 		{
 			//Get conversations from this group
 			IList<ConversationGroup> conversationGroups = await _cosmosDbService.ContainerManager.ConversationGroupData.GetListAsync(1, 10000);
-			IEnumerable<ConversationGroup> filteredConversationGroups = conversationGroups.Where(x => x.Conversations.Contains(conversationId));	
+			IEnumerable<ConversationGroup> filteredConversationGroups = conversationGroups.Where(x => x.Conversations.Contains(conversationId));
 			IDictionary<string, string> list = new Dictionary<string, string>();
 
-			if(filteredConversationGroups == null || !filteredConversationGroups.Any())
+			if (filteredConversationGroups == null || !filteredConversationGroups.Any())
 			{
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
-				list.Add(conversation.Id, conversation.Name);											
+				list.Add(conversation.Id, conversation.Name);
 			}
 			else
 			{
-				foreach(ConversationGroup conversationGroup in filteredConversationGroups)
+				foreach (ConversationGroup conversationGroup in filteredConversationGroups)
 				{
-					foreach(string otherConversationId in conversationGroup.Conversations)
+					foreach (string otherConversationId in conversationGroup.Conversations)
 					{
-						if(!string.IsNullOrWhiteSpace(otherConversationId) && !list.ContainsKey(otherConversationId))
+						if (!string.IsNullOrWhiteSpace(otherConversationId) && !list.ContainsKey(otherConversationId))
 						{
 							Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(otherConversationId);
-							list.Add(conversation.Id, conversation.Name);						
+							list.Add(conversation.Id, conversation.Name);
 						}
-						
+
 					}
 				}
-			}			
+			}
 
 			list.OrderByDescending(x => x.Key);
 			return list ?? new Dictionary<string, string>();
@@ -1089,10 +1106,10 @@ namespace ConversationBuilder.Controllers
 		{
 			//TODO Deal with performance reloading and paging
 			IDictionary<string, string> list = new Dictionary<string, string>();
-			
+
 			await VerifyUserData();
 			IList<Conversation> conversations = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(Conversation conversation in conversations.OrderBy(x => x.Name))
+			foreach (Conversation conversation in conversations.OrderBy(x => x.Name))
 			{
 				list.Add(conversation.Id, conversation.Name);
 			}
@@ -1105,7 +1122,7 @@ namespace ConversationBuilder.Controllers
 			IDictionary<string, string> list = new Dictionary<string, string>();
 			await VerifyUserData();
 			IList<CharacterConfiguration> conversations = await _cosmosDbService.ContainerManager.CharacterConfigurationData.GetListAsync(1, 10000, _userConfiguration.ShowAllConversations ? "" : _userInformation?.AccessId);
-			foreach(CharacterConfiguration characterConfiguration in conversations.OrderBy(x => x.Name))
+			foreach (CharacterConfiguration characterConfiguration in conversations.OrderBy(x => x.Name))
 			{
 				list.Add(characterConfiguration.Id, characterConfiguration.Name);
 			}
@@ -1114,7 +1131,7 @@ namespace ConversationBuilder.Controllers
 
 		protected async Task<bool> CanBeDeleted(string itemId, DeleteItem itemType)
 		{
-			switch(itemType)
+			switch (itemType)
 			{
 				case DeleteItem.GenericDataStore:
 					IList<Conversation> conversations0 = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync();
@@ -1147,13 +1164,13 @@ namespace ConversationBuilder.Controllers
 					IList<Conversation> conversations5 = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync();
 					return !conversations5.Any(x => x.Triggers.Contains(itemId));
 				case DeleteItem.SpeechHandler:
-					IList<Conversation> conversations6 = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync();					
-					foreach(Conversation conversation in conversations6.Where( x => x != null))
+					IList<Conversation> conversations6 = await _cosmosDbService.ContainerManager.ConversationData.GetListAsync();
+					foreach (Conversation conversation in conversations6.Where(x => x != null))
 					{
-						foreach(string triggerId in conversation.Triggers.Where( x => x != null))
+						foreach (string triggerId in conversation.Triggers.Where(x => x != null))
 						{
 							TriggerDetail triggerDetail = await _cosmosDbService.ContainerManager.TriggerDetailData.GetAsync(triggerId);
-							if(triggerDetail.Trigger == "SpeechHeard" && triggerDetail.Id == itemId)
+							if (triggerDetail.Trigger == "SpeechHeard" && triggerDetail.Id == itemId)
 							{
 								return false;
 							}
@@ -1172,7 +1189,7 @@ namespace ConversationBuilder.Controllers
 		CharacterConfiguration,
 		Conversation,
 		SkillMessage,
-		Trigger,		
+		Trigger,
 		SpeechHandler,
 		ArmLocation,
 		HeadLocation,
