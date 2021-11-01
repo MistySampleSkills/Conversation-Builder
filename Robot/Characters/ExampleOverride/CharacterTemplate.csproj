@@ -144,10 +144,6 @@
       <Project>{A1B74B3E-050D-423E-B00D-51A6BE475150}</Project>
       <Name>TimeManager</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\MistyInteraction\MistyInteraction.csproj">
-      <Project>{60e0d411-3eb1-4ee9-8172-a59ce2857378}</Project>
-      <Name>MistyInteraction</Name>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

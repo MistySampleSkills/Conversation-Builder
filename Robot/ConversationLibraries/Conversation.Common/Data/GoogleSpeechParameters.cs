@@ -50,12 +50,12 @@ namespace Conversation.Common
 		/// <summary>
 		/// Text to speech Endpoint
 		/// </summary>
-		public string TTSEndpoint { get; set; }
+		public string Endpoint { get; set; }
 
 		/// <summary>
 		/// Speech To Text Endpoint
 		/// </summary>
-		public string STTEndpoint { get; set; }
+		//public string STTEndpoint { get; set; }
 
 		/// <summary>
 		/// Speaking voice, works better if proper voice for translated language

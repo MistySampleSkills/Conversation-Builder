@@ -30,36 +30,24 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Conversation.Common;
-using MistyRobotics.Common.Types;
-using MistyRobotics.SDK.Events;
-using MistyRobotics.SDK.Messengers;
-using SkillTools.Web;
 
-namespace MistyCharacter
+namespace Conversation.Common
 {
-	public class Speak : ConversationCommand
+	public class ConversationCommand
 	{
-		FurhatManager _furhatManager;
+		public delegate object ExecuteCommand(IDictionary<string, object> parameters);
 
-		public Speak(string name, FurhatManager furhatManager)
-		: base(name)
+		private ExecuteCommand command;
+
+		public ConversationCommand(string name, ExecuteCommand code)
 		{
-			_furhatManager = furhatManager;
+			Name = name;
+			command = code;
 		}
 
-		public new async Task<object> Code(IDictionary<string, object> parameters)
-		{
-			//TryToPersonalizeData(commandData[0], out string newText);
+		public string Name { get; set; }
 
-			_ = await _furhatManager.Speak(Convert.ToString(parameters.First().Value));
-			return true;
-		}
 	}
 }
-
+ 

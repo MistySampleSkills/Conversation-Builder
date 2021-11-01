@@ -36,15 +36,15 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
-using MistyCharacter;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
 using SkillTools.Web;
+using SpeechTools;
 
-namespace MistyCharacter
+namespace FurhatCommands
 {
-	public class FurhatManager
+	public class FurhatCommandManager : IFurhatCommandManager
 	{
 		private string _ip;
 		private const string ApiEndpoint = "/furhat";
@@ -53,17 +53,25 @@ namespace MistyCharacter
 
 		private const string FurhatIp = "FurhatIp";
 
-		protected IDictionary<string, object> _parameters { get; set; }
-		protected IRobotMessenger _misty { get; set; }
-		protected CharacterParameters _characterParameters { get; set; }
+		private IDictionary<string, object> _parameters { get; set; }
+		private IRobotMessenger _misty { get; set; }
+		private CharacterParameters _characterParameters { get; set; }
+		private IList<ConversationCommand> _commands { get; set; } = new List<ConversationCommand>();
 
-		public FurhatManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, SpeechManager speechManager)
+		public IList<ConversationCommand> GetCommands()
+		{
+			//makee a copy
+			return _commands;
+		}
+
+		public FurhatCommandManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, SpeechManager speechManager)
 		{
 			_misty = misty;
 			_parameters = parameters;
 			_characterParameters = characterParameters;
 			//TODO process params and get furhat ip
 			_ip = "10.0.0.100";
+			_speechManager = speechManager;
 		}
 
 		public Task<bool> Initialize()
@@ -73,6 +81,8 @@ namespace MistyCharacter
 				_ip = FurhatIp;
 				return Task.FromResult(true);
 			}
+
+			_commands.Add(new ConversationCommand("F-SPEAK", Voice));
 
 			return Task.FromResult(false);
 		}
@@ -102,6 +112,11 @@ namespace MistyCharacter
 				_misty.SkillLogger.LogInfo("Furhat 'AttendClosest' threw exception", ex);
 				return false;
 			}
+		}
+
+		private async Task<object> Voice(IDictionary<string, object> data)
+		{
+			return await Voice(Convert.ToString(data.First().Value));
 		}
 
 		public async Task<bool> Voice(string voice)

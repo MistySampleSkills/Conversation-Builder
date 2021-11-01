@@ -31,49 +31,24 @@
 //**********************************************************************/
 
 //using System;
-//using System.Collections.Generic;
 //using System.Threading.Tasks;
 //using Conversation.Common;
 //using MistyRobotics.SDK.Events;
 
 //namespace MistyCharacter
 //{
-//	public interface ISpeechManager
+//	public interface ILocomotionManager
 //	{
 //		Task<bool> Initialize();
-//		int Volume { get; set; }
-//		void Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
-//		string GetLocaleName(string name);
-//		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
-//		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
-//		void AbortListening(string audioName);		
-//		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
-//		bool TryToPersonalizeData(string text, out string newText);
 
+//		Task HandleLocomotionAction(LocomotionAction locomotionAction);
 
-//		void SetAudioTrim(int trimMs);
-//		void SetMaxSilence(int silenceTimeout);
-//		void SetMaxListen(int listenTimeout);
-//		//void UpdatePrespeech(string prespeech);
-//		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
-
-
-
-
-
-
-
-//		event EventHandler<string> StartedSpeaking;
-//		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
-//		event EventHandler<DateTime> StartedListening;
-//		event EventHandler<IVoiceRecordEvent> StoppedListening;
-//		event EventHandler<TriggerData> SpeechIntent;
-//		event EventHandler<bool> KeyPhraseRecognitionOn;
-//		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
-//		event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
-//		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
-//		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-//		event EventHandler<string> UserDataAnimationScript;
+//		event EventHandler<LocomotionAction> StartedLocomotionAction;
+//		event EventHandler<LocomotionAction> CompletedLocomotionAction;
+//		event EventHandler<LocomotionAction> PassingWaypoint;
+//		event EventHandler<LocomotionAction> ReachedDestination;
+//		event EventHandler<LocomotionAction> LocomotionFailed;
+//		event EventHandler<LocomotionAction> TryingNewRoute;
 
 //		void Dispose();
 //	}

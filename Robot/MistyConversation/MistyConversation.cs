@@ -75,7 +75,10 @@ namespace MistyConversation
 			try
 			{
 				_conversationManager = new ConversationManager(_misty, parameters, new MistyCharacter.ManagerConfiguration());
-				if (!await _conversationManager.Initialize(new BasicMisty(_misty, parameters, new ManagerConfiguration())))
+				
+				//Put in templates if desired...
+				//eg: if (!await _conversationManager.Initialize(new EventTemplateMisty(_misty, parameters, new ManagerConfiguration())))
+				if (!await _conversationManager.Initialize(new BasicMisty(_misty, parameters, new ManagerConfiguration())))				
 				{
 					_misty.SkillLogger.Log($"Failed to initialize conversation manager.");
 					_misty.SkillCompleted();

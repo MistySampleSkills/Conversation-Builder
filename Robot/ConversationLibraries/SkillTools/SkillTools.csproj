@@ -144,10 +144,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="System.IO">
       <Version>4.3.0</Version>

@@ -62,9 +62,8 @@ namespace MistyCharacter
 		/// <param name="emotionManager"></param>
 		/// <param name="speechIntentManager"></param>
 		/// <param name="animationManager"></param>
-		/// <param name="locomotionManager"></param>
 		[Obsolete("Arm Manager and Head Manager are deprecated, please use Animation Manager instead.")]
-		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null, ILocomotionManager locomotionManager = null)
+		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null/*, ILocomotionManager locomotionManager = null*/)
 		{
 			SpeechManager = speechmanager;
 			ArmManager = armManager;
@@ -73,16 +72,17 @@ namespace MistyCharacter
 			EmotionManager = emotionManager;
 			SpeechIntentManager = speechIntentManager;
 			AnimationManager = animationManager;
-			LocomotionManager = locomotionManager;
+			//LocomotionManager = locomotionManager;
 		}
 
 		public ISpeechManager SpeechManager { get; set; }
+
 		public IArmManager ArmManager { get; set; }
 		public IHeadManager HeadManager { get; set; }
 		public ITimeManager TimeManager { get; set; }
 		public IEmotionManager EmotionManager { get; set; }
 		public ISpeechIntentManager SpeechIntentManager { get; set; }
 		public IAnimationManager AnimationManager { get; set; }
-		public ILocomotionManager LocomotionManager { get; set; }
+//		public ILocomotionManager LocomotionManager { get; set; }
 	}
 }

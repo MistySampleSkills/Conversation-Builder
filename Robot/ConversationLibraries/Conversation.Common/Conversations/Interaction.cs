@@ -40,8 +40,15 @@ namespace Conversation.Common
 
 		public string Name { get; set; }
 
+		public string InitializationScript { get; set; }
+
 		public string Animation { get; set; }
-		
+		public string InteractionScript { get; set; }
+
+		public string ListeningAnimation { get; set; }
+		public string ProcessingAnimation { get; set; }
+
+
 		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 
 		public double InteractionFailedTimeout { get; set; } = 120;

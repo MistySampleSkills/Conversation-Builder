@@ -121,13 +121,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Data\TimerTriggerData.cs" />
-    <Compile Include="DefaultManagers\AnimationManager.cs" />
-    <Compile Include="DefaultManagers\LocomotionManager.cs" />
+    <Compile Include="Character\AnimationManager.cs" />
+    <Compile Include="Deprecated\LocomotionManager.cs" />
     <Compile Include="Data\ManagerConfiguration.cs" />
     <Compile Include="Character\IBaseCharacter.cs" />
     <Compile Include="Character\BaseManager.cs" />
-    <Compile Include="DefaultManagers\IAnimationManager.cs" />
-    <Compile Include="DefaultManagers\ILocomotionManager.cs" />
+    <Compile Include="Character\IAnimationManager.cs" />
+    <Compile Include="Deprecated\ILocomotionManager.cs" />
     <Compile Include="Deprecated\IArmManager.cs" />
     <Compile Include="Deprecated\IHeadManager.cs" />
     <Compile Include="Deprecated\ArmManager.cs" />
@@ -137,8 +137,6 @@
     <Compile Include="Emotion\EmotionManager.cs" />
     <Compile Include="Emotion\IEmotionManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Speech\ISpeechManager.cs" />
-    <Compile Include="Speech\SpeechManager.cs" />
     <Compile Include="Types\ListeningState.cs" />
     <EmbeddedResource Include="Properties\MistyCharacter.rd.xml" />
   </ItemGroup>

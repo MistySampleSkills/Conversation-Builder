@@ -120,11 +120,8 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Commands\Speak.cs" />
-    <Compile Include="Commands\TestCommand.cs" />
-    <Compile Include="FurhatCommandInitializer.cs" />
-    <Compile Include="FurhatManager.cs" />
-    <Compile Include="IFurhatManager.cs" />
+    <Compile Include="FurhatCommandManager.cs" />
+    <Compile Include="IFurhatCommandManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\FurhatCommands.rd.xml" />
   </ItemGroup>
@@ -148,13 +145,13 @@
       <Project>{C081F243-3735-4C72-B071-29B751E460B1}</Project>
       <Name>SkillTools</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\ConversationLibraries\SpeechTools\SpeechTools.csproj">
+      <Project>{8A67AA55-D289-41D3-8AFE-54960B21A5B4}</Project>
+      <Name>SpeechTools</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\MistyConversation\MistyConversation.csproj">
       <Project>{2c224b33-2acc-4a91-8447-f317f09bc1e8}</Project>
       <Name>MistyConversation</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MistyCommand\MistyCommand.csproj">
-      <Project>{3979fe14-a6d6-4733-8730-bb4c945c2622}</Project>
-      <Name>MistyCommand</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

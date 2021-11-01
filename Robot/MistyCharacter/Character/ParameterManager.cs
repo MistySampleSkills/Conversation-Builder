@@ -446,6 +446,18 @@ namespace MistyCharacter
 					CharacterParameters.InitializationStatusMessage = $"Speech configuration not set, speech intent will not work.";
 				}
 
+				CharacterParameters.AzureTTSParameters = new AzureSpeechParameters();
+				CharacterParameters.GoogleTTSParameters = new GoogleSpeechParameters();
+				CharacterParameters.AzureSpeechRecognitionParameters = new AzureSpeechParameters();
+				CharacterParameters.GoogleSpeechRecognitionParameters = new GoogleSpeechParameters();
+
+				CharacterParameters.SpeechConfiguration = JsonConvert.DeserializeObject<SpeechConfiguration>(GetStringField(_parameters, ConversationConstants.SpeechConfiguration)) ?? new SpeechConfiguration();
+				SetSpeechParameters();
+
+				/*
+
+
+
 				CharacterParameters.AzureSpeechParameters = new AzureSpeechParameters();
 				CharacterParameters.GoogleSpeechParameters = new GoogleSpeechParameters();
 
@@ -480,10 +492,10 @@ namespace MistyCharacter
 						CharacterParameters.GoogleSpeechParameters.SpeakingGender = speechConfiguration.SpeakingGender ?? "FEMALE";
 						CharacterParameters.GoogleSpeechParameters.SpokenLanguage = speechConfiguration.SpokenLanguage ?? "en-US";					
 					}
-				}
+				}*/
 				
-				CharacterParameters.SpeechRecognitionService = speechConfiguration.SpeechRecognitionService ?? "Azure";
-				CharacterParameters.TextToSpeechService = speechConfiguration.TextToSpeechService ?? "Misty";
+			//	CharacterParameters.SpeechRecognitionService = speechConfiguration.SpeechRecognitionService ?? "Azure";
+			//	CharacterParameters.TextToSpeechService = speechConfiguration.TextToSpeechService ?? "Misty";
 
 				CharacterParameters.TrackHistory = GetIntField(_parameters, ConversationConstants.TrackHistory) ?? 3;
 				CharacterParameters.PersonConfidence = GetDoubleField(_parameters, ConversationConstants.PersonConfidence) ?? 0.6;
@@ -537,7 +549,65 @@ namespace MistyCharacter
 			return CharacterParameters;
 		}
 
-	
+
+		private void SetSpeechParameters()
+		{
+			//Speech Rec Parameters
+			if (!string.IsNullOrWhiteSpace(CharacterParameters.SpeechConfiguration?.SpeechRecognitionSubscriptionKey))
+			{
+				string recService = CharacterParameters.SpeechConfiguration.SpeechRecognitionService.ToLower().Trim();
+
+				if (recService == "azure" || recService == "azureonboard")
+				{
+					CharacterParameters.AzureSpeechRecognitionParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.SpeechRecognitionSubscriptionKey;
+					CharacterParameters.AzureSpeechRecognitionParameters.Region = CharacterParameters.SpeechConfiguration.SpeechRecognitionRegion ?? "";
+					CharacterParameters.AzureSpeechRecognitionParameters.Endpoint = CharacterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "";
+					CharacterParameters.AzureSpeechRecognitionParameters.TranslatedLanguage = CharacterParameters.SpeechConfiguration.TranslatedLanguage ?? "en";
+					CharacterParameters.AzureSpeechRecognitionParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+					CharacterParameters.AzureSpeechRecognitionParameters.ProfanitySetting = CharacterParameters.SpeechConfiguration.ProfanitySetting ?? "Raw";
+				}
+				else if (recService == "google" || recService == "googleonboard")
+				{
+					CharacterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.SpeechRecognitionSubscriptionKey ?? "";
+					CharacterParameters.GoogleSpeechRecognitionParameters.Endpoint = CharacterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "https://speech.googleapis.com/v1p1beta1/speech:recognize?key=";
+					CharacterParameters.GoogleSpeechRecognitionParameters.SpeakingVoice = CharacterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
+					CharacterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+				}
+
+
+				CharacterParameters.SpeechRecognitionService = recService ?? "vosk";
+			}
+
+
+
+			//TTS Parameters
+			if (!string.IsNullOrWhiteSpace(CharacterParameters.SpeechConfiguration?.TextToSpeechSubscriptionKey))
+			{
+				string recService = CharacterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
+
+				if (recService == "azure" || recService == "azureonboard")
+				{
+					CharacterParameters.AzureTTSParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
+					CharacterParameters.AzureTTSParameters.Region = CharacterParameters.SpeechConfiguration.SpeechRecognitionRegion ?? "";
+					CharacterParameters.AzureTTSParameters.Endpoint = CharacterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "";
+					CharacterParameters.AzureTTSParameters.SpeakingVoice = CharacterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-AriaNeural";
+					CharacterParameters.AzureTTSParameters.TranslatedLanguage = CharacterParameters.SpeechConfiguration.TranslatedLanguage ?? "en";
+					CharacterParameters.AzureTTSParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+					CharacterParameters.AzureTTSParameters.ProfanitySetting = CharacterParameters.SpeechConfiguration.ProfanitySetting ?? "Raw";
+				}
+				else if (recService == "google" || recService == "googleonboard")
+				{
+					CharacterParameters.GoogleTTSParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
+					CharacterParameters.GoogleTTSParameters.Endpoint = CharacterParameters.SpeechConfiguration.TextToSpeechEndpoint ?? "https://texttospeech.googleapis.com/v1/text:synthesize?key=";
+					CharacterParameters.GoogleTTSParameters.SpeakingVoice = CharacterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
+					CharacterParameters.GoogleTTSParameters.SpeakingGender = CharacterParameters.SpeechConfiguration.SpeakingGender ?? "FEMALE";
+					CharacterParameters.GoogleTTSParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+				}
+
+				CharacterParameters.TextToSpeechService = recService ?? "Misty";
+			}
+		}
+
 		private ConversationGroup GetDefaultSurvey()
 		{
 			try

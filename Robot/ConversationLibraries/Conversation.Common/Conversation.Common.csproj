@@ -133,6 +133,7 @@
     <Compile Include="Conversations\SkillMessage.cs" />
     <Compile Include="Conversations\TriggerDetail.cs" />
     <Compile Include="Conversations\UtteranceData.cs" />
+    <Compile Include="Data\ConversationCommand.cs" />
     <Compile Include="Data\SpeechConfiguration.cs" />
     <Compile Include="Data\AzureSpeechParameters.cs" />
     <Compile Include="Data\CharacterParameters.cs" />
@@ -158,10 +159,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="System.IO">
       <Version>4.3.0</Version>

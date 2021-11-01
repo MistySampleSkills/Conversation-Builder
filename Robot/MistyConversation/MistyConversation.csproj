@@ -95,6 +95,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="EventTemplateMisty.cs" />
     <Compile Include="MistyConversation.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -134,10 +135,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
@@ -145,13 +146,17 @@
       <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ConversationLibraries\SpeechTools\SpeechTools.csproj">
+      <Project>{8A67AA55-D289-41D3-8AFE-54960B21A5B4}</Project>
+      <Name>SpeechTools</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ConversationLibraries\TimeManager\TimeManager.csproj">
       <Project>{a1b74b3e-050d-423e-b00d-51a6be475150}</Project>
       <Name>TimeManager</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MistyInteraction\MistyInteraction.csproj">
-      <Project>{60e0d411-3eb1-4ee9-8172-a59ce2857378}</Project>
-      <Name>MistyInteraction</Name>
+    <ProjectReference Include="..\MistyCharacter\MistyCharacter.csproj">
+      <Project>{b3665f59-b772-4058-b522-eaefe3980f7c}</Project>
+      <Name>MistyCharacter</Name>
     </ProjectReference>
     <ProjectReference Include="..\MistyManager\MistyManager.csproj">
       <Project>{4B051DD6-90C2-4F93-8509-50D3B0341225}</Project>

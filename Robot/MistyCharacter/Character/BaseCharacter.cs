@@ -92,9 +92,9 @@ namespace MistyCharacter
 		private KeyValuePair<DateTime, TriggerData> _latestTriggerMatchData = new KeyValuePair<DateTime, TriggerData>();
 		private IList<string> _skillsToStop = new List<string>();
 		protected IDictionary<string, object> OriginalParameters = new Dictionary<string, object>();
-		protected IRobotMessenger Misty;
-		protected AzureSpeechParameters AzureSpeechParameters;
-		protected GoogleSpeechParameters GoogleSpeechParameters;
+		protected IRobotMessenger Robot;
+		//protected AzureSpeechParameters AzureSpeechParameters;
+		//protected GoogleSpeechParameters GoogleSpeechParameters;
 		protected ISDKLogger Logger;
 		protected CharacterParameters CharacterParameters { get; private set; } = new CharacterParameters();
 		protected ConcurrentDictionary<string, AnimationRequest> EmotionAnimations = new ConcurrentDictionary<string, AnimationRequest>();
@@ -119,7 +119,7 @@ namespace MistyCharacter
 		private IAnimationManager AnimationManager;
 		private ITimeManager TimeManager;
 		private IEmotionManager EmotionManager;
-		private ILocomotionManager LocomotionManager;
+		//private ILocomotionManager LocomotionManager;
 		private ISpeechIntentManager SpeechIntentManager;
 		private IList<string> LiveTriggers = new List<string>();
 		private ConversationGroup _conversationGroup = new ConversationGroup();
@@ -152,6 +152,7 @@ namespace MistyCharacter
 		private bool _qrTagRegistered;
 		private bool _serialMessageRegistered;
 		private bool _faceRecognitionRegistered;
+		private bool _objectDetectionRegistered;
 
 		private TOFCounter _tofCountFrontRight = new TOFCounter();
 		private TOFCounter _tofCountFrontLeft = new TOFCounter();
@@ -166,54 +167,218 @@ namespace MistyCharacter
 		private bool _triggerHandled = false;
 		private IList<string> _allowedUtterances = new List<string>();
 
+
+
+
+
+
+
+
+
+
+
+
+		public event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
+		public event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
+		public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
+
+		private IObjectDetectionEvent _lastObjectEvent;
+		private IObjectDetectionEvent _lastPersonEvent;
+		private object _timerLock = new object();
+		private Timer _moveHeadTimer;
+		private double? _lastPitch = 0;
+		private double? _lastYaw = 0;
+		private double? _lastActuatorYaw;
+		private double? _lastActuatorPitch;
+		private bool _headMovingContinuously;
+		private object _findFaceLock = new object();
+		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
+		private DateTime _followedObjectLastSeen = DateTime.Now;
+		private DateTime _lastMovementCommand = DateTime.Now;
+		private bool _tick = false;
+
+		private void ObjectDetectionCallback(IObjectDetectionEvent objEvent)
+		{
+			try
+			{
+				if (objEvent.Description == "person")
+				{
+					_followedObjectLastSeen = DateTime.Now;
+					_lastPersonEvent = objEvent;
+					_lastObjectEvent = null;
+				}
+				else if (objEvent.Description.ToLower() == _currentHeadRequest?.FollowObject?.ToLower())
+				{
+					_followedObjectLastSeen = DateTime.Now;
+					_lastObjectEvent = objEvent;
+					_lastPersonEvent = null;
+				}
+				else
+				{
+					_lastObjectEvent = null;
+					_lastPersonEvent = null;
+				}
+				ObjectEvent?.Invoke(this, objEvent);
+			}
+			catch (Exception ex)
+			{
+				Robot.SkillLogger.Log("Failed processing face event.", ex);
+			}
+		}
+
+
+		public void RegisterLocomotionEvents()
+		{
+			//Register Bump Sensors with a callback
+			Robot.RegisterBumpSensorEvent(BumpCallback, 0, true, null, null, null);
+
+			//Front Right Time of Flight
+			List<TimeOfFlightValidation> tofFrontRightValidations = new List<TimeOfFlightValidation>();
+			tofFrontRightValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.FrontRight });
+			Robot.RegisterTimeOfFlightEvent(TOFFRRangeCallback, 0, true, tofFrontRightValidations, "FrontRight", null);
+
+			//Front Left Time of Flight
+			List<TimeOfFlightValidation> tofFrontLeftValidations = new List<TimeOfFlightValidation>();
+			tofFrontLeftValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.FrontLeft });
+			Robot.RegisterTimeOfFlightEvent(TOFFLRangeCallback, 0, true, tofFrontLeftValidations, "FrontLeft", null);
+
+			//Front Center Time of Flight
+			List<TimeOfFlightValidation> tofFrontCenterValidations = new List<TimeOfFlightValidation>();
+			tofFrontCenterValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.FrontCenter });
+			Robot.RegisterTimeOfFlightEvent(TOFCRangeCallback, 0, true, tofFrontCenterValidations, "FrontCenter", null);
+
+			//Back Time of Flight
+			List<TimeOfFlightValidation> tofBackValidations = new List<TimeOfFlightValidation>();
+			tofBackValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.Back });
+			Robot.RegisterTimeOfFlightEvent(TOFBRangeCallback, 0, true, tofBackValidations, "Back", null);
+
+			//Setting debounce a little higher to avoid too much traffic
+			//Firmware will do the actual stop for edge detection
+			List<TimeOfFlightValidation> tofFrontRightEdgeValidations = new List<TimeOfFlightValidation>();
+			tofFrontRightEdgeValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.DownwardFrontRight });
+			Robot.RegisterTimeOfFlightEvent(FrontEdgeCallback, 1000, true, tofFrontRightEdgeValidations, "FREdge", null);
+
+			List<TimeOfFlightValidation> tofFrontLeftEdgeValidations = new List<TimeOfFlightValidation>();
+			tofFrontLeftEdgeValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.DownwardFrontLeft });
+			Robot.RegisterTimeOfFlightEvent(FrontEdgeCallback, 1000, true, tofFrontLeftEdgeValidations, "FLEdge", null);
+
+			IList<DriveEncoderValidation> driveValidations = new List<DriveEncoderValidation>();
+			LogEventDetails(Robot.RegisterDriveEncoderEvent(EncoderCallback, 250, true, driveValidations, "DriveEncoder", null));
+
+			LogEventDetails(Robot.RegisterIMUEvent(IMUCallback, 50, true, null, "IMU", null));
+
+		}
+
+		private void ActuatorCallback(IActuatorEvent actuatorEvent)
+		{
+			switch (actuatorEvent.SensorPosition)
+			{
+				case ActuatorPosition.HeadPitch:
+					_lastActuatorPitch = actuatorEvent.ActuatorValue;
+					HeadPitchActuatorEvent?.Invoke(this, actuatorEvent);
+					break;
+				case ActuatorPosition.HeadYaw:
+					_lastActuatorYaw = actuatorEvent.ActuatorValue;
+					HeadYawActuatorEvent?.Invoke(this, actuatorEvent);
+					break;
+				case ActuatorPosition.HeadRoll:
+					HeadRollActuatorEvent?.Invoke(this, actuatorEvent);
+					break;
+			}
+		}
+
+		private bool _finding = false;
+
+
+
+
 		public BaseCharacter(IRobotMessenger misty, 
 			IDictionary<string, object> originalParameters,
 			ManagerConfiguration managerConfiguration = null)
 		{
-			Misty = misty;
+			Robot = misty;
 			OriginalParameters = originalParameters;
 			_managerConfiguration = managerConfiguration;
 		}
+
+		private void RegisterHeadEvents()
+		{
+			Robot.UnregisterEvent("GenericODEvent", null);
+			Robot.UnregisterEvent("ODEventForObjectFollow", null);
+			Robot.UnregisterEvent("HeadYaw", null);
+			Robot.UnregisterEvent("HeadPitch", null);
+			Robot.UnregisterEvent("HeadRoll", null);
+
+			_currentHeadRequest = new HeadLocation(null, null, null);
+
+			//Person object, used for following face
+			List<ObjectValidation> personValidations = new List<ObjectValidation>();
+			personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
+			LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
+
+			List<ObjectValidation> objectValidations = new List<ObjectValidation>();
+			objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
+			LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
+
+			//Head Actuators for following actions.
+			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
+			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
+			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorYawValidations, "HeadYaw", null));
+
+			IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
+			actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
+			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorPitchValidations, "HeadPitch", null));
+
+			IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
+			actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
+			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
+			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorRollValidations, "HeadRoll", null));
+
+			Robot.StartObjectDetector(CharacterParameters.PersonConfidence, 0, CharacterParameters.TrackHistory, null);
+
+		}
+
 
 		public async Task<bool> Initialize(CharacterParameters characterParameters)
 		{
 			try
 			{
 				
-
 				CharacterParameters = characterParameters;
-				AzureSpeechParameters = characterParameters.AzureSpeechParameters;
-				GoogleSpeechParameters = characterParameters.GoogleSpeechParameters;
-				Logger = Misty.SkillLogger;
+				//AzureSpeechParameters = characterParameters.AzureSpeechParameters;
+				//GoogleSpeechParameters = characterParameters.GoogleSpeechParameters;
+				Logger = Robot.SkillLogger;
 				PopulateEmotionDefaults();
 
 				_conversationGroup = CharacterParameters.ConversationGroup;
 				_genericDataStores = CharacterParameters.ConversationGroup.GenericDataStores;
 				
-				Misty.UnregisterAllEvents(null); //in case last run was stopped abnormally (via debugger)
+				Robot.UnregisterAllEvents(null); //in case last run was stopped abnormally (via debugger)
                 await Task.Delay(200); //time for unreg to happen before we rereg
 
-				AssetWrapper = new AssetWrapper(Misty);
+				AssetWrapper = new AssetWrapper(Robot);
 				_ = RefreshAssetLists();
 
-				TimeManager = _managerConfiguration?.TimeManager ?? new EnglishTimeManager(Misty, OriginalParameters, CharacterParameters);
+				TimeManager = _managerConfiguration?.TimeManager ?? new EnglishTimeManager(Robot, OriginalParameters, CharacterParameters);
 				await TimeManager.Initialize();
 
-				ArmManager = _managerConfiguration?.ArmManager ?? new ArmManager(Misty, OriginalParameters, CharacterParameters);
+				ArmManager = _managerConfiguration?.ArmManager ?? new ArmManager(Robot, OriginalParameters, CharacterParameters);
 				await ArmManager.Initialize();
 
-				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Misty, OriginalParameters, CharacterParameters);
+				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters);
 				await HeadManager.Initialize();
 
-				SpeechIntentManager = _managerConfiguration?.SpeechIntentManager ?? new SpeechIntentManager(Misty, CharacterParameters.ConversationGroup.IntentUtterances, CharacterParameters.ConversationGroup.GenericDataStores);
+				SpeechIntentManager = _managerConfiguration?.SpeechIntentManager ?? new SpeechIntentManager(Robot, CharacterParameters.ConversationGroup.IntentUtterances, CharacterParameters.ConversationGroup.GenericDataStores);
 				
-				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Misty, OriginalParameters, CharacterParameters, CharacterState, StateAtAnimationStart, PreviousState, _genericDataStores, SpeechIntentManager);
+				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Robot, OriginalParameters, CharacterParameters, CharacterState, StateAtAnimationStart, PreviousState, _genericDataStores, SpeechIntentManager);
 				await SpeechManager.Initialize();
 
-				LocomotionManager = _managerConfiguration?.LocomotionManager ?? new LocomotionManager(Misty, OriginalParameters, CharacterParameters);
-				await LocomotionManager.Initialize();
+			//	LocomotionManager = _managerConfiguration?.LocomotionManager ?? new LocomotionManager(Misty, OriginalParameters, CharacterParameters);
+				//await LocomotionManager.Initialize();
 
-				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Misty, OriginalParameters, CharacterParameters, SpeechManager, LocomotionManager, ArmManager, HeadManager);
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager/*, LocomotionManager, ArmManager, HeadManager*/);
 				await AnimationManager.Initialize();
 
 				IgnoreEvents();
@@ -221,10 +386,10 @@ namespace MistyCharacter
 				SpeechManager.SpeechIntent += SpeechManager_SpeechIntent;
 				SpeechManager.PreSpeechCompleted += SpeechManager_PreSpeechCompleted;
 				
-				LogEventDetails(Misty.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
-				LogEventDetails(Misty.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
-				LogEventDetails(Misty.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
-				LogEventDetails(Misty.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
+				LogEventDetails(Robot.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
+				LogEventDetails(Robot.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
+				LogEventDetails(Robot.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
+				LogEventDetails(Robot.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
 
 				//Other events and their kick off calls are registered the first time they are used
 				
@@ -261,7 +426,7 @@ namespace MistyCharacter
 				
 				if (CharacterParameters.ShowListeningIndicator)
 				{
-					_ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
+					_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
 					{
                         Wrap = true,
                         Visible = true,
@@ -280,7 +445,7 @@ namespace MistyCharacter
 
 				if (CharacterParameters.DisplaySpoken)
 				{
-					_ = Misty.SetTextDisplaySettingsAsync("SpokeText", new TextSettings
+					_ = Robot.SetTextDisplaySettingsAsync("SpokeText", new TextSettings
 					{
 						Wrap = true,
 						Visible = true,
@@ -299,7 +464,7 @@ namespace MistyCharacter
 
 				if (CharacterParameters.HeardSpeechToScreen)
 				{
-					_ = Misty.SetTextDisplaySettingsAsync("SpeechText", new TextSettings
+					_ = Robot.SetTextDisplaySettingsAsync("SpeechText", new TextSettings
 					{
 						Wrap = true,
 						Visible = true,
@@ -363,7 +528,7 @@ namespace MistyCharacter
 		public async void UpdateRunningSkillsCallback(object timerData)
 		{
 			IList<string> newSkills = new List<string>();
-			IGetRunningSkillsResponse response = await Misty.GetRunningSkillsAsync();
+			IGetRunningSkillsResponse response = await Robot.GetRunningSkillsAsync();
 			if(response.Data != null && response.Data.Count() > 0)
 			{
 				foreach (RunningSkillDetails details in response.Data.Distinct())
@@ -443,7 +608,7 @@ namespace MistyCharacter
 						animation.Speak = newText;
 						animation.SpeakFileName = ConversationConstants.IgnoreCallback;
 						interaction.StartListening = false;
-						Misty.SkillLogger.Log($"Prespeech saying '{animation?.Speak ?? "nothing"}' and not changing animation.");
+						Robot.SkillLogger.Log($"Prespeech saying '{animation?.Speak ?? "nothing"}' and not changing animation.");
 						SpeechManager.Speak(animation, interaction);
 					}
 				}
@@ -469,7 +634,7 @@ namespace MistyCharacter
             }
             catch (Exception ex)
             {
-                Misty.SkillLogger.Log($"Failed to restart trigger handling.", ex);
+                Robot.SkillLogger.Log($"Failed to restart trigger handling.", ex);
             }
             finally
             {
@@ -494,7 +659,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
             {
-                Misty.SkillLogger.Log($"Failed to restart current interaction.", ex);
+                Robot.SkillLogger.Log($"Failed to restart current interaction.", ex);
             }
 			finally
 			{
@@ -512,7 +677,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
             {
-                Misty.SkillLogger.Log($"Failed to pause trigger handling.", ex);
+                Robot.SkillLogger.Log($"Failed to pause trigger handling.", ex);
             }
 			finally
 			{
@@ -547,12 +712,12 @@ namespace MistyCharacter
 		
 		public async Task<bool> StartConversation(string conversationId = null, string interactionId = null)
 		{
-			Misty.StopKeyPhraseRecognition(null);
-			Misty.SetFlashlight(false, null);
+			Robot.StopKeyPhraseRecognition(null);
+			Robot.SetFlashlight(false, null);
 
 			if (CharacterParameters.StartVolume != null && CharacterParameters.StartVolume > 0)
 			{
-				Misty.SetDefaultVolume((int)CharacterParameters.StartVolume, null);
+				Robot.SetDefaultVolume((int)CharacterParameters.StartVolume, null);
 			}
 			
 			string startConversation = conversationId ?? _conversationGroup.StartupConversation;
@@ -565,8 +730,8 @@ namespace MistyCharacter
 			
 			if (CurrentInteraction != null)
 			{
-				Misty.SkillLogger.Log($"STARTING CONVERSATION");
-				Misty.SkillLogger.Log($"Conversation: {_currentConversationData.Name} | Interaction: {CurrentInteraction?.Name} | Going to starting interaction...");				
+				Robot.SkillLogger.Log($"STARTING CONVERSATION");
+				Robot.SkillLogger.Log($"Conversation: {_currentConversationData.Name} | Interaction: {CurrentInteraction?.Name} | Going to starting interaction...");				
 				if (_currentConversationData.InitiateSkillsAtConversationStart && _currentConversationData.SkillMessages != null)
 				{
 					foreach (SkillMessage skillMessage in _currentConversationData.SkillMessages)
@@ -577,7 +742,7 @@ namespace MistyCharacter
 						{
 							_runningSkills.Add(skillMessage.Skill);
 							IDictionary<string, object> payloadData = OriginalParameters;
-							Misty.RunSkill(skillMessage.Skill, payloadData, null);
+							Robot.RunSkill(skillMessage.Skill, payloadData, null);
 
 							StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Running skill {skillMessage.Skill}.");
 							await Task.Delay(1000);
@@ -600,11 +765,11 @@ namespace MistyCharacter
 			_interactionQueue.Clear();
 			IgnoreEvents();
 
-			Misty.StopFaceRecognition(null);
-			Misty.StopArTagDetector(null);
-			Misty.StopQrTagDetector(null);
+			Robot.StopFaceRecognition(null);
+			Robot.StopArTagDetector(null);
+			Robot.StopQrTagDetector(null);
 
-			Misty.Speak(string.IsNullOrWhiteSpace(speak) ? "Ending conversation." : speak, true, "InteractionTimeout", null);
+			Robot.Speak(string.IsNullOrWhiteSpace(speak) ? "Ending conversation." : speak, true, "InteractionTimeout", null);
 			ConversationEnded?.Invoke(this, DateTime.Now);
 		}
 
@@ -646,13 +811,92 @@ namespace MistyCharacter
 			});
 		}
 
+
+		//TODO ONLY TURN ON AS NEEDED< CURRENTLY IT KEEPS ON!
+		private void RegisterEvent(string trigger)
+		{
+			if (string.IsNullOrWhiteSpace(trigger))
+			{
+				return;
+			}
+
+			trigger = trigger.Trim();
+			//Register events and start services as needed if it is the first time we see this trigger
+			if (!_bumpSensorRegistered && (string.Equals(trigger, Triggers.BumperPressed, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(trigger, Triggers.BumperReleased, StringComparison.OrdinalIgnoreCase)))
+			{
+				LogEventDetails(Robot.RegisterBumpSensorEvent(BumpCallback, 50, true, null, "BumpSensor", null));
+				_bumpSensorRegistered = true;
+			}
+			else if (!_capTouchRegistered && (string.Equals(trigger, Triggers.CapTouched, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(trigger, Triggers.CapReleased, StringComparison.OrdinalIgnoreCase)))
+			{
+				LogEventDetails(Robot.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
+				_capTouchRegistered = true;
+			}
+			else if (!_arTagRegistered && string.Equals(trigger, Triggers.ArTagSeen, StringComparison.OrdinalIgnoreCase))
+			{
+				Robot.StartArTagDetector(7, 140, null);
+				LogEventDetails(Robot.RegisterArTagDetectionEvent(ArTagCallback, 250, true, "ArTag", null));
+				_arTagRegistered = true;
+			}
+			else if (!_qrTagRegistered && string.Equals(trigger, Triggers.QrTagSeen, StringComparison.OrdinalIgnoreCase))
+			{
+				Robot.StartQrTagDetector(null);
+				LogEventDetails(Robot.RegisterQrTagDetectionEvent(QrTagCallback, 250, true, "QrTag", null));
+				_qrTagRegistered = true;
+			}
+			else if (!_serialMessageRegistered && string.Equals(trigger, Triggers.SerialMessage, StringComparison.OrdinalIgnoreCase))
+			{
+				LogEventDetails(Robot.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
+				_serialMessageRegistered = true;
+			}
+			else if (!_faceRecognitionRegistered && string.Equals(trigger, Triggers.FaceRecognized, StringComparison.OrdinalIgnoreCase))
+			{
+				//Misty.StopObjectDetector(null);
+				Robot.StartFaceRecognition(null);
+				//Misty.StartFaceDetection(null);
+				LogEventDetails(Robot.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 250, true, null, "FaceRecognition", null));
+				_faceRecognitionRegistered = true;
+			}
+			else if (!_objectDetectionRegistered && string.Equals(trigger, Triggers.ObjectSeen, StringComparison.OrdinalIgnoreCase))
+			{
+				//Misty.StopFaceRecognition(null);
+				Robot.StartObjectDetector(CharacterParameters.PersonConfidence, 0, 2, null);
+				//Misty.StartFaceDetection(null);
+				LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, 250, true, null, "ObjectDetection", null));
+				_objectDetectionRegistered = true;
+			}
+			else if (!_tofRegistered && string.Equals(trigger, Triggers.TimeOfFlightRange, StringComparison.OrdinalIgnoreCase))
+			{
+				LogEventDetails(Robot.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 100, true, null, "TimeOfFlight", null));
+				_tofRegistered = true;
+			}
+		}
+
+		public void ManualTrigger(object sender, TriggerData trigger)
+		{
+			_ = SendManagedResponseEvent(new TriggerData(trigger.Text, trigger.TriggerFilter, trigger.Trigger));
+		}
+
 		//Script added triggers
 		public void AddTrigger(object sender, KeyValuePair<string, TriggerData> trigger)
 		{
 			TriggerDetail triggerDetail = new TriggerDetail(trigger.Key, trigger.Value.Trigger, trigger.Value.TriggerFilter);
-			TriggerIntentChecking(trigger.Value, triggerDetail);
+
+			ListenToEvent(triggerDetail, 0);
 		}
-		
+
+		public void RemoveTrigger(object sender, string trigger)
+		{
+			TriggerDetail triggerDetail = new TriggerDetail(trigger, trigger);
+
+
+
+			IgnoreEvent(triggerDetail, 0);
+		}
+
+		/*
 		public void RegisterEvent(string trigger)
 		{
 			//Register events and start services as needed if it is the first time we see this trigger
@@ -662,7 +906,7 @@ namespace MistyCharacter
 				case Triggers.BumperReleased:
 					if(!_bumpSensorRegistered)
 					{
-						LogEventDetails(Misty.RegisterBumpSensorEvent(BumpSensorCallback, 50, true, null, "BumpSensor", null));
+						LogEventDetails(Robot.RegisterBumpSensorEvent(BumpSensorCallback, 50, true, null, "BumpSensor", null));
 						_bumpSensorRegistered = true;
 					}
 					break;				
@@ -670,15 +914,15 @@ namespace MistyCharacter
 				case Triggers.CapTouched:
 					if (!_capTouchRegistered)
 					{
-						LogEventDetails(Misty.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
+						LogEventDetails(Robot.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
 						_capTouchRegistered = true;
 					}
 					break;
 				case Triggers.ArTagSeen:
 					if (!_arTagRegistered)
 					{
-						Misty.StartArTagDetector(7, 140, null);
-						LogEventDetails(Misty.RegisterArTagDetectionEvent(ArTagCallback, 100, true, "ArTag", null));
+						Robot.StartArTagDetector(7, 140, null);
+						LogEventDetails(Robot.RegisterArTagDetectionEvent(ArTagCallback, 100, true, "ArTag", null));
 						_arTagRegistered = true;
 					}
 					break;
@@ -686,36 +930,36 @@ namespace MistyCharacter
 				case Triggers.TimeOfFlightRange:
 					if (!_tofRegistered)
 					{
-						LogEventDetails(Misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 100, true, null, "TimeOfFlight", null));
+						LogEventDetails(Robot.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 100, true, null, "TimeOfFlight", null));
 						_tofRegistered = true;
 					}
 					break;
 				case Triggers.QrTagSeen:
 					if (!_qrTagRegistered)
 					{
-						Misty.StartQrTagDetector(null);
-						LogEventDetails(Misty.RegisterQrTagDetectionEvent(QrTagCallback, 100, true, "QrTag", null));
+						Robot.StartQrTagDetector(null);
+						LogEventDetails(Robot.RegisterQrTagDetectionEvent(QrTagCallback, 100, true, "QrTag", null));
 						_qrTagRegistered = true;
 					}
 					break;
 				case Triggers.SerialMessage:
 					if (!_serialMessageRegistered)
 					{
-						LogEventDetails(Misty.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
+						LogEventDetails(Robot.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
 						_serialMessageRegistered = true;
 					}
 					break;
 				case Triggers.FaceRecognized:
 					if (!_faceRecognitionRegistered)
 					{
-						Misty.StartFaceRecognition(null);
+						Robot.StartFaceRecognition(null);
 						//Misty.StartFaceDetection(null);
-						LogEventDetails(Misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
+						LogEventDetails(Robot.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
 						_faceRecognitionRegistered = true;
 					}
 					break;
 			}
-		}
+		}*/
 
 		private void IgnoreEvent(TriggerDetail detail, int delayMs)
 		{
@@ -836,23 +1080,23 @@ namespace MistyCharacter
 						//	break;
 						case ListeningState.Recording:
                             //Misty.DisplayText("🌟", "Listening", null);
-                            Misty.DisplayText("LISTENING...", "Listening", null);
+                            Robot.DisplayText("LISTENING...", "Listening", null);
                             //Misty.DisplayText("🌟", "SPEAK NOW", null);
-                            _ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
+                            _ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
                             {
                                 Visible = true
                             });
 							break;
                         case ListeningState.ProcessingSpeech:
-                            Misty.DisplayText("PROCESSING SPEECH...", "Listening", null);
+                            Robot.DisplayText("PROCESSING SPEECH...", "Listening", null);
                            // Misty.DisplayText("🌟", "Listening", null);
-                            _ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
+                            _ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
                             {
                                 Visible = true
                             });
                             break;
                         default:
-                            _ = Misty.SetTextDisplaySettingsAsync("Listening", new TextSettings
+                            _ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
                             {
                                 Visible = false
                             });
@@ -898,7 +1142,7 @@ namespace MistyCharacter
 
 			if (!string.IsNullOrWhiteSpace(e) && CharacterParameters.DisplaySpoken)
 			{
-				Misty.DisplayText(e, "SpokeText", null);
+				Robot.DisplayText(e, "SpokeText", null);
 			}
 		}
 
@@ -906,7 +1150,7 @@ namespace MistyCharacter
 		{
 			if(CharacterParameters.LogInteraction)
 			{
-				Misty.SkillLogger.Log(message, ex);
+				Robot.SkillLogger.Log(message, ex);
 			}
 
 			if (CharacterParameters.StreamInteraction)
@@ -915,7 +1159,7 @@ namespace MistyCharacter
 				{
 					message += $"|Exception:{ex.Message}";
 				}
-				Misty.PublishMessage(message, null);
+				Robot.PublishMessage(message, null);
 			}
 		}
 		
@@ -943,7 +1187,7 @@ namespace MistyCharacter
 			if (possibleActions == null || possibleActions.Count == 0)
             {
 				//TODO Go to No Interaction selection?
-                Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Unmapped intent. Going to the start of the same conversation...");
+                Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Unmapped intent. Going to the start of the same conversation...");
                 Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == _currentConversationData.StartupInteraction);
                 QueueInteraction(interactionRequest);
                 return;
@@ -1017,7 +1261,7 @@ namespace MistyCharacter
 
 				if (string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
 				{
-					Misty.SkillLogger.Log($"Trigger has been activated, but the destination is unmapped, continuing to wait for mapped trigger.");
+					Robot.SkillLogger.Log($"Trigger has been activated, but the destination is unmapped, continuing to wait for mapped trigger.");
 					return;
 				}
 				else
@@ -1033,8 +1277,8 @@ namespace MistyCharacter
 							sanity++;
 							await Task.Delay(100);
 						}
-						Misty.StopSpeaking(null);
-						Misty.StopAudio(null);
+						Robot.StopSpeaking(null);
+						Robot.StopAudio(null);
 						await Task.Delay(25);
 					}
 					else if (!string.IsNullOrWhiteSpace(_currentAnimation.Speak) || !string.IsNullOrWhiteSpace(_currentAnimation.AudioFile))
@@ -1048,13 +1292,13 @@ namespace MistyCharacter
 						}
 						if(sanity == 6000)
 						{
-							Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Possible error managing speech, unless Misty has actually been speaking in one interaction for a minute.");
+							Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Possible error managing speech, unless Misty has actually been speaking in one interaction for a minute.");
 						}
 					}
 
 					if ((string.IsNullOrWhiteSpace(conversation) || conversation == _currentConversationData.Id) && !string.IsNullOrWhiteSpace(interaction))
 					{
-						Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Going to interaction {interaction} in the same conversation...");
+						Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Going to interaction {interaction} in the same conversation...");
 						Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == interaction);
 						interactionRequest.Retrigger = selectedAction.Retrigger;
 						if (overrideAnimation != null)
@@ -1069,7 +1313,7 @@ namespace MistyCharacter
 					}
 					else if (!string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
 					{
-						Misty.SkillLogger.Log($"Going to the start of conversation {conversation}...");
+						Robot.SkillLogger.Log($"Going to the start of conversation {conversation}...");
 
 						_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
 
@@ -1087,7 +1331,7 @@ namespace MistyCharacter
 					}
 					else if (!string.IsNullOrWhiteSpace(conversation) && !string.IsNullOrWhiteSpace(interaction))
 					{
-						Misty.SkillLogger.Log($"Going to interaction {interaction} in conversation {conversation}...");
+						Robot.SkillLogger.Log($"Going to interaction {interaction} in conversation {conversation}...");
 
 						_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
 
@@ -1444,7 +1688,7 @@ namespace MistyCharacter
 						_timerTriggerTimer?.Dispose();
 						CharacterState.LatestTriggerMatched = new KeyValuePair<DateTime, TriggerData>(DateTime.Now, triggerData);
 						ResponseEventReceived?.Invoke(this, triggerData);
-						Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Valid intent {triggerData.Trigger} {triggerData.TriggerFilter}.");
+						Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Valid intent {triggerData.Trigger} {triggerData.TriggerFilter}.");
 
 						_ = GoToNextAnimation(triggerDetailMap);
 
@@ -1455,7 +1699,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
             {
-                Misty.SkillLogger.Log($"Failed to process and verify the trigger.", ex);
+                Robot.SkillLogger.Log($"Failed to process and verify the trigger.", ex);
             }
 			finally
 			{
@@ -1557,13 +1801,13 @@ namespace MistyCharacter
 						payloadData.Add("LatestTriggerCheck", Newtonsoft.Json.JsonConvert.SerializeObject(CharacterState.LatestTriggerChecked));
 						
 						//if just started, may miss first trigger, should really start skills at start of conversation
-						Misty.TriggerEvent(skillMessage.EventName, "MistyCharacter", payloadData, null, null);
+						Robot.TriggerEvent(skillMessage.EventName, "MistyCharacter", payloadData, null, null);
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				Misty.SkillLogger.Log("Failed to manage trigger.", ex);
+				Robot.SkillLogger.Log("Failed to manage trigger.", ex);
 			}
 		}
 		
@@ -1577,7 +1821,7 @@ namespace MistyCharacter
 
 			if(CharacterParameters.HeardSpeechToScreen && !string.IsNullOrWhiteSpace(speechIntent.Text))
 			{
-				Misty.DisplayText(speechIntent.Text, "SpeechText", null);
+				Robot.DisplayText(speechIntent.Text, "SpeechText", null);
 			}
 
             //New data formats
@@ -1944,7 +2188,7 @@ namespace MistyCharacter
 		
 		private void LogEventDetails(IEventDetails eventDetails)
 		{
-			Misty.SkillLogger.Log($"Registered event '{eventDetails.EventName}' at {DateTime.Now}.  Id = {eventDetails.EventId}, Type = {eventDetails.EventType}, KeepAlive = {eventDetails.KeepAlive}");
+			Robot.SkillLogger.Log($"Registered event '{eventDetails.EventName}' at {DateTime.Now}.  Id = {eventDetails.EventId}, Type = {eventDetails.EventType}, KeepAlive = {eventDetails.KeepAlive}");
 		}
 		
 		private void TriggerAnimationComplete(Interaction interaction)
@@ -1963,7 +2207,7 @@ namespace MistyCharacter
 				_latestTriggerMatchData = CharacterState.LatestTriggerMatched;                
 				UniqueAnimationId = Guid.NewGuid();
 				
-				if (Misty.SkillStatus == NativeSkillStatus.Running)
+				if (Robot.SkillStatus == NativeSkillStatus.Running)
 				{
 					CharacterState.Spoke = false;
 					CharacterState.UnknownFaceSeen = false;
@@ -1980,7 +2224,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
 			{
-				Misty.SkillLogger.Log("Exception running animation.", ex);
+				Robot.SkillLogger.Log("Exception running animation.", ex);
 			}
 		}
 		
@@ -2018,19 +2262,19 @@ namespace MistyCharacter
 
 				CurrentInteraction = new Interaction(interaction);
 
-				Misty.SkillLogger.Log($"STARTING NEW INTERACTION.");
-				Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Processing next interaction in queue.");				
+				Robot.SkillLogger.Log($"STARTING NEW INTERACTION.");
+				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Processing next interaction in queue.");				
 				if(_skillsToStop != null && _skillsToStop.Count > 0 )
 				{
 					foreach (string skill in _skillsToStop)
 					{
-						Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Stop skill request for skill {skill}.");
-						await Misty.CancelRunningSkillAsync(skill);
+						Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Stop skill request for skill {skill}.");
+						await Robot.CancelRunningSkillAsync(skill);
 					}
 					_skillsToStop.Clear();
 				}
 
-				_ = Misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+				_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
 				{
 					Deleted = true
 				});
@@ -2055,13 +2299,13 @@ namespace MistyCharacter
 				
 				if (interaction == null)
 				{
-					Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Failed processing null conversation phrase.");
+					Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Failed processing null conversation phrase.");
 					return;
 				}
 
 				if (CharacterParameters.LogLevel == SkillLogLevel.Verbose || CharacterParameters.LogLevel == SkillLogLevel.Info)
 				{
-					Misty.SkillLogger.Log($"Animation message '{animationRequest?.Name}' sent in to : Say '{animationRequest?.Speak ?? "nothing"}' : Play Audio '{animationRequest?.Speak ?? "none"}'.");
+					Robot.SkillLogger.Log($"Animation message '{animationRequest?.Name}' sent in to : Say '{animationRequest?.Speak ?? "nothing"}' : Play Audio '{animationRequest?.Speak ?? "none"}'.");
 				}
 
 				//Arrgh headaches
@@ -2113,7 +2357,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
 			{
-				Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Exception processing animation request.", ex);
+				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Exception processing animation request.", ex);
 			}
 		}
 
@@ -2198,14 +2442,14 @@ namespace MistyCharacter
 					interaction.StartListening = false;
 					SpeechManager.Speak(preSpeechAnimation, interaction);
 
-					Misty.SkillLogger.Log($"Prespeech saying '{ preSpeechAnimation.Speak}' for animation '{ preSpeechAnimation.Name}'.");
+					Robot.SkillLogger.Log($"Prespeech saying '{ preSpeechAnimation.Speak}' for animation '{ preSpeechAnimation.Name}'.");
 				}
 				else if (!string.IsNullOrWhiteSpace(preSpeechAnimation.AudioFile))
 				{
 					hasAudio = true;
 					CharacterState.Audio = preSpeechAnimation.AudioFile;
-					Misty.PlayAudio(preSpeechAnimation.AudioFile, null, null);
-					Misty.SkillLogger.Log($"Prespeech playing audio '{ preSpeechAnimation.AudioFile}' for animation '{ preSpeechAnimation.Name}'.");
+					Robot.PlayAudio(preSpeechAnimation.AudioFile, null, null);
+					Robot.SkillLogger.Log($"Prespeech playing audio '{ preSpeechAnimation.AudioFile}' for animation '{ preSpeechAnimation.Name}'.");
 				}
 			
 
@@ -2219,12 +2463,12 @@ namespace MistyCharacter
 						preSpeechAnimation.ImageFile = preSpeechAnimation.ImageFile + ".jpg";
 					}
 					StreamAndLogInteraction($"Animation: { preSpeechAnimation.Name} | Displaying image {preSpeechAnimation.ImageFile}");
-					Misty.DisplayImage(preSpeechAnimation.ImageFile, null, false, null);
+					Robot.DisplayImage(preSpeechAnimation.ImageFile, null, false, null);
 				}
 
 				if (preSpeechAnimation.SetFlashlight != CharacterState.FlashLightOn)
 				{
-					Misty.SetFlashlight(preSpeechAnimation.SetFlashlight, null);
+					Robot.SetFlashlight(preSpeechAnimation.SetFlashlight, null);
 					CharacterState.FlashLightOn = preSpeechAnimation.SetFlashlight;
 				}
 
@@ -2241,7 +2485,7 @@ namespace MistyCharacter
 								{
 									await Task.Delay((int)(preSpeechAnimation.LEDActionDelay * 1000));
 								}
-								Misty.TransitionLED(ledTransitionAction.Red, ledTransitionAction.Green, ledTransitionAction.Blue, ledTransitionAction.Red2, ledTransitionAction.Green2, ledTransitionAction.Blue2, ledTransition, ledTransitionAction.PatternTime * 1000, null);
+								Robot.TransitionLED(ledTransitionAction.Red, ledTransitionAction.Green, ledTransitionAction.Blue, ledTransitionAction.Red2, ledTransitionAction.Green2, ledTransitionAction.Blue2, ledTransition, ledTransitionAction.PatternTime * 1000, null);
 							});
 
 							CharacterState.AnimationLED = ledTransitionAction;
@@ -2284,7 +2528,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
 			{
-				Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Animation Id: { interaction.Animation} | Exception while attempting to process animation request callback.", ex);
+				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Animation Id: { interaction.Animation} | Exception while attempting to process animation request callback.", ex);
 			}
 		}
 
@@ -2294,14 +2538,14 @@ namespace MistyCharacter
 			{
                 if (interaction?.Animation == null)
                 {
-                    Misty.SkillLogger.Log($"Received null interaction or animation for interaction {interaction?.Name ?? interaction?.Id}.");
+                    Robot.SkillLogger.Log($"Received null interaction or animation for interaction {interaction?.Name ?? interaction?.Id}.");
                     return;
                 }
 
                 AnimationRequest originalAnimationRequest = _currentConversationData.Animations.FirstOrDefault(x => x.Id == interaction.Animation);
                 if(originalAnimationRequest == null)
                 {
-                    Misty.SkillLogger.Log($"Could not find animation for interaction {interaction?.Name ?? interaction?.Id}.");
+                    Robot.SkillLogger.Log($"Could not find animation for interaction {interaction?.Name ?? interaction?.Id}.");
                     return;
                 }
 				//Make copy cuz we are decorating and changing things here
@@ -2310,7 +2554,7 @@ namespace MistyCharacter
 				
 				if (animationRequest == null || newInteraction == null)
 				{
-                    Misty.SkillLogger.Log($"Failed to copy data.");
+                    Robot.SkillLogger.Log($"Failed to copy data.");
                     return;
 				}
 
@@ -2328,7 +2572,7 @@ namespace MistyCharacter
 
 					if(skillMessage.StopIfRunning)
 					{
-						Misty.CancelRunningSkill(skillMessage.Skill, null);
+						Robot.CancelRunningSkill(skillMessage.Skill, null);
 						lock (_runningSkillLock)
 						{
 							_runningSkills.Remove(skillMessage.Skill);						
@@ -2362,14 +2606,14 @@ namespace MistyCharacter
 							{
 
 								StreamAndLogInteraction($"Running skill {skillMessage.Skill}.");
-								_ = Misty.RunSkillAsync(skillMessage.Skill, OriginalParameters);
+								_ = Robot.RunSkillAsync(skillMessage.Skill, OriginalParameters);
 							}
 						}
 					}
 
 					StreamAndLogInteraction($"Sending event {skillMessage.EventName} to trigger handler skill {skillMessage.Skill}.");
 					//if just started, may miss first trigger, should really start skills at start of conversation
-					Misty.TriggerEvent(skillMessage.EventName, "MistyCharacter", payloadData, null, null);
+					Robot.TriggerEvent(skillMessage.EventName, "MistyCharacter", payloadData, null, null);
 
 					if (skillMessage.StopOnNextAnimation && !_skillsToStop.Contains(skillMessage.Skill))
 					{
@@ -2514,14 +2758,14 @@ namespace MistyCharacter
 
 					SpeechManager.Speak(animationRequest, newInteraction);
 
-					Misty.SkillLogger.Log($"Saying '{ animationRequest.Speak}' for animation '{ animationRequest.Name}'.");
+					Robot.SkillLogger.Log($"Saying '{ animationRequest.Speak}' for animation '{ animationRequest.Name}'.");
 				}
 				else if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile))
 				{
 					hasAudio = true;
 					CharacterState.Audio = animationRequest.AudioFile;
-					Misty.PlayAudio(animationRequest.AudioFile, null, null);
-					Misty.SkillLogger.Log($"Playing audio '{ animationRequest.AudioFile}' for animation '{ animationRequest.Name}'.");
+					Robot.PlayAudio(animationRequest.AudioFile, null, null);
+					Robot.SkillLogger.Log($"Playing audio '{ animationRequest.AudioFile}' for animation '{ animationRequest.Name}'.");
 				}
 				
 				//Display image
@@ -2534,12 +2778,12 @@ namespace MistyCharacter
 						animationRequest.ImageFile = animationRequest.ImageFile + ".jpg";
 					}
 					StreamAndLogInteraction($"Animation: { animationRequest.Name} | Displaying image {animationRequest.ImageFile}");
-					Misty.DisplayImage(animationRequest.ImageFile, null, false, null);
+					Robot.DisplayImage(animationRequest.ImageFile, null, false, null);
 				}
 
 				if (animationRequest.SetFlashlight != CharacterState.FlashLightOn)
 				{
-					Misty.SetFlashlight(animationRequest.SetFlashlight, null);
+					Robot.SetFlashlight(animationRequest.SetFlashlight, null);
 					CharacterState.FlashLightOn = animationRequest.SetFlashlight;
 				}
 
@@ -2556,7 +2800,7 @@ namespace MistyCharacter
 								{
 									await Task.Delay((int)(animationRequest.LEDActionDelay * 1000));
 								}
-								Misty.TransitionLED(ledTransitionAction.Red, ledTransitionAction.Green, ledTransitionAction.Blue, ledTransitionAction.Red2, ledTransitionAction.Green2, ledTransitionAction.Blue2, ledTransition, ledTransitionAction.PatternTime * 1000, null);
+								Robot.TransitionLED(ledTransitionAction.Red, ledTransitionAction.Green, ledTransitionAction.Blue, ledTransitionAction.Red2, ledTransitionAction.Green2, ledTransitionAction.Blue2, ledTransition, ledTransitionAction.PatternTime * 1000, null);
 							});
 
 							CharacterState.AnimationLED = ledTransitionAction;
@@ -2605,14 +2849,14 @@ namespace MistyCharacter
 				if (CurrentInteraction.StartListening && !hasAudio)
 				{
 					//Can still listen without speaking
-					_ = Misty.CaptureSpeechAsync(false, true, (int)(animationRequest.ListenTimeout * 1000), (int)(animationRequest.SilenceTimeout * 1000), null);
+					_ = Robot.CaptureSpeechAsync(false, true, (int)(animationRequest.ListenTimeout * 1000), (int)(animationRequest.SilenceTimeout * 1000), null);
 
 					StartedListening?.Invoke(this, DateTime.Now);
 				}
 			}
 			catch (Exception ex)
 			{
-				Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Animation Id: { interaction.Animation} | Exception while attempting to process animation request callback.", ex);
+				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Animation Id: { interaction.Animation} | Exception while attempting to process animation request callback.", ex);
 			}
 		}
 		
@@ -2678,16 +2922,16 @@ namespace MistyCharacter
 			{
 				if(string.IsNullOrWhiteSpace(_currentConversationData.NoTriggerInteraction))
 				{
-					Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Interaction timeout. No intents were triggered, stopping conversation.");
+					Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Interaction timeout. No intents were triggered, stopping conversation.");
 					TriggerAnimationComplete(CurrentInteraction);
 					StopConversation();
-					Misty.Speak("Interaction timed out with unmapped conversation 'No Trigger Interaction' action.  Cancelling skill.", true, "InteractionTimeout", null);
+					Robot.Speak("Interaction timed out with unmapped conversation 'No Trigger Interaction' action.  Cancelling skill.", true, "InteractionTimeout", null);
 					await Task.Delay(5000);
-					Misty.SkillCompleted();
+					Robot.SkillCompleted();
 				}
 				else
 				{
-					Misty.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Interaction timeout. No intents were triggered, going to default interaction {_currentConversationData.NoTriggerInteraction}.");
+					Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Interaction timeout. No intents were triggered, going to default interaction {_currentConversationData.NoTriggerInteraction}.");
 					_ = GoToNextAnimation(new List<TriggerActionOption>{ new TriggerActionOption
 					{
 						GoToConversation = _currentConversationData.Id,
@@ -2949,11 +3193,130 @@ namespace MistyCharacter
 
 		}
 
+		private void EncoderCallback(IDriveEncoderEvent encoderEvent)
+		{
+			CurrentLocomotionState.LeftDistanceSinceLastStop = encoderEvent.LeftDistance;
+			CurrentLocomotionState.RightDistanceSinceLastStop = encoderEvent.RightDistance;
+			CurrentLocomotionState.LeftVelocity = encoderEvent.LeftVelocity;
+			CurrentLocomotionState.RightVelocity = encoderEvent.RightVelocity;
+		}
+
+		private void IMUCallback(IIMUEvent imuEvent)
+		{
+			CurrentLocomotionState.RobotPitch = imuEvent.Pitch;
+			CurrentLocomotionState.RobotYaw = imuEvent.Yaw;
+			CurrentLocomotionState.RobotRoll = imuEvent.Roll;
+			CurrentLocomotionState.XAcceleration = imuEvent.XAcceleration;
+			CurrentLocomotionState.YAcceleration = imuEvent.YAcceleration;
+			CurrentLocomotionState.ZAcceleration = imuEvent.ZAcceleration;
+			CurrentLocomotionState.PitchVelocity = imuEvent.PitchVelocity;
+			CurrentLocomotionState.RollVelocity = imuEvent.RollVelocity;
+			CurrentLocomotionState.YawVelocity = imuEvent.YawVelocity;
+		}
+
+		private void TOFFLRangeCallback(ITimeOfFlightEvent tofEvent)
+		{
+			if (TryGetAdjustedDistance(tofEvent, out double distance))
+			{
+				CurrentLocomotionState.FrontLeftTOF = distance;
+			}
+		}
+
+		private void TOFFRRangeCallback(ITimeOfFlightEvent tofEvent)
+		{
+			if (TryGetAdjustedDistance(tofEvent, out double distance))
+			{
+				CurrentLocomotionState.FrontRightTOF = distance;
+			}
+		}
+
+		private void TOFCRangeCallback(ITimeOfFlightEvent tofEvent)
+		{
+			if (TryGetAdjustedDistance(tofEvent, out double distance))
+			{
+				CurrentLocomotionState.FrontCenterTOF = distance;
+			}
+		}
+
+
+		private bool TryGetAdjustedDistance(ITimeOfFlightEvent tofEvent, out double distance)
+		{
+			distance = 0;
+			// From Testing, using this pattern for return data
+			//   0 = valid range data
+			// 101 = sigma fail - lower confidence but most likely good
+			// 104 = Out of bounds - Distance returned is greater than distance we are confident about, but most likely good - error codes can be returned in distance field at this time :(  so ignore error code range
+			if (tofEvent.Status == 0 ||
+				(tofEvent.Status == 101 && tofEvent.DistanceInMeters >= 1) ||
+				tofEvent.Status == 104)
+			{
+				distance = tofEvent.DistanceInMeters;
+			}
+			else if (tofEvent.Status == 102)
+			{
+				//102 generally indicates nothing substantial is in front of the robot so the TOF is returning the floor as a close distance
+				//So ignore the distance returned and just set to 2 meters
+				distance = 2;
+			}
+			else
+			{
+				//TOF returning uncertain data or really low confidence in distance, ignore value 
+				return false;
+			}
+			return true;
+		}
+
+
+		private void TOFBRangeCallback(ITimeOfFlightEvent tofEvent)
+		{
+			if (TryGetAdjustedDistance(tofEvent, out double distance))
+			{
+				CurrentLocomotionState.BackTOF = distance;
+			}
+		}
+
+		public LocomotionState CurrentLocomotionState { get; private set; } = new LocomotionState();
+
+
+		private void BumpCallback(IBumpSensorEvent bumpEvent)
+		{
+			switch (bumpEvent.SensorPosition)
+			{
+				case BumpSensorPosition.FrontRight:
+					CurrentLocomotionState.FrontRightBumpContacted = bumpEvent.IsContacted;
+					break;
+				case BumpSensorPosition.FrontLeft:
+					CurrentLocomotionState.FrontLeftBumpContacted = bumpEvent.IsContacted;
+					break;
+				case BumpSensorPosition.BackRight:
+					CurrentLocomotionState.BackRightBumpContacted = bumpEvent.IsContacted;
+					break;
+				case BumpSensorPosition.BackLeft:
+					CurrentLocomotionState.BackLeftBumpContacted = bumpEvent.IsContacted;
+					break;
+			}
+		}
+
+		private void FrontEdgeCallback(ITimeOfFlightEvent edgeEvent)
+		{
+			switch (edgeEvent.SensorPosition)
+			{
+				case TimeOfFlightPosition.DownwardFrontRight:
+					CurrentLocomotionState.FrontRightEdgeTOF = edgeEvent.DistanceInMeters;
+					break;
+				case TimeOfFlightPosition.DownwardFrontLeft:
+					CurrentLocomotionState.FrontLeftEdgeTOF = edgeEvent.DistanceInMeters;
+					break;
+			}
+		}
+
+
+
 		private void QueueInteraction(Interaction interaction)
 		{
 			try
 			{
-				Misty.SkillLogger.Log($"QUEUEING NEXT INTERACTION : {interaction.Name}");
+				Robot.SkillLogger.Log($"QUEUEING NEXT INTERACTION : {interaction.Name}");
 				_interactionQueue.Enqueue(interaction);
 
 				//We'll wait for an intent for the next animation
@@ -2961,7 +3324,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
 			{
-				Misty.SkillLogger.Log($"Interaction: {interaction?.Name} | Failed attempting to handle phrase in AnimatePhrase.", ex);
+				Robot.SkillLogger.Log($"Interaction: {interaction?.Name} | Failed attempting to handle phrase in AnimatePhrase.", ex);
 
 				ConversationEnded?.Invoke(this, DateTime.Now);
 			}
@@ -2977,7 +3340,7 @@ namespace MistyCharacter
 			{
 				if (disposing)
 				{
-					Misty.UpdateHazardSettings(new HazardSettings { RevertToDefault = true }, null);
+					Robot.UpdateHazardSettings(new HazardSettings { RevertToDefault = true }, null);
 					IgnoreEvents();
 					_noInteractionTimer?.Dispose();
 					_triggerActionTimeoutTimer?.Dispose();
@@ -2989,18 +3352,18 @@ namespace MistyCharacter
 					HeadManager.Dispose();
 					TimeManager.Dispose();
 					AnimationManager.Dispose();
-					LocomotionManager.Dispose();
+					//LocomotionManager.Dispose();
 					
-					Misty.UnregisterAllEvents(null);
-					Misty.Stop(null);
-					Misty.Halt(new List<MotorMask> { MotorMask.LeftArm, MotorMask.RightArm }, null);
+					Robot.UnregisterAllEvents(null);
+					Robot.Stop(null);
+					Robot.Halt(new List<MotorMask> { MotorMask.LeftArm, MotorMask.RightArm }, null);
 					
-					Misty.StopFaceDetection(null);
-					Misty.StopObjectDetector(null);
-					Misty.StopFaceRecognition(null);
-					Misty.StopArTagDetector(null);
-					Misty.StopQrTagDetector(null);
-					Misty.StopKeyPhraseRecognition(null);
+					Robot.StopFaceDetection(null);
+					Robot.StopObjectDetector(null);
+					Robot.StopFaceRecognition(null);
+					Robot.StopArTagDetector(null);
+					Robot.StopQrTagDetector(null);
+					Robot.StopKeyPhraseRecognition(null);
 				}
 
 				_isDisposed = true;

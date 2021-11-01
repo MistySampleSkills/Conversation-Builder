@@ -36,7 +36,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MistyInteraction.Common;
+using Conversation.Common;
 using Google.Cloud.Speech.V1;
 using Google.Cloud.TextToSpeech.V1;
 using MistyRobotics.Common.Types;

@@ -49,6 +49,10 @@ namespace Conversation.Common
 		public GoogleSpeechParameters GoogleTTSParameters { get; set; }
 
 
+		public SpeechConfiguration SpeechConfiguration { get; set; }
+
+
+
 
 		public bool RetranslateTTS { get; set; }
 

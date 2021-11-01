@@ -30,63 +30,18 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Conversation.Common;
-using MistyRobotics.Common.Types;
-using MistyRobotics.SDK;
-using MistyRobotics.SDK.Events;
-using MistyRobotics.SDK.Messengers;
-using SkillTools.Web;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace MistyCharacter
+namespace FurhatCommands
 {
-	public class CommandManager : IDisposable
+	public interface IFurhatCommandManager
 	{
-		private IList<ConversationCommand> _userCommands;
-		private IList<ConversationCommand> _builtInCommands;
+		Task<bool> Initialize();
 
-		protected IDictionary<string, object> Parameters { get; set; }
-		protected IRobotMessenger Robot { get; set; }
-		protected CharacterParameters CharacterParameters { get; set; }
-		
-		public CommandManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
-		{
-			Robot = misty;
-			Parameters = parameters;
-			CharacterParameters = characterParameters;
-		}
+		IList<ConversationCommand> GetCommands();
 
-		public async Task<bool> Initialize(IList<ConversationCommand> commands)
-		{
-			_userCommands = commands;
-			AddBuiltIncommands();
-			return true;
-		}
-
-		private void AddBuiltIncommands()
-		{
-		}
-
-		private bool _isDisposed = false;
-
-		protected void Dispose(bool disposing)
-		{
-			if (!_isDisposed)
-			{
-				if (disposing) { }
-
-				_isDisposed = true;
-			}
-		}
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
+		void Dispose();
 	}
 }
- 

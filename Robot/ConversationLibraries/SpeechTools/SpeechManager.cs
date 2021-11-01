@@ -73,8 +73,11 @@ namespace SpeechTools
 		private GoogleSpeechService _googleService;
 		private bool _recording;
 		private AssetWrapper _assetWrapper;
-		private AzureSpeechParameters _azureSpeechParameters;
-		private GoogleSpeechParameters _googleSpeechParameters;
+		private AzureSpeechParameters _azureSpeechRecognitionParameters;
+		private GoogleSpeechParameters _googleSpeechRecognitionParameters;
+		private AzureSpeechParameters _azureTTSParameters;
+		private GoogleSpeechParameters _googleTTSParameters;
+
 		private ITimeManager _timeManager;
 		private IDictionary<string, UtteranceData> _intentUtterances = new Dictionary<string, UtteranceData>();
 		private IList<string> _listeningCallbacks = new List<string>();
@@ -142,10 +145,10 @@ namespace SpeechTools
 				switch (_characterParameters.TextToSpeechService)
 				{
 					case "Google":
-						name = _googleSpeechParameters.SpokenLanguage + _googleSpeechParameters.SpeakingVoice + _googleSpeechParameters.SpeakingGender?[0] + name;
+						name = _googleTTSParameters.SpokenLanguage + _googleTTSParameters.SpeakingVoice + _googleTTSParameters.SpeakingGender?[0] + name;
 						break;
 					case "Azure":
-						name = _azureSpeechParameters.TranslatedLanguage + _azureSpeechParameters.SpeakingVoice + name;
+						name = _azureTTSParameters.TranslatedLanguage + _azureTTSParameters.SpeakingVoice + name;
 						break;
 					default:
 						name = TTSNamePreface + name;
@@ -184,52 +187,57 @@ namespace SpeechTools
 			_misty.UnregisterEvent("CharacterAudioComplete", null);
 			_misty.UnregisterEvent("CharacterTTSComplete", null);
 
-			_azureSpeechParameters = _characterParameters.AzureSpeechParameters;
-			_googleSpeechParameters = _characterParameters.GoogleSpeechParameters;
+			_azureSpeechRecognitionParameters = _characterParameters.AzureSpeechRecognitionParameters;
+			_googleSpeechRecognitionParameters = _characterParameters.GoogleSpeechRecognitionParameters;
+			_azureTTSParameters = _characterParameters.AzureTTSParameters;
+			_googleTTSParameters = _characterParameters.GoogleTTSParameters;
+
 			_assetWrapper = new AssetWrapper(_misty);
-			await RefreshAssetLists();
-			
-			_misty.SetNotificationSettings(true, false, true, _characterParameters.ConversationGroup.KeyPhraseRecognizedAudio, null);
-			_misty.GetVolume(ProcessVolumeResponse);
+			await _assetWrapper.RefreshAssetLists();
 
-			_timeManager = new EnglishTimeManager(_misty, _parameters, _characterParameters);
-
-			if (_azureSpeechParameters != null && !string.IsNullOrWhiteSpace(_azureSpeechParameters.SubscriptionKey))
+			if (_azureSpeechRecognitionParameters?.SubscriptionKey != null || _azureTTSParameters?.SubscriptionKey != null)
 			{
-				AzureServiceAuthorization servicesAuth = new AzureServiceAuthorization
+				AzureServiceAuthorization recAuth = new AzureServiceAuthorization
 				{
-					Region = _azureSpeechParameters.Region,
-					Endpoint = _azureSpeechParameters.Endpoint,
-					SubscriptionKey = _azureSpeechParameters.SubscriptionKey
+					Region = _azureSpeechRecognitionParameters.Region ?? "",
+					Endpoint = _azureSpeechRecognitionParameters.Endpoint ?? "",
+					SubscriptionKey = _azureSpeechRecognitionParameters.SubscriptionKey ?? ""
 				};
 
-				_azureCognitive = new AzureSpeechService(servicesAuth, _misty);
-				_azureCognitive.SpeakingVoice = _azureSpeechParameters?.SpeakingVoice;
-				_azureCognitive.SpokenLanguage = _azureSpeechParameters?.SpokenLanguage;
-				_azureCognitive.TranslatedLanguage = _azureSpeechParameters?.TranslatedLanguage;
-				_azureCognitive.ProfanitySetting = _azureSpeechParameters?.ProfanitySetting;
-
-				_intentUtterances = _characterParameters.ConversationGroup.IntentUtterances;
-				_speechIntentManager = _speechIntentManager ?? new SpeechIntentManager(_misty, _intentUtterances);
-			}
-
-			if (_googleSpeechParameters != null && !string.IsNullOrWhiteSpace(_googleSpeechParameters.SubscriptionKey))
-			{
-				GoogleServiceAuthorization servicesAuth = new GoogleServiceAuthorization
+				AzureServiceAuthorization ttsAuth = new AzureServiceAuthorization
 				{
-					STTEndpoint = _googleSpeechParameters?.STTEndpoint,
-					TTSEndpoint = _googleSpeechParameters?.TTSEndpoint,
-					SubscriptionKey = _googleSpeechParameters?.SubscriptionKey
+					Region = _azureTTSParameters.Region ?? "",
+					Endpoint = _azureTTSParameters.Endpoint ?? "",
+					SubscriptionKey = _azureTTSParameters.SubscriptionKey ?? ""
 				};
 
-				_googleService = new GoogleSpeechService(servicesAuth, _misty);
-				_googleService.SpeakingVoice = _googleSpeechParameters?.SpeakingVoice;
-				_googleService.SpeakingGender = _googleSpeechParameters?.SpeakingGender;
-				_googleService.SpokenLanguage = _googleSpeechParameters?.SpokenLanguage;
-				
-				_intentUtterances = _characterParameters.ConversationGroup.IntentUtterances;
-				_speechIntentManager = _speechIntentManager ?? new SpeechIntentManager(_misty, _intentUtterances);
+				_azureCognitive = new AzureSpeechService(ttsAuth, recAuth, _misty);
+				_azureCognitive.SpeakingVoice = _azureSpeechRecognitionParameters?.SpeakingVoice;
+				_azureCognitive.SpokenLanguage = _azureSpeechRecognitionParameters?.SpokenLanguage;
+				_azureCognitive.TranslatedLanguage = _azureSpeechRecognitionParameters?.TranslatedLanguage;
+				_azureCognitive.ProfanitySetting = _azureSpeechRecognitionParameters?.ProfanitySetting;
 			}
+
+			if (_googleSpeechRecognitionParameters?.SubscriptionKey != null || _googleTTSParameters?.SubscriptionKey != null)
+			{
+				GoogleServiceAuthorization speechRecAuth = new GoogleServiceAuthorization
+				{
+					Endpoint = _googleSpeechRecognitionParameters?.Endpoint ?? "",
+					SubscriptionKey = _googleSpeechRecognitionParameters?.SubscriptionKey ?? ""
+				};
+
+				GoogleServiceAuthorization ttsAuth = new GoogleServiceAuthorization
+				{
+					Endpoint = _googleTTSParameters?.Endpoint ?? "",
+					SubscriptionKey = _googleTTSParameters?.SubscriptionKey ?? ""
+				};
+
+				_googleService = new GoogleSpeechService(ttsAuth, speechRecAuth, _misty);
+				_googleService.SpeakingVoice = _googleSpeechRecognitionParameters?.SpeakingVoice;
+				_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender;
+				_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage;
+			}
+
 
 			LogEventDetails(_misty.RegisterVoiceRecordEvent(VoiceRecordCallback, 100, true, "VoiceRecord", null));
 			LogEventDetails(_misty.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 100, true, "KeyPhrase", null));
@@ -465,7 +473,7 @@ namespace SpeechTools
 					newText = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:mstts=\"https://www.w3.org/2001/mstts\" xml:lang=\"en-US\">";
 					
 					//TODO allow pass in override by animation
-					newText += $"<voice name=\"{(string.IsNullOrWhiteSpace(animationRequest.OverrideVoice) ? _azureSpeechParameters.SpeakingVoice : animationRequest.OverrideVoice)}\">";
+					newText += $"<voice name=\"{(string.IsNullOrWhiteSpace(animationRequest.OverrideVoice) ? _azureTTSParameters.SpeakingVoice : animationRequest.OverrideVoice)}\">";
 
 
 					if (startText[0] != null)
@@ -545,10 +553,10 @@ namespace SpeechTools
 						switch (_characterParameters.SpeechRecognitionService.Trim().ToLower())
 						{
 							case "googleonboard":
-								_ = _misty.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.GoogleSpeechParameters.SubscriptionKey, _characterParameters.GoogleSpeechParameters.SpokenLanguage);
+								_ = _misty.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey, _characterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage);
 								return;
 							case "azureonboard":
-								_ = _misty.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.AzureSpeechParameters.SubscriptionKey, _characterParameters.AzureSpeechParameters.Region, _characterParameters.AzureSpeechParameters.SpokenLanguage);
+								_ = _misty.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.AzureSpeechRecognitionParameters.SubscriptionKey, _characterParameters.AzureSpeechRecognitionParameters.Region, _characterParameters.AzureSpeechRecognitionParameters.SpokenLanguage);
 								return;
 							case "vosk":
 								_ = _misty.CaptureSpeechVoskAsync(false, _listenTimeout, _silenceTimeout);

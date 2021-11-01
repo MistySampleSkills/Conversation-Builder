@@ -46,6 +46,124 @@ using TimeManager;
 
 namespace MistyCharacter
 {
+
+	public enum LocomotionStatus
+	{
+		Unknown,
+		Initialized,
+		Starting,
+		Stopped,
+		ScriptDriving,
+		WaypointDriving,
+		RecalculatingRoute,
+		PathBlocked,
+		Wandering
+	}
+
+	public class LocomotionState
+	{
+		public double FrontLeftTOF { get; set; }
+
+		public double FrontRightTOF { get; set; }
+
+		public double FrontCenterTOF { get; set; }
+
+		public double BackTOF { get; set; }
+
+		public bool BackLeftBumpContacted { get; set; }
+
+		public bool BackRightBumpContacted { get; set; }
+
+		public bool FrontLeftBumpContacted { get; set; }
+
+		public bool FrontRightBumpContacted { get; set; }
+
+		public double FrontRightEdgeTOF { get; set; }
+
+		public double FrontLeftEdgeTOF { get; set; }
+
+		public double BackRightEdgeTOF { get; set; }
+
+		public double BackLeftEdgeTOF { get; set; }
+
+		public double LeftVelocity { get; set; }
+		public double RightVelocity { get; set; }
+
+		public double LeftDistanceSinceLastStop { get; set; }
+		public double RightDistanceSinceLastStop { get; set; }
+
+		public double LeftDistanceSinceWayPoint { get; set; }
+		public double RightDistanceSinceWayPoint { get; set; }
+
+		public double LeftDistanceSinceStart { get; set; }
+		public double RightDistanceSinceStart { get; set; }
+
+		public string[] MovementHistory { get; set; }
+
+		public LocomotionStatus LocomotionStatus { get; set; }
+
+		public LocomotionAction LocomotionAction { get; set; }
+
+		public double RobotPitch { get; set; }
+		public double RobotYaw { get; set; }
+		public double RobotRoll { get; set; }
+
+		public double XAcceleration { get; set; }
+		public double YAcceleration { get; set; }
+		public double ZAcceleration { get; set; }
+
+		public double PitchVelocity { get; set; }
+		public double RollVelocity { get; set; }
+		public double YawVelocity { get; set; }
+
+		public double? LockedHeading { get; set; }
+	}
+
+	public enum LocomotionCommand
+	{
+		Drive,
+		Heading,
+		Turn,
+		Arc,
+		Waypoint,
+		Wander,
+		Return,//ToLastWaypoint
+		Stop,
+		Halt,
+		TurnHeading,
+	}
+
+	public class LocomotionAction
+	{
+		public AnimationRequest AnimationRequest { get; set; }
+		public ConversationData Conversation { get; set; }
+
+		public LocomotionCommand Action { get; set; }
+		public double? DistanceMeters { get; set; }
+		public int? TimeMs { get; set; }
+		public double? Velocity { get; set; }
+		public double? Degrees { get; set; }
+		public double? Heading { get; set; }
+		public double? Radius { get; set; }
+		public bool Reverse { get; set; }
+
+		public bool AllowRerouting { get; set; } = true;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	public class CommandResult
 	{
 		public bool Success { get; set; }
@@ -71,6 +189,23 @@ namespace MistyCharacter
 
 	public class AnimationManager : BaseManager, IAnimationManager
 	{
+		public event EventHandler<LocomotionAction> StartedLocomotionAction;
+		public event EventHandler<LocomotionAction> CompletedLocomotionAction;
+		public event EventHandler<LocomotionAction> LocomotionFailed;
+		public event EventHandler<LocomotionAction> LocomotionStopped;
+
+		public event EventHandler<LocomotionAction> ReachedDestination;
+		public event EventHandler<LocomotionAction> PassingWaypoint;
+		public event EventHandler<LocomotionAction> TryingNewRoute;
+		public event EventHandler<IIMUEvent> IMUEvent;
+
+		public LocomotionState CurrentLocomotionState { get; private set; } = new LocomotionState();
+
+
+
+
+
+
 		public event EventHandler<DateTime> CompletedAnimationScript;
 		public event EventHandler<DateTime> StartedAnimationScript;
 		public event EventHandler<DateTime> AnimationScriptActionsComplete;
@@ -88,10 +223,10 @@ namespace MistyCharacter
 		private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 		private IList<string> _completionCommands = new List<string>();
 		private IList<string> _startupCommands = new List<string>();
-		private IFurhatManager _furhatManager;
+		//private IFurhatManager _furhatManager;
 		private ISpeechManager _speechManager;
 		private ITimeManager _timeManager;
-		private ILocomotionManager _locomotionManager;
+		//private ILocomotionManager _locomotionManager;
 		private IArmManager _armManager;
 		private IHeadManager _headManager;
 		private AnimationRequest _currentAnimation;
@@ -130,63 +265,65 @@ namespace MistyCharacter
 
 		//TODO PLUG THESE IN!
 		public event EventHandler<KeyValuePair<string, TriggerData>> AddTrigger;
+		public event EventHandler<KeyValuePair<string, TriggerData>> RegisterEvent;
 		public event EventHandler<string> RemoveTrigger;
 		public event EventHandler<TriggerData> ManualTrigger;
 
-		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, ILocomotionManager locomotionManager, IArmManager armManager, IHeadManager headManager)
+		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager/*, ILocomotionManager locomotionManager, IArmManager armManager, IHeadManager headManager*/)
 		: base(misty, parameters, characterParameters)
 		{
 			_speechManager = speechManager;
-			_locomotionManager = locomotionManager;
-			_headManager = headManager;
-			_armManager = armManager;
+		//	_locomotionManager = locomotionManager;
+			//_headManager = headManager;
+			//_armManager = armManager;
 			_webMessenger = new WebMessenger();
+			CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Unknown;
 
 			_speechManager.StoppedSpeaking += _speechManager_StoppedSpeaking;
 			_speechManager.UserDataAnimationScript += _speechManager_UserDataAnimationScript;
 
-			_armManager.LeftArmActuatorEvent += _armManager_LeftArmActuatorEvent;
-			_armManager.RightArmActuatorEvent += _armManager_RightArmActuatorEvent;
-			_headManager.HeadPitchActuatorEvent += _headManager_HeadPitchActuatorEvent;
-			_headManager.HeadYawActuatorEvent += _headManager_HeadYawActuatorEvent;
-			_headManager.HeadRollActuatorEvent += _headManager_HeadRollActuatorEvent;
+//			_armManager.LeftArmActuatorEvent += _armManager_LeftArmActuatorEvent;
+	//		_armManager.RightArmActuatorEvent += _armManager_RightArmActuatorEvent;
+		//	_headManager.HeadPitchActuatorEvent += _headManager_HeadPitchActuatorEvent;
+		//	_headManager.HeadYawActuatorEvent += _headManager_HeadYawActuatorEvent;
+	//		_headManager.HeadRollActuatorEvent += _headManager_HeadRollActuatorEvent;
 		}
 
-		private void _headManager_HeadRollActuatorEvent(object sender, IActuatorEvent e)
-		{
-			_headRollDegrees = e.ActuatorValue;
-		}
+		//private void _headManager_HeadRollActuatorEvent(object sender, IActuatorEvent e)
+		//{
+		//	_headRollDegrees = e.ActuatorValue;
+		//}
 
-		private void _headManager_HeadYawActuatorEvent(object sender, IActuatorEvent e)
-		{
-			_headYawDegrees = e.ActuatorValue;
-		}
+		//private void _headManager_HeadYawActuatorEvent(object sender, IActuatorEvent e)
+		//{
+		//	_headYawDegrees = e.ActuatorValue;
+		//}
 
-		private void _headManager_HeadPitchActuatorEvent(object sender, IActuatorEvent e)
-		{
-			_headPitchDegrees = e.ActuatorValue;
-		}
+		//private void _headManager_HeadPitchActuatorEvent(object sender, IActuatorEvent e)
+		//{
+		//	_headPitchDegrees = e.ActuatorValue;
+		//}
 
-		private void _armManager_RightArmActuatorEvent(object sender, IActuatorEvent e)
-		{
-			_rightArmDegrees = e.ActuatorValue;
-		}
+		//private void _armManager_RightArmActuatorEvent(object sender, IActuatorEvent e)
+		//{
+		//	_rightArmDegrees = e.ActuatorValue;
+		//}
 
-		private void _armManager_LeftArmActuatorEvent(object sender, IActuatorEvent e)
-		{
-			_leftArmDegrees = e.ActuatorValue;
-		}
+		//private void _armManager_LeftArmActuatorEvent(object sender, IActuatorEvent e)
+		//{
+		//	_leftArmDegrees = e.ActuatorValue;
+		//}
 
 
 		public void SpeechResponseHandler(object sender, TriggerData data)
 		{
-			_speechIntent = data;
+			//_speechIntent = data;
 		}
 
 		public async void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent)
 		{
 
-			if (_animationsCanceled || (_currentAnimationData.ProcessingAnimation != null && !await RunInternalScript(_currentAnimationData.ProcessingAnimation, false, true)))
+			if (_animationsCanceled || (_currentInteraction.ProcessingAnimation != null && !await RunInternalScript(_currentInteraction.ProcessingAnimation, false, true)))
 			{
 				_interactionCancellationEvent?.TrySetResult(true);
 				return;
@@ -195,7 +332,7 @@ namespace MistyCharacter
 
 		public async void HandleStartedListening(object sender, DateTime time)
 		{
-			if (_animationsCanceled || (_currentAnimationData.ListeningAnimation != null && !await RunInternalScript(_currentAnimationData.ListeningAnimation, false, true)))
+			if (_animationsCanceled || (_currentInteraction.ListeningAnimation != null && !await RunInternalScript(_currentInteraction.ListeningAnimation, false, true)))
 			{
 				_interactionCancellationEvent?.TrySetResult(true);
 				return;
@@ -362,7 +499,11 @@ namespace MistyCharacter
 				}
 			}
 		}
-		
+
+
+
+
+
 		public async Task SendCrossRobotCommand(IList<Robot> robots, string command, bool includeSelf = false, bool awaitAck = false)
 		{
 			foreach (Robot robot in robots)
@@ -890,14 +1031,14 @@ namespace MistyCharacter
 							case "STOP":
 								//STOP;
 								// TODO Needs to stop entire locomotion recipe/ script, or separate command?
-								await _locomotionManager.HandleLocomotionAction(new LocomotionAction
+								await HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Stop
 								});
 								break;
 							case "HALT":
 								//HALT;
-								await _locomotionManager.HandleLocomotionAction(new LocomotionAction
+								await HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Halt
 								});
@@ -1254,10 +1395,10 @@ namespace MistyCharacter
 								switch (CharacterParameters.SpeechRecognitionService.ToLower().Trim())
 								{
 									case "googleonboard":
-										_ = Robot.CaptureSpeechGoogleAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
+										_ = Robot.CaptureSpeechGoogleAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey, CharacterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage);
 										break;
 									case "azureonboard":
-										_ = Robot.CaptureSpeechAzureAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.Region, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
+										_ = Robot.CaptureSpeechAzureAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.AzureSpeechRecognitionParameters.SubscriptionKey, CharacterParameters.AzureSpeechRecognitionParameters.Region, CharacterParameters.AzureSpeechRecognitionParameters.SpokenLanguage);
 										break;
 									case "vosk":
 										_ = Robot.CaptureSpeechVoskAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000));
@@ -1284,7 +1425,7 @@ namespace MistyCharacter
 							case "DRIVE":
 								//DRIVE:distanceMeters,timeMs,true/false(reverse);
 								string[] driveData = commandData[1].Split(",");
-								_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Drive,
 									DistanceMeters = Convert.ToDouble(driveData[0]),
@@ -1296,7 +1437,7 @@ namespace MistyCharacter
 							case "HEADING":
 								//HEADING:heading,distanceMeters,timeMs,true/false(reverse);
 								string[] headingData = commandData[1].Split(",");
-								_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Heading,
 									Heading = Convert.ToDouble(headingData[0]),
@@ -1311,7 +1452,7 @@ namespace MistyCharacter
 								string[] turnData = commandData[1].Split(",");
 								string direction = Convert.ToString(turnData[2]);
 								direction = direction.ToLower().Trim();
-								_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Turn,
 									Degrees = direction.StartsWith("r") ? -Math.Abs(Convert.ToDouble(turnData[0])) : Math.Abs(Convert.ToDouble(turnData[0])),
@@ -1323,7 +1464,7 @@ namespace MistyCharacter
 							case "TURN-HEADING":
 								//TURN-HEADING:heading,timeMs,right/left;
 								string[] turnHData = commandData[1].Split(",");
-								_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.TurnHeading,
 									Heading = Math.Abs(Convert.ToDouble(turnHData[0])),
@@ -1335,7 +1476,7 @@ namespace MistyCharacter
 							case "ARC":
 								//ARC:heading,radius,timeMs,true/false(reverse);
 								string[] arcData = commandData[1].Split(",");
-								_ = _locomotionManager.HandleLocomotionAction(new LocomotionAction
+								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Arc,
 									Heading = Convert.ToDouble(arcData[0]),
@@ -1457,7 +1598,7 @@ namespace MistyCharacter
 								{
 									filter2 = triggerData2[3];
 								}
-								RegisterEvent(triggerData2[2]);
+								//?? Part of add trigger?  RegisterEvent(triggerData2[2]);
 								TriggerData newTriggerData = new TriggerData(null, filter2, triggerData2[2]);
 								newTriggerData.KeepAlive = false;
 								newTriggerData.OverrideInteraction = triggerData2[1];
@@ -1471,7 +1612,7 @@ namespace MistyCharacter
 								{
 									filter = triggerData[2];
 								}
-								RegisterEvent(triggerData[1]);
+								//?? Part of add trigger?  RegisterEvent(triggerData[1]);
 								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData[0], new TriggerData(null, filter, triggerData[1])));
 								break;
 							case "T-ACTION!":
@@ -1482,7 +1623,7 @@ namespace MistyCharacter
 								{
 									filterA = triggerDataA[3];
 								}
-								RegisterEvent(triggerDataA[2]);
+								//?? Part of add trigger?  RegisterEvent(triggerDataA[2]);
 								TriggerData newTriggerDataA = new TriggerData(null, filterA, triggerDataA[2]);
 								newTriggerDataA.KeepAlive = true;
 								newTriggerDataA.OverrideInteraction = triggerDataA[1];
@@ -1496,7 +1637,7 @@ namespace MistyCharacter
 								{
 									filter4 = triggerData4[2];
 								}
-								RegisterEvent(triggerData4[1]);
+								//?? Part of add trigger?  RegisterEvent(triggerData4[1]);
 								TriggerData newTriggerData4 = new TriggerData(null, filter4, triggerData4[1]);
 								newTriggerData4.KeepAlive = true;
 								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData4[0], newTriggerData4));
@@ -1533,22 +1674,22 @@ namespace MistyCharacter
 									ManualTrigger?.Invoke(this, new TriggerData(timedText, timedTriggerEventData[2], timedTriggerEventData[1]));
 								});
 								break;
-							case "TIME":
-								TimeObject timeObject = _timeManager.GetTimeObject();
-								_speechManager.Speak(timeObject.SpokenTime, false);
-								break;
-							case "DAY":
-								TimeObject timeObject2 = _timeManager.GetTimeObject();
-								_speechManager.Speak(timeObject2.SpokenDay.ToString(), false);
-								break;
-							case "SEND-EVENT":
-								//SEND-EVENT:EventName,yourdata;
-								string[] eventData = commandData[1].Split(",");
-								IDictionary<string, object> payloadData = new Dictionary<string, object>();
-								payloadData.Add("EventData", eventData[1]);
-								payloadData.Add("State", Newtonsoft.Json.JsonConvert.SerializeObject(_robotStateSystem.GetRobotStateEvent()));
-								await Robot.TriggerEventAsync(eventData[0], "AnimationManager", payloadData, new List<string>());
-								break;
+							//case "TIME":
+							//	TimeObject timeObject = _timeManager.GetTimeObject();
+							//	_speechManager.Speak(timeObject.SpokenTime, false);
+							//	break;
+							//case "DAY":
+							//	TimeObject timeObject2 = _timeManager.GetTimeObject();
+							//	_speechManager.Speak(timeObject2.SpokenDay.ToString(), false);
+							//	break;
+							//case "SEND-EVENT":
+							//	//SEND-EVENT:EventName,yourdata;
+							//	string[] eventData = commandData[1].Split(",");
+							//	IDictionary<string, object> payloadData = new Dictionary<string, object>();
+							//	payloadData.Add("EventData", eventData[1]);
+							//	payloadData.Add("State", Newtonsoft.Json.JsonConvert.SerializeObject(_robotStateSystem.GetRobotStateEvent()));
+							//	await Robot.TriggerEventAsync(eventData[0], "AnimationManager", payloadData, new List<string>());
+							//	break;
 							case "AWAIT-EVENT":
 								//AWAIT-EVENT:EventName1,10000/-1;
 								//TODO Not quite right
@@ -1611,93 +1752,6 @@ namespace MistyCharacter
 
 
 
-
-		private bool _bumpSensorRegistered;
-		private bool _capTouchRegistered;
-		private bool _arTagRegistered;
-		private bool _tofRegistered;
-		private bool _qrTagRegistered;
-		private bool _serialMessageRegistered;
-		private bool _faceRecognitionRegistered;
-		private bool _objectDetectionRegistered;
-
-
-
-		//TODO ONLY TURN ON AS NEEDED< CURRENTLY IT KEEPS ON!
-		private void RegisterEvent(string trigger)
-		{
-			if (string.IsNullOrWhiteSpace(trigger))
-			{
-				return;
-			}
-
-			trigger = trigger.Trim();
-			//Register events and start services as needed if it is the first time we see this trigger
-			if (!_bumpSensorRegistered && (string.Equals(trigger, Triggers.BumperPressed, StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(trigger, Triggers.BumperReleased, StringComparison.OrdinalIgnoreCase)))
-			{
-				LogEventDetails(Robot.RegisterBumpSensorEvent(BumpCallback, 50, true, null, "BumpSensor", null));
-				_bumpSensorRegistered = true;
-			}
-			else if (!_capTouchRegistered && (string.Equals(trigger, Triggers.CapTouched, StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(trigger, Triggers.CapReleased, StringComparison.OrdinalIgnoreCase)))
-			{
-				LogEventDetails(Robot.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
-				_capTouchRegistered = true;
-			}
-			else if (!_arTagRegistered && string.Equals(trigger, Triggers.ArTagSeen, StringComparison.OrdinalIgnoreCase))
-			{
-				Robot.StartArTagDetector(7, 140, null);
-				LogEventDetails(Robot.RegisterArTagDetectionEvent(ArTagCallback, 250, true, "ArTag", null));
-				_arTagRegistered = true;
-			}
-			else if (!_qrTagRegistered && string.Equals(trigger, Triggers.QrTagSeen, StringComparison.OrdinalIgnoreCase))
-			{
-				Robot.StartQrTagDetector(null);
-				LogEventDetails(Robot.RegisterQrTagDetectionEvent(QrTagCallback, 250, true, "QrTag", null));
-				_qrTagRegistered = true;
-			}
-			else if (!_serialMessageRegistered && string.Equals(trigger, Triggers.SerialMessage, StringComparison.OrdinalIgnoreCase))
-			{
-				LogEventDetails(Robot.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
-				_serialMessageRegistered = true;
-			}
-			else if (!_faceRecognitionRegistered && string.Equals(trigger, Triggers.FaceRecognized, StringComparison.OrdinalIgnoreCase))
-			{
-				//Robot.StopObjectDetector(null);
-				Robot.StartFaceRecognition(null);
-				//Misty.StartFaceDetection(null);
-				LogEventDetails(Robot.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 250, true, null, "FaceRecognition", null));
-				_faceRecognitionRegistered = true;
-			}
-			else if (!_objectDetectionRegistered && string.Equals(trigger, Triggers.ObjectSeen, StringComparison.OrdinalIgnoreCase))
-			{
-				//Robot.StopFaceRecognition(null);
-				Robot.StartObjectDetector(StartupParameters.Robot.PersonConfidence, 0, 2, null);
-				//Misty.StartFaceDetection(null);
-				LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, 250, true, null, "ObjectDetection", null));
-				_objectDetectionRegistered = true;
-			}
-		}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 		//This command needs to come in from another bot or skill
 		//Need to handle when bot says it isn't gonna handle cross robot stuff
 		public bool HandleSyncEvent(IUserEvent userEvent)
@@ -1754,6 +1808,7 @@ namespace MistyCharacter
 			}
 		}
 
+
 		private void ClearAnimationDisplayLayers()
 		{
 			_userTextLayerVisible = false;
@@ -1777,6 +1832,88 @@ namespace MistyCharacter
 			{
 				Deleted = true
 			});
+		}
+
+
+		/// <summary>
+		/// Handle loco actions for this character
+		/// </summary>
+		public async Task HandleLocomotionAction(LocomotionAction locomotionAction)
+		{
+			try
+			{
+				CurrentLocomotionState.LocomotionAction = locomotionAction;
+				CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Starting;
+
+				StartedLocomotionAction?.Invoke(this, locomotionAction);
+				//based upon request, do stuff and other things
+
+				switch (locomotionAction.Action)
+				{
+					case LocomotionCommand.Stop:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Stopped;
+						await Robot.StopAsync();
+						LocomotionStopped?.Invoke(this, locomotionAction);
+						break;
+					case LocomotionCommand.Halt:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Stopped;
+						await Robot.HaltAsync(new List<MotorMask> { MotorMask.AllMotors });
+						LocomotionStopped?.Invoke(this, locomotionAction);
+						break;
+					case LocomotionCommand.Turn:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
+						await Turn((double)locomotionAction.Degrees, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
+						break;
+					case LocomotionCommand.TurnHeading:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
+						await TurnHeading((double)locomotionAction.Heading, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
+						break;
+					case LocomotionCommand.Arc:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
+						await Arc((double)locomotionAction.Degrees, (double)locomotionAction.Radius, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
+						break;
+					case LocomotionCommand.Heading:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
+						await Heading((double)locomotionAction.Heading, (double)locomotionAction.DistanceMeters, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
+						break;
+					case LocomotionCommand.Drive:
+						CurrentLocomotionState.LocomotionStatus = LocomotionStatus.ScriptDriving;
+						await Drive((double)locomotionAction.DistanceMeters, (int)locomotionAction.TimeMs, locomotionAction.Reverse);
+						break;
+				}
+
+				CompletedLocomotionAction?.Invoke(this, locomotionAction);
+			}
+			catch
+			{
+				//TODO
+				LocomotionFailed?.Invoke(this, locomotionAction);
+			}
+		}
+
+		private async Task Turn(double degrees, int timeMs, bool reverse = false)
+		{
+			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, 0, timeMs, reverse);
+		}
+
+		private async Task TurnHeading(double heading, int timeMs, bool reverse = false)
+		{
+			await Robot.DriveArcAsync(heading, 0, timeMs, reverse);
+		}
+
+		private async Task Arc(double degrees, double radius, int timeMs, bool reverse = false)
+		{
+			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, radius, timeMs, reverse);
+		}
+
+		private async Task Heading(double heading, double distance, int timeMs, bool reverse = false)
+		{
+			await Robot.DriveHeadingAsync(heading, distance, timeMs, reverse);
+		}
+
+		private async Task Drive(double distance, int timeMs, bool reverse = false)
+		{
+			await Robot.DriveHeadingAsync(CurrentLocomotionState.RobotYaw, distance, timeMs, reverse);
 		}
 
 		private bool _isDisposed = false;
