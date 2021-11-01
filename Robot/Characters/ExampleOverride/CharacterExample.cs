@@ -33,7 +33,7 @@
 using System;
 using System.Collections.Generic;
 using Conversation.Common;
-using MistyCharacter;
+using MistyInteraction;
 using MistyRobotics.SDK.Messengers;
 
 namespace CharacterTemplates
@@ -45,8 +45,16 @@ namespace CharacterTemplates
     /// </summary>
     public class EventTemplate : BaseCharacter
 	{
-		public EventTemplate(IRobotMessenger misty, CharacterParameters characterParameters, IDictionary<string, object> originalParameters, ManagerConfiguration managerConfiguration = null)
-			: base(misty, characterParameters, originalParameters, managerConfiguration)
+		public EventTemplate(IRobotMessenger misty, IDictionary<string, object> originalParameters, ManagerConfiguration managerConfiguration = null)
+			: base(misty, originalParameters, 
+				  new ManagerConfiguration  //update managers as desired
+				(
+					null,
+					null,
+					null,
+					null,
+					null
+				 ))
 		{
 			RegisterOptionalEvents();
 			UpdateEmotionDefaults();
@@ -59,7 +67,7 @@ namespace CharacterTemplates
 		/// </summary>
 		private void UpdateEmotionDefaults()
 		{
-			//TODO Remove and reset as desired
+			//TODO Remove and reset as desired, or create a whole new Emotion Manager
 			foreach(KeyValuePair<string, AnimationRequest> emotionanimation in EmotionAnimations)
 			{
 				//do what ya want

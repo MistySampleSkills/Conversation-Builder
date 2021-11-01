@@ -30,6 +30,8 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System;
+
 namespace MistyCharacter
 {
     /// <summary>
@@ -39,6 +41,27 @@ namespace MistyCharacter
 	{
 		public ManagerConfiguration() { }
 
+		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null)
+		{
+			SpeechManager = speechmanager;		
+			TimeManager = timeManager;
+			EmotionManager = emotionManager;
+			SpeechIntentManager = speechIntentManager;
+			AnimationManager = animationManager;
+		}
+
+		/// <summary>
+		/// Deprecated!
+		/// </summary>
+		/// <param name="speechmanager"></param>
+		/// <param name="timeManager"></param>
+		/// <param name="armManager"></param>
+		/// <param name="headManager"></param>
+		/// <param name="emotionManager"></param>
+		/// <param name="speechIntentManager"></param>
+		/// <param name="animationManager"></param>
+		/// <param name="locomotionManager"></param>
+		[Obsolete("Arm Manager and Head Manager are deprecated, please use Animation Manager instead.")]
 		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null, ILocomotionManager locomotionManager = null)
 		{
 			SpeechManager = speechmanager;

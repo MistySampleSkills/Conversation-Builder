@@ -45,6 +45,9 @@ namespace Conversation.Common
 		public string TriggerFilter { get; set; }		
 		public string Trigger { get; set; }
 
+		public bool KeepAlive { get; set; } = true;
+
 		public bool OverrideIntent { get; set; }
+		public string  OverrideInteraction { get; set; }
 	}
 }

@@ -49,6 +49,20 @@ namespace MistyCharacter
 		void AbortListening(string audioName);		
 		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
 
+
+
+		void SetAudioTrim(int trimMs);
+		void SetMaxSilence(int silenceTimeout);
+		void SetMaxListen(int listenTimeout);
+		//void UpdatePrespeech(string prespeech);
+		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
+
+
+
+
+
+
+
 		event EventHandler<string> StartedSpeaking;
 		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
 		event EventHandler<DateTime> StartedListening;

@@ -39,6 +39,8 @@ namespace MistyCharacter
 {
 	public interface IBaseCharacter
 	{
+		void RegisterEvent(object sender, string trigger);
+
 		/// <summary>
 		/// Triggered when a conversation is started
 		/// </summary>
@@ -245,7 +247,7 @@ namespace MistyCharacter
 		/// Must be called after character creation, before use.
 		/// </summary>
 		/// <returns></returns>
-		Task<bool> Initialize();
+		Task<bool> Initialize(CharacterParameters characterParameters);
 
 		/// <summary>
 		/// Dispose of the character to prevent background tasks from continuing after cancellation

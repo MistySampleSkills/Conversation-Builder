@@ -126,6 +126,8 @@
     <Compile Include="AzureCognitive\AzureSpeechService.cs" />
     <Compile Include="AzureCognitive\AzureServiceAuthorization.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpeechIntentInterpreter.cs" />
+    <Compile Include="TextComparisonObject.cs" />
     <EmbeddedResource Include="Properties\SpeechTools.rd.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -161,8 +163,12 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\MistyInteraction.Common\MistyInteraction.Common.csproj">
+      <Project>{e93dde04-b176-402d-b63a-b68b88e85105}</Project>
+      <Name>MistyInteraction.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Conversation.Common\Conversation.Common.csproj">
-      <Project>{F6DB04A8-FA28-4096-AB01-94A5F1BADFF4}</Project>
+      <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\SkillTools\SkillTools.csproj">

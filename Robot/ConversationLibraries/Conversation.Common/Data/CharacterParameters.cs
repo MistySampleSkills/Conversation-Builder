@@ -37,8 +37,18 @@ namespace Conversation.Common
 {
 	public sealed class CharacterParameters
 	{
-		public AzureSpeechParameters AzureSpeechParameters { get; set; }
-		public GoogleSpeechParameters GoogleSpeechParameters { get; set; }
+		//public AzureSpeechParameters AzureSpeechParameters { get; set; }
+		//public GoogleSpeechParameters GoogleSpeechParameters { get; set; }
+
+		public AzureSpeechParameters AzureSpeechRecognitionParameters { get; set; }
+
+		public GoogleSpeechParameters GoogleSpeechRecognitionParameters { get; set; }
+
+		public AzureSpeechParameters AzureTTSParameters { get; set; }
+
+		public GoogleSpeechParameters GoogleTTSParameters { get; set; }
+
+
 
 		public bool RetranslateTTS { get; set; }
 
@@ -87,5 +97,7 @@ namespace Conversation.Common
 		public IList<Robot> Robots { get; set; } = new List<Robot>();
 
 		public IList<Recipe> Recipes { get; set; } = new List<Recipe>();
+
+		public string FurhatIp { get; set; }
 	}
 }

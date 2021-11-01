@@ -35,6 +35,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Conversation.Common;
+using MistyInteraction;
+using MistyManager;
 using MistyRobotics.Common.Data;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
@@ -49,8 +51,8 @@ namespace MistyConversation
 	internal class MistyConversationSkill : IMistySkill
 	{
 		public INativeRobotSkill Skill { get; set; }
-		private IRobotMessenger Misty;
-		private CharacterManagerLoader _characterManagerLoader;
+		private IRobotMessenger _misty;
+		private ConversationManager _conversationManager;
 		
 		public MistyConversationSkill()
 		{
@@ -64,121 +66,36 @@ namespace MistyConversation
 
 		public void LoadRobotConnection(IRobotMessenger robotInterface)
 		{
-			Misty = robotInterface;
+			_misty = robotInterface;
 		}
 
 		public async void OnStart(object sender, IDictionary<string, object> parameters)
 		{
 			try
 			{
-                //Unregister events in case didn't shut down cleanly last time
-				Misty.UnregisterAllEvents(null);
-
-				//Revert display to defaults before starting...
-				await Misty.SetDisplaySettingsAsync(true);
-				Misty.SetBlinkSettings(true, null, null, null, null, null, null);
-
-				await Misty.SetTextDisplaySettingsAsync("Text", new TextSettings
+				_conversationManager = new ConversationManager(_misty, parameters, new MistyInteraction.ManagerConfiguration());
+				if (!await _conversationManager.Initialize(new BasicMisty(_misty, parameters, new ManagerConfiguration())))
 				{
-					Wrap = true,
-					Visible = true,
-					Weight = 15,
-					Size = 20,
-					HorizontalAlignment = ImageHorizontalAlignment.Center,
-					VerticalAlignment = ImageVerticalAlignment.Bottom,
-					Red = 255,
-					Green = 255,
-					Blue = 255,
-					PlaceOnTop = true,
-					FontFamily = "Courier New",
-					Height = 45
-				});
-				
-				Misty.DisplayText("Hello...", "Text", null);
-				Misty.ChangeLED(0, 255, 255, null);
-				Misty.MoveArms(65.0, 65.0, 20, 20, null, AngularUnit.Degrees, null);
-
-				await Task.Delay(2000);
-				_characterManagerLoader = await CharacterManagerLoader.InitializeCharacter(parameters, Misty);
-				if (_characterManagerLoader == null)
-				{
-					Misty.Speak("Sorry, I am having trouble initializing and starting this skill.", true, null, null);
-					await Task.Delay(5000);
+					_misty.SkillLogger.Log($"Failed to initialize conversation manager.");
+					_misty.SkillCompleted();
 					return;
 				}
 
-				Misty.DisplayText("Almost there...", "Text", null);
-				await Task.Delay(2000);
-				try
-				{
-					bool audioEnabled = false;
-					bool cameraEnabled = false;
-					IRobotCommandResponse audioResults = null;
-					IRobotCommandResponse cameraResults = null;
-					cameraEnabled = (await Misty.CameraServiceEnabledAsync()).Data;
-					audioEnabled = (await Misty.AudioServiceEnabledAsync()).Data;
-					if (!cameraEnabled)
-					{
-						cameraResults = await Misty.EnableCameraServiceAsync();
-						cameraEnabled = cameraResults.Status == ResponseStatus.Success;
-					}
-					if (!audioEnabled)
-					{
-						audioResults = await Misty.EnableAudioServiceAsync();
-						audioEnabled = audioResults.Status == ResponseStatus.Success;
-					}
+				await _conversationManager.StartConversation();
 
-					if ((!cameraEnabled || !audioEnabled))
-					{
-						Misty.Speak("Sorry, I am having trouble initializing the audio or camera services.  I will try to start the conversation, but you may have to restart Misty.", true, null, null);
-						Misty.DisplayText($"Failed Audio/Camera Test", "Text", null);
-						Misty.SkillLogger.Log($"Failed to get enabled response from audio or camera.");
-						await Task.Delay(4000);
-                        //Warned them, but try anyway in case they are just slow to come up
-					}
-				}
-				catch (Exception ex)
-				{
-                    Misty.Speak("Sorry, I am having trouble initializing the audio or camera services.  I will try to start the conversation, but you may have to restart Misty.", true, null, null);
-                    Misty.DisplayText($"Failed Audio/Camera Test", "Text", null);
-					Misty.SkillLogger.Log("Enable services threw an exception. 820 services not loaded properly.", ex);
-					await Task.Delay(4000);
-                    //Warned them, but try anyway in case they are just slow to come up
-                }
-
-                Misty.DisplayText($"Waking Misty...", "Text", null);
-                await Task.Delay(2000);
-
-                string startupConversation = CharacterManagerLoader.CharacterParameters.ConversationGroup.StartupConversation;
-				ConversationData conversationData = CharacterManagerLoader.CharacterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
-				if (conversationData == null)
-				{
-					Misty.SkillLogger.Log($"Could not locate the starting conversation.");
-					Misty.DisplayText($"Failed to start conversation.", "SpokeText", null);
-					return;
-				}				
-
-				Misty.DisplayText($"Starting {conversationData.Name}", "Text", null);
-				await Task.Delay(3000);
-				Misty.SetTextDisplaySettings("Text", new TextSettings
-				{
-					Deleted = true
-				}, null);
-
-				//Go!
-				await _characterManagerLoader.StartConversation();
 			}
 			catch (OperationCanceledException)
 			{
-				Misty.SkillLogger.Log($"Skill cancelled by user.");
+				_misty.SkillLogger.Log($"Skill cancelled by user.");
 				return;
 			}
 			catch (Exception ex)
 			{
-				Misty.DisplayText($"Failed Initialization", "Text", null);
-				Misty.SkillLogger.Log($"Failed to initialize the skill.", ex);
-				Misty.Speak("Sorry, I am unable to initialize the skill. You need to restart the skill or the robot.", true, null, null);
+				_misty.DisplayText($"Failed Initialization", "Text", null);
+				_misty.SkillLogger.Log($"Failed to initialize the skill.", ex);
+				_misty.Speak("Sorry, I am unable to initialize the skill. You need to restart the skill or the robot.", true, null, null);
 				await Task.Delay(5000);
+				_misty.SkillCompleted();
 			}
 		}
 
@@ -194,11 +111,11 @@ namespace MistyConversation
 
 		public void OnCancel(object sender, IDictionary<string, object> parameters)
 		{
-			_characterManagerLoader?.Dispose();
+			_conversationManager?.Dispose();
 
-			Misty.Speak("Misty conversation skill cancelling.", true, null, null);
-			Misty.SetBlinkSettings(true, null, null, null, null, null, null);
-			Misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
+			_misty.Speak("Misty conversation skill cancelling.", true, null, null);
+			_misty.SetBlinkSettings(true, null, null, null, null, null, null);
+			_misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
 		}
 
 		public void OnTimeout(object sender, IDictionary<string, object> parameters)
@@ -216,9 +133,9 @@ namespace MistyConversation
 			{
 				if (disposing)
 				{
-					_characterManagerLoader?.Dispose();
-					Misty.UnregisterAllEvents(null);
-					Misty.SkillCompleted();
+					_conversationManager?.Dispose();
+					_misty.UnregisterAllEvents(null);
+					_misty.SkillCompleted();
 				}
 
 				_isDisposed = true;

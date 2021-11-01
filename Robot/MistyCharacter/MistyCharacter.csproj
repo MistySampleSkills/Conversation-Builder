@@ -123,6 +123,8 @@
     <Compile Include="Character\TimerTriggerData.cs" />
     <Compile Include="Character\ListeningState.cs" />
     <Compile Include="DefaultManagers\AnimationManager.cs" />
+    <Compile Include="DefaultManagers\FurhatManager.cs" />
+    <Compile Include="DefaultManagers\IFurhatManager.cs" />
     <Compile Include="DefaultManagers\LocomotionManager.cs" />
     <Compile Include="DefaultManagers\IEmotionManager.cs" />
     <Compile Include="DefaultManagers\EmotionManager.cs" />
@@ -181,7 +183,7 @@
       <Name>SkillTools</Name>
     </ProjectReference>
     <ProjectReference Include="..\ConversationLibraries\SpeechTools\SpeechTools.csproj">
-      <Project>{8a67aa55-d289-41d3-8afe-54960b21a5b4}</Project>
+      <Project>{8A67AA55-D289-41D3-8AFE-54960B21A5B4}</Project>
       <Name>SpeechTools</Name>
     </ProjectReference>
   </ItemGroup>

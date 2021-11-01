@@ -87,9 +87,6 @@ namespace MistyConversation
 				
 				switch (CharacterParameters.Character?.ToLower())
 				{
-					case Experimental:					
-						Character = new ExperimentalMisty(_misty, CharacterParameters, parameters);
-						break;
 					case Event:
 						Character = new EventTemplate(_misty, CharacterParameters, parameters);
 						break;

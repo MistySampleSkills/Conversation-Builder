@@ -36,7 +36,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Conversation.Common;
+using MistyInteraction.Common;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.CognitiveServices.Speech.Translation;
@@ -55,10 +55,12 @@ namespace SpeechTools.AzureCognitive
 	public sealed class AzureSpeechService : ISpeechService
 	{
 		private IRobotMessenger _robot;
-		private SpeechConfig _speechConfig;
+		private SpeechConfig _ttsSpeechConfig;
 		private SpeechTranslationConfig _speechTranslationConfig;
 		private readonly SemaphoreSlim _speechSemaphore = new SemaphoreSlim(1, 1);
-		private AzureServiceAuthorization _servicesAuthorization;
+		private AzureServiceAuthorization _ttsAuthorization;
+		private AzureServiceAuthorization _recognitionAuthorization;
+		
 		private string _azureSpeechProfanitySetting = "Raw";
 		private string _spokenLanguage = "en-US";
 		private string _translatedLanguage = "en";
@@ -81,7 +83,7 @@ namespace SpeechTools.AzureCognitive
 			set
 			{
 				_speakingvoice = value;
-				_speechConfig.SpeechSynthesisVoiceName = _speakingvoice;
+				_ttsSpeechConfig.SpeechSynthesisVoiceName = _speakingvoice;
 				_speechTranslationConfig.SpeechSynthesisVoiceName = _speakingvoice;
 			}
 		}
@@ -98,7 +100,7 @@ namespace SpeechTools.AzureCognitive
 			set
 			{
 				_translatedLanguage = value;
-				_speechConfig.SpeechSynthesisLanguage = _translatedLanguage;
+				_ttsSpeechConfig.SpeechSynthesisLanguage = _translatedLanguage;
 				_speechTranslationConfig.SpeechSynthesisLanguage = _translatedLanguage;
 			}
 		}
@@ -116,7 +118,7 @@ namespace SpeechTools.AzureCognitive
 			{
 				_spokenLanguage = value;
 				_speechTranslationConfig.SpeechRecognitionLanguage = _spokenLanguage;
-				_speechConfig.SpeechRecognitionLanguage = _spokenLanguage;
+				_ttsSpeechConfig.SpeechRecognitionLanguage = _spokenLanguage;
 			}
 		}
 
@@ -136,30 +138,31 @@ namespace SpeechTools.AzureCognitive
 				{
 					case "Removed":
 						_speechTranslationConfig.SetProfanity(ProfanityOption.Removed);
-						_speechConfig.SetProfanity(ProfanityOption.Removed);
+						_ttsSpeechConfig.SetProfanity(ProfanityOption.Removed);
 						break;
 					case "Masked":
 						_speechTranslationConfig.SetProfanity(ProfanityOption.Masked);
-						_speechConfig.SetProfanity(ProfanityOption.Masked);
+						_ttsSpeechConfig.SetProfanity(ProfanityOption.Masked);
 						break;
 					case "Raw":
 					default:
 						_speechTranslationConfig.SetProfanity(ProfanityOption.Raw);
-						_speechConfig.SetProfanity(ProfanityOption.Raw);
+						_ttsSpeechConfig.SetProfanity(ProfanityOption.Raw);
 						break;
 				}
 			}
 		}
 
-		public AzureSpeechService(AzureServiceAuthorization servicesAuthorization, IRobotMessenger robot)
+		public AzureSpeechService(AzureServiceAuthorization ttsAuthorization, AzureServiceAuthorization recognitionAuthorization, IRobotMessenger robot)
 		{
 			_robot = robot;
-			_servicesAuthorization = servicesAuthorization;
+			_ttsAuthorization = ttsAuthorization;
+			_recognitionAuthorization = recognitionAuthorization;
 
-			_speechConfig = SpeechConfig.FromSubscription(_servicesAuthorization.SubscriptionKey, _servicesAuthorization.Region);
-			_speechTranslationConfig = SpeechTranslationConfig.FromSubscription(_servicesAuthorization.SubscriptionKey, _servicesAuthorization.Region);
+			_ttsSpeechConfig = SpeechConfig.FromSubscription(_ttsAuthorization.SubscriptionKey, _ttsAuthorization.Region);
+			_speechTranslationConfig = SpeechTranslationConfig.FromSubscription(_recognitionAuthorization.SubscriptionKey, _recognitionAuthorization.Region);
 			
-			if (_speechConfig != null && _speechTranslationConfig != null)
+			if (_ttsSpeechConfig != null || _speechTranslationConfig != null)
 			{
 				Authorized = true;
 			}
@@ -370,7 +373,7 @@ namespace SpeechTools.AzureCognitive
 				
 				using (var fileOutput = AudioConfig.FromWavFileOutput(storageFile.Path))
 				{
-					using (var synthesizer = new SpeechSynthesizer(_speechConfig, fileOutput))
+					using (var synthesizer = new SpeechSynthesizer(_ttsSpeechConfig, fileOutput))
 					{
 						SpeechSynthesisResult result = null;
 						if(useSSML)

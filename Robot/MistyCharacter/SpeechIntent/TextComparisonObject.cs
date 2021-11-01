@@ -32,12 +32,12 @@
 
 namespace MistyCharacter.SpeechIntent
 {	
-	internal class TextComparisonObject
+	/*internal class TextComparisonObject
     {
         public string Id { get; set; }
         public string Intent { get; set; }
 		public double HitCountAverage { get; set; }
 		public int MaxHitCount { get; set; }
 		public int Priority { get; set; }
-	}
+	}*/
 }

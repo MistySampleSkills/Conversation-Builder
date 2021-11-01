@@ -164,9 +164,9 @@
       <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
       <Name>SkillTools</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\MistyCharacter\MistyCharacter.csproj">
-      <Project>{B3665F59-B772-4058-B522-EAEFE3980F7C}</Project>
-      <Name>MistyCharacter</Name>
+    <ProjectReference Include="..\..\..\MistyInteraction\MistyInteraction.csproj">
+      <Project>{60e0d411-3eb1-4ee9-8172-a59ce2857378}</Project>
+      <Name>MistyInteraction</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '15.0' ">

@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using Conversation.Common;
 using MistyRobotics.SDK.Messengers;
 using MistyCharacter.SpeechIntent;
+using SpeechTools;
 
 namespace MistyCharacter
 {

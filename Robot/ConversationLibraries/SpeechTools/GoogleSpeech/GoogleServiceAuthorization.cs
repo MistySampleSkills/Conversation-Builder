@@ -45,11 +45,6 @@ namespace SpeechTools.GoogleSpeech
 		/// <summary>
 		/// Google Speech to text Endpoint
 		/// </summary>
-		public string STTEndpoint { get; set; }
-
-		/// <summary>
-		/// Google Text to Speech Endpoint
-		/// </summary>
-		public string TTSEndpoint { get; set; }
+		public string Endpoint { get; set; }
 	}
 }

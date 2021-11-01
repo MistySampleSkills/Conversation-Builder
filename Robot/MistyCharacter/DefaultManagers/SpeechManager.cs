@@ -52,6 +52,7 @@ namespace MistyCharacter
 {
 	public class SpeechManager : BaseManager, ISpeechManager
 	{
+
 		public event EventHandler<string> StartedSpeaking;
 		public event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
 		public event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
@@ -79,6 +80,7 @@ namespace MistyCharacter
 		private IList<string> _listeningCallbacks = new List<string>();
 		private object _lockListenerData = new object();
 		private bool _listenAborted;
+		private int _audioTrim = 0;
 		private int _silenceTimeout = 6000;
 		private int _listenTimeout = 6000;
 		private IList<string> _allowedTriggers = new List<string>();
@@ -111,7 +113,20 @@ namespace MistyCharacter
 				}
 			}
 		}
+		
 
+		public void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData)
+		{
+			if (triggerData.Value.Trigger.Trim().ToLower() == Triggers.SpeechHeard.ToLower())
+			{
+				KeyValuePair<string, UtteranceData> utteranceData = _intentUtterances.FirstOrDefault(x => x.Value.Name.Trim().ToLower() == triggerData.Value.TriggerFilter.Trim().ToLower());
+				if (utteranceData.Value != null && !_allowedTriggers.Contains(utteranceData.Value.Id))
+				{
+					_allowedTriggers.Add(utteranceData.Value.Id);
+				}
+			}
+		}
+		
 		public string GetLocaleName(string name)
 		{
 			if (CharacterParameters.AddLocaleToAudioNames)
@@ -137,6 +152,21 @@ namespace MistyCharacter
 			_listenTimeout = listenTimeout >= 1000 ? listenTimeout : 1000;
 			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;
 			_allowedTriggers = allowedUtterances;
+		}
+
+		public void SetAudioTrim(int trimMs)
+		{
+			_audioTrim = trimMs;
+		}
+
+		public void SetMaxSilence(int silenceTimeout)
+		{
+			_silenceTimeout = silenceTimeout;
+		}
+
+		public void SetMaxListen(int listenTimeout)
+		{
+			_listenTimeout = listenTimeout;
 		}
 
 		public override async Task<bool> Initialize()
@@ -502,13 +532,19 @@ namespace MistyCharacter
 						_recording = true;
 
 						Robot.SkillLogger.LogVerbose("Capture Speech called.");
-						switch (CharacterParameters.SpeechRecognitionService)
+						switch (CharacterParameters.SpeechRecognitionService.Trim().ToLower())
 						{
-							case "GoogleOnboard":
+							case "googleonboard":
 								_ = Robot.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
 								return;
-							case "AzureOnboard":
+							case "azureonboard":
 								_ = Robot.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.Region, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
+								return;
+							case "vosk":
+								_ = Robot.CaptureSpeechVoskAsync(false, _listenTimeout, _silenceTimeout);
+								return;
+							case "deepspeech":
+								_ = Robot.CaptureSpeechDeepSpeechAsync(false, _listenTimeout, _silenceTimeout);
 								return;
 							default:
 								_ = Robot.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
@@ -571,8 +607,8 @@ namespace MistyCharacter
 				Robot.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 
-				if (CharacterParameters.SpeechRecognitionService == "GoogleOnboard" ||
-					CharacterParameters.SpeechRecognitionService == "AzureOnboard")
+				string service = CharacterParameters.SpeechRecognitionService.Trim().ToLower();
+				if (service == "googleonboard" || service == "azureonboard" || service == "deepspeech" || service == "vosk")
 				{
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
 					return;

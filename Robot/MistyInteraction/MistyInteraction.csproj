@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{80CC1BF1-BB89-489C-A566-8FBB408A2E9F}</ProjectGuid>
+    <ProjectGuid>{60E0D411-3EB1-4EE9-8172-A59CE2857378}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ExperimentalMisty</RootNamespace>
-    <AssemblyName>ExperimentalMisty</AssemblyName>
+    <RootNamespace>MistyCharacter</RootNamespace>
+    <AssemblyName>MistyCharacter</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17763.0</TargetPlatformVersion>
@@ -120,33 +120,71 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ExperimentalMisty.cs" />
+    <Compile Include="Character\TimerTriggerData.cs" />
+    <Compile Include="Character\ListeningState.cs" />
+    <Compile Include="DefaultManagers\AnimationManager.cs" />
+    <Compile Include="DefaultManagers\FurhatManager.cs" />
+    <Compile Include="DefaultManagers\IFurhatManager.cs" />
+    <Compile Include="DefaultManagers\ISpeechIntentManager.cs" />
+    <Compile Include="DefaultManagers\ISpeechManager.cs" />
+    <Compile Include="DefaultManagers\LocomotionManager.cs" />
+    <Compile Include="DefaultManagers\IEmotionManager.cs" />
+    <Compile Include="DefaultManagers\EmotionManager.cs" />
+    <Compile Include="Character\ManagerConfiguration.cs" />
+    <Compile Include="Character\IBaseCharacter.cs" />
+    <Compile Include="DefaultManagers\BaseManager.cs" />
+    <Compile Include="DefaultManagers\IAnimationManager.cs" />
+    <Compile Include="DefaultManagers\ILocomotionManager.cs" />
+    <Compile Include="DefaultManagers\IArmManager.cs" />
+    <Compile Include="DefaultManagers\IHeadManager.cs" />
+    <Compile Include="DefaultManagers\ITimeManager.cs" />
+    <Compile Include="DefaultManagers\SpeechIntentManager.cs" />
+    <Compile Include="DefaultManagers\SpeechManager.cs" />
+    <Compile Include="DefaultManagers\TimeManager.cs" />
+    <Compile Include="DefaultManagers\ArmManager.cs" />
+    <Compile Include="DefaultManagers\HeadManager.cs" />
+    <Compile Include="Character\BaseCharacter.cs" />
+    <Compile Include="SpeechIntent\TextComparisonObject.cs" />
+    <Compile Include="SpeechIntent\SpeechIntentInterpreter.cs" />
+    <Compile Include="Character\ParameterManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Properties\ExperimentalMisty.rd.xml" />
+    <EmbeddedResource Include="Properties\MistyInteraction.rd.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
+    </PackageReference>
+    <PackageReference Include="System.IO">
+      <Version>4.3.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Runtime.Handles">
+      <Version>4.3.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Threading.Tasks">
+      <Version>4.3.0</Version>
+    </PackageReference>
+    <PackageReference Include="Twilio">
+      <Version>5.53.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ConversationLibraries\Conversation.Common\Conversation.Common.csproj">
-      <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
+    <ProjectReference Include="..\ConversationLibraries\Conversation.Common\Conversation.Common.csproj">
+      <Project>{F6DB04A8-FA28-4096-AB01-94A5F1BADFF4}</Project>
       <Name>Conversation.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Managers\HeadManagerExperiment\HeadManagerExperiment.csproj">
-      <Project>{3a023832-d74e-4daa-8204-81cd6309789e}</Project>
-      <Name>HeadManagerExperiment</Name>
+    <ProjectReference Include="..\ConversationLibraries\SkillTools\SkillTools.csproj">
+      <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
+      <Name>SkillTools</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\MistyCharacter\MistyCharacter.csproj">
-      <Project>{b3665f59-b772-4058-b522-eaefe3980f7c}</Project>
-      <Name>MistyCharacter</Name>
+    <ProjectReference Include="..\ConversationLibraries\SpeechTools\SpeechTools.csproj">
+      <Project>{8a67aa55-d289-41d3-8afe-54960b21a5b4}</Project>
+      <Name>SpeechTools</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

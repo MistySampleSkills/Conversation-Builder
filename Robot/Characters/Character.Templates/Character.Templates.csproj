@@ -148,21 +148,9 @@
       <Project>{b3665f59-b772-4058-b522-eaefe3980f7c}</Project>
       <Name>MistyCharacter</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Managers\HeadManagerExperiment\HeadManagerExperiment.csproj">
-      <Project>{3A023832-D74E-4DAA-8204-81CD6309789E}</Project>
-      <Name>HeadManagerExperiment</Name>
-    </ProjectReference>
     <ProjectReference Include="..\BasicMisty\BasicMisty.csproj">
       <Project>{4cace942-84db-49ef-9559-c41131bed797}</Project>
       <Name>BasicMisty</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EventTemplate\EventTemplate.csproj">
-      <Project>{9448f7bb-3b5a-4edd-812e-49345c0b9157}</Project>
-      <Name>EventTemplate</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ExperimentalMisty\ExperimentalMisty.csproj">
-      <Project>{80cc1bf1-bb89-489c-a566-8fbb408a2e9f}</Project>
-      <Name>ExperimentalMisty</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

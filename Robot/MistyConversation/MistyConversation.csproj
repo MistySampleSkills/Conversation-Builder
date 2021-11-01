@@ -141,17 +141,17 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Characters\Character.Templates\Character.Templates.csproj">
-      <Project>{8680ECBB-ABB7-4A93-91A9-5C6DCE12C196}</Project>
-      <Name>Character.Templates</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ConversationLibraries\Conversation.Common\Conversation.Common.csproj">
       <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MistyCharacter\MistyCharacter.csproj">
-      <Project>{b3665f59-b772-4058-b522-eaefe3980f7c}</Project>
-      <Name>MistyCharacter</Name>
+    <ProjectReference Include="..\MistyInteraction\MistyInteraction.csproj">
+      <Project>{60e0d411-3eb1-4ee9-8172-a59ce2857378}</Project>
+      <Name>MistyInteraction</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MistyManager\MistyManager.csproj">
+      <Project>{4B051DD6-90C2-4F93-8509-50D3B0341225}</Project>
+      <Name>MistyManager</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '15.0' ">

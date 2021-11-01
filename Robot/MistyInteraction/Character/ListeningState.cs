@@ -30,60 +30,14 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System.Collections.Generic;
-using Conversation.Common;
-using MistyCharacter;
-using MistyRobotics.SDK.Messengers;
-
-namespace CharacterTemplates
+namespace MistyInteraction
 {
-    /// <summary>
-    /// Example of character overloading the default head manager of the conversation character    
-    /// Experimental, concepts may change or be deprecated
-    /// </summary>
-	public class ExperimentalMisty : BaseCharacter
+	public enum ListeningState
 	{
-		public ExperimentalMisty(IRobotMessenger misty, CharacterParameters characterParameters, IDictionary<string, object> originalParameters)
-			: base(misty, characterParameters, originalParameters, 
-				new ManagerConfiguration
-				(
-                    //Using default speech manager to control recorded speech to text translations and speaking
-                    null,
-                    //Using default time manager, in English
-                    null,
-                    //Using default arm manager                    
-                    null, 
-                    // The head manager controls head actions including following faces and objects, starting experiment for better following
-                    null, //new NewHeadManager(misty, originalParameters, characterParameters),
-                    //very beta and experimental Emotional system where Misty will traverse her emotional spectrum based upon animation emotions and other input
-                    null,
-                    //Allows users to plug in their own intent handling for the character
-                    null
-                 )
-		) { }
-
-		#region IDisposable Support
-
-		private bool _isDisposed = false;
-
-		private void Dispose(bool disposing)
-		{
-			if (!_isDisposed)
-			{
-				if (disposing)
-				{
-					base.Dispose();
-				}
-
-				_isDisposed = true;
-			}
-		}
-
-		public new void Dispose()
-		{
-			Dispose(true);
-		}
-
-		#endregion
+		Waiting,
+		Speaking,
+		Recording,
+		//WaitingForKeyPhrase,
+        ProcessingSpeech
 	}
 }

@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Conversation.Common;
 using MistyRobotics.SDK.Events;
@@ -52,6 +53,15 @@ namespace MistyCharacter
 		Task HandleExternalCommand(IUserEvent userEvent);
 		
 		void Dispose();
+
+		event EventHandler<KeyValuePair<string, TriggerData>> AddTrigger;
+		event EventHandler<string> RemoveTrigger;
+		void SpeechResponseHandler(object sender, TriggerData data);
+		void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent);
+		void HandleStartedListening(object sender, DateTime time);
+
+		event EventHandler<TriggerData> ManualTrigger;
+
 	}
 }
  

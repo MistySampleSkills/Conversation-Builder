@@ -84,7 +84,7 @@ namespace MistyCharacter
 		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;		
 		public event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-
+		
 		private const int MaxProcessingVoiceWaits = 30;
 		private const int DelayBetweenProcessingVoiceChecksMs = 100;
 		private int _currentProcessingVoiceWaits = 0;
@@ -166,22 +166,23 @@ namespace MistyCharacter
 		private IList<string> _allowedUtterances = new List<string>();
 
 		public BaseCharacter(IRobotMessenger misty, 
-			CharacterParameters characterParameters,
 			IDictionary<string, object> originalParameters,
 			ManagerConfiguration managerConfiguration = null)
 		{
 			Misty = misty;
 			OriginalParameters = originalParameters;
-			CharacterParameters = characterParameters;
-			AzureSpeechParameters = characterParameters.AzureSpeechParameters;
-			GoogleSpeechParameters = characterParameters.GoogleSpeechParameters;
 			_managerConfiguration = managerConfiguration;
 		}
 
-		public async Task<bool> Initialize()
+		public async Task<bool> Initialize(CharacterParameters characterParameters)
 		{
 			try
 			{
+				
+
+				CharacterParameters = characterParameters;
+				AzureSpeechParameters = characterParameters.AzureSpeechParameters;
+				GoogleSpeechParameters = characterParameters.GoogleSpeechParameters;
 				Logger = Misty.SkillLogger;
 				PopulateEmotionDefaults();
 
@@ -244,6 +245,9 @@ namespace MistyCharacter
 				SpeechManager.KeyPhraseRecognitionOn += SpeechManager_KeyPhraseRecognitionOn;
 
 				AnimationManager.SyncEvent += AnimationManager_SyncEvent;
+				AnimationManager.AddTrigger += AddTrigger;
+				AnimationManager.RemoveTrigger += RemoveTrigger;
+				AnimationManager.ManualTrigger += ManualTrigger;
 
 				InteractionEnded += RunNextAnimation;
 
@@ -640,8 +644,15 @@ namespace MistyCharacter
 				}
 			});
 		}
+
+		//Script added triggers
+		public void AddTrigger(object sender, KeyValuePair<string, TriggerData> trigger)
+		{
+			TriggerDetail triggerDetail = new TriggerDetail(trigger.Key, trigger.Value.Trigger, trigger.Value.TriggerFilter);
+			TriggerIntentChecking(trigger.Value, triggerDetail);
+		}
 		
-		private void RegisterEvent(string trigger)
+		public void RegisterEvent(string trigger)
 		{
 			//Register events and start services as needed if it is the first time we see this trigger
 			switch(trigger)

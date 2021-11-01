@@ -86,7 +86,9 @@ namespace MistyCharacter
 		private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 		private IList<string> _completionCommands = new List<string>();
 		private IList<string> _startupCommands = new List<string>();
+		private IFurhatManager _furhatManager;
 		private ISpeechManager _speechManager;
+		private TimeManager _timeManager;
 		private ILocomotionManager _locomotionManager;
 		private IArmManager _armManager;
 		private IHeadManager _headManager;
@@ -94,6 +96,10 @@ namespace MistyCharacter
 		private Interaction _currentInteraction;
 		private bool _repeatScript;
 		private WebMessenger _webMessenger;
+
+		private TaskCompletionSource<bool> _receivedSyncEvent;
+		private TaskCompletionSource<bool> _interactionCancellationEvent;
+		private TaskCompletionSource<bool> _receivedSpeechCompletionEvent;
 
 		//TODO This should prolly go to loco manager
 		private string _lastWaypoint;
@@ -107,8 +113,6 @@ namespace MistyCharacter
 		private string _waitingEvent;
 		private bool _awaitAny;
 		private object _waitingLock = new object();
-		private TaskCompletionSource<bool> _receivedSyncEvent;
-		private TaskCompletionSource<bool> _receivedSpeechCompletionEvent;
 
 		//TODO move to arm and head managers or replace with script only?
 		private double _rightArmDegrees;
@@ -116,8 +120,16 @@ namespace MistyCharacter
 		private double _headPitchDegrees;
 		private double _headRollDegrees;
 		private double _headYawDegrees;
+		private int _maxSilence = 10000;
+		private int _maxListen = 10000;
 
 		private bool _responsiveState = true; //by default, let other bots call this bot if it knows the IP
+
+
+		//TODO PLUG THESE IN!
+		public event EventHandler<KeyValuePair<string, TriggerData>> AddTrigger;
+		public event EventHandler<string> RemoveTrigger;
+		public event EventHandler<TriggerData> ManualTrigger;
 
 		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, ILocomotionManager locomotionManager, IArmManager armManager, IHeadManager headManager)
 		: base(misty, parameters, characterParameters)
@@ -161,6 +173,32 @@ namespace MistyCharacter
 		private void _armManager_LeftArmActuatorEvent(object sender, IActuatorEvent e)
 		{
 			_leftArmDegrees = e.ActuatorValue;
+		}
+
+
+		public void SpeechResponseHandler(object sender, TriggerData data)
+		{
+			_speechIntent = data;
+		}
+
+		public async void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent)
+		{
+
+			if (_animationsCanceled || (_currentAnimationData.ProcessingAnimation != null && !await RunInternalScript(_currentAnimationData.ProcessingAnimation, false, true)))
+			{
+				_interactionCancellationEvent?.TrySetResult(true);
+				return;
+			}
+		}
+
+		public async void HandleStartedListening(object sender, DateTime time)
+		{
+			if (_animationsCanceled || (_currentAnimationData.ListeningAnimation != null && !await RunInternalScript(_currentAnimationData.ListeningAnimation, false, true)))
+			{
+				_interactionCancellationEvent?.TrySetResult(true);
+				return;
+			}
+
 		}
 
 		private async void _speechManager_UserDataAnimationScript(object sender, string script)
@@ -1209,13 +1247,19 @@ namespace MistyCharacter
 								break;
 							case "START-LISTEN":
 								//START-LISTEN;
-								switch (CharacterParameters.SpeechRecognitionService)
+								switch (CharacterParameters.SpeechRecognitionService.ToLower().Trim())
 								{
-									case "GoogleOnboard":
+									case "googleonboard":
 										_ = Robot.CaptureSpeechGoogleAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
 										break;
-									case "AzureOnboard":
+									case "azureonboard":
 										_ = Robot.CaptureSpeechAzureAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.Region, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
+										break;
+									case "vosk":
+										_ = Robot.CaptureSpeechVoskAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000));
+										break;
+									case "deepspeech":
+										_ = Robot.CaptureSpeechDeepSpeechAsync(false, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000));
 										break;
 									default:
 										_ = Robot.CaptureSpeechAsync(false, true, (int)(_currentInteraction.ListenTimeout * 1000), (int)(_currentInteraction.SilenceTimeout * 1000), null);
@@ -1296,7 +1340,12 @@ namespace MistyCharacter
 									Reverse = Convert.ToBoolean(arcData[3].Trim())
 								});
 								break;
-
+							case "RECORD":
+								_ = Robot.StartRecordingAudioAsync(commandData[1]);
+								break;
+							case "STOP-RECORDING":
+								_ = Robot.StopRecordingAudioAsync();
+								break;
 							case "RESPONSIVE-STATE":
 								//RESPONSIVE-STATE:true/on/false/off;
 								string[] responsiveStateData = commandData[1].Split(",");
@@ -1343,7 +1392,7 @@ namespace MistyCharacter
 								string[] stopSkillData = commandData[1].Split(",");
 								_ = Robot.CancelRunningSkillAsync(stopSkillData[0]);
 								break;
-
+							
 							case "AWAIT-ANY":
 								//AWAIT-ANY:10000/-1;
 								string[] awaitAnySyncEvent = commandData[1].Split(",");
@@ -1376,6 +1425,138 @@ namespace MistyCharacter
 							case "GOTO-WAYPOINT":
 								//WAYPOINT:waypoint-name,velocity?;
 								break;
+							case "TRIGGER":
+								//TRIGGER:trigger,triggerFilter,text;
+								string[] triggerEventData = commandData[1].Split(",");
+								string text = "";
+								if (triggerEventData.Length > 2)
+								{
+									text = triggerEventData[2];
+								}
+								ManualTrigger?.Invoke(this, new TriggerData(text, triggerEventData[1], triggerEventData[0]));
+								break;
+							case "GOTO-ACTION":
+								//GOTO-ACTION:Action;
+								string[] gotoData = commandData[1].Split(",");
+								TriggerData newTriggerData0 = new TriggerData("", "Manual", "Manual") { OverrideInteraction = gotoData[0] };
+								newTriggerData0.KeepAlive = false;
+								newTriggerData0.OverrideInteraction = gotoData[0];
+								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(gotoData[0], newTriggerData0));
+								await Task.Delay(200);
+								ManualTrigger?.Invoke(this, newTriggerData0);
+								break;
+							case "T-ACTION":
+								//T-ACTION:Name,OverrideAction,Trigger, TriggerFilter;
+								string[] triggerData2 = commandData[1].Split(",");
+								string filter2 = "";
+								if (triggerData2.Length == 4)
+								{
+									filter2 = triggerData2[3];
+								}
+								RegisterEvent(triggerData2[2]);
+								TriggerData newTriggerData = new TriggerData(null, filter2, triggerData2[2]);
+								newTriggerData.KeepAlive = false;
+								newTriggerData.OverrideInteraction = triggerData2[1];
+								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData2[0], newTriggerData));
+								break;
+							case "T-ON":
+								//T-ON:Name,Trigger,TriggerFilter;
+								string[] triggerData = commandData[1].Split(",");
+								string filter = "";
+								if (triggerData.Length == 3)
+								{
+									filter = triggerData[2];
+								}
+								RegisterEvent(triggerData[1]);
+								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData[0], new TriggerData(null, filter, triggerData[1])));
+								break;
+							case "T-ACTION!":
+								//T-ACTION!:Name,OverrideAction,Trigger, TriggerFilter;
+								string[] triggerDataA = commandData[1].Split(",");
+								string filterA = "";
+								if (triggerDataA.Length == 4)
+								{
+									filterA = triggerDataA[3];
+								}
+								RegisterEvent(triggerDataA[2]);
+								TriggerData newTriggerDataA = new TriggerData(null, filterA, triggerDataA[2]);
+								newTriggerDataA.KeepAlive = true;
+								newTriggerDataA.OverrideInteraction = triggerDataA[1];
+								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerDataA[0], newTriggerDataA));
+								break;
+							case "T-ON!":
+								//T-ON!:Name,Trigger,TriggerFilter;
+								string[] triggerData4 = commandData[1].Split(",");
+								string filter4 = "";
+								if (triggerData4.Length == 3)
+								{
+									filter4 = triggerData4[2];
+								}
+								RegisterEvent(triggerData4[1]);
+								TriggerData newTriggerData4 = new TriggerData(null, filter4, triggerData4[1]);
+								newTriggerData4.KeepAlive = true;
+								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData4[0], newTriggerData4));
+								break;
+							case "T-OFF":
+								//T-OFF:Name;
+								RemoveTrigger?.Invoke(this, commandData[1]);
+								break;
+
+							case "SET-AUDIO-TRIM":
+								_speechManager.SetAudioTrim(Convert.ToInt32(commandData[1]));
+								break;
+							case "SET-MAX-SILENCE":
+								_speechManager.SetMaxSilence(Convert.ToInt32(commandData[1]));
+								_maxSilence = Convert.ToInt32(commandData[1]);
+								break;
+							case "SET-MAX-LISTEN":
+								_speechManager.SetMaxListen(Convert.ToInt32(commandData[1]));
+								_maxListen = Convert.ToInt32(commandData[1]);
+								break;
+							case "TIMED-TRIGGER":
+								//TIMED-TRIGGER:timeMs,trigger,triggerFilter,text;
+								string[] timedTriggerEventData = commandData[1].Split(",");
+								string timedText = "";
+								if (timedTriggerEventData.Length > 3)
+								{
+									timedText = timedTriggerEventData[3];
+								}
+
+								_ = Task.Run(async () =>
+								{
+									//Use timer instead?
+									await Task.Delay(Convert.ToInt32(timedTriggerEventData[0]));
+									ManualTrigger?.Invoke(this, new TriggerData(timedText, timedTriggerEventData[2], timedTriggerEventData[1]));
+								});
+								break;
+							case "TIME":
+								TimeObject timeObject = _timeManager.GetTimeObject();
+								_speechManager.Speak(timeObject.SpokenTime, false);
+								break;
+							case "DAY":
+								TimeObject timeObject2 = _timeManager.GetTimeObject();
+								_speechManager.Speak(timeObject2.SpokenDay.ToString(), false);
+								break;
+							case "SEND-EVENT":
+								//SEND-EVENT:EventName,yourdata;
+								string[] eventData = commandData[1].Split(",");
+								IDictionary<string, object> payloadData = new Dictionary<string, object>();
+								payloadData.Add("EventData", eventData[1]);
+								payloadData.Add("State", Newtonsoft.Json.JsonConvert.SerializeObject(_robotStateSystem.GetRobotStateEvent()));
+								await Robot.TriggerEventAsync(eventData[0], "AnimationManager", payloadData, new List<string>());
+								break;
+							case "AWAIT-EVENT":
+								//AWAIT-EVENT:EventName1,10000/-1;
+								//TODO Not quite right
+								string[] awaitSyncEventData = commandData[1].Split(",");
+								lock (_waitingLock)
+								{
+									_waitingEvent = awaitSyncEventData[0].Trim();
+									Robot.RegisterUserEvent(_waitingEvent, UserEventCallback, 0, false, null);
+									_waitingTimeoutMs = Convert.ToInt32(awaitSyncEventData[1]);
+								}
+								break;
+
 							default:
 								Robot.SkillLogger.Log($"Unknown command in animation script. {action?.ToUpper()}");
 								return new CommandResult { Success = false };
@@ -1414,6 +1595,104 @@ namespace MistyCharacter
 				return new CommandResult { Success = false };
 			}
 		}
+
+
+		private void UserEventCallback(IUserEvent userEvent)
+		{
+			if (string.Compare(userEvent.EventName.Trim(), _waitingEvent.Trim(), true) == 0)
+			{
+				_receivedSyncEvent?.TrySetResult(true);
+			}
+		}
+
+
+
+
+		private bool _bumpSensorRegistered;
+		private bool _capTouchRegistered;
+		private bool _arTagRegistered;
+		private bool _tofRegistered;
+		private bool _qrTagRegistered;
+		private bool _serialMessageRegistered;
+		private bool _faceRecognitionRegistered;
+		private bool _objectDetectionRegistered;
+
+
+
+		//TODO ONLY TURN ON AS NEEDED< CURRENTLY IT KEEPS ON!
+		private void RegisterEvent(string trigger)
+		{
+			if (string.IsNullOrWhiteSpace(trigger))
+			{
+				return;
+			}
+
+			trigger = trigger.Trim();
+			//Register events and start services as needed if it is the first time we see this trigger
+			if (!_bumpSensorRegistered && (string.Equals(trigger, Triggers.BumperPressed, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(trigger, Triggers.BumperReleased, StringComparison.OrdinalIgnoreCase)))
+			{
+				LogEventDetails(Robot.RegisterBumpSensorEvent(BumpCallback, 50, true, null, "BumpSensor", null));
+				_bumpSensorRegistered = true;
+			}
+			else if (!_capTouchRegistered && (string.Equals(trigger, Triggers.CapTouched, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(trigger, Triggers.CapReleased, StringComparison.OrdinalIgnoreCase)))
+			{
+				LogEventDetails(Robot.RegisterCapTouchEvent(CapTouchCallback, 50, true, null, "CapTouch", null));
+				_capTouchRegistered = true;
+			}
+			else if (!_arTagRegistered && string.Equals(trigger, Triggers.ArTagSeen, StringComparison.OrdinalIgnoreCase))
+			{
+				Robot.StartArTagDetector(7, 140, null);
+				LogEventDetails(Robot.RegisterArTagDetectionEvent(ArTagCallback, 250, true, "ArTag", null));
+				_arTagRegistered = true;
+			}
+			else if (!_qrTagRegistered && string.Equals(trigger, Triggers.QrTagSeen, StringComparison.OrdinalIgnoreCase))
+			{
+				Robot.StartQrTagDetector(null);
+				LogEventDetails(Robot.RegisterQrTagDetectionEvent(QrTagCallback, 250, true, "QrTag", null));
+				_qrTagRegistered = true;
+			}
+			else if (!_serialMessageRegistered && string.Equals(trigger, Triggers.SerialMessage, StringComparison.OrdinalIgnoreCase))
+			{
+				LogEventDetails(Robot.RegisterSerialMessageEvent(SerialMessageCallback, 0, true, "SerialMessage", null));
+				_serialMessageRegistered = true;
+			}
+			else if (!_faceRecognitionRegistered && string.Equals(trigger, Triggers.FaceRecognized, StringComparison.OrdinalIgnoreCase))
+			{
+				//Robot.StopObjectDetector(null);
+				Robot.StartFaceRecognition(null);
+				//Misty.StartFaceDetection(null);
+				LogEventDetails(Robot.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 250, true, null, "FaceRecognition", null));
+				_faceRecognitionRegistered = true;
+			}
+			else if (!_objectDetectionRegistered && string.Equals(trigger, Triggers.ObjectSeen, StringComparison.OrdinalIgnoreCase))
+			{
+				//Robot.StopFaceRecognition(null);
+				Robot.StartObjectDetector(StartupParameters.Robot.PersonConfidence, 0, 2, null);
+				//Misty.StartFaceDetection(null);
+				LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, 250, true, null, "ObjectDetection", null));
+				_objectDetectionRegistered = true;
+			}
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		//This command needs to come in from another bot or skill
 		//Need to handle when bot says it isn't gonna handle cross robot stuff
