@@ -31,17 +31,31 @@
 **********************************************************************/
 
 using System;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using Conversation.Common;
 using MistyRobotics.SDK.Messengers;
 
-namespace MistyCharacter
+namespace TimeManager
 {
-	public class TimeManager : BaseManager, ITimeManager
+	public class EnglishTimeManager : ITimeManager
 	{
-		public TimeManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
-			: base(misty, parameters, characterParameters) { }
-		
+		private IDictionary<string, object> _parameters { get; set; }
+		private IRobotMessenger _misty { get; set; }
+		private CharacterParameters _characterParameters { get; set; }
+
+		public EnglishTimeManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
+		{
+			_misty = misty;
+			_parameters = parameters;
+			_characterParameters = characterParameters;
+		}
+
+		public async Task<bool> Initialize()
+		{
+			return true;
+		}
+
 		public TimeObject GetTimeObject()
 		{
 			DateTime now = DateTime.Now.ToLocalTime();

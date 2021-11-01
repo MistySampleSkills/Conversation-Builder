@@ -30,19 +30,31 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System;
+using Conversation.Common;
+using System.Collections.Generic;
 
-namespace Conversation.Common
+namespace SpeechTools
 {
 	/// <summary>
-	/// Used for creating spoken time animations
+	/// Under development, may change
 	/// </summary>
-	public class TimeObject
+	public interface ISpeechIntentManager
 	{
-		public string SpokenTime { get; set; }
-		public DateTimeOffset Timestamp { get; set; }
-		public TimeDescription Description { get; set; }
-		public DayOfWeek SpokenDay { get; set; }
-		public bool IsPm { get; set; }
+        /// <summary>
+        /// Get the intent of the speech/text
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="allowedIntents"></param>
+        /// <returns></returns>
+        SpeechMatchData GetIntent(string text, IList<string> allowedIntents = null);
+
+		/// <summary>
+		/// Looks up keys using speech/text intent algorithm where specified in the data
+		/// Move to Inline Speech Manager?
+		/// </summary>
+		/// <param name="userDataName"></param>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		GenericData FindUserDataFromText(string userDataName, string text);
 	}
 }

@@ -1,4 +1,4 @@
-/**********************************************************************
+﻿/**********************************************************************
 	Copyright 2021 Misty Robotics
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -30,14 +30,37 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-namespace MistyCharacter.SpeechIntent
-{	
-	/*internal class TextComparisonObject
-    {
-        public string Id { get; set; }
-        public string Intent { get; set; }
-		public double HitCountAverage { get; set; }
-		public int MaxHitCount { get; set; }
-		public int Priority { get; set; }
-	}*/
+using System.Collections.Generic;
+using Conversation.Common;
+using MistyRobotics.SDK.Messengers;
+using SpeechTools;
+
+namespace SpeechTools
+{
+	public sealed class SpeechIntentManager : ISpeechIntentManager
+	{
+		private IRobotMessenger _misty;
+		private SpeechIntentInterpreter _intentInterpreter;
+		
+		public SpeechIntentManager(IRobotMessenger robot, IDictionary<string, UtteranceData> utteranceLists, IList<GenericDataStore> userData = null)
+		{
+			_misty = robot;			
+			_intentInterpreter = new SpeechIntentInterpreter(utteranceLists, userData);
+		}
+		
+		public SpeechMatchData GetIntent(string text, IList<string> allowedIntents = null)
+		{
+			return _intentInterpreter.GetIntent(text, allowedIntents);
+		}
+		
+		public GenericData FindUserDataFromText(string userDataName, string text)
+		{
+			return _intentInterpreter.FindUserDataFromText(userDataName, text);
+		}
+
+		public SpeechMatchData GetMatch(string text, IDictionary<string, string> matchstrings, string wordMatchRule = "exact", bool exactPhraseMatchOnly = false)
+		{
+			return _intentInterpreter.GetMatch(text, matchstrings, wordMatchRule, exactPhraseMatchOnly);
+		}
+	}
 }

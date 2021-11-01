@@ -30,52 +30,29 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Conversation.Common;
-using MistyRobotics.SDK.Events;
-
-namespace MistyCharacter
+namespace TimeManager
 {
-	public interface ISpeechManager
+	public enum TimeDescription
 	{
-		Task<bool> Initialize();
-		int Volume { get; set; }
-		void Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
-		string GetLocaleName(string name);
-		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
-		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
-		void AbortListening(string audioName);		
-		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
-
-
-
-		void SetAudioTrim(int trimMs);
-		void SetMaxSilence(int silenceTimeout);
-		void SetMaxListen(int listenTimeout);
-		//void UpdatePrespeech(string prespeech);
-		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
-
-
-
-
-
-
-
-		event EventHandler<string> StartedSpeaking;
-		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
-		event EventHandler<DateTime> StartedListening;
-		event EventHandler<IVoiceRecordEvent> StoppedListening;
-		event EventHandler<TriggerData> SpeechIntent;
-		event EventHandler<bool> KeyPhraseRecognitionOn;
-		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
-		event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
-		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
-		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-		event EventHandler<string> UserDataAnimationScript;
-
-		void Dispose();
+		/// <summary>
+		/// Dunno
+		/// </summary>
+		Unknown,
+		/// <summary>
+		/// 4am-12pm
+		/// </summary>
+		Morning,
+		/// <summary>
+		/// 12pm-5pm
+		/// </summary>
+		Afternoon,
+		/// <summary>
+		/// 5pm-9pm
+		/// </summary>
+		Evening,
+		/// <summary>
+		/// 9pm-4am
+		/// </summary>
+		Night
 	}
 }
- 

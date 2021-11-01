@@ -30,6 +30,7 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using Conversation.Common;
 using SpeechTools;
 using System.Collections.Generic;
 
@@ -48,5 +49,14 @@ namespace MistyInteraction
 		/// <returns></returns>
 		SpeechMatchData GetIntent(string text, IList<string> allowedIntents = null);
 
+
+		/// <summary>
+		/// Looks up keys using speech/text intent algorithm where specified in the data
+		/// Move to Inline Speech Manager?
+		/// </summary>
+		/// <param name="userDataName"></param>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		GenericData FindUserDataFromText(string userDataName, string text);
 	}
 }

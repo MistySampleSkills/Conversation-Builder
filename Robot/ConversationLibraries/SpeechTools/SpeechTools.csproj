@@ -122,11 +122,15 @@
   <ItemGroup>
     <Compile Include="GoogleSpeech\GoogleServiceAuthorization.cs" />
     <Compile Include="GoogleSpeech\GoogleSpeechService.cs" />
+    <Compile Include="ISpeechIntentManager.cs" />
+    <Compile Include="ISpeechManager.cs" />
     <Compile Include="ISpeechService.cs" />
     <Compile Include="AzureCognitive\AzureSpeechService.cs" />
     <Compile Include="AzureCognitive\AzureServiceAuthorization.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpeechIntentInterpreter.cs" />
+    <Compile Include="SpeechIntentManager.cs" />
+    <Compile Include="SpeechManager.cs" />
     <Compile Include="TextComparisonObject.cs" />
     <EmbeddedResource Include="Properties\SpeechTools.rd.xml" />
   </ItemGroup>
@@ -144,10 +148,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="NAudio">
       <Version>1.10.0</Version>
@@ -163,10 +167,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\MistyInteraction.Common\MistyInteraction.Common.csproj">
-      <Project>{e93dde04-b176-402d-b63a-b68b88e85105}</Project>
-      <Name>MistyInteraction.Common</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Conversation.Common\Conversation.Common.csproj">
       <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>
@@ -174,6 +174,10 @@
     <ProjectReference Include="..\SkillTools\SkillTools.csproj">
       <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
       <Name>SkillTools</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TimeManager\TimeManager.csproj">
+      <Project>{a1b74b3e-050d-423e-b00d-51a6be475150}</Project>
+      <Name>TimeManager</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

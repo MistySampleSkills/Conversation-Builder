@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using System;
+using TimeManager;
 
 namespace MistyInteraction
 {

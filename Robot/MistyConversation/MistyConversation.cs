@@ -35,13 +35,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Conversation.Common;
-using MistyInteraction;
+using MistyCharacter;
 using MistyManager;
 using MistyRobotics.Common.Data;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
 using MistyRobotics.SDK.Messengers;
 using MistyRobotics.SDK.Responses;
+using TimeManager;
 
 namespace MistyConversation
 {
@@ -73,7 +74,7 @@ namespace MistyConversation
 		{
 			try
 			{
-				_conversationManager = new ConversationManager(_misty, parameters, new MistyInteraction.ManagerConfiguration());
+				_conversationManager = new ConversationManager(_misty, parameters, new MistyCharacter.ManagerConfiguration());
 				if (!await _conversationManager.Initialize(new BasicMisty(_misty, parameters, new ManagerConfiguration())))
 				{
 					_misty.SkillLogger.Log($"Failed to initialize conversation manager.");

@@ -120,34 +120,26 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Character\TimerTriggerData.cs" />
-    <Compile Include="Character\ListeningState.cs" />
+    <Compile Include="Data\TimerTriggerData.cs" />
     <Compile Include="DefaultManagers\AnimationManager.cs" />
-    <Compile Include="DefaultManagers\FurhatManager.cs" />
-    <Compile Include="DefaultManagers\IFurhatManager.cs" />
     <Compile Include="DefaultManagers\LocomotionManager.cs" />
-    <Compile Include="DefaultManagers\IEmotionManager.cs" />
-    <Compile Include="DefaultManagers\EmotionManager.cs" />
-    <Compile Include="Character\ManagerConfiguration.cs" />
+    <Compile Include="Data\ManagerConfiguration.cs" />
     <Compile Include="Character\IBaseCharacter.cs" />
-    <Compile Include="DefaultManagers\BaseManager.cs" />
+    <Compile Include="Character\BaseManager.cs" />
     <Compile Include="DefaultManagers\IAnimationManager.cs" />
     <Compile Include="DefaultManagers\ILocomotionManager.cs" />
-    <Compile Include="DefaultManagers\ISpeechManager.cs" />
-    <Compile Include="DefaultManagers\IArmManager.cs" />
-    <Compile Include="DefaultManagers\IHeadManager.cs" />
-    <Compile Include="DefaultManagers\ITimeManager.cs" />
-    <Compile Include="DefaultManagers\TimeManager.cs" />
-    <Compile Include="DefaultManagers\SpeechManager.cs" />
-    <Compile Include="DefaultManagers\ArmManager.cs" />
-    <Compile Include="DefaultManagers\HeadManager.cs" />
+    <Compile Include="Deprecated\IArmManager.cs" />
+    <Compile Include="Deprecated\IHeadManager.cs" />
+    <Compile Include="Deprecated\ArmManager.cs" />
+    <Compile Include="Deprecated\HeadManager.cs" />
     <Compile Include="Character\BaseCharacter.cs" />
-    <Compile Include="DefaultManagers\ISpeechIntentManager.cs" />
-    <Compile Include="DefaultManagers\SpeechIntentManager.cs" />
-    <Compile Include="SpeechIntent\TextComparisonObject.cs" />
-    <Compile Include="SpeechIntent\SpeechIntentInterpreter.cs" />
     <Compile Include="Character\ParameterManager.cs" />
+    <Compile Include="Emotion\EmotionManager.cs" />
+    <Compile Include="Emotion\IEmotionManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Speech\ISpeechManager.cs" />
+    <Compile Include="Speech\SpeechManager.cs" />
+    <Compile Include="Types\ListeningState.cs" />
     <EmbeddedResource Include="Properties\MistyCharacter.rd.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -155,10 +147,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.240-beta</Version>
     </PackageReference>
     <PackageReference Include="System.IO">
       <Version>4.3.0</Version>
@@ -186,7 +178,12 @@
       <Project>{8A67AA55-D289-41D3-8AFE-54960B21A5B4}</Project>
       <Name>SpeechTools</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ConversationLibraries\TimeManager\TimeManager.csproj">
+      <Project>{A1B74B3E-050D-423E-B00D-51A6BE475150}</Project>
+      <Name>TimeManager</Name>
+    </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

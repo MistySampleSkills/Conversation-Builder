@@ -30,33 +30,63 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Conversation.Common;
+using MistyRobotics.Common.Types;
+using MistyRobotics.SDK;
+using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
-using MistyCharacter.SpeechIntent;
-using SpeechTools;
+using SkillTools.Web;
 
 namespace MistyCharacter
 {
-	public sealed class SpeechIntentManager : ISpeechIntentManager
+	public class CommandManager : IDisposable
 	{
-		private IRobotMessenger _misty;
-		private SpeechIntentInterpreter _intentInterpreter;
+		private IList<ConversationCommand> _userCommands;
+		private IList<ConversationCommand> _builtInCommands;
+
+		protected IDictionary<string, object> Parameters { get; set; }
+		protected IRobotMessenger Robot { get; set; }
+		protected CharacterParameters CharacterParameters { get; set; }
 		
-		public SpeechIntentManager(IRobotMessenger robot, IDictionary<string, UtteranceData> utteranceLists, IList<GenericDataStore> userData = null)
+		public CommandManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 		{
-			_misty = robot;			
-			_intentInterpreter = new SpeechIntentInterpreter(utteranceLists, userData);
+			Robot = misty;
+			Parameters = parameters;
+			CharacterParameters = characterParameters;
 		}
-		
-		public SpeechMatchData GetIntent(string text, IList<string> allowedIntents = null)
+
+		public async Task<bool> Initialize(IList<ConversationCommand> commands)
 		{
-			return _intentInterpreter.GetIntent(text, allowedIntents);
+			_userCommands = commands;
+			AddBuiltIncommands();
+			return true;
 		}
-		
-		public GenericData FindUserDataFromText(string userDataName, string text)
+
+		private void AddBuiltIncommands()
 		{
-			return _intentInterpreter.FindUserDataFromText(userDataName, text);
+		}
+
+		private bool _isDisposed = false;
+
+		protected void Dispose(bool disposing)
+		{
+			if (!_isDisposed)
+			{
+				if (disposing) { }
+
+				_isDisposed = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
 		}
 	}
 }
+ 

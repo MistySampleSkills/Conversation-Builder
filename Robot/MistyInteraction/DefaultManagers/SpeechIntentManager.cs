@@ -52,5 +52,10 @@ namespace MistyInteraction
 		{
 			return _intentInterpreter.GetIntent(text, allowedIntents);
 		}
+
+		public GenericData FindUserDataFromText(string userDataName, string text)
+		{
+			return _intentInterpreter.FindUserDataFromText(userDataName, text);
+		}
 	}
 }

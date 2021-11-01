@@ -30,32 +30,16 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System.Threading.Tasks;
 using Conversation.Common;
-using MistyCharacter.SpeechIntent;
-using System.Collections.Generic;
 
-namespace MistyCharacter
+namespace TimeManager
 {
-	/// <summary>
-	/// Under development, may change
-	/// </summary>
-	public interface ISpeechIntentManager
+	public interface ITimeManager
 	{
-        /// <summary>
-        /// Get the intent of the speech/text
-        /// </summary>
-        /// <param name="text"></param>
-        /// <param name="allowedIntents"></param>
-        /// <returns></returns>
-        SpeechMatchData GetIntent(string text, IList<string> allowedIntents = null);
+		Task<bool> Initialize();
+		TimeObject GetTimeObject();
 
-		/// <summary>
-		/// Looks up keys using speech/text intent algorithm where specified in the data
-		/// Move to Inline Speech Manager?
-		/// </summary>
-		/// <param name="userDataName"></param>
-		/// <param name="text"></param>
-		/// <returns></returns>
-		GenericData FindUserDataFromText(string userDataName, string text);
+		void Dispose();
 	}
 }

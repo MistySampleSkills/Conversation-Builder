@@ -33,7 +33,7 @@
 using System;
 using System.Collections.Generic;
 using Conversation.Common;
-using MistyInteraction;
+using MistyCharacter;
 using MistyRobotics.SDK.Messengers;
 
 namespace CharacterTemplates

@@ -30,16 +30,28 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
+using MistyRobotics.Common.Types;
+using MistyRobotics.SDK.Events;
+using MistyRobotics.SDK.Messengers;
+using SkillTools.Web;
 
 namespace MistyCharacter
 {
-	public interface ITimeManager
+	public class TestCommand : ConversationCommand
 	{
-		Task<bool> Initialize();
-		TimeObject GetTimeObject();
+		public TestCommand(string name, string script, Delegate command)
+		: base(name, script) {}
 
-		void Dispose();
+		public new static object Code(IDictionary<string, object> parameters)
+		{
+			return null;
+		}
 	}
 }
+

@@ -39,8 +39,6 @@ namespace MistyCharacter
 {
 	public interface IBaseCharacter
 	{
-		void RegisterEvent(object sender, string trigger);
-
 		/// <summary>
 		/// Triggered when a conversation is started
 		/// </summary>

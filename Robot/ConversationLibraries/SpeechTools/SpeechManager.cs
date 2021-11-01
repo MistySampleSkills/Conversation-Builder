@@ -37,7 +37,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
-using MistyCharacter.SpeechIntent;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
 using MistyRobotics.SDK.Events;
@@ -47,10 +46,11 @@ using SkillTools.AssetTools;
 using SpeechTools;
 using SpeechTools.AzureCognitive;
 using SpeechTools.GoogleSpeech;
+using TimeManager;
 
-namespace MistyCharacter
+namespace SpeechTools
 {
-	public class SpeechManager : BaseManager, ISpeechManager
+	public class SpeechManager : ISpeechManager
 	{
 
 		public event EventHandler<string> StartedSpeaking;
@@ -75,7 +75,7 @@ namespace MistyCharacter
 		private AssetWrapper _assetWrapper;
 		private AzureSpeechParameters _azureSpeechParameters;
 		private GoogleSpeechParameters _googleSpeechParameters;
-		private TimeManager _timeManager;
+		private ITimeManager _timeManager;
 		private IDictionary<string, UtteranceData> _intentUtterances = new Dictionary<string, UtteranceData>();
 		private IList<string> _listeningCallbacks = new List<string>();
 		private object _lockListenerData = new object();
@@ -97,6 +97,10 @@ namespace MistyCharacter
 		private CharacterState _stateAtAnimationStart;
 		private CharacterState _previousState;
 
+		private IDictionary<string, object> _parameters { get; set; }
+		private IRobotMessenger _misty { get; set; }
+		private CharacterParameters _characterParameters { get; set; }
+
 		private int _volume;
 		public int Volume
 		{
@@ -109,11 +113,15 @@ namespace MistyCharacter
 				if (_volume != value)
 				{
 					_volume = value;
-					Robot.SetDefaultVolume(_volume, null);
+					_misty.SetDefaultVolume(_volume, null);
 				}
 			}
 		}
-		
+
+		protected void LogEventDetails(IEventDetails eventDetails)
+		{
+			_misty.SkillLogger.LogInfo($"Registered event '{eventDetails.EventName}' at {DateTime.Now}.  Id = {eventDetails.EventId}, Type = {eventDetails.EventType}, KeepAlive = {eventDetails.KeepAlive}");
+		}
 
 		public void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData)
 		{
@@ -129,9 +137,9 @@ namespace MistyCharacter
 		
 		public string GetLocaleName(string name)
 		{
-			if (CharacterParameters.AddLocaleToAudioNames)
+			if (_characterParameters.AddLocaleToAudioNames)
 			{
-				switch (CharacterParameters.TextToSpeechService)
+				switch (_characterParameters.TextToSpeechService)
 				{
 					case "Google":
 						name = _googleSpeechParameters.SpokenLanguage + _googleSpeechParameters.SpeakingVoice + _googleSpeechParameters.SpeakingGender?[0] + name;
@@ -169,22 +177,22 @@ namespace MistyCharacter
 			_listenTimeout = listenTimeout;
 		}
 
-		public override async Task<bool> Initialize()
+		public async Task<bool> Initialize()
 		{
-			Robot.UnregisterEvent("KeyPhrase", null);
-			Robot.UnregisterEvent("VoiceRecord", null);
-			Robot.UnregisterEvent("CharacterAudioComplete", null);
-			Robot.UnregisterEvent("CharacterTTSComplete", null);
+			_misty.UnregisterEvent("KeyPhrase", null);
+			_misty.UnregisterEvent("VoiceRecord", null);
+			_misty.UnregisterEvent("CharacterAudioComplete", null);
+			_misty.UnregisterEvent("CharacterTTSComplete", null);
 
-			_azureSpeechParameters = CharacterParameters.AzureSpeechParameters;
-			_googleSpeechParameters = CharacterParameters.GoogleSpeechParameters;
-			_assetWrapper = new AssetWrapper(Robot);
+			_azureSpeechParameters = _characterParameters.AzureSpeechParameters;
+			_googleSpeechParameters = _characterParameters.GoogleSpeechParameters;
+			_assetWrapper = new AssetWrapper(_misty);
 			await RefreshAssetLists();
 			
-			Robot.SetNotificationSettings(true, false, true, CharacterParameters.ConversationGroup.KeyPhraseRecognizedAudio, null);
-			Robot.GetVolume(ProcessVolumeResponse);
+			_misty.SetNotificationSettings(true, false, true, _characterParameters.ConversationGroup.KeyPhraseRecognizedAudio, null);
+			_misty.GetVolume(ProcessVolumeResponse);
 
-			_timeManager = new TimeManager(Robot, Parameters, CharacterParameters);
+			_timeManager = new EnglishTimeManager(_misty, _parameters, _characterParameters);
 
 			if (_azureSpeechParameters != null && !string.IsNullOrWhiteSpace(_azureSpeechParameters.SubscriptionKey))
 			{
@@ -195,14 +203,14 @@ namespace MistyCharacter
 					SubscriptionKey = _azureSpeechParameters.SubscriptionKey
 				};
 
-				_azureCognitive = new AzureSpeechService(servicesAuth, Robot);
+				_azureCognitive = new AzureSpeechService(servicesAuth, _misty);
 				_azureCognitive.SpeakingVoice = _azureSpeechParameters?.SpeakingVoice;
 				_azureCognitive.SpokenLanguage = _azureSpeechParameters?.SpokenLanguage;
 				_azureCognitive.TranslatedLanguage = _azureSpeechParameters?.TranslatedLanguage;
 				_azureCognitive.ProfanitySetting = _azureSpeechParameters?.ProfanitySetting;
 
-				_intentUtterances = CharacterParameters.ConversationGroup.IntentUtterances;
-				_speechIntentManager = _speechIntentManager ?? new SpeechIntentManager(Robot, _intentUtterances);
+				_intentUtterances = _characterParameters.ConversationGroup.IntentUtterances;
+				_speechIntentManager = _speechIntentManager ?? new SpeechIntentManager(_misty, _intentUtterances);
 			}
 
 			if (_googleSpeechParameters != null && !string.IsNullOrWhiteSpace(_googleSpeechParameters.SubscriptionKey))
@@ -214,19 +222,19 @@ namespace MistyCharacter
 					SubscriptionKey = _googleSpeechParameters?.SubscriptionKey
 				};
 
-				_googleService = new GoogleSpeechService(servicesAuth, Robot);
+				_googleService = new GoogleSpeechService(servicesAuth, _misty);
 				_googleService.SpeakingVoice = _googleSpeechParameters?.SpeakingVoice;
 				_googleService.SpeakingGender = _googleSpeechParameters?.SpeakingGender;
 				_googleService.SpokenLanguage = _googleSpeechParameters?.SpokenLanguage;
 				
-				_intentUtterances = CharacterParameters.ConversationGroup.IntentUtterances;
-				_speechIntentManager = _speechIntentManager ?? new SpeechIntentManager(Robot, _intentUtterances);
+				_intentUtterances = _characterParameters.ConversationGroup.IntentUtterances;
+				_speechIntentManager = _speechIntentManager ?? new SpeechIntentManager(_misty, _intentUtterances);
 			}
 
-			LogEventDetails(Robot.RegisterVoiceRecordEvent(VoiceRecordCallback, 100, true, "VoiceRecord", null));
-			LogEventDetails(Robot.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 100, true, "KeyPhrase", null));
-			LogEventDetails(Robot.RegisterAudioPlayCompleteEvent(AudioCallback, 100, true, "CharacterAudioComplete", null));
-			LogEventDetails(Robot.RegisterTextToSpeechCompleteEvent(TTSCallback, 100, true, "CharacterTTSComplete", null));
+			LogEventDetails(_misty.RegisterVoiceRecordEvent(VoiceRecordCallback, 100, true, "VoiceRecord", null));
+			LogEventDetails(_misty.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 100, true, "KeyPhrase", null));
+			LogEventDetails(_misty.RegisterAudioPlayCompleteEvent(AudioCallback, 100, true, "CharacterAudioComplete", null));
+			LogEventDetails(_misty.RegisterTextToSpeechCompleteEvent(TTSCallback, 100, true, "CharacterTTSComplete", null));
 					
 			return true;
 		}
@@ -244,13 +252,13 @@ namespace MistyCharacter
 			{
 				if (_keyPhraseOn && (currentInteraction == null || hasAudio || !currentInteraction.AllowKeyPhraseRecognition))
 				{
-					await Robot.StopKeyPhraseRecognitionAsync();
+					await _misty.StopKeyPhraseRecognitionAsync();
 					_keyPhraseOn = false;
 					KeyPhraseRecognitionOn?.Invoke(this, false);
 				}
 				else if (currentInteraction != null && currentInteraction.AllowKeyPhraseRecognition && !hasAudio && (!_keyPhraseOn || _keyPhraseTriggered))
 				{
-					await Robot.StartKeyPhraseRecognitionAsync(false, true, (int)(currentInteraction.ListenTimeout * 1000), (int)(currentInteraction.SilenceTimeout * 1000), null);
+					await _misty.StartKeyPhraseRecognitionAsync(false, true, (int)(currentInteraction.ListenTimeout * 1000), (int)(currentInteraction.SilenceTimeout * 1000), null);
 					_keyPhraseOn = true;
 					_keyPhraseTriggered = false;
 					KeyPhraseRecognitionOn?.Invoke(this, true);
@@ -265,9 +273,11 @@ namespace MistyCharacter
 			return _keyPhraseOn;
 		}
 
-		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, CharacterState stateAtAnimationStart, CharacterState previousState, IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)
-			: base(misty, parameters, characterParameters)
+		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, CharacterState stateAtAnimationStart, CharacterState previousState, IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)			
 		{
+			_parameters = parameters;
+			_misty = misty;
+			_characterParameters = characterParameters;			
 			_robotName = characterParameters.ConversationGroup.RobotName ?? "Misty";
 			_genericDataStores = genericDataStores;
 			_speechIntentManager = speechIntentManager;
@@ -282,7 +292,7 @@ namespace MistyCharacter
 			_listeningCallbacks.Remove(audioName + ".wav");
 			_listenAborted = true;
 
-			Robot.StopRecordingAudio(null);
+			_misty.StopRecordingAudio(null);
 		}
 
 		private void ProcessVolumeResponse(IGetVolumeResponse volumeResponse)
@@ -310,7 +320,7 @@ namespace MistyCharacter
 
 				if (string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
-					Robot.SkillLogger.LogWarning("No text passed in to Speak command.");
+					_misty.SkillLogger.LogWarning("No text passed in to Speak command.");
 					return;
 				}
 				
@@ -320,14 +330,14 @@ namespace MistyCharacter
 				}
 
 				//This will save files with language and voice as part of the name
-				if (CharacterParameters.AddLocaleToAudioNames)
+				if (_characterParameters.AddLocaleToAudioNames)
 				{
 					currentAnimation.SpeakFileName = GetLocaleName(currentAnimation.SpeakFileName);
 				}
 
 				_listenAborted = false;
 
-				if (CharacterParameters.TextToSpeechService == "Misty")
+				if (_characterParameters.TextToSpeechService == "Misty")
 				{
 					if (currentInteraction.StartListening && !string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName))
 					{
@@ -338,7 +348,7 @@ namespace MistyCharacter
 						}
 					}
 
-					Robot.Speak(currentAnimation.Speak, CharacterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
+					_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
 				}
@@ -346,7 +356,7 @@ namespace MistyCharacter
 				if ((_azureCognitive != null && _azureCognitive.Authorized) || (_googleService != null && _googleService.Authorized))
 				{
 					string newText = currentAnimation.Speak;
-					bool usingSSML = CharacterParameters.TextToSpeechService == "Azure" && TryGetSSMLText(currentAnimation.Speak, out  newText, currentAnimation);
+					bool usingSSML = _characterParameters.TextToSpeechService == "Azure" && TryGetSSMLText(currentAnimation.Speak, out  newText, currentAnimation);
 					currentAnimation.Speak = newText ?? currentAnimation.Speak;
 
 					currentAnimation.SpeakFileName = AssetHelper.AddMissingWavExtension(currentAnimation.SpeakFileName);
@@ -364,20 +374,20 @@ namespace MistyCharacter
 					if (!textChanged)
 					{
 						if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
-							(!CharacterParameters.RetranslateTTS &&
-							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, CharacterParameters.AddLocaleToAudioNames)).Any())
+							(!_characterParameters.RetranslateTTS &&
+							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
 						)
 						{
-							Robot.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-							Robot.SkillLogger.LogVerbose(currentAnimation.Speak);							
-							Robot.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
+							_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);							
+							_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
 						}
 						else
 						{
-							Robot.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-							Robot.SkillLogger.LogVerbose(currentAnimation.Speak);
+							_misty.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
 							
-							switch (CharacterParameters.TextToSpeechService)
+							switch (_characterParameters.TextToSpeechService)
 							{
 								case "Google":
 									await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName, Volume, usingSSML, 0);
@@ -393,7 +403,7 @@ namespace MistyCharacter
 					else
 					{
 						//Make a new file						
-						switch (CharacterParameters.TextToSpeechService)
+						switch (_characterParameters.TextToSpeechService)
 						{
 							case "Google":
 								//TODO Make configurable
@@ -409,7 +419,7 @@ namespace MistyCharacter
 			}
 			catch(Exception ex)
 			{
-				Robot.SkillLogger.Log("Failed processing Speak action in Character.", ex);
+				_misty.SkillLogger.Log("Failed processing Speak action in Character.", ex);
 				StoppedSpeaking?.Invoke(this, null);
 			}
 		}
@@ -497,7 +507,7 @@ namespace MistyCharacter
 
 		protected void TTSCallback(ITextToSpeechCompleteEvent ttsComplete)
 		{
-			Robot.SkillLogger.LogVerbose($"TTS Callback: UtteranceId: {ttsComplete.UttteranceId}");
+			_misty.SkillLogger.LogVerbose($"TTS Callback: UtteranceId: {ttsComplete.UttteranceId}");
 
 			AudioCallback(new AudioPlayCompleteEvent(ttsComplete.UttteranceId, -1));
 		}
@@ -507,10 +517,10 @@ namespace MistyCharacter
 			try
 			{
 				_recording = false;
-				Robot.SkillLogger.LogVerbose($"Audio Callback. Name: {audioComplete.Name}");
+				_misty.SkillLogger.LogVerbose($"Audio Callback. Name: {audioComplete.Name}");
 				if(_processingAudioCallback)
 				{
-					Robot.SkillLogger.LogWarning($"Audio Callback ignored as system is still processing previous callback. Name: {audioComplete.Name}");
+					_misty.SkillLogger.LogWarning($"Audio Callback ignored as system is still processing previous callback. Name: {audioComplete.Name}");
 					return;
 				}
 				_processingAudioCallback = true;
@@ -518,7 +528,7 @@ namespace MistyCharacter
 				if (audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
 				{
 					PreSpeechCompleted?.Invoke(this, audioComplete);
-					Robot.SkillLogger.LogVerbose($"Prespeech complete. Name: {audioComplete.Name}");
+					_misty.SkillLogger.LogVerbose($"Prespeech complete. Name: {audioComplete.Name}");
 					return;
 				}
 				else
@@ -531,23 +541,23 @@ namespace MistyCharacter
 					{
 						_recording = true;
 
-						Robot.SkillLogger.LogVerbose("Capture Speech called.");
-						switch (CharacterParameters.SpeechRecognitionService.Trim().ToLower())
+						_misty.SkillLogger.LogVerbose("Capture Speech called.");
+						switch (_characterParameters.SpeechRecognitionService.Trim().ToLower())
 						{
 							case "googleonboard":
-								_ = Robot.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.GoogleSpeechParameters.SubscriptionKey, CharacterParameters.GoogleSpeechParameters.SpokenLanguage);
+								_ = _misty.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.GoogleSpeechParameters.SubscriptionKey, _characterParameters.GoogleSpeechParameters.SpokenLanguage);
 								return;
 							case "azureonboard":
-								_ = Robot.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, CharacterParameters.AzureSpeechParameters.SubscriptionKey, CharacterParameters.AzureSpeechParameters.Region, CharacterParameters.AzureSpeechParameters.SpokenLanguage);
+								_ = _misty.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.AzureSpeechParameters.SubscriptionKey, _characterParameters.AzureSpeechParameters.Region, _characterParameters.AzureSpeechParameters.SpokenLanguage);
 								return;
 							case "vosk":
-								_ = Robot.CaptureSpeechVoskAsync(false, _listenTimeout, _silenceTimeout);
+								_ = _misty.CaptureSpeechVoskAsync(false, _listenTimeout, _silenceTimeout);
 								return;
 							case "deepspeech":
-								_ = Robot.CaptureSpeechDeepSpeechAsync(false, _listenTimeout, _silenceTimeout);
+								_ = _misty.CaptureSpeechDeepSpeechAsync(false, _listenTimeout, _silenceTimeout);
 								return;
 							default:
-								_ = Robot.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
+								_ = _misty.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
 								return;
 						}
 					}
@@ -555,7 +565,7 @@ namespace MistyCharacter
 			}
 			catch(Exception ex)
 			{
-				Robot.SkillLogger.Log("Failed processing audio callback in Character.", ex);
+				_misty.SkillLogger.Log("Failed processing audio callback in Character.", ex);
 			}
 			finally
 			{
@@ -571,7 +581,7 @@ namespace MistyCharacter
 		{ 
 			try
 			{
-				Robot.SkillLogger.LogVerbose("Key Phrase Callback called, calling capture speech.");
+				_misty.SkillLogger.LogVerbose("Key Phrase Callback called, calling capture speech.");
 				if (_recording)
 				{
 					return;
@@ -580,14 +590,14 @@ namespace MistyCharacter
 				KeyPhraseRecognized?.Invoke(this, keyPhraseEvent);
 				_keyPhraseTriggered = true;
 				_recording = true;
-				_ = Robot.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
+				_ = _misty.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
 
 				StartedListening?.Invoke(this, DateTime.Now);
 				return;
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.Log("Failed to process Voice Command event.", ex);
+				_misty.SkillLogger.Log("Failed to process Voice Command event.", ex);
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard));
 			}
 		}
@@ -600,14 +610,14 @@ namespace MistyCharacter
 				StoppedListening?.Invoke(this, voiceRecordEvent);
 				if (_listenAborted)
 				{
-					Robot.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
+					_misty.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
 					return;
 				}
 
-				Robot.SkillLogger.LogVerbose("Voice Record Callback - processing");
+				_misty.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 
-				string service = CharacterParameters.SpeechRecognitionService.Trim().ToLower();
+				string service = _characterParameters.SpeechRecognitionService.Trim().ToLower();
 				if (service == "googleonboard" || service == "azureonboard" || service == "deepspeech" || service == "vosk")
 				{
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
@@ -616,35 +626,35 @@ namespace MistyCharacter
 
 				if (voiceRecordEvent.ErrorCode == 3)
 				{
-					Robot.SkillLogger.Log("Didn't hear anything with microphone.");
+					_misty.SkillLogger.Log("Didn't hear anything with microphone.");
 					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));					
 					return;
 				}
 
 				IGetAudioResponse audioResponse;
-				audioResponse = await Robot.GetAudioAsync("capture_Dialogue.wav", false);
+				audioResponse = await _misty.GetAudioAsync("capture_Dialogue.wav", false);
 
 				if(audioResponse.Status != ResponseStatus.Success)
 				{
-					Robot.SkillLogger.Log($"Failed to retrieve file 'capture_Dialogue.wav', received {audioResponse.Status}.  Ignoring speech intent.");
+					_misty.SkillLogger.Log($"Failed to retrieve file 'capture_Dialogue.wav', received {audioResponse.Status}.  Ignoring speech intent.");
 					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 					return;
 				}
 				else if (audioResponse?.Data?.Audio == null)
 				{
-					Robot.SkillLogger.Log("Couldn't find the audio file 'capture_Dialogue.wav'.");
+					_misty.SkillLogger.Log("Couldn't find the audio file 'capture_Dialogue.wav'.");
 					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 					return;
 				}
 				else if ( audioResponse?.Data?.Audio.Count() == 0)
 				{			
-					Robot.SkillLogger.Log("Found empty audio file 'capture_Dialogue.wav'.");
+					_misty.SkillLogger.Log("Found empty audio file 'capture_Dialogue.wav'.");
 					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 					return;
 				}
 
 				SpeechToTextData description = new SpeechToTextData();
-				switch (CharacterParameters.SpeechRecognitionService)
+				switch (_characterParameters.SpeechRecognitionService)
 				{
 					case "Google":
 						description = await _googleService.TranslateAudioStream((byte[])audioResponse.Data.Audio);
@@ -659,7 +669,7 @@ namespace MistyCharacter
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.Log("Failed to process Voice Command event.", ex);
+				_misty.SkillLogger.Log("Failed to process Voice Command event.", ex);
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard));
 			}
 			finally
@@ -676,11 +686,11 @@ namespace MistyCharacter
 
                 //Old conversations trigger on name, new ones on id
 				SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
-				Robot.SkillLogger.LogInfo($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
+				_misty.SkillLogger.LogInfo($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
 			}
 			else
 			{
-				Robot.SkillLogger.LogInfo("Didn't hear anything or can no longer translate.");
+				_misty.SkillLogger.LogInfo("Didn't hear anything or can no longer translate.");
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 			}
 		}
@@ -946,7 +956,7 @@ namespace MistyCharacter
 			//get rid of this now that there is an animations script
 			if (!string.IsNullOrWhiteSpace(genericData.ScreenText))
 			{
-				_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+				_ = _misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
 				{
 					Wrap = true,
 					Visible = true,
@@ -962,7 +972,7 @@ namespace MistyCharacter
 					Height = 50
 				});
 
-				Robot.DisplayText(genericData.ScreenText, "UserDataText", null);
+				_misty.DisplayText(genericData.ScreenText, "UserDataText", null);
 			}
 
 			if(!string.IsNullOrWhiteSpace(genericData.DataAnimationScript))
@@ -1022,7 +1032,7 @@ namespace MistyCharacter
 			{
 				if (disposing)
 				{
-					Robot.UnregisterAllEvents(null);
+					_misty.UnregisterAllEvents(null);
 				}
 
 				_isDisposed = true;

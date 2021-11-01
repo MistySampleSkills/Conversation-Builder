@@ -41,6 +41,8 @@ using MistyRobotics.SDK;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
 using SkillTools.Web;
+using SpeechTools;
+using TimeManager;
 
 namespace MistyCharacter
 {
@@ -88,7 +90,7 @@ namespace MistyCharacter
 		private IList<string> _startupCommands = new List<string>();
 		private IFurhatManager _furhatManager;
 		private ISpeechManager _speechManager;
-		private TimeManager _timeManager;
+		private ITimeManager _timeManager;
 		private ILocomotionManager _locomotionManager;
 		private IArmManager _armManager;
 		private IHeadManager _headManager;
@@ -248,6 +250,8 @@ namespace MistyCharacter
 				Height = 50
 			});
 			_userTextLayerVisible = true;
+
+			_timeManager = new EnglishTimeManager(Robot, Parameters, CharacterParameters);
 			
 			return Task.FromResult(true);
 		}

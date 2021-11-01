@@ -34,7 +34,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MistyRobotics.SDK.Events;
-using MistyInteraction.Common;
+using Conversation.Common;
 
 namespace MistyInteraction
 {

@@ -32,96 +32,50 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Conversation.Common;
-using MistyRobotics.SDK.Messengers;
+using MistyRobotics.SDK.Events;
 
-namespace MistyInteraction
+namespace SpeechTools
 {
-	public class TimeManager : BaseManager, ITimeManager
+	public interface ISpeechManager
 	{
-		public TimeManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
-			: base(misty, parameters, characterParameters) { }
-		
-		public TimeObject GetTimeObject()
-		{
-			DateTime now = DateTime.Now.ToLocalTime();
-			TimeObject timeObject = new TimeObject
-			{
-				Timestamp = now,
-				Description = TimeDescription.Unknown
-			};
+		Task<bool> Initialize();
+		int Volume { get; set; }
+		void Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
+		string GetLocaleName(string name);
+		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
+		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
+		void AbortListening(string audioName);		
+		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
 
-			timeObject.IsPm = false;
-			int hour = now.Hour;
 
-			if (hour >= 4 && hour < 12)
-			{
-				timeObject.Description = TimeDescription.Morning;
-			}
-			else if (hour >= 12 && hour < 17)
-			{
-				timeObject.Description = TimeDescription.Afternoon;
-			}
-			else if (hour >= 17 && hour < 21)
-			{
-				timeObject.Description = TimeDescription.Evening;
-			}
-			else
-			{
-				timeObject.Description = TimeDescription.Night;
-			}
 
-			if (hour >= 12)
-			{
-				timeObject.IsPm = true;
-				hour = hour - 12;
-			}
+		void SetAudioTrim(int trimMs);
+		void SetMaxSilence(int silenceTimeout);
+		void SetMaxListen(int listenTimeout);
+		//void UpdatePrespeech(string prespeech);
+		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
 
-			if (hour == 0)
-			{
-				hour = 12;
-			}
 
-			timeObject.SpokenDay = now.DayOfWeek;
 
-			//get proper minute string
-			int minute = now.Minute;
-			string minuteString = "";
-			if (minute > 0 && minute < 10)
-			{
-				minuteString = " oh " + minute;
-			}
-			else if(minute == 0)
-			{
-				minuteString = "";
-			}
-			else			
-			{
-				minuteString = minute.ToString();
-			}
 
-			//get time
-			timeObject.SpokenTime = hour + " " + minuteString + " " + (timeObject.IsPm ? "P.M." : "A.M.");
 
-			return timeObject;
-		}
 
-		//This implementation doesn't use dispose yet, but following manager pattern
-		private bool _isDisposed = false;
 
-		private void Dispose(bool disposing)
-		{
-			if (!_isDisposed)
-			{
-				if (disposing) { }
+		event EventHandler<string> StartedSpeaking;
+		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
+		event EventHandler<DateTime> StartedListening;
+		event EventHandler<IVoiceRecordEvent> StoppedListening;
+		event EventHandler<TriggerData> SpeechIntent;
+		event EventHandler<bool> KeyPhraseRecognitionOn;
+		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
+		event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
+		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
+		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+		event EventHandler<string> UserDataAnimationScript;
 
-				_isDisposed = true;
-			}
-		}
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
+		void Dispose();
 	}
 }
+ 

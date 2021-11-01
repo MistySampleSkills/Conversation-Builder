@@ -1,4 +1,4 @@
-﻿/**********************************************************************
+/**********************************************************************
 	Copyright 2021 Misty Robotics
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -30,29 +30,11 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-namespace Conversation.Common
+namespace EmailManager
 {
-	public enum TimeDescription
+	public sealed class SenderEmail
 	{
-		/// <summary>
-		/// Dunno
-		/// </summary>
-		Unknown,
-		/// <summary>
-		/// 4am-12pm
-		/// </summary>
-		Morning,
-		/// <summary>
-		/// 12pm-5pm
-		/// </summary>
-		Afternoon,
-		/// <summary>
-		/// 5pm-9pm
-		/// </summary>
-		Evening,
-		/// <summary>
-		/// 9pm-4am
-		/// </summary>
-		Night
+		public string Email { get; set; }
+		public string EmailPassword { get; set; }
 	}
 }

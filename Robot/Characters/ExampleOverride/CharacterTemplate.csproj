@@ -140,6 +140,10 @@
       <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\ConversationLibraries\TimeManager\TimeManager.csproj">
+      <Project>{A1B74B3E-050D-423E-B00D-51A6BE475150}</Project>
+      <Name>TimeManager</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\MistyInteraction\MistyInteraction.csproj">
       <Project>{60e0d411-3eb1-4ee9-8172-a59ce2857378}</Project>
       <Name>MistyInteraction</Name>

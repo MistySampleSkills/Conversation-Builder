@@ -33,7 +33,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MistyInteraction;
+using MistyCharacter;
 using MistyRobotics.Common.Data;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK;

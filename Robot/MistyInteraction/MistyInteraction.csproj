@@ -122,6 +122,7 @@
   <ItemGroup>
     <Compile Include="Character\TimerTriggerData.cs" />
     <Compile Include="Character\ListeningState.cs" />
+    <Compile Include="DefaultManagers\CommandManager.cs" />
     <Compile Include="DefaultManagers\AnimationManager.cs" />
     <Compile Include="DefaultManagers\FurhatManager.cs" />
     <Compile Include="DefaultManagers\IFurhatManager.cs" />
@@ -135,20 +136,20 @@
     <Compile Include="DefaultManagers\BaseManager.cs" />
     <Compile Include="DefaultManagers\IAnimationManager.cs" />
     <Compile Include="DefaultManagers\ILocomotionManager.cs" />
-    <Compile Include="DefaultManagers\IArmManager.cs" />
-    <Compile Include="DefaultManagers\IHeadManager.cs" />
-    <Compile Include="DefaultManagers\ITimeManager.cs" />
+    <Compile Include="Deprecated\IArmManager.cs" />
+    <Compile Include="Deprecated\IHeadManager.cs" />
     <Compile Include="DefaultManagers\SpeechIntentManager.cs" />
     <Compile Include="DefaultManagers\SpeechManager.cs" />
-    <Compile Include="DefaultManagers\TimeManager.cs" />
-    <Compile Include="DefaultManagers\ArmManager.cs" />
-    <Compile Include="DefaultManagers\HeadManager.cs" />
+    <Compile Include="Deprecated\ArmManager.cs" />
+    <Compile Include="Deprecated\HeadManager.cs" />
     <Compile Include="Character\BaseCharacter.cs" />
     <Compile Include="SpeechIntent\TextComparisonObject.cs" />
     <Compile Include="SpeechIntent\SpeechIntentInterpreter.cs" />
     <Compile Include="Character\ParameterManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Properties\MistyInteraction.rd.xml" />
+    <EmbeddedResource Include="Properties\MistyInteraction.rd.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
@@ -185,6 +186,10 @@
     <ProjectReference Include="..\ConversationLibraries\SpeechTools\SpeechTools.csproj">
       <Project>{8a67aa55-d289-41d3-8afe-54960b21a5b4}</Project>
       <Name>SpeechTools</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ConversationLibraries\TimeManager\TimeManager.csproj">
+      <Project>{A1B74B3E-050D-423E-B00D-51A6BE475150}</Project>
+      <Name>TimeManager</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

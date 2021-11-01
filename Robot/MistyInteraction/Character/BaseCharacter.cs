@@ -46,7 +46,6 @@ using MistyRobotics.SDK.Responses;
 using MistyRobotics.SDK;
 using MistyRobotics.Common.Data;
 using SkillTools.AssetTools;
-//using MistyCharacter.SpeechIntent;
 
 namespace MistyInteraction
 {

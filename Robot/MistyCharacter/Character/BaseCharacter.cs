@@ -46,7 +46,8 @@ using MistyRobotics.SDK.Responses;
 using MistyRobotics.SDK;
 using MistyRobotics.Common.Data;
 using SkillTools.AssetTools;
-using MistyCharacter.SpeechIntent;
+using TimeManager;
+using SpeechTools;
 
 namespace MistyCharacter
 {
@@ -195,7 +196,7 @@ namespace MistyCharacter
 				AssetWrapper = new AssetWrapper(Misty);
 				_ = RefreshAssetLists();
 
-				TimeManager = _managerConfiguration?.TimeManager ?? new TimeManager(Misty, OriginalParameters, CharacterParameters);
+				TimeManager = _managerConfiguration?.TimeManager ?? new EnglishTimeManager(Misty, OriginalParameters, CharacterParameters);
 				await TimeManager.Initialize();
 
 				ArmManager = _managerConfiguration?.ArmManager ?? new ArmManager(Misty, OriginalParameters, CharacterParameters);

@@ -1,6 +1,6 @@
 ﻿using CharacterTemplates;
 using Conversation.Common;
-using MistyInteraction;
+using MistyCharacter;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
 using MistyRobotics.SDK.Messengers;
@@ -146,8 +146,9 @@ namespace MistyManager
 
 					_character = character == null ? new BasicMisty(_misty, _parameters) : character;
 
-					bool initialized = await _character.Initialize(_characterParameters);
-					if(initialized)
+					//bool initialized = await _character.Initialize(_characterParameters);
+					bool initialized = await _character.Initialize();
+					if (initialized)
 					{
 						_misty.DisplayText("Hello!", "Text", null);
 						_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);

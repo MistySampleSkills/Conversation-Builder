@@ -142,8 +142,6 @@
     <Compile Include="Conversations\ArmLocation.cs" />
     <Compile Include="Conversations\HeadLocation.cs" />
     <Compile Include="Conversations\LEDTransitionAction.cs" />
-    <Compile Include="Data\TimeDescription.cs" />
-    <Compile Include="Data\TimeObject.cs" />
     <Compile Include="Data\TriggerEvent.cs" />
     <Compile Include="Conversations\ConversationGroup.cs" />
     <Compile Include="Helpers\AssetHelper.cs" />

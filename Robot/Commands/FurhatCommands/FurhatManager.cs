@@ -36,6 +36,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
+using MistyCharacter;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
@@ -43,24 +44,43 @@ using SkillTools.Web;
 
 namespace MistyCharacter
 {
-	public class FurhatManager : BaseManager, IFurhatManager
+	public class FurhatManager
 	{
 		private string _ip;
 		private const string ApiEndpoint = "/furhat";
 		private WebMessenger _webMessenger = new WebMessenger();
-		
-		public FurhatManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
-			: base(misty, parameters, characterParameters) {}
+		private SpeechManager _speechManager;
 
-		public override Task<bool> Initialize()
+		private const string FurhatIp = "FurhatIp";
+
+		protected IDictionary<string, object> _parameters { get; set; }
+		protected IRobotMessenger _misty { get; set; }
+		protected CharacterParameters _characterParameters { get; set; }
+
+		public FurhatManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, SpeechManager speechManager)
 		{
-			if(!string.IsNullOrWhiteSpace(CharacterParameters.FurhatIp))
+			_misty = misty;
+			_parameters = parameters;
+			_characterParameters = characterParameters;
+			//TODO process params and get furhat ip
+			_ip = "10.0.0.100";
+		}
+
+		public Task<bool> Initialize()
+		{
+			if(!string.IsNullOrWhiteSpace(FurhatIp))
 			{
-				_ip = CharacterParameters.FurhatIp;
+				_ip = FurhatIp;
 				return Task.FromResult(true);
 			}
+
 			return Task.FromResult(false);
 		}
+
+
+
+
+
 
 		public async Task<bool> AttendClosest()
 		{
@@ -74,12 +94,12 @@ namespace MistyCharacter
 				});
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'AttendClosest' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'AttendClosest' response: {webMessengerData?.Response}");
 				return (webMessengerData?.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'AttendClosest' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'AttendClosest' threw exception", ex);
 				return false;
 			}
 		}
@@ -95,12 +115,12 @@ namespace MistyCharacter
 				});
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'Voice' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'Voice' response: {webMessengerData?.Response}");
 				return (webMessengerData?.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'Voice' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'Voice' threw exception", ex);
 				return false;
 			}
 		}
@@ -118,12 +138,12 @@ namespace MistyCharacter
 					texture
 				});
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'Face' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'Face' response: {webMessengerData?.Response}");
 				return (webMessengerData?.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'Face' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'Face' threw exception", ex);
 				return false;
 			}
 		}
@@ -139,12 +159,12 @@ namespace MistyCharacter
 				});
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'Speak' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'Speak' response: {webMessengerData?.Response}");
 				return (webMessengerData?.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'Speak' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'Speak' threw exception", ex);
 				return false;
 			}
 		}
@@ -157,12 +177,12 @@ namespace MistyCharacter
 				string data = Newtonsoft.Json.JsonConvert.SerializeObject(new { });
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'StopSpeaking' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'StopSpeaking' response: {webMessengerData?.Response}");
 				return (webMessengerData?.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'StopSpeaking' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'StopSpeaking' threw exception", ex);
 				return false;
 			}
 		}
@@ -173,12 +193,12 @@ namespace MistyCharacter
 			{
 				string endpoint = $"http://{_ip}{ApiEndpoint}/listen";
 				WebMessengerData webMessengerData = await _webMessenger.GetRequest(endpoint);
-				Robot.SkillLogger.LogInfo($"Furhat 'Listen' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'Listen' response: {webMessengerData?.Response}");
 				return (webMessengerData.Response);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'Listen' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'Listen' threw exception", ex);
 				return null;
 			}
 		}
@@ -191,12 +211,12 @@ namespace MistyCharacter
 				string data = Newtonsoft.Json.JsonConvert.SerializeObject(new { });
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'StopListening' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'StopListening' response: {webMessengerData?.Response}");
 				return (webMessengerData.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'StopListening' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'StopListening' threw exception", ex);
 				return false;
 			}
 		}
@@ -212,12 +232,12 @@ namespace MistyCharacter
 				});
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'Gesture' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'Gesture' response: {webMessengerData?.Response}");
 				return (webMessengerData.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'Gesture' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'Gesture' threw exception", ex);
 				return false;
 			}
 		}
@@ -235,12 +255,12 @@ namespace MistyCharacter
 				});
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'LED' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'LED' response: {webMessengerData?.Response}");
 				return (webMessengerData.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'LED' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'LED' threw exception", ex);
 				return false;
 			}
 		}
@@ -256,12 +276,12 @@ namespace MistyCharacter
 				});
 
 				WebMessengerData webMessengerData = await _webMessenger.PostRequest(endpoint, data, "application/json");
-				Robot.SkillLogger.LogInfo($"Furhat 'Audio' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'Audio' response: {webMessengerData?.Response}");
 				return (webMessengerData.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'Audio' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'Audio' threw exception", ex);
 				return false;
 			}
 		}
@@ -272,12 +292,12 @@ namespace MistyCharacter
 			{
 				string endpoint = $"http://{_ip}{ApiEndpoint}/gestures";
 				WebMessengerData webMessengerData = await _webMessenger.GetRequestAsync(endpoint);
-				Robot.SkillLogger.LogInfo($"Furhat 'GetGestures' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'GetGestures' response: {webMessengerData?.Response}");
 				return (webMessengerData.Response);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'GetGestures' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'GetGestures' threw exception", ex);
 				return null;
 			}
 		}
@@ -288,12 +308,12 @@ namespace MistyCharacter
 			{
 				string endpoint = $"http://{_ip}{ApiEndpoint}/voices";
 				WebMessengerData webMessengerData = await _webMessenger.GetRequestAsync(endpoint);
-				Robot.SkillLogger.LogInfo($"Furhat 'GetVoices' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'GetVoices' response: {webMessengerData?.Response}");
 				return (webMessengerData.Response);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'GetVoices' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'GetVoices' threw exception", ex);
 				return null;
 			}
 		}
@@ -304,12 +324,12 @@ namespace MistyCharacter
 			{
 				string endpoint = $"http://{_ip}{ApiEndpoint}/users";
 				WebMessengerData webMessengerData = await _webMessenger.GetRequestAsync(endpoint);
-				Robot.SkillLogger.LogInfo($"Furhat 'GetUsers' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'GetUsers' response: {webMessengerData?.Response}");
 				return (webMessengerData.Response);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'GetUsers' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'GetUsers' threw exception", ex);
 				return null;
 			}
 		}
@@ -320,12 +340,12 @@ namespace MistyCharacter
 			{
 				string endpoint = $"http://{_ip}{ApiEndpoint}/test";
 				WebMessengerData webMessengerData = await _webMessenger.GetRequestAsync(endpoint);
-				Robot.SkillLogger.LogInfo($"Furhat 'Test' response: {webMessengerData?.Response}");
+				_misty.SkillLogger.LogInfo($"Furhat 'Test' response: {webMessengerData?.Response}");
 				return (webMessengerData.HttpCode == 200);
 			}
 			catch (Exception ex)
 			{
-				Robot.SkillLogger.LogInfo("Furhat 'Test' threw exception", ex);
+				_misty.SkillLogger.LogInfo("Furhat 'Test' threw exception", ex);
 				return false;
 			}
 		}

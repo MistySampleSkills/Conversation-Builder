@@ -31,6 +31,8 @@
 **********************************************************************/
 
 using System;
+using SpeechTools;
+using TimeManager;
 
 namespace MistyCharacter
 {
