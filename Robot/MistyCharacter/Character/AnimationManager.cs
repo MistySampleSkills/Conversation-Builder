@@ -252,11 +252,11 @@ namespace MistyCharacter
 		private object _waitingLock = new object();
 
 		//TODO move to arm and head managers or replace with script only?
-		private double _rightArmDegrees;
-		private double _leftArmDegrees;
-		private double _headPitchDegrees;
-		private double _headRollDegrees;
-		private double _headYawDegrees;
+		//private double _rightArmDegrees;
+		//private double _leftArmDegrees;
+		//private double _headPitchDegrees;
+		//private double _headRollDegrees;
+		//private double _headYawDegrees;
 		private int _maxSilence = 10000;
 		private int _maxListen = 10000;
 

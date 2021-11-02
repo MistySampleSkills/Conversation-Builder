@@ -168,7 +168,7 @@ namespace MistyCharacter
 		/// <summary>
 		/// Current state of robot and character
 		/// </summary>
-		CharacterState CharacterState { get; }
+		CharacterState CurrentCharacterState { get; }
 
 		/// <summary>
 		/// The state of robot and character at the end of the last interaction
