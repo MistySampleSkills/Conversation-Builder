@@ -32,6 +32,7 @@
 
 using System;
 using System.Collections.Generic;
+using MistyCharacter;
 using MistyRobotics.SDK.Events;
 
 namespace Conversation.Common
@@ -75,9 +76,14 @@ namespace Conversation.Common
 			LeftVelocity = state.LeftVelocity;
 			AnimationEmotion = state.AnimationEmotion;
 			CurrentMood = state.CurrentMood;
+
+			//TODO
+			LocomotionState = state.LocomotionState;
 		}
 
 		//Commanded State Info
+		public LocomotionState LocomotionState { get; set; }
+
 		public bool FlashLightOn { get; set; }
 		public LEDTransitionAction AnimationLED { get; set; }
 		public string Image { get; set; }

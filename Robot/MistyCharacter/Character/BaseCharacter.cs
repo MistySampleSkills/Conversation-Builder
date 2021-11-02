@@ -57,6 +57,7 @@ namespace MistyCharacter
 		public int Count { get; set; }
 	}
 
+
 	public abstract class BaseCharacter : IBaseCharacter
 	{
 		//Allow others to register for these... pass on the event data

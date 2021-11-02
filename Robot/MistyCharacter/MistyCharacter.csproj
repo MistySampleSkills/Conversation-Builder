@@ -120,6 +120,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Character\MistyState.cs" />
     <Compile Include="Data\TimerTriggerData.cs" />
     <Compile Include="Character\AnimationManager.cs" />
     <Compile Include="Deprecated\LocomotionManager.cs" />

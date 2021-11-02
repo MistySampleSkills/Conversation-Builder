@@ -180,6 +180,11 @@
       <Name>SkillTools</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MistyCharacter">
+      <HintPath>..\..\MistyInteraction\bin\ARM\Debug\MistyCharacter.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
