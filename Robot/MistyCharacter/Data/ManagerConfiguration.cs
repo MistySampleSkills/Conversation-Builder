@@ -62,8 +62,8 @@ namespace MistyCharacter
 		/// <param name="emotionManager"></param>
 		/// <param name="speechIntentManager"></param>
 		/// <param name="animationManager"></param>
-		[Obsolete("Arm Manager and Head Manager are deprecated, please use Animation Manager instead.")]
-		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null/*, ILocomotionManager locomotionManager = null*/)
+		[Obsolete("Arm Manager, Head Manager, and Locomotion Manager are deprecated, please use Animation Manager instead.")]
+		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null)
 		{
 			SpeechManager = speechmanager;
 			ArmManager = armManager;

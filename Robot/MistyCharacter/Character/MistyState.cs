@@ -512,7 +512,7 @@ namespace MistyCharacter
 			}
 			else if (!_tofRegistered && string.Equals(trigger, Triggers.TimeOfFlightRange, StringComparison.OrdinalIgnoreCase))
 			{
-				LogEventDetails(_misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 100, true, null, "TimeOfFlight", null));
+				LogEventDetails(_misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 500, true, null, "TimeOfFlight", null));
 				_tofRegistered = true;
 			}
 		}

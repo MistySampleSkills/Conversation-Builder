@@ -41,12 +41,13 @@ using MistyRobotics.SDK.Messengers;
 
 namespace MistyCharacter
 {
+	//Deprecated, update for face and object follow only
 	public class HeadManager : BaseManager, IHeadManager
 	{
-		public event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
-		public event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
-		public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;		
-		public event EventHandler<IObjectDetectionEvent> ObjectEvent;
+		//public event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
+		//public event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
+		//public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;		
+		//public event EventHandler<IObjectDetectionEvent> ObjectEvent;
 
 		private IObjectDetectionEvent _lastObjectEvent;
 		private IObjectDetectionEvent _lastPersonEvent;
@@ -68,40 +69,40 @@ namespace MistyCharacter
 		public HeadManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 			: base(misty, parameters, characterParameters)
 		{
-			Robot.UnregisterEvent("GenericODEvent", null);
-			Robot.UnregisterEvent("ODEventForObjectFollow", null);			
-			Robot.UnregisterEvent("HeadYaw", null);
-			Robot.UnregisterEvent("HeadPitch", null);
-			Robot.UnregisterEvent("HeadRoll", null);
+			//Robot.UnregisterEvent("GenericODEvent", null);
+			//Robot.UnregisterEvent("ODEventForObjectFollow", null);			
+			//Robot.UnregisterEvent("HeadYaw", null);
+			//Robot.UnregisterEvent("HeadPitch", null);
+			//Robot.UnregisterEvent("HeadRoll", null);
 
 			_currentHeadRequest = new HeadLocation(null, null, null);
 
 			//Person object, used for following face
-			List<ObjectValidation> personValidations = new List<ObjectValidation>();
-			personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
-			LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
+			//List<ObjectValidation> personValidations = new List<ObjectValidation>();
+			//personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
+			//LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
 			
-			List<ObjectValidation> objectValidations = new List<ObjectValidation>();
-			objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
-			LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
+			//List<ObjectValidation> objectValidations = new List<ObjectValidation>();
+			//objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
+			//LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
 			
-			//Head Actuators for following actions.
-			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
-			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
-			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
-			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorYawValidations, "HeadYaw", null));
+			////Head Actuators for following actions.
+			//IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
+			//actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
+			////LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
+			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorYawValidations, "HeadYaw", null));
 
-			IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
-			actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
-			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorPitchValidations, "HeadPitch", null));
+			//IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
+			//actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
+			////LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
+			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorPitchValidations, "HeadPitch", null));
 
-			IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
-			actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
-			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorRollValidations, "HeadRoll", null));
+			//IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
+			//actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
+			////LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
+			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorRollValidations, "HeadRoll", null));
 
-			Robot.StartObjectDetector(characterParameters.PersonConfidence, 0, characterParameters.TrackHistory, null);
+			//Robot.StartObjectDetector(characterParameters.PersonConfidence, 0, characterParameters.TrackHistory, null);
 		}
 
 		public void HandleHeadAction(HeadLocation headLocation)
@@ -204,7 +205,7 @@ namespace MistyCharacter
 			}
 		}
 	
-		private void ObjectDetectionCallback(IObjectDetectionEvent objEvent)
+		public void HandleObjectDetectionEvent(object sender, IObjectDetectionEvent objEvent)
 		{
 			try
 			{
@@ -225,7 +226,7 @@ namespace MistyCharacter
 					_lastObjectEvent = null;
 					_lastPersonEvent = null;
 				}
-				ObjectEvent?.Invoke(this, objEvent);
+				//ObjectEvent?.Invoke(this, objEvent);
 			}
 			catch (Exception ex)
 			{
@@ -381,20 +382,20 @@ namespace MistyCharacter
 			}			
 		}
 		
-		private void ActuatorCallback(IActuatorEvent actuatorEvent)
+		public void HandleActuatorEvent(object sender, IActuatorEvent actuatorEvent)
 		{
 			switch(actuatorEvent.SensorPosition)
 			{
 				case ActuatorPosition.HeadPitch:
 					_lastActuatorPitch = actuatorEvent.ActuatorValue;
-					HeadPitchActuatorEvent?.Invoke(this, actuatorEvent);
+					//HeadPitchActuatorEvent?.Invoke(this, actuatorEvent);
 					break;
 				case ActuatorPosition.HeadYaw:
 					_lastActuatorYaw = actuatorEvent.ActuatorValue;
-					HeadYawActuatorEvent?.Invoke(this, actuatorEvent);
+					//HeadYawActuatorEvent?.Invoke(this, actuatorEvent);
 					break;
 				case ActuatorPosition.HeadRoll:
-					HeadRollActuatorEvent?.Invoke(this, actuatorEvent);
+					//HeadRollActuatorEvent?.Invoke(this, actuatorEvent);
 					break;
 			}
 		}

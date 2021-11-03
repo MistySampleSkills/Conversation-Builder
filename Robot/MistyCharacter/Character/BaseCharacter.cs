@@ -131,8 +131,8 @@ namespace MistyCharacter
 		private Timer _pollRunningSkillsTimer;
 		private AssetWrapper AssetWrapper;
 		private ISpeechManager SpeechManager;
-		//private IArmManager ArmManager;
-		//private IHeadManager HeadManager;
+		private IArmManager ArmManager;
+		private IHeadManager HeadManager;
 		private IAnimationManager AnimationManager;
 		private ITimeManager TimeManager;
 		private IEmotionManager EmotionManager;
@@ -217,24 +217,28 @@ namespace MistyCharacter
 				TimeManager = _managerConfiguration?.TimeManager ?? new EnglishTimeManager(Robot, OriginalParameters, CharacterParameters);
 				await TimeManager.Initialize();
 
-				//ArmManager = _managerConfiguration?.ArmManager ?? new ArmManager(Robot, OriginalParameters, CharacterParameters);
-				//await ArmManager.Initialize();
+				ArmManager = _managerConfiguration?.ArmManager ?? new ArmManager(Robot, OriginalParameters, CharacterParameters);
+				await ArmManager.Initialize();
 
-				//HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters);
-				//await HeadManager.Initialize();
+				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters);
+				await HeadManager.Initialize();
 
 				SpeechIntentManager = _managerConfiguration?.SpeechIntentManager ?? new SpeechIntentManager(Robot, CharacterParameters.ConversationGroup.IntentUtterances, CharacterParameters.ConversationGroup.GenericDataStores);
 				
 				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Robot, OriginalParameters, CharacterParameters, MistyState.GetCharacterState(), /*StateAtAnimationStart, PreviousState,*/ _genericDataStores, SpeechIntentManager);
 				await SpeechManager.Initialize();
 
-			//	LocomotionManager = _managerConfiguration?.LocomotionManager ?? new LocomotionManager(Misty, OriginalParameters, CharacterParameters);
-				//await LocomotionManager.Initialize();
-
-				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState/*, LocomotionManager, ArmManager, HeadManager*/);
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager,	HeadManager);
 				await AnimationManager.Initialize();
 
 				IgnoreEvents();
+
+				//subscribe to head events for deprecated head mgr
+				ObjectEvent += HeadManager.HandleObjectDetectionEvent;
+				HeadPitchActuatorEvent += HeadManager.HandleActuatorEvent;
+				HeadYawActuatorEvent += HeadManager.HandleActuatorEvent;
+				//HeadRollActuatorEvent += HeadManager.HandleActuatorEvent;
+
 
 
 				//LogEventDetails(Robot.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
@@ -242,15 +246,8 @@ namespace MistyCharacter
 				//LogEventDetails(Robot.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
 				//LogEventDetails(Robot.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
 
-				//Other events and their kick off calls are registered the first time they are used
 
-				//ArmManager.RightArmActuatorEvent += ArmManager_RightArmActuatorEvent;
-				//ArmManager.LeftArmActuatorEvent += ArmManager_LeftArmActuatorEvent;
-				//HeadManager.HeadPitchActuatorEvent += HeadManager_HeadPitchActuatorEvent;
-				//HeadManager.HeadYawActuatorEvent += HeadManager_HeadYawActuatorEvent;
-				//HeadManager.HeadRollActuatorEvent += HeadManager_HeadRollActuatorEvent;
-				//HeadManager.ObjectEvent += ObjectCallback;
-
+				SpeechManager.SpeechIntent += MistyState.HandleSpeechIntentReceived;
 				SpeechManager.SpeechIntent += SpeechManager_SpeechIntent;
 				SpeechManager.PreSpeechCompleted += SpeechManager_PreSpeechCompleted;
 				SpeechManager.StartedSpeaking += SpeechManager_StartedSpeaking;
@@ -280,6 +277,7 @@ namespace MistyCharacter
 				MistyState.LeftArmActuatorEvent += HandleLeftArmEvent;
 				MistyState.RightArmActuatorEvent += HandleRightArmEvent;
 				MistyState.TimeOfFlightEvent += HandleTimeOfFlightEvent;
+				
 
 				InteractionEnded += RunNextAnimation;
 
@@ -371,7 +369,7 @@ namespace MistyCharacter
 
 		public void RestartTriggerHandling()
 		{
-			_processingTriggersSemaphore.Wait();
+			//_processingTriggersSemaphore.Wait();
 			try
 			{
 				WaitingForOverrideTrigger = false;
@@ -383,12 +381,12 @@ namespace MistyCharacter
 			}
 			finally
 			{
-				_processingTriggersSemaphore.Release();
+			//	_processingTriggersSemaphore.Release();
 			}
 		}
 		public void PauseTriggerHandling(bool ignoreTriggeringEvents = true)
 		{
-			_processingTriggersSemaphore.Wait();
+			//_processingTriggersSemaphore.Wait();
 			try
 			{
 				WaitingForOverrideTrigger = true;
@@ -400,7 +398,7 @@ namespace MistyCharacter
 			}
 			finally
 			{
-				_processingTriggersSemaphore.Release();
+				//_processingTriggersSemaphore.Release();
 			}
 		}
 
@@ -925,22 +923,28 @@ namespace MistyCharacter
 
 		public async void UpdateRunningSkillsCallback(object timerData)
 		{
-			IList<string> newSkills = new List<string>();
-			IGetRunningSkillsResponse response = await Robot.GetRunningSkillsAsync();
-			if (response.Data != null && response.Data.Count() > 0)
+			if (Robot.SkillStatus == NativeSkillStatus.Ready)
 			{
-				foreach (RunningSkillDetails details in response.Data.Distinct())
+				IList<string> newSkills = new List<string>();
+				IGetRunningSkillsResponse response = await Robot.GetRunningSkillsAsync();
+				if (response.Data != null && response.Data.Count() > 0)
 				{
-					newSkills.Add(details.UniqueId.ToString());
+					foreach (RunningSkillDetails details in response.Data.Distinct())
+					{
+						newSkills.Add(details.UniqueId.ToString());
+					}
+				}
+
+				lock (_runningSkillLock)
+				{
+					_runningSkills = newSkills;
 				}
 			}
 
-			lock (_runningSkillLock)
+			if(Robot.SkillStatus == NativeSkillStatus.Ready)
 			{
-				_runningSkills = newSkills;
+				_pollRunningSkillsTimer = new Timer(UpdateRunningSkillsCallback, null, 15000, Timeout.Infinite);
 			}
-
-			_pollRunningSkillsTimer = new Timer(UpdateRunningSkillsCallback, null, 15000, Timeout.Infinite);
 		}
 		
 		public void RestartCurrentInteraction(bool interruptCurrentAction = true)
@@ -1493,29 +1497,29 @@ namespace MistyCharacter
 					}
 				}
 
-				//if (!string.IsNullOrWhiteSpace(preSpeechAnimation.ArmLocation))
-				//{
-				//	_ = Task.Run(async () =>
-				//	{
-				//		if (preSpeechAnimation.ArmActionDelay > 0)
-				//		{
-				//			await Task.Delay((int)(preSpeechAnimation.ArmActionDelay * 1000));
-				//		}
-				//		ArmManager.HandleArmAction(preSpeechAnimation, _currentConversationData);
-				//	});
-				//}
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.ArmLocation))
+				{
+					_ = Task.Run(async () =>
+					{
+						if (preSpeechAnimation.ArmActionDelay > 0)
+						{
+							await Task.Delay((int)(preSpeechAnimation.ArmActionDelay * 1000));
+						}
+						ArmManager.HandleArmAction(preSpeechAnimation, _currentConversationData);
+					});
+				}
 
-				//if (!string.IsNullOrWhiteSpace(preSpeechAnimation.HeadLocation))
-				//{
-				//	_ = Task.Run(async () =>
-				//	{
-				//		if (preSpeechAnimation.HeadActionDelay > 0)
-				//		{
-				//			await Task.Delay((int)(preSpeechAnimation.HeadActionDelay * 1000));
-				//		}
-				//		HeadManager.HandleHeadAction(preSpeechAnimation, _currentConversationData);
-				//	});
-				//}
+				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.HeadLocation))
+				{
+					_ = Task.Run(async () =>
+					{
+						if (preSpeechAnimation.HeadActionDelay > 0)
+						{
+							await Task.Delay((int)(preSpeechAnimation.HeadActionDelay * 1000));
+						}
+						HeadManager.HandleHeadAction(preSpeechAnimation, _currentConversationData);
+					});
+				}
 
 				if (!string.IsNullOrWhiteSpace(preSpeechAnimation.AnimationScript))
 				{
@@ -1808,31 +1812,31 @@ namespace MistyCharacter
 					}
 				}
 
-				////Move arms
-				//if (!string.IsNullOrWhiteSpace(animationRequest.ArmLocation))
-				//{
-				//	_ = Task.Run(async () =>
-				//	{
-				//		if (animationRequest.ArmActionDelay > 0)
-				//		{
-				//			await Task.Delay((int)(animationRequest.ArmActionDelay * 1000));
-				//		}
-				//		ArmManager.HandleArmAction(animationRequest, _currentConversationData);
-				//	});
-				//}
+				//Move arms
+				if (!string.IsNullOrWhiteSpace(animationRequest.ArmLocation))
+				{
+					_ = Task.Run(async () =>
+					{
+						if (animationRequest.ArmActionDelay > 0)
+						{
+							await Task.Delay((int)(animationRequest.ArmActionDelay * 1000));
+						}
+						ArmManager.HandleArmAction(animationRequest, _currentConversationData);
+					});
+				}
 
-				////Move head
-				//if (!string.IsNullOrWhiteSpace(animationRequest.HeadLocation))
-				//{
-				//	_ = Task.Run(async () =>
-				//	{
-				//		if (animationRequest.HeadActionDelay > 0)
-				//		{
-				//			await Task.Delay((int)(animationRequest.HeadActionDelay * 1000));
-				//		}
-				//		HeadManager.HandleHeadAction(animationRequest, _currentConversationData);
-				//	});
-				//}
+				//Move head
+				if (!string.IsNullOrWhiteSpace(animationRequest.HeadLocation))
+				{
+					_ = Task.Run(async () =>
+					{
+						if (animationRequest.HeadActionDelay > 0)
+						{
+							await Task.Delay((int)(animationRequest.HeadActionDelay * 1000));
+						}
+						HeadManager.HandleHeadAction(animationRequest, _currentConversationData);
+					});
+				}
 
 				if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
 				{

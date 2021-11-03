@@ -109,7 +109,7 @@ namespace MistyCharacter
 		private ISpeechManager _speechManager;
 		private ITimeManager _timeManager;
 		//private ILocomotionManager _locomotionManager;
-		private IArmManager _armManager;
+		//private IArmManager _armManager;
 		private IHeadManager _headManager;
 		private AnimationRequest _currentAnimation;
 		private Interaction _currentInteraction;
@@ -152,51 +152,19 @@ namespace MistyCharacter
 		public event EventHandler<string> RemoveTrigger;
 		public event EventHandler<TriggerData> ManualTrigger;
 
-		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState/*, ILocomotionManager locomotionManager, IArmManager armManager, IHeadManager headManager*/)
+		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState, ITimeManager timeManager = null, IHeadManager headManager = null)
 		: base(misty, parameters, characterParameters)
 		{
 			_speechManager = speechManager;
-		//	_locomotionManager = locomotionManager;
-			//_headManager = headManager;
-			//_armManager = armManager;
+			_headManager = headManager ?? new HeadManager(Robot, Parameters, CharacterParameters);
+			_timeManager = timeManager ?? new EnglishTimeManager(Robot, Parameters, CharacterParameters);
 			_webMessenger = new WebMessenger();
 			CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Unknown;
 
 			_speechManager.StoppedSpeaking += _speechManager_StoppedSpeaking;
 			_speechManager.UserDataAnimationScript += _speechManager_UserDataAnimationScript;
 			_mistyState = mistyState;
-//			_armManager.LeftArmActuatorEvent += _armManager_LeftArmActuatorEvent;
-//		_armManager.RightArmActuatorEvent += _armManager_RightArmActuatorEvent;
-//	_headManager.HeadPitchActuatorEvent += _headManager_HeadPitchActuatorEvent;
-//	_headManager.HeadYawActuatorEvent += _headManager_HeadYawActuatorEvent;
-//		_headManager.HeadRollActuatorEvent += _headManager_HeadRollActuatorEvent;
 		}
-
-		//private void _headManager_HeadRollActuatorEvent(object sender, IActuatorEvent e)
-		//{
-		//	_headRollDegrees = e.ActuatorValue;
-		//}
-
-		//private void _headManager_HeadYawActuatorEvent(object sender, IActuatorEvent e)
-		//{
-		//	_headYawDegrees = e.ActuatorValue;
-		//}
-
-		//private void _headManager_HeadPitchActuatorEvent(object sender, IActuatorEvent e)
-		//{
-		//	_headPitchDegrees = e.ActuatorValue;
-		//}
-
-		//private void _armManager_RightArmActuatorEvent(object sender, IActuatorEvent e)
-		//{
-		//	_rightArmDegrees = e.ActuatorValue;
-		//}
-
-		//private void _armManager_LeftArmActuatorEvent(object sender, IActuatorEvent e)
-		//{
-		//	_leftArmDegrees = e.ActuatorValue;
-		//}
-
 
 		public void SpeechResponseHandler(object sender, TriggerData data)
 		{
@@ -272,7 +240,6 @@ namespace MistyCharacter
 			});
 			_userTextLayerVisible = true;
 
-			_timeManager = new EnglishTimeManager(Robot, Parameters, CharacterParameters);
 			
 			return Task.FromResult(true);
 		}

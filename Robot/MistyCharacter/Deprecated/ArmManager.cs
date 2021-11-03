@@ -52,31 +52,33 @@ namespace MistyCharacter
 		private bool _tick = false;
         private object _timerLock = new object();
 
+		
+
         public ArmManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 		: base(misty, parameters, characterParameters)
 		{
-			Robot.UnregisterEvent("LeftArm", null);
-			Robot.UnregisterEvent("RightArm", null);
+		//	Robot.UnregisterEvent("LeftArm", null);
+		//	Robot.UnregisterEvent("RightArm", null);
 
 			//Arm Actuators
-			IList<ActuatorPositionValidation> actuatorLeftArmValidations = new List<ActuatorPositionValidation>();
-			actuatorLeftArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.LeftArm));
-			LogEventDetails(Robot.RegisterActuatorEvent(LeftArmCallback, 50, true, actuatorLeftArmValidations, "LeftArm", null));
+			//IList<ActuatorPositionValidation> actuatorLeftArmValidations = new List<ActuatorPositionValidation>();
+			//actuatorLeftArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.LeftArm));
+			//LogEventDetails(Robot.RegisterActuatorEvent(LeftArmCallback, 50, true, actuatorLeftArmValidations, "LeftArmDeprecated", null));
 
-			IList<ActuatorPositionValidation> actuatorRightArmValidations = new List<ActuatorPositionValidation>();
-			actuatorRightArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.RightArm));
-			LogEventDetails(Robot.RegisterActuatorEvent(RightArmCallback, 50, true, actuatorRightArmValidations, "RightArm", null));
+			//IList<ActuatorPositionValidation> actuatorRightArmValidations = new List<ActuatorPositionValidation>();
+			//actuatorRightArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.RightArm));
+			//LogEventDetails(Robot.RegisterActuatorEvent(RightArmCallback, 50, true, actuatorRightArmValidations, "RightArmDeprecated", null));
 		}
 
-		private void LeftArmCallback(IActuatorEvent leftArmEvent)
-		{
-			LeftArmActuatorEvent?.Invoke(this, leftArmEvent);
-		}
+		//private void LeftArmCallback(IActuatorEvent leftArmEvent)
+		//{
+		//	LeftArmActuatorEvent?.Invoke(this, leftArmEvent);
+		//}
 
-		private void RightArmCallback(IActuatorEvent rightArmEvent)
-		{
-			RightArmActuatorEvent?.Invoke(this, rightArmEvent);
-		}
+		//private void RightArmCallback(IActuatorEvent rightArmEvent)
+		//{
+		//	RightArmActuatorEvent?.Invoke(this, rightArmEvent);
+		//}
 
 		private void MoveArmsCallback(object timerData)
 		{

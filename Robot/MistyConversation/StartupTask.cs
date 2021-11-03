@@ -40,7 +40,7 @@ namespace MistyConversation
     {
         public void Run(IBackgroundTaskInstance taskInstance)
         {
-            RobotMessenger.LoadAndPrepareSkill(taskInstance, new MistyConversationSkill(), SkillLogLevel.Info, "");
+            RobotMessenger.LoadAndPrepareSkill(taskInstance, new MistyConversationSkill(), SkillLogLevel.Warning, "");
         }
     }
 }

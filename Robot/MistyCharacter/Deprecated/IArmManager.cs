@@ -41,8 +41,8 @@ namespace MistyCharacter
 	{
 		Task<bool> Initialize();
 		void HandleArmAction(AnimationRequest animationRequest, ConversationData conversation);
-		event EventHandler<IActuatorEvent> RightArmActuatorEvent;
-		event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
+		//event EventHandler<IActuatorEvent> RightArmActuatorEvent;
+		//event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
 
 		void Dispose();
 	}

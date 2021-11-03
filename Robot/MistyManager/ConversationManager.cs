@@ -15,34 +15,38 @@ namespace MistyManager
 {
     public class ConversationManager : IDisposable
     {
-		private IDictionary<string, object> _parameters;
-
-		private IRobotMessenger _misty;
+		private IRobotMessenger _misty;		
+		private IBaseCharacter _character;
+		private IAssetWrapper _assetWrapper;
+		private IDictionary<string, object> _parameters = new Dictionary<string, object>();
 		private ParameterManager _parameterManager;
 		private ManagerConfiguration _managerConfiguration = new ManagerConfiguration();
-
-		private IBaseCharacter _character;
 		private CharacterParameters _characterParameters = new CharacterParameters();
-		private IAssetWrapper _assetWrapper;
-
+		
+		public ConversationManager(IRobotMessenger misty, IDictionary<string, object> parameters = null, ManagerConfiguration managerConfiguration = null)
+		{
+			_misty = misty;
+			_managerConfiguration = managerConfiguration;
+			_parameters = parameters;
+		}
+		
 		public async Task<bool> Initialize(IBaseCharacter character = null)
 		{
 			try
 			{
+				_misty.UnregisterAllEvents(null);
+
 				_misty.DisplayText("Initializing robot systems...", "Text", null);
 				await Task.Delay(1500);
-
-				_assetWrapper = new AssetWrapper(_misty);
-				await _assetWrapper.LoadAssets(true);
-				_assetWrapper.ShowSystemImage(SystemImage.SystemGearPrompt);
-				
-				//Unregister events in case didn't shut down cleanly last time
-				_misty.UnregisterAllEvents(null);
 
 				//Revert display to defaults before starting...
 				await _misty.SetDisplaySettingsAsync(true);
 				_misty.SetBlinkSettings(true, null, null, null, null, null, null);
 
+				_assetWrapper = new AssetWrapper(_misty);
+				await _assetWrapper.LoadAssets(true);
+				_assetWrapper.ShowSystemImage(SystemImage.SystemGearPrompt);
+				
 				await _misty.SetTextDisplaySettingsAsync("Text", new TextSettings
 				{
 					Wrap = true,
@@ -103,19 +107,10 @@ namespace MistyManager
 					//Warned them, but try anyway in case they are just slow to come up
 				}
 
-				_misty.DisplayText($"Checking robot directives...", "Text", null);
+				_misty.DisplayText($"Configuring robot settings...", "Text", null);
 				_assetWrapper.ShowSystemImage(SystemImage.SystemLogoPrompt);
 				await Task.Delay(2000);
-
-				//string startupConversation = _characterParameters.ConversationGroup.StartupConversation;
-				//ConversationData conversationData = _characterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
-				//if (conversationData == null)
-				//{
-				//	_misty.SkillLogger.Log($"Could not locate the starting conversation.");
-				//	_misty.DisplayText($"Failed to start conversation.", "SpokeText", null);
-				//	return false;
-				//}
-
+				
 				_parameterManager = new ParameterManager(_misty, _parameters);
 				if (_parameterManager == null)
 				{
@@ -125,8 +120,8 @@ namespace MistyManager
 					return false;
 				}
 
-				_misty.DisplayText($"Turning robot on...", "Text", null);
-				_assetWrapper.ShowSystemImage(SystemImage.SleepingZZZ);
+				_misty.DisplayText($"Retrieving robot directives...", "Text", null);
+				_assetWrapper.ShowSystemImage(SystemImage.EcstacyStarryEyed);
 				await Task.Delay(2000);
 
 				_characterParameters = await _parameterManager.Initialize();
@@ -144,6 +139,10 @@ namespace MistyManager
 					}
 
 
+					_misty.DisplayText($"Waking robot...", "Text", null);
+					_assetWrapper.ShowSystemImage(SystemImage.SleepingZZZ);
+					await Task.Delay(2000);
+
 					string startupConversation = _characterParameters.ConversationGroup.StartupConversation;
 					ConversationData conversationData = _characterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
 					if (conversationData == null)
@@ -156,23 +155,27 @@ namespace MistyManager
 					_character = character == null ? new BasicMisty(_misty, _parameters) : character;
 
 					bool initialized = await _character.Initialize(_characterParameters);
-					//bool initialized = await _character.Initialize();
 					if (initialized)
 					{
 						_misty.DisplayText("Hello!", "Text", null);
-						_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
 					}
 					else
 					{
 						_misty.DisplayText("Failed to wake up robot!", "Text", null);
+						
 					}
-					
+					_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
 					await Task.Delay(2000);
 					return initialized;
+				}
+				else
+				{
+
 				}
 			}
 			catch (Exception ex)
 			{
+				_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
 				_misty.Speak("Sorry, I am having trouble initializing the conversation and cannot continue.", true, null, null);
 				_misty.DisplayText($"Failed manager initialization", "Text", null);
 				_misty.SkillLogger.Log("Exception thrown in conversation manager.", ex);
@@ -187,19 +190,11 @@ namespace MistyManager
 			}
 			return false;
 		}
-
-		public ConversationManager(IRobotMessenger misty, IDictionary<string, object> parameters = null, ManagerConfiguration managerConfiguration = null)
-		{
-			_misty = misty;
-			_managerConfiguration = managerConfiguration;
-			_parameters = parameters;
-		}
-
+		
 		public async Task<bool> StartConversation()
 		{
 			return await _character.StartConversation();
 		}
-
 
 		#region IDisposable Support
 

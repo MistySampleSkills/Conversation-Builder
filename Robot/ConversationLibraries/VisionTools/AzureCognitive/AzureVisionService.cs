@@ -50,7 +50,7 @@ namespace VisionTools.AzureCognitive
 				ImageDescription imageDescription = await _computerVisionClient.DescribeImageInStreamAsync(stream);
 				if (!imageDescription.Captions.Any())
 				{
-					return "I have no idea.";
+					return string.Empty;
 				}
 				else
 				{
@@ -87,7 +87,7 @@ namespace VisionTools.AzureCognitive
 				ImageDescription imageDescription = await _computerVisionClient.DescribeImageAsync(url, 1);
 				if (!imageDescription.Captions.Any())
 				{
-					return "I have no idea.";
+					return string.Empty;
 				}
 				else
 				{

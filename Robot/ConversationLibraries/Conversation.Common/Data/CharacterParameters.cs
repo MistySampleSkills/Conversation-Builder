@@ -37,9 +37,6 @@ namespace Conversation.Common
 {
 	public sealed class CharacterParameters
 	{
-		//public AzureSpeechParameters AzureSpeechParameters { get; set; }
-		//public GoogleSpeechParameters GoogleSpeechParameters { get; set; }
-
 		public AzureSpeechParameters AzureSpeechRecognitionParameters { get; set; }
 
 		public GoogleSpeechParameters GoogleSpeechRecognitionParameters { get; set; }
@@ -47,16 +44,12 @@ namespace Conversation.Common
 		public AzureSpeechParameters AzureTTSParameters { get; set; }
 
 		public GoogleSpeechParameters GoogleTTSParameters { get; set; }
-
-
+		
 		public SpeechConfiguration SpeechConfiguration { get; set; }
-
-
-
-
+		
 		public bool RetranslateTTS { get; set; }
 
-		public SpeechConfiguration SpeechService { get; set; }
+		//public SpeechConfiguration SpeechService { get; set; }
 
 		public string TextToSpeechService { get; set; } = "Misty";
 		public string SpeechRecognitionService { get; set; } = "Azure";

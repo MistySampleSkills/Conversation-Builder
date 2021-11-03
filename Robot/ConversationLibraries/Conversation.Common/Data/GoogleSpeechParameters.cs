@@ -48,16 +48,10 @@ namespace Conversation.Common
 		public string SubscriptionKey { get; set; }
 		
 		/// <summary>
-		/// Text to speech Endpoint
+		/// Endpoint
 		/// </summary>
 		public string Endpoint { get; set; }
-
-		/// <summary>
-		/// Speech To Text Endpoint
-		/// </summary>
-		//public string STTEndpoint { get; set; }
-
-		/// <summary>
+		
 		/// Speaking voice, works better if proper voice for translated language
 		/// </summary>
 		public string SpeakingVoice { get; set; }

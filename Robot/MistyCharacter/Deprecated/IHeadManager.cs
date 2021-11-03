@@ -42,10 +42,13 @@ namespace MistyCharacter
 		Task<bool> Initialize();
 		void HandleHeadAction(HeadLocation headLocation);
 		void HandleHeadAction(AnimationRequest animationRequest, ConversationData conversation);
-		event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
-		event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
-		event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
-		event EventHandler<IObjectDetectionEvent> ObjectEvent;
+
+		void HandleActuatorEvent(object sender, IActuatorEvent actuatorEvent);
+		void HandleObjectDetectionEvent(object sender, IObjectDetectionEvent objEvent);
+		//event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
+		//event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
+		//event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
+		//event EventHandler<IObjectDetectionEvent> ObjectEvent;
 
 		void Dispose();
 	}

@@ -40,36 +40,6 @@ using Twilio.Rest.Api.V2010.Account;
 namespace TwilioManager
 {
 	/// <summary>
-	/// Common SMS interface
-	/// </summary>
-	public interface ISMSService
-	{
-		/// <summary>
-		/// Initialize the service connection
-		/// </summary>
-		/// <param name="accountId"></param>
-		/// <param name="authToken"></param>
-		/// <param name="senderPhoneNumber"></param>
-		/// <returns></returns>
-		bool Initialize(string accountId, string authToken, string senderPhoneNumber);
-
-		/// <summary>
-		/// Send a message to a phone
-		/// </summary>
-		/// <param name="toPhoneNumber"></param>
-		/// <param name="message"></param>
-		bool SendMessage(string toPhoneNumber, string message);
-
-		/// <summary>
-		/// Send a message with links to publicly available URIs
-		/// </summary>
-		/// <param name="toPhoneNumber"></param>
-		/// <param name="message"></param>
-		/// <param name="uris"></param>
-		bool SendMessageWithMediaLinks(string toPhoneNumber, string message, IEnumerable<Uri> uris);
-	}
-
-	/// <summary>
 	/// Provides twilio SMS service
 	/// </summary>
 	public sealed class TwilioService : ISMSService

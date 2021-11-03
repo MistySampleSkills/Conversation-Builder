@@ -121,6 +121,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ISMSService.cs" />
     <Compile Include="TwilioService.cs" />
     <EmbeddedResource Include="Properties\TwilioManager.rd.xml" />
   </ItemGroup>

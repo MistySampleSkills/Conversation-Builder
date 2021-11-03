@@ -32,35 +32,32 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Conversation.Common;
 using MistyCharacter;
 using MistyManager;
 using MistyRobotics.Common.Data;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
 using MistyRobotics.SDK.Messengers;
-using MistyRobotics.SDK.Responses;
-using TimeManager;
 
 namespace MistyConversation
 {
 	/// <summary>
-	/// Skill used to start up the conversation capabilities
+	/// Example skill used to start up the conversation capabilities
 	/// </summary>
 	internal class MistyConversationSkill : IMistySkill
 	{
 		public INativeRobotSkill Skill { get; set; }
 		private IRobotMessenger _misty;
 		private ConversationManager _conversationManager;
-		
+		private bool _cancelledByUser = false;
+
 		public MistyConversationSkill()
 		{
 			Skill = new NativeRobotSkill("Misty Conversation", "8be20a90-1150-44ac-a756-ebe4de30689e")
 			{
 				TimeoutInSeconds = -1,
-				AllowedCleanupTimeInMs = 10000,
+				AllowedCleanupTimeInMs = 5000,
 				StartupRules = new List<NativeStartupRule> { NativeStartupRule.Manual }
 			};
 		}
@@ -74,9 +71,10 @@ namespace MistyConversation
 		{
 			try
 			{
-				_conversationManager = new ConversationManager(_misty, parameters, new MistyCharacter.ManagerConfiguration());
-				
-				//Put in templates if desired...
+				_cancelledByUser = false;
+				_conversationManager = new ConversationManager(_misty, parameters, new ManagerConfiguration());
+
+				//Can also use BaseCharacter templates if desired...
 				//eg: if (!await _conversationManager.Initialize(new EventTemplateMisty(_misty, parameters, new ManagerConfiguration())))
 				if (!await _conversationManager.Initialize(new BasicMisty(_misty, parameters, new ManagerConfiguration())))				
 				{
@@ -90,7 +88,7 @@ namespace MistyConversation
 			}
 			catch (OperationCanceledException)
 			{
-				_misty.SkillLogger.Log($"Skill cancelled by user.");
+				_cancelledByUser = true;
 				return;
 			}
 			catch (Exception ex)
@@ -115,9 +113,7 @@ namespace MistyConversation
 
 		public void OnCancel(object sender, IDictionary<string, object> parameters)
 		{
-			_conversationManager?.Dispose();
-
-			_misty.Speak("Misty conversation skill cancelling.", true, null, null);
+			_misty.SkillLogger.Log($"Conversation skill cancelled.");			
 			_misty.SetBlinkSettings(true, null, null, null, null, null, null);
 			_misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
 		}

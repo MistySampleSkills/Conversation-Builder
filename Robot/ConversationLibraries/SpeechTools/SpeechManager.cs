@@ -94,16 +94,13 @@ namespace SpeechTools
 		private IList<string> _replacementValues = new List<string> { "face", "filter", "qrcode", "arcode", "text", "intent", "time", "robotname" };
 		private IList<GenericDataStore> _genericDataStores = new List<GenericDataStore>();
 		private string _robotName = "Misty";
-
 		private CharacterState _characterState;
-		private CharacterState _stateAtAnimationStart;
-		private CharacterState _previousState;
 
 		private IDictionary<string, object> _parameters { get; set; }
 		private IRobotMessenger _misty { get; set; }
 		private CharacterParameters _characterParameters { get; set; }
 
-		private int _volume;
+		private int _volume = 20;
 		public int Volume
 		{
 			get
@@ -191,6 +188,7 @@ namespace SpeechTools
 			_azureTTSParameters = _characterParameters.AzureTTSParameters;
 			_googleTTSParameters = _characterParameters.GoogleTTSParameters;
 
+			_timeManager = new EnglishTimeManager(_misty, _parameters, _characterParameters);
 			_assetWrapper = new AssetWrapper(_misty);
 			await _assetWrapper.RefreshAssetLists();
 
@@ -236,8 +234,7 @@ namespace SpeechTools
 				_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender;
 				_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage;
 			}
-
-
+			
 			LogEventDetails(_misty.RegisterVoiceRecordEvent(VoiceRecordCallback, 100, true, "VoiceRecord", null));
 			LogEventDetails(_misty.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 100, true, "KeyPhrase", null));
 			LogEventDetails(_misty.RegisterAudioPlayCompleteEvent(AudioCallback, 100, true, "CharacterAudioComplete", null));

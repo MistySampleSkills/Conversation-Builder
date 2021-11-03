@@ -40,7 +40,7 @@ namespace MistyConversation
 {
     /// <summary>
     /// Character with optional event listening example built off of the BaseCharacter
-    /// Shows the events available to a developer
+    /// Shows most of the events available to a developer
     /// Experimental, concepts may change or be deprecated
     /// </summary>
     public class EventTemplateMisty : BaseCharacter

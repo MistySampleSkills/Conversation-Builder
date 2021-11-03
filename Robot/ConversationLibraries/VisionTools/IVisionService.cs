@@ -9,7 +9,6 @@ namespace VisionTools
 	{
 		Unknown,
 		AzureCognitive
-		//Moar!
 	}
 
 	/// <summary>

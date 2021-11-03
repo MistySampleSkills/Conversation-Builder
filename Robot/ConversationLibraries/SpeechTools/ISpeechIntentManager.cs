@@ -56,5 +56,15 @@ namespace SpeechTools
 		/// <param name="text"></param>
 		/// <returns></returns>
 		GenericData FindUserDataFromText(string userDataName, string text);
+
+		/// <summary>
+		/// Dynamic matching using intent system
+		/// </summary>
+		/// <param name="text"></param>
+		/// <param name="matchstrings"></param>
+		/// <param name="wordMatchRule"></param>
+		/// <param name="exactPhraseMatchOnly"></param>
+		/// <returns></returns>
+		SpeechMatchData GetMatch(string text, IDictionary<string, string> matchstrings, string wordMatchRule = "exact", bool exactPhraseMatchOnly = false);
 	}
 }

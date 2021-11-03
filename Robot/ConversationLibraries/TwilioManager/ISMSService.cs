@@ -32,44 +32,36 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Conversation.Common;
-using MistyRobotics.SDK.Events;
 
-namespace SpeechTools
+namespace TwilioManager
 {
-	public interface ISpeechManager
+	/// <summary>
+	/// Common SMS interface
+	/// </summary>
+	public interface ISMSService
 	{
-		event EventHandler<string> StartedSpeaking;
-		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
-		event EventHandler<DateTime> StartedListening;
-		event EventHandler<IVoiceRecordEvent> StoppedListening;
-		event EventHandler<TriggerData> SpeechIntent;
-		event EventHandler<bool> KeyPhraseRecognitionOn;
-		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
-		event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
-		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
-		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-		event EventHandler<string> UserDataAnimationScript;
+		/// <summary>
+		/// Initialize the service connection
+		/// </summary>
+		/// <param name="accountId"></param>
+		/// <param name="authToken"></param>
+		/// <param name="senderPhoneNumber"></param>
+		/// <returns></returns>
+		bool Initialize(string accountId, string authToken, string senderPhoneNumber);
 
-		Task<bool> Initialize();
-		int Volume { get; set; }
-		void Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
-		string GetLocaleName(string name);
-		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
-		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
-		void AbortListening(string audioName);		
-		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
-		
-		void SetAudioTrim(int trimMs);
-		void SetMaxSilence(int silenceTimeout);
-		void SetMaxListen(int listenTimeout);
+		/// <summary>
+		/// Send a message to a phone
+		/// </summary>
+		/// <param name="toPhoneNumber"></param>
+		/// <param name="message"></param>
+		bool SendMessage(string toPhoneNumber, string message);
 
-		//TODO and move into speech manager
-		//void UpdatePrespeech(string prespeech);
-		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
-		
-		void Dispose();
-	}
+		/// <summary>
+		/// Send a message with links to publicly available URIs
+		/// </summary>
+		/// <param name="toPhoneNumber"></param>
+		/// <param name="message"></param>
+		/// <param name="uris"></param>
+		bool SendMessageWithMediaLinks(string toPhoneNumber, string message, IEnumerable<Uri> uris);
+	}	
 }
- 
