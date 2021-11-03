@@ -42,14 +42,14 @@ using Conversation.Weather.OpenWeather;
 using FunnyBone;
 using MistyCharacter;
 
-namespace ExampleHandlerSkill
-{	
-    /// <summary>
-    /// Example trigger handler skill that can be called from conversation to interact with the code in the Conversation Libraries
-    /// Skill is used in the Presentation example to tell jokes and get the weather.
-    /// Trigger handler skills can be created to provide more capabilities to conversations.
-    /// The conversation skill will start this skill and it should not be started separately by the user.
-    /// </summary>
+namespace ExampleHelperSkill
+{
+	/// <summary>
+	/// Example trigger handler skill that can be called from conversation to interact with the code in the Conversation Libraries
+	/// Skill is used in the Presentation example to tell jokes and get the weather.
+	/// Trigger handler skills can be created to provide more capabilities to conversations.
+	/// The conversation skill will start this skill and it should not be started separately by the user.
+	/// </summary>
 	internal class ExampleTriggerHandler : IMistySkill
 	{
 		private IRobotMessenger _misty;
@@ -60,7 +60,7 @@ namespace ExampleHandlerSkill
 		private TriggerToSend _triggerToSend;
 		private IDictionary<string, object> _parameters;
 
-		public INativeRobotSkill Skill { get; private set; } = 
+		public INativeRobotSkill Skill { get; private set; } =
 			new NativeRobotSkill("Example Trigger Handler", "0e971056-d222-4b64-a289-7fd0c75683bf")
 			{
 				TimeoutInSeconds = -1
@@ -71,17 +71,17 @@ namespace ExampleHandlerSkill
 		{
 			_misty = robotInterface;
 		}
-		
-		public async void OnStart(object sender, IDictionary<string, object> parameters)
-        {
-            //Trigger skills are started by the conversation manager and are started with the same parameters of the conversation skill	
-            _parameters = parameters;
 
-            //In case this wasn't shut down properly last time, make sure it's events are all newly registered
+		public async void OnStart(object sender, IDictionary<string, object> parameters)
+		{
+			//Trigger skills are started by the conversation manager and are started with the same parameters of the conversation skill	
+			_parameters = parameters;
+
+			//In case this wasn't shut down properly last time, make sure it's events are all newly registered
 			_misty.UnregisterAllEvents(null);
-			
-            //Process the startup parameters
-            //TODO Handle more of this in the libraries
+
+			//Process the startup parameters
+			//TODO Handle more of this in the libraries
 			try
 			{
 				if (!parameters.TryGetValue("Parameters", out object innerParameterObject))
@@ -94,7 +94,7 @@ namespace ExampleHandlerSkill
 				IDictionary<string, object> innerParameters = Newtonsoft.Json.JsonConvert.DeserializeObject<IDictionary<string, object>>(Convert.ToString(innerParameterObject));
 				_parameterManager = new ParameterManager(_misty, innerParameters, false);
 				CharacterParameters characterParameters = await _parameterManager.Initialize();
-				if(characterParameters == null || !string.IsNullOrWhiteSpace(characterParameters.InitializationStatusMessage))
+				if (characterParameters == null || !string.IsNullOrWhiteSpace(characterParameters.InitializationStatusMessage))
 				{
 					_misty.Speak($"Failed processing parameters in Example handler skill.  Skill may not work properly.", true, "failed", null);
 				}
@@ -106,36 +106,36 @@ namespace ExampleHandlerSkill
 				return;
 			}
 
-            //Get parameters for open weather from user defined character payload
-            //TODO Update to use from skill payload, currently using character configuration payload
-            // eg: {"OpenWeatherApiAuth": "xyz_your_auth_code", "OpenWeatherCountryCode" : "US", "OpenWeatherCity" :"Boulder" }
-            var openWeatherApiAuth = _parameterManager.GetUserDefinedStringData("OpenWeatherApiAuth");
+			//Get parameters for open weather from user defined character payload
+			//TODO Update to use from skill payload, currently using character configuration payload
+			// eg: {"OpenWeatherApiAuth": "xyz_your_auth_code", "OpenWeatherCountryCode" : "US", "OpenWeatherCity" :"Boulder" }
+			var openWeatherApiAuth = _parameterManager.GetUserDefinedStringData("OpenWeatherApiAuth");
 			var ipStackApiAuth = _parameterManager.GetUserDefinedStringData("IpStackApiAuth");
 			var openWeatherCountryCode = _parameterManager.GetUserDefinedStringData("OpenWeatherCountryCode");
 			var openWeatherCity = _parameterManager.GetUserDefinedStringData("OpenWeatherCity");
 			_weatherManager = new WeatherManager(_misty, openWeatherApiAuth, ipStackApiAuth, openWeatherCountryCode, openWeatherCity);
-            
-            _funnyBoneAPI = new FunnyBoneAPI();
-            
-            /////////////////////////////////////////////////////////////////
-            ///
-            /// Adding Skill Messages with this skill id and the event names Joke and Weather
-            ///   will cause them to be called if this skill is installed on the robot.
-            ///   the conversation can choose to wait on an external event and these calls will send those events back when complete
-            
-            //Calls an endpoint to get a joke
+
+			_funnyBoneAPI = new FunnyBoneAPI();
+
+			/////////////////////////////////////////////////////////////////
+			///
+			/// Adding Skill Messages with this skill id and the event names Joke and Weather
+			///   will cause them to be called if this skill is installed on the robot.
+			///   the conversation can choose to wait on an external event and these calls will send those events back when complete
+
+			//Calls an endpoint to get a joke
 			_misty.RegisterUserEvent("Joke", Joke, 0, true, null);
 
-            //Requires proper setup in conversation builder UI
-            _misty.RegisterUserEvent("Weather", WeatherCallback, 0, true, null);
-            
-            //Setup event so can send trigger after Misty completes whatever needs to be said
-            _misty.RegisterTextToSpeechCompleteEvent(TextToSpeechCompleteCallback, 100, true, "TriggerHandlerTTSComplete", null);
+			//Requires proper setup in conversation builder UI
+			_misty.RegisterUserEvent("Weather", WeatherCallback, 0, true, null);
+
+			//Setup event so can send trigger after Misty completes whatever needs to be said
+			_misty.RegisterTextToSpeechCompleteEvent(TextToSpeechCompleteCallback, 100, true, "TriggerHandlerTTSComplete", null);
 		}
 
 		private void TextToSpeechCompleteCallback(ITextToSpeechCompleteEvent textToSpeechCompleteEvent)
 		{
-			if(_triggerToSend != null && textToSpeechCompleteEvent.UttteranceId == _triggerToSend.UtteranceId)
+			if (_triggerToSend != null && textToSpeechCompleteEvent.UttteranceId == _triggerToSend.UtteranceId)
 			{
 				SendTrigger(_triggerToSend.Trigger, _triggerToSend.TriggerFilter, _triggerToSend.Text);
 				_triggerToSend = null;
@@ -162,12 +162,12 @@ namespace ExampleHandlerSkill
 			_triggerToSend = new TriggerToSend("ExternalEvent", "weather", "WeatherSpoken");
 			_misty.Speak(weather, true, "weather", null);
 		}
-		
+
 		public void OnPause(object sender, IDictionary<string, object> parameters)
 		{
 			OnCancel(sender, parameters);
 		}
-		
+
 		public void OnResume(object sender, IDictionary<string, object> parameters)
 		{
 			OnStart(sender, parameters);
@@ -178,22 +178,22 @@ namespace ExampleHandlerSkill
 			_misty.UnregisterAllEvents(null);
 			Dispose();
 		}
-		
+
 		public void OnTimeout(object sender, IDictionary<string, object> parameters)
 		{
 			OnCancel(sender, parameters);
 		}
-		
+
 		private void SendTrigger(string trigger, string triggerFilter, string text)
 		{
-            IDictionary<string, object> data = new Dictionary<string, object>
-            {
-                { "Trigger", trigger },
-                { "TriggerFilter", triggerFilter },
-                { "Text", text }
-            };
+			IDictionary<string, object> data = new Dictionary<string, object>
+			{
+				{ "Trigger", trigger },
+				{ "TriggerFilter", triggerFilter },
+				{ "Text", text }
+			};
 
-            _misty.TriggerEvent("ExternalEvent", Skill.UniqueId.ToString(), data, new List<string> { "8be20a90-1150-44ac-a756-ebe4de30689e" }, null);
+			_misty.TriggerEvent("ExternalEvent", Skill.UniqueId.ToString(), data, new List<string> { "8be20a90-1150-44ac-a756-ebe4de30689e" }, null);
 		}
 
 		#region IDisposable Support
@@ -207,7 +207,7 @@ namespace ExampleHandlerSkill
 				if (disposing)
 				{
 					_weatherManager?.Dispose();
-                }
+				}
 
 				_isDisposed = true;
 			}

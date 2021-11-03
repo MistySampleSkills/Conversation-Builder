@@ -46,124 +46,6 @@ using TimeManager;
 
 namespace MistyCharacter
 {
-
-	public enum LocomotionStatus
-	{
-		Unknown,
-		Initialized,
-		Starting,
-		Stopped,
-		ScriptDriving,
-		WaypointDriving,
-		RecalculatingRoute,
-		PathBlocked,
-		Wandering
-	}
-
-	public class LocomotionState
-	{
-		public double FrontLeftTOF { get; set; }
-
-		public double FrontRightTOF { get; set; }
-
-		public double FrontCenterTOF { get; set; }
-
-		public double BackTOF { get; set; }
-
-		public bool BackLeftBumpContacted { get; set; }
-
-		public bool BackRightBumpContacted { get; set; }
-
-		public bool FrontLeftBumpContacted { get; set; }
-
-		public bool FrontRightBumpContacted { get; set; }
-
-		public double FrontRightEdgeTOF { get; set; }
-
-		public double FrontLeftEdgeTOF { get; set; }
-
-		public double BackRightEdgeTOF { get; set; }
-
-		public double BackLeftEdgeTOF { get; set; }
-
-		public double LeftVelocity { get; set; }
-		public double RightVelocity { get; set; }
-
-		public double LeftDistanceSinceLastStop { get; set; }
-		public double RightDistanceSinceLastStop { get; set; }
-
-		public double LeftDistanceSinceWayPoint { get; set; }
-		public double RightDistanceSinceWayPoint { get; set; }
-
-		public double LeftDistanceSinceStart { get; set; }
-		public double RightDistanceSinceStart { get; set; }
-
-		public string[] MovementHistory { get; set; }
-
-		public LocomotionStatus LocomotionStatus { get; set; }
-
-		public LocomotionAction LocomotionAction { get; set; }
-
-		public double RobotPitch { get; set; }
-		public double RobotYaw { get; set; }
-		public double RobotRoll { get; set; }
-
-		public double XAcceleration { get; set; }
-		public double YAcceleration { get; set; }
-		public double ZAcceleration { get; set; }
-
-		public double PitchVelocity { get; set; }
-		public double RollVelocity { get; set; }
-		public double YawVelocity { get; set; }
-
-		public double? LockedHeading { get; set; }
-	}
-
-	public enum LocomotionCommand
-	{
-		Drive,
-		Heading,
-		Turn,
-		Arc,
-		Waypoint,
-		Wander,
-		Return,//ToLastWaypoint
-		Stop,
-		Halt,
-		TurnHeading,
-	}
-
-	public class LocomotionAction
-	{
-		public AnimationRequest AnimationRequest { get; set; }
-		public ConversationData Conversation { get; set; }
-
-		public LocomotionCommand Action { get; set; }
-		public double? DistanceMeters { get; set; }
-		public int? TimeMs { get; set; }
-		public double? Velocity { get; set; }
-		public double? Degrees { get; set; }
-		public double? Heading { get; set; }
-		public double? Radius { get; set; }
-		public bool Reverse { get; set; }
-
-		public bool AllowRerouting { get; set; } = true;
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	public class CommandResult
 	{
 		public bool Success { get; set; }
@@ -262,6 +144,7 @@ namespace MistyCharacter
 
 		private bool _responsiveState = true; //by default, let other bots call this bot if it knows the IP
 
+		private IMistyState _mistyState;
 
 		//TODO PLUG THESE IN!
 		public event EventHandler<KeyValuePair<string, TriggerData>> AddTrigger;
@@ -269,7 +152,7 @@ namespace MistyCharacter
 		public event EventHandler<string> RemoveTrigger;
 		public event EventHandler<TriggerData> ManualTrigger;
 
-		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager/*, ILocomotionManager locomotionManager, IArmManager armManager, IHeadManager headManager*/)
+		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState/*, ILocomotionManager locomotionManager, IArmManager armManager, IHeadManager headManager*/)
 		: base(misty, parameters, characterParameters)
 		{
 			_speechManager = speechManager;
@@ -281,12 +164,12 @@ namespace MistyCharacter
 
 			_speechManager.StoppedSpeaking += _speechManager_StoppedSpeaking;
 			_speechManager.UserDataAnimationScript += _speechManager_UserDataAnimationScript;
-
+			_mistyState = mistyState;
 //			_armManager.LeftArmActuatorEvent += _armManager_LeftArmActuatorEvent;
-	//		_armManager.RightArmActuatorEvent += _armManager_RightArmActuatorEvent;
-		//	_headManager.HeadPitchActuatorEvent += _headManager_HeadPitchActuatorEvent;
-		//	_headManager.HeadYawActuatorEvent += _headManager_HeadYawActuatorEvent;
-	//		_headManager.HeadRollActuatorEvent += _headManager_HeadRollActuatorEvent;
+//		_armManager.RightArmActuatorEvent += _armManager_RightArmActuatorEvent;
+//	_headManager.HeadPitchActuatorEvent += _headManager_HeadPitchActuatorEvent;
+//	_headManager.HeadYawActuatorEvent += _headManager_HeadYawActuatorEvent;
+//		_headManager.HeadRollActuatorEvent += _headManager_HeadRollActuatorEvent;
 		}
 
 		//private void _headManager_HeadRollActuatorEvent(object sender, IActuatorEvent e)
@@ -323,21 +206,22 @@ namespace MistyCharacter
 		public async void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent)
 		{
 
-			if (_animationsCanceled || (_currentInteraction.ProcessingAnimation != null && !await RunInternalScript(_currentInteraction.ProcessingAnimation, false, true)))
+			//TODO
+			/*if (_animationsCanceled || (_currentInteraction.ProcessingAnimation != null && !await RunInternalScript(_currentInteraction.ProcessingAnimation, false, true)))
 			{
 				_interactionCancellationEvent?.TrySetResult(true);
 				return;
-			}
+			}*/
 		}
 
 		public async void HandleStartedListening(object sender, DateTime time)
 		{
-			if (_animationsCanceled || (_currentInteraction.ListeningAnimation != null && !await RunInternalScript(_currentInteraction.ListeningAnimation, false, true)))
+			//TODO
+			/*if (_animationsCanceled || (_currentInteraction.ListeningAnimation != null && !await RunInternalScript(_currentInteraction.ListeningAnimation, false, true)))
 			{
 				_interactionCancellationEvent?.TrySetResult(true);
 				return;
-			}
-
+			}*/
 		}
 
 		private async void _speechManager_UserDataAnimationScript(object sender, string script)
@@ -918,12 +802,13 @@ namespace MistyCharacter
 							case "ARMS-OFFSET":
 								//ARMS:leftDegrees,rightDegrees,timeMs;
 								string[] data1 = commandData[1].Split(",");
-								_ = Robot.MoveArmsAsync(Convert.ToDouble(data1[0]) + _leftArmDegrees, Convert.ToDouble(data1[1]) + _rightArmDegrees, null, null, Convert.ToDouble(data1[2]) / 1000, AngularUnit.Degrees);
+								
+								_ = Robot.MoveArmsAsync(Convert.ToDouble(data1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(data1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, null, Convert.ToDouble(data1[2]) / 1000, AngularUnit.Degrees);
 								break;
 							case "ARMS-OFFSET-V":
 								//ARMS:leftDegrees,rightDegrees,timeMs;
 								string[] datav1 = commandData[1].Split(",");
-								_ = Robot.MoveArmsAsync(Convert.ToDouble(datav1[0]) + _leftArmDegrees, Convert.ToDouble(datav1[1]) + _rightArmDegrees, null, Convert.ToDouble(datav1[2]), null, AngularUnit.Degrees);
+								_ = Robot.MoveArmsAsync(Convert.ToDouble(datav1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(datav1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, Convert.ToDouble(datav1[2]), null, AngularUnit.Degrees);
 								break;
 							case "ARM-V":
 								//ARMS-V:leftDegrees,rightDegrees,velocity;
@@ -939,16 +824,16 @@ namespace MistyCharacter
 								break;
 							case "ARM-OFFSET":
 								//ARM:left/right,degrees,timeMs;
-								string[] armOData = commandData[1].Split(",");
+								string[] armOData = commandData[1].Split(",");								
 								RobotArm selectedArm2 = armOData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-								double armDegrees = armOData[0].ToLower().StartsWith("r") ? _rightArmDegrees : _leftArmDegrees;
+								double armDegrees = armOData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
 								_ = Robot.MoveArmAsync(Convert.ToDouble(armOData[1]) + armDegrees, selectedArm2, null, Convert.ToDouble(armOData[2]) / 1000, AngularUnit.Degrees);
 								break;
 							case "ARM-OFFSET-V":
 								//ARM:left/right,degrees,timeMs;
 								string[] armOvData = commandData[1].Split(",");
 								RobotArm selectedArm3 = armOvData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-								double armDegrees2 = armOvData[0].ToLower().StartsWith("r") ? _rightArmDegrees : _leftArmDegrees;
+								double armDegrees2 = armOvData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
 								_ = Robot.MoveArmAsync(Convert.ToDouble(armOvData[1]) + armDegrees2, selectedArm3, Convert.ToDouble(armOvData[2]), null, AngularUnit.Degrees);
 								break;
 							case "HEAD":
@@ -959,17 +844,17 @@ namespace MistyCharacter
 							case "HEAD-OFFSET":
 								//HEAD:pitch,roll,yaw,velocity;
 								string[] headOData = commandData[1].Split(",");
-								_ = Robot.MoveHeadAsync(GetNullableObject(headOData, 0) == null ? null : GetNullableObject(headOData, 0) + _headPitchDegrees,
-										GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _headRollDegrees,
-										GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _headYawDegrees,
+								_ = Robot.MoveHeadAsync(GetNullableObject(headOData, 0) == null ? null : GetNullableObject(headOData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
+										GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
+										GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
 										null, Convert.ToDouble(headOData[3]) / 1000, AngularUnit.Degrees);
 								break;
 							case "HEAD-OFFSET-V":
 								//HEAD:pitch,roll,yaw,velocity;
 								string[] headOvData = commandData[1].Split(",");
-								_ = Robot.MoveHeadAsync(GetNullableObject(headOvData, 0) == null ? null : GetNullableObject(headOvData, 0)+ _headPitchDegrees,
-										GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _headRollDegrees,
-										GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _headYawDegrees,
+								_ = Robot.MoveHeadAsync(GetNullableObject(headOvData, 0) == null ? null : GetNullableObject(headOvData, 0)+ _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
+										GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
+										GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
 										Convert.ToDouble(headOvData[3]), null, AngularUnit.Degrees);
 								break;
 							case "HEAD-V":
@@ -1117,8 +1002,8 @@ namespace MistyCharacter
 									});
 									_userImageLayerVisible = true;
 								}*/
-								//_ = Robot.DisplayImageAsync(commandData[1], "UserImageLayer", true);
-								_ = Robot.DisplayImageAsync(commandData[1], null, true);
+			//_ = Robot.DisplayImageAsync(commandData[1], "UserImageLayer", true);
+			_ = Robot.DisplayImageAsync(commandData[1], null, true);
 								break;
 							case "TEXT":
 								//TEXT:text to display;

@@ -175,15 +175,15 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ConversationLibraries\SkillTools\SkillTools.csproj">
-      <Project>{C081F243-3735-4C72-B071-29B751E460B1}</Project>
-      <Name>SkillTools</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="MistyCharacter">
       <HintPath>..\..\MistyInteraction\bin\ARM\Debug\MistyCharacter.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SkillTools\SkillTools.csproj">
+      <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
+      <Name>SkillTools</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

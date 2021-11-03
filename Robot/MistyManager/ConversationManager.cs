@@ -107,14 +107,14 @@ namespace MistyManager
 				_assetWrapper.ShowSystemImage(SystemImage.SystemLogoPrompt);
 				await Task.Delay(2000);
 
-				string startupConversation = _characterParameters.ConversationGroup.StartupConversation;
-				ConversationData conversationData = _characterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
-				if (conversationData == null)
-				{
-					_misty.SkillLogger.Log($"Could not locate the starting conversation.");
-					_misty.DisplayText($"Failed to start conversation.", "SpokeText", null);
-					return false;
-				}
+				//string startupConversation = _characterParameters.ConversationGroup.StartupConversation;
+				//ConversationData conversationData = _characterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
+				//if (conversationData == null)
+				//{
+				//	_misty.SkillLogger.Log($"Could not locate the starting conversation.");
+				//	_misty.DisplayText($"Failed to start conversation.", "SpokeText", null);
+				//	return false;
+				//}
 
 				_parameterManager = new ParameterManager(_misty, _parameters);
 				if (_parameterManager == null)
@@ -141,6 +141,16 @@ namespace MistyManager
 					{
 						_misty.DisplayText($"Loading conversation.", "Text", null);
 						await _misty.TransitionLEDAsync(0, 255, 0, 30, 144, 255, LEDTransition.Breathe, 1000);
+					}
+
+
+					string startupConversation = _characterParameters.ConversationGroup.StartupConversation;
+					ConversationData conversationData = _characterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
+					if (conversationData == null)
+					{
+						_misty.SkillLogger.Log($"Could not locate the starting conversation.");
+						_misty.DisplayText($"Failed to start conversation.", "SpokeText", null);
+						return false;
 					}
 
 					_character = character == null ? new BasicMisty(_misty, _parameters) : character;

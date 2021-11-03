@@ -31,9 +31,11 @@
 **********************************************************************/
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Conversation.Common;
+using SkillTools.AssetTools;
 
 namespace MistyCharacter
 {
@@ -82,8 +84,10 @@ namespace MistyCharacter
 		private Random _random = new Random();
 		private string _currentEmotion = Emotions.Joy;
 		public PID CurrentPID { get; private set; }
-		private IDictionary<string, PID> EmotionalMapping = new Dictionary<string, PID>();
 
+		protected ConcurrentDictionary<string, AnimationRequest> EmotionAnimations = new ConcurrentDictionary<string, AnimationRequest>();
+
+		private IDictionary<string, PID> EmotionalMapping = new Dictionary<string, PID>();		
 		public string GetCurrentEmotion()
 		{
 			return _currentEmotion;
@@ -126,6 +130,257 @@ namespace MistyCharacter
 			EmotionalMapping.TryAdd(Emotions.Fear, new PID(PleasureLevel.Hate, IntensityLevel.Intense, DominanceLevel.Submissive));
 			EmotionalMapping.TryAdd(Emotions.Disgust, new PID(PleasureLevel.Hate, IntensityLevel.Intense, DominanceLevel.Dominant));
 			EmotionalMapping.TryAdd(Emotions.Horror, new PID(PleasureLevel.Hate, IntensityLevel.ExtremelyIntense, DominanceLevel.Submissive));
+
+			PopulateEmotionDefaults();
+		}
+
+
+		/// <summary>
+		/// Populate all the emotion defaults for this character
+		/// Is this still what we want?
+		/// </summary>
+		private void PopulateEmotionDefaults()
+		{
+			EmotionAnimations.TryAdd(Emotions.Admiration,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Admiration,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.PhraseHello.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Amazement.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Adoration,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Adoration,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.Acceptance.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Amazement.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.AestheticAppreciation,
+				new AnimationRequest
+				{
+					Emotion = Emotions.AestheticAppreciation,
+					AudioFile = "s_" + SystemSound.Awe2.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.ContentLeft.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Amusement,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Amusement,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.Joy2.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.JoyGoofy3.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Anxiety,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Anxiety,
+					AudioFile = "s_" + SystemSound.Sadness.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.ApprehensionConcerned.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Awe,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Awe,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.Awe.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Amazement.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Awkwardness,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Awkwardness,
+					AudioFile = "s_" + SystemSound.DisorientedConfused2.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Sleepy.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Boredom,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Boredom,
+					AudioFile = "s_" + SystemSound.Boredom.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Sleepy3.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Calmness,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Calmness,
+					ImageFile = "e_" + SystemImage.DefaultContent.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Confusion,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Confusion,
+					SpeakingStyle = "empathetic",
+					AudioFile = "s_" + SystemSound.DisorientedConfused2.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Disoriented.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Craving,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Craving,
+					AudioFile = "s_" + SystemSound.PhraseHello.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.ContentRight.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Desire,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Desire,
+					AudioFile = "s_" + SystemSound.Love.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Love.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Disgust,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Disgust,
+					SpeakingStyle = "empathetic",
+					AudioFile = "s_" + SystemSound.Disgust2.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Rage2.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.EmpatheticPain,
+				new AnimationRequest
+				{
+					Emotion = Emotions.EmpatheticPain,
+					SpeakingStyle = "empathetic",
+					AudioFile = "s_" + SystemSound.Disapproval.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Sadness.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Entrancement,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Entrancement,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.PhraseHello.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.EcstacyStarryEyed.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Envy,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Envy,
+					AudioFile = "s_" + SystemSound.Loathing.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Disgust.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Avoidance,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Avoidance,
+					AudioFile = "",
+					ImageFile = ""
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Excitement,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Calmness,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.Joy4.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Joy2.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Fear,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Fear,
+					SpeakingStyle = "empathetic",
+					AudioFile = "s_" + SystemSound.Anger.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Terror.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Horror,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Horror,
+					SpeakingStyle = "empathetic",
+					AudioFile = "s_" + SystemSound.Anger4.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Terror2.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Interest,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Interest,
+					AudioFile = "s_" + SystemSound.Acceptance.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.ContentRight.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Joy,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Joy,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.Joy3.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.JoyGoofy3.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Nostalgia,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Nostalgia,
+					AudioFile = "s_" + SystemSound.Amazement2.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Admiration.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Romance,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Romance,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.Love.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Love.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Sadness,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Sadness,
+					SpeakingStyle = "empathetic",
+					AudioFile = "s_" + SystemSound.Grief4.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Sadness.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Satisfaction,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Satisfaction,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.Ecstacy2.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Admiration.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Sympathy,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Sympathy,
+					SpeakingStyle = "empathetic",
+					AudioFile = "s_" + SystemSound.Grief3.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.Grief.ToString() + ".jpg"
+				});
+
+			EmotionAnimations.TryAdd(Emotions.Triumph,
+				new AnimationRequest
+				{
+					Emotion = Emotions.Triumph,
+					SpeakingStyle = "cheerful",
+					AudioFile = "s_" + SystemSound.PhraseEvilAhHa.ToString() + ".wav",
+					ImageFile = "e_" + SystemImage.EcstacyStarryEyed.ToString() + ".jpg"
+				});
+
 		}
 
 		public PID GetPIDForEmotion(string emotion)

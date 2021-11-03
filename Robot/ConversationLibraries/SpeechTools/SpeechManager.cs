@@ -43,7 +43,6 @@ using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
 using MistyRobotics.SDK.Responses;
 using SkillTools.AssetTools;
-using SpeechTools;
 using SpeechTools.AzureCognitive;
 using SpeechTools.GoogleSpeech;
 using TimeManager;
@@ -281,7 +280,7 @@ namespace SpeechTools
 			return _keyPhraseOn;
 		}
 
-		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, CharacterState stateAtAnimationStart, CharacterState previousState, IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)			
+		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, /*CharacterState stateAtAnimationStart, CharacterState previousState,*/ IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)			
 		{
 			_parameters = parameters;
 			_misty = misty;
@@ -290,8 +289,8 @@ namespace SpeechTools
 			_genericDataStores = genericDataStores;
 			_speechIntentManager = speechIntentManager;
 			_characterState = characterState;
-			_stateAtAnimationStart = stateAtAnimationStart;
-			_previousState = previousState;
+			//_stateAtAnimationStart = stateAtAnimationStart;
+			//_previousState = previousState;
 		}
 
 		public void AbortListening(string audioName)
@@ -997,28 +996,33 @@ namespace SpeechTools
 				case "face":
 					newData = _characterState.LastKnownFaceSeen ??
 						_characterState.FaceRecognitionEvent?.Label ??
-						_stateAtAnimationStart?.FaceRecognitionEvent?.Label ??
-						_previousState?.FaceRecognitionEvent?.Label ?? MissingInlineData;
+						//_stateAtAnimationStart?.FaceRecognitionEvent?.Label ??
+						//_previousState?.FaceRecognitionEvent?.Label ?? 
+						MissingInlineData;
 					break;
 				case "qrcode":
 					newData = _characterState.QrTagEvent?.DecodedInfo ??
-						_stateAtAnimationStart?.QrTagEvent?.DecodedInfo ??
-						_previousState?.QrTagEvent?.DecodedInfo ?? MissingInlineData;
+						//_stateAtAnimationStart?.QrTagEvent?.DecodedInfo ??
+						//_previousState?.QrTagEvent?.DecodedInfo ?? 
+						MissingInlineData;
 					break;
 				case "arcode":
 					newData = _characterState.ArTagEvent?.TagId.ToString() ??
-						_stateAtAnimationStart?.ArTagEvent?.TagId.ToString() ??
-						_previousState?.ArTagEvent?.TagId.ToString() ?? MissingInlineData;
+						//_stateAtAnimationStart?.ArTagEvent?.TagId.ToString() ??
+						//_previousState?.ArTagEvent?.TagId.ToString() ?? 
+						MissingInlineData;
 					break;
 				case "text":
 					newData = _characterState.SpeechResponseEvent?.Text ??
-						_stateAtAnimationStart?.SpeechResponseEvent?.Text ??
-						_previousState?.SpeechResponseEvent?.Text ?? MissingInlineData;
+						//_stateAtAnimationStart?.SpeechResponseEvent?.Text ??
+						//_previousState?.SpeechResponseEvent?.Text ?? 
+						MissingInlineData;
 					break;
 				case "intent":
 					newData = _characterState.SpeechResponseEvent?.TriggerFilter ??
-						_stateAtAnimationStart?.SpeechResponseEvent?.TriggerFilter ??
-						_previousState?.SpeechResponseEvent?.TriggerFilter ?? MissingInlineData;
+						//_stateAtAnimationStart?.SpeechResponseEvent?.TriggerFilter ??
+						//_previousState?.SpeechResponseEvent?.TriggerFilter ?? 
+						MissingInlineData;
 					break;
 				case "robotname":
 					newData = string.IsNullOrWhiteSpace(_robotName) ? "Misty" : _robotName;

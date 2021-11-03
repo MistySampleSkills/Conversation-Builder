@@ -1,4 +1,4 @@
-﻿/**********************************************************************
+/**********************************************************************
 	Copyright 2021 Misty Robotics
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -30,48 +30,24 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System.Collections.Generic;
-using Conversation.Common;
-using MistyCharacter;
-using MistyRobotics.SDK.Messengers;
-
-namespace MistyManager
-{
-	/// <summary>
-	/// Simple template character using defaults
-    /// Used if no, or invalid, character passed in
-    /// Overriding a character also allows for manager overriding
-    /// Characters can be used to supplement different actions without skills
-    /// Experimental, concepts may change or be deprecated
-	/// </summary>
-	public class BasicMisty : BaseCharacter
+namespace ExampleHelperSkill
+{	
+    /// <summary>
+    /// Trigger event to send back to the conversation after completing the requested action
+    /// </summary>
+	internal class TriggerToSend
 	{
-		public BasicMisty(IRobotMessenger misty,IDictionary<string, object> originalParameters,ManagerConfiguration managerConfiguration = null)
-			: base(misty, originalParameters, managerConfiguration)
-		{}
-		
-		#region IDisposable Support
-
-		private bool _isDisposed = false;
-
-		private void Dispose(bool disposing)
+		internal TriggerToSend(string trigger, string utteranceId, string triggerFilter, string text = "")
 		{
-			if (!_isDisposed)
-			{
-				if (disposing)
-				{
-					base.Dispose();
-				}
-
-				_isDisposed = true;
-			}
+			Trigger = trigger;
+			TriggerFilter = triggerFilter;
+			Text = text;
+			UtteranceId = utteranceId;
 		}
 
-		public new void Dispose()
-		{
-			Dispose(true);
-		}
-
-		#endregion
+		public string Trigger { get; set; }
+		public string TriggerFilter { get; set; }
+		public string Text { get; set; }
+		public string UtteranceId { get; set; }
 	}
 }

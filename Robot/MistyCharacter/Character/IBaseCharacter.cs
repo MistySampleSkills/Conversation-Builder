@@ -39,6 +39,36 @@ namespace MistyCharacter
 {
 	public interface IBaseCharacter
 	{
+		void HandleFaceRecognitionEvent(object sender, IFaceRecognitionEvent theEvent);
+		void HandleCapTouchEvent(object sender, ICapTouchEvent theEvent);
+		void HandleBumperEvent(object sender, IBumpSensorEvent theEvent);
+		void HandleBatteryChargeEvent(object sender, IBatteryChargeEvent theEvent);
+		void HandleQrTagEvent(object sender, IQrTagDetectionEvent theEvent);
+		void HandleArTagEvent(object sender, IArTagDetectionEvent theEvent);
+		void HandleTimeOfFlightEvent(object sender, ITimeOfFlightEvent theEvent);
+		void HandleSerialMessageEvent(object sender, ISerialMessageEvent theEvent);
+		void HandleLeftArmEvent(object sender, IActuatorEvent theEvent);
+		void HandleRightArmEvent(object sender, IActuatorEvent theEvent);
+		void HandleHeadPitchEvent(object sender, IActuatorEvent theEvent);
+		void HandleHeadRollEvent(object sender, IActuatorEvent theEvent);
+		void HandleHeadYawEvent(object sender, IActuatorEvent theEvent);
+
+		//void HandleKeyPhraseRecognitionOn(object sender, bool theEvent);
+
+		void HandleSyncEvent(object sender, IUserEvent userEvent);
+
+		void HandleRobotCommand(object sender, IUserEvent userEvent);
+
+		void HandlePersonObjectEvent(object sender, IObjectDetectionEvent theEvent);
+		void HandleNonPersonObjectEvent(object sender, IObjectDetectionEvent theEvent);
+		void HandleDriveEncoder(object sender, IDriveEncoderEvent theEvent);
+		void HandleExternalEvent(object sender, IUserEvent theEvent);
+
+		event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
+		event EventHandler<IActuatorEvent> RightArmActuatorEvent;
+		event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
+		event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
+		event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
 		/// <summary>
 		/// Triggered when a conversation is started
 		/// </summary>
@@ -60,10 +90,20 @@ namespace MistyCharacter
 		event EventHandler<DateTime> InteractionEnded;
 
 		/// <summary>
+		/// Triggered when an intent is handled
+		/// </summary>
+		event EventHandler<TriggerData> ValidTriggerReceived;
+
+
+		event EventHandler<IObjectDetectionEvent> PersonObjectEvent;
+
+		event EventHandler<IObjectDetectionEvent> NonPersonObjectEvent;
+
+		/// <summary>
 		/// Triggered when voice data has been processed
 		/// </summary>
 		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
-		
+
 		/// <summary>
 		/// Triggered when voice data processing has started
 		/// </summary>
@@ -103,7 +143,7 @@ namespace MistyCharacter
 		/// It may or may not be handled as a trigger depending on the interaction settings
 		/// </summary>
 		event EventHandler<IArTagDetectionEvent> ArTagEvent;
-		
+
 		/// <summary>
 		/// Triggered when a TOF event occurs
 		/// It may or may not be handled as a trigger depending on the interaction settings
@@ -135,11 +175,6 @@ namespace MistyCharacter
 		event EventHandler<TriggerData> SpeechIntentEvent;
 
 		/// <summary>
-		/// Triggered when an intent is handled
-		/// </summary>
-		event EventHandler<TriggerData> ResponseEventReceived;
-
-		/// <summary>
 		/// Triggered when any face recognition event occurs
 		/// It may or may not be handled as a trigger depending on the interaction settings
 		/// </summary>
@@ -168,17 +203,17 @@ namespace MistyCharacter
 		/// <summary>
 		/// Current state of robot and character
 		/// </summary>
-		CharacterState CurrentCharacterState { get; }
+		//	CharacterState CurrentCharacterState { get; }
 
 		/// <summary>
 		/// The state of robot and character at the end of the last interaction
 		/// </summary>
-		CharacterState PreviousState { get; }
+		//CharacterState PreviousState { get; }
 
 		/// <summary>
 		/// The state of robot and character at the start of this interaction
 		/// </summary>
-		CharacterState StateAtAnimationStart { get; }
+		//CharacterState StateAtAnimationStart { get; }
 
 		/// <summary>
 		/// The current interaction being performed

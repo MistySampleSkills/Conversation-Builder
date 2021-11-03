@@ -51,28 +51,54 @@ namespace MistyCharacter
 		event EventHandler<IArTagDetectionEvent> ArTagEvent;
 		event EventHandler<ITimeOfFlightEvent> TimeOfFlightEvent;
 		event EventHandler<ISerialMessageEvent> SerialMessageEvent;
-		event EventHandler<IUserEvent> ExternalEvent;
-		event EventHandler<IObjectDetectionEvent> ObjectEvent;
-		event EventHandler<TriggerData> SpeechIntentEvent;
-		event EventHandler<TriggerData> ResponseEventReceived;
-		event EventHandler<string> StartedSpeaking;
-		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
-		event EventHandler<DateTime> StartedListening;
-		event EventHandler<IVoiceRecordEvent> StoppedListening;
-		event EventHandler<bool> KeyPhraseRecognitionOn;
-		event EventHandler<IDriveEncoderEvent> DriveEncoder;
-		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
-		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
-		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-
-
 		event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
 		event EventHandler<IActuatorEvent> RightArmActuatorEvent;
 		event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
 		event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
 		event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
+		event EventHandler<IObjectDetectionEvent> ObjectEvent;
+		event EventHandler<bool> KeyPhraseRecognitionOn;
+		event EventHandler<IObjectDetectionEvent> PersonObjectEvent;
+		event EventHandler<IObjectDetectionEvent> NonPersonObjectEvent;
+		event EventHandler<IDriveEncoderEvent> DriveEncoder;
+
+		event EventHandler<IUserEvent> ExternalEvent;
+		event EventHandler<IUserEvent> SyncEvent;
+		event EventHandler<IUserEvent> RobotCommand;
+
+		event EventHandler<TriggerData> SpeechIntentEvent;
+		event EventHandler<string> StartedSpeaking;
+		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
+		event EventHandler<DateTime> StartedListening;
+		event EventHandler<IVoiceRecordEvent> StoppedListening;		
+		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
+		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
+		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+		
+		void HandleSpeechIntentReceived(object sender, TriggerData triggerData);
+		void HandleStartedSpeakingReceived(object sender, string triggerData);
+		void HandleStoppedSpeakingReceived(object sender, IAudioPlayCompleteEvent triggerData);
+		void HandleStartedListeningReceived(object sender, DateTime triggerData);
+		void HandleStoppedListeningReceived(object sender, IVoiceRecordEvent triggerData);
+		void HandleKeyPhraseRecognizedReceived(object sender, IKeyPhraseRecognizedEvent triggerData);
+		void HandleCompletedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
+		void HandleStartedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
+
+		event EventHandler<TriggerData> ValidTriggerReceived;
+		event EventHandler<DateTime> ConversationStarted;
+		event EventHandler<DateTime> ConversationEnded;
+		event EventHandler<DateTime> InteractionStarted;
+		event EventHandler<DateTime> InteractionEnded;
+
+		void HandleValidTriggerReceived(object sender, TriggerData triggerData);
+		void HandleConversationStarted(object sender, DateTime datetime);
+		void HandleConversationEnded(object sender, DateTime datetime);
+		void HandleInteractionStarted(object sender, DateTime datetime);
+		void HandleInteractionEnded(object sender, DateTime datetime);
 
 		Task<bool> Initialize();
+
+		CharacterState GetCharacterState();
 		void RegisterEvent(string trigger);
 		void UnregisterEvent(string trigger);
 	}
@@ -86,7 +112,7 @@ namespace MistyCharacter
 		
 		//Allow others to register for these... pass on the event data
 
-		//TODO Add missing and integrate private items into CharacterState
+		//Built in Misty raw events
 		public event EventHandler<IFaceRecognitionEvent> FaceRecognitionEvent;
 		public event EventHandler<ICapTouchEvent> CapTouchEvent;
 		public event EventHandler<IBumpSensorEvent> BumperEvent;
@@ -95,40 +121,144 @@ namespace MistyCharacter
 		public event EventHandler<IArTagDetectionEvent> ArTagEvent;
 		public event EventHandler<ITimeOfFlightEvent> TimeOfFlightEvent;
 		public event EventHandler<ISerialMessageEvent> SerialMessageEvent;
-		public event EventHandler<IUserEvent> ExternalEvent;
 		public event EventHandler<IObjectDetectionEvent> ObjectEvent;
-		public event EventHandler<TriggerData> SpeechIntentEvent;
-		public event EventHandler<TriggerData> ResponseEventReceived;
-		public event EventHandler<string> StartedSpeaking;
-		public event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
-		public event EventHandler<DateTime> StartedListening;
-		public event EventHandler<IVoiceRecordEvent> StoppedListening;
-		public event EventHandler<bool> KeyPhraseRecognitionOn;
+		public event EventHandler<IObjectDetectionEvent> PersonObjectEvent;
+		public event EventHandler<IObjectDetectionEvent> NonPersonObjectEvent;		
 		public event EventHandler<IDriveEncoderEvent> DriveEncoder;
-		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
-		public event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
-		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-
-		
 		public event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
 		public event EventHandler<IActuatorEvent> RightArmActuatorEvent;
 		public event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
 		public event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
 		public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
+		
+		//Last ext4ernal/user event
+		public event EventHandler<IUserEvent> ExternalEvent;
+		public event EventHandler<IUserEvent> SyncEvent;
+		public event EventHandler<IUserEvent> RobotCommand;
 
-		//TODO Add missing and integrate private items into CharacterState
+		//Catch to update current state and then resend conversation items for all listeners
+		public event EventHandler<TriggerData> ValidTriggerReceived;
+		public event EventHandler<DateTime> ConversationStarted;
+		public event EventHandler<DateTime> ConversationEnded;
+		public event EventHandler<DateTime> InteractionStarted;
+		public event EventHandler<DateTime> InteractionEnded;
 
-		private IObjectDetectionEvent _lastObjectEvent;
-		private IObjectDetectionEvent _lastPersonEvent;
+		//speech
+		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
+		public event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
+		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+		public event EventHandler<TriggerData> SpeechIntentEvent;
+		public event EventHandler<string> StartedSpeaking;
+		public event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
+		public event EventHandler<DateTime> StartedListening;
+		public event EventHandler<IVoiceRecordEvent> StoppedListening;
+		public event EventHandler<bool> KeyPhraseRecognitionOn;
+
+		#region retriggering events
+
+		public void HandleValidTriggerReceived(object sender, TriggerData triggerData)
+		{
+			ValidTriggerReceived?.Invoke(this, triggerData);
+		}
+
+		public void HandleConversationStarted(object sender, DateTime datetime)
+		{
+			ConversationStarted?.Invoke(this, datetime);
+		}
+
+		public void HandleConversationEnded(object sender, DateTime datetime)
+		{
+			ConversationEnded?.Invoke(this, datetime);
+		}
+
+		public void HandleInteractionStarted(object sender, DateTime datetime)
+		{
+			InteractionStarted?.Invoke(this, datetime);
+		}
+
+		public void HandleInteractionEnded(object sender, DateTime datetime)
+		{
+			InteractionEnded?.Invoke(this, datetime);
+		}
+
+		public void HandleSpeechIntentReceived(object sender, TriggerData triggerData)
+		{
+			if (_currentCharacterState == null)
+			{
+				return;
+			}
+			_currentCharacterState.SpeechResponseEvent = triggerData;
+			SpeechIntentEvent?.Invoke(this, triggerData);
+		}
+
+		public void HandleStartedSpeakingReceived(object sender, string text)
+		{
+			StartedSpeaking?.Invoke(this, text);
+		}
+
+		public void HandleStoppedSpeakingReceived(object sender, IAudioPlayCompleteEvent audioEvent)
+		{
+			if (_currentCharacterState == null || audioEvent == null)
+			{
+				return;
+			}
+			_currentCharacterState.Speaking = false;
+			_currentCharacterState.Saying = "";
+			_currentCharacterState.Spoke = true;
+			StoppedSpeaking?.Invoke(this, audioEvent);
+		}
+		public void HandleStartedListeningReceived(object sender, DateTime datetime)
+		{
+			if (_currentCharacterState == null)
+			{
+				return;
+			}
+			_currentCharacterState.Listening = true;
+			StartedListening?.Invoke(this, datetime);
+		}
+		public void HandleStoppedListeningReceived(object sender, IVoiceRecordEvent voiceEvent)
+		{
+			if (_currentCharacterState == null || voiceEvent == null)
+			{
+				return;
+			}
+			_currentCharacterState.Listening = false;
+			StoppedListening?.Invoke(this, voiceEvent);
+		}
+		public void HandleKeyPhraseRecognizedReceived(object sender, IKeyPhraseRecognizedEvent kpRecEvent)
+		{
+			_currentCharacterState.KeyPhraseRecognized = (KeyPhraseRecognizedEvent)kpRecEvent;
+			KeyPhraseRecognized?.Invoke(this, kpRecEvent);
+			
+		}
+		public void HandleCompletedProcessingVoiceReceived(object sender, IVoiceRecordEvent voiceData)
+		{
+			CompletedProcessingVoice?.Invoke(this, voiceData);
+		}
+
+		public void HandleStartedProcessingVoiceReceived(object sender, IVoiceRecordEvent voiceData)
+		{
+			StartedProcessingVoice?.Invoke(this, voiceData);
+		}
+
+		public void HandleKeyPhraseRecognitionOn(object sender, bool e)
+		{
+			//TODO
+			if (_currentCharacterState == null)
+			{
+				return;
+			}
+			_currentCharacterState.KeyPhraseRecognitionOn = e;
+			//KeyPhraseRecognitionOn?.Invoke(this, e);
+		}
+
+
+		#endregion retriggering events
+
+		//TODO Get rid of me
 		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
-		private DateTime _followedObjectLastSeen = DateTime.Now;
-		private DateTime _lastMovementCommand = DateTime.Now;
-
-		private double? _lastPitch = 0;
-		private double? _lastYaw = 0;
-		private double? _lastActuatorYaw;
-		private double? _lastActuatorPitch;
-
+		
+		//TODO Make all events only register as needed
 		private bool _bumpSensorRegistered;
 		private bool _capTouchRegistered;
 		private bool _arTagRegistered;
@@ -158,6 +288,11 @@ namespace MistyCharacter
 			{
 				return false;
 			}
+		}
+
+		public CharacterState GetCharacterState()
+		{
+			return _currentCharacterState;
 		}
 
 		#region Event Management
@@ -383,105 +518,18 @@ namespace MistyCharacter
 		}
 
 		#endregion
-
-		#region Speech Event Handlers
-
-		private void HandlePreSpeechCompleted(object sender, IAudioPlayCompleteEvent e)
-		{
-			//TODO
-		}
-
-		private void HandleKeyPhraseRecognized(object sender, IKeyPhraseRecognizedEvent keyPhraseEvent)
-		{
-			_currentCharacterState.KeyPhraseRecognized = (KeyPhraseRecognizedEvent)keyPhraseEvent;						
-			//KeyPhraseRecognized?.Invoke(this, keyPhraseEvent);
-		}
 		
-		private void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent e)
-		{
-			//StartedProcessingVoice?.Invoke(this, e);   
-        }
-
-		private void HandleCompletedProcessingVoice(object sender, IVoiceRecordEvent e)
-		{
-			//CompletedProcessingVoice?.Invoke(this, e);   
-        }
-
-		private void HandleKeyPhraseRecognitionOn(object sender, bool e)
-		{
-			if (_currentCharacterState == null)
-			{
-				return;
-			}
-			_currentCharacterState.KeyPhraseRecognitionOn = e;
-			//KeyPhraseRecognitionOn?.Invoke(this, e);
-		}
-
-		private void HandleStoppedListening(object sender, IVoiceRecordEvent e)
-		{
-			if (_currentCharacterState == null || e == null)
-			{
-				return;
-			}
-			_currentCharacterState.Listening = false;
-			//StoppedListening?.Invoke(this, e);
-		}
-
-		private void HandleStartedListening(object sender, DateTime e)
-		{
-			if (_currentCharacterState == null || e == null)
-			{
-				return;
-			}
-			_currentCharacterState.Listening = true;
-			//StartedListening?.Invoke(this, e);
-		}
-
-		private void HandleStoppedSpeaking(object sender, IAudioPlayCompleteEvent e)
-		{
-			//e could be null if exception thrown when trying to speak
-			if (_currentCharacterState == null || e == null)
-			{
-				return;
-			}
-			_currentCharacterState.Speaking = false;
-			_currentCharacterState.Saying = "";
-			_currentCharacterState.Spoke = true;
-
-		//	StoppedSpeaking?.Invoke(this, e);
-		}
-
-		private void HandleStartedSpeaking(object sender, string e)
-		{
-			if (_currentCharacterState == null || e == null)
-			{
-				return;
-			}
-			_currentCharacterState.Speaking = true;
-			//StartedSpeaking?.Invoke(this, e);
-		}
-
-		private void HandleSpeechIntent(object sender, TriggerData speechIntent)
-		{
-			if (_currentCharacterState == null)
-			{
-				return;
-			}
-			_currentCharacterState.SpeechResponseEvent = speechIntent;
-			//SpeechIntentEvent?.Invoke(this, speechIntent);
-		}
-
-		#endregion Speech Event Handlers
-
 		#region Robot Event Callbacks
 		
 		private void LeftArmCallback(IActuatorEvent leftArmEvent)
 		{
+			_currentCharacterState.LeftArmActuatorEvent = (ActuatorEvent)leftArmEvent;
 			LeftArmActuatorEvent?.Invoke(this, leftArmEvent);
 		}
 
 		private void RightArmCallback(IActuatorEvent rightArmEvent)
 		{
+			_currentCharacterState.RightArmActuatorEvent = (ActuatorEvent)rightArmEvent;
 			RightArmActuatorEvent?.Invoke(this, rightArmEvent);
 		}
 
@@ -497,21 +545,12 @@ namespace MistyCharacter
 
 				if (objEvent.Description == "person")
 				{
-					_followedObjectLastSeen = DateTime.Now;
-					_lastPersonEvent = objEvent;
-					_lastObjectEvent = null;
+					PersonObjectEvent?.Invoke(this, objEvent);
 				}
 				else if (objEvent.Description.ToLower() == _currentHeadRequest?.FollowObject?.ToLower())
 				{
 					_currentCharacterState.NonPersonObjectEvent = (ObjectDetectionEvent)objEvent;
-					_followedObjectLastSeen = DateTime.Now;
-					_lastObjectEvent = objEvent;
-					_lastPersonEvent = null;
-				}
-				else
-				{
-					_lastObjectEvent = null;
-					_lastPersonEvent = null;
+					NonPersonObjectEvent?.Invoke(this, objEvent);					
 				}
 				
 				_currentCharacterState.ObjectEvent = (ObjectDetectionEvent)objEvent;				
@@ -528,12 +567,10 @@ namespace MistyCharacter
 			switch (actuatorEvent.SensorPosition)
 			{
 				case ActuatorPosition.HeadPitch:
-					_lastActuatorPitch = actuatorEvent.ActuatorValue;
 					HeadPitchActuatorEvent?.Invoke(this, actuatorEvent);
 					_currentCharacterState.HeadPitchActuatorEvent = (ActuatorEvent)actuatorEvent;
 					break;
 				case ActuatorPosition.HeadYaw:
-					_lastActuatorYaw = actuatorEvent.ActuatorValue;
 					HeadYawActuatorEvent?.Invoke(this, actuatorEvent);
 					_currentCharacterState.HeadYawActuatorEvent = (ActuatorEvent)actuatorEvent;
 					break;
@@ -638,7 +675,6 @@ namespace MistyCharacter
 			_currentCharacterState.LocomotionState.RightDistanceSinceLastStop = encoderEvent.RightDistance;
 			_currentCharacterState.LocomotionState.LeftVelocity = encoderEvent.LeftVelocity;
 			_currentCharacterState.LocomotionState.RightVelocity = encoderEvent.RightVelocity;
-			_currentCharacterState.DriveEncoder = (DriveEncoderEvent)encoderEvent;
 			DriveEncoder?.Invoke(this, encoderEvent);
 		}
 
@@ -660,6 +696,7 @@ namespace MistyCharacter
 			if (TryGetAdjustedDistance(tofEvent, out double distance))
 			{
 				_currentCharacterState.LocomotionState.FrontLeftTOF = distance;
+				TimeOfFlightEvent?.Invoke(this, tofEvent);
 			}
 		}
 
@@ -668,6 +705,7 @@ namespace MistyCharacter
 			if (TryGetAdjustedDistance(tofEvent, out double distance))
 			{
 				_currentCharacterState.LocomotionState.FrontRightTOF = distance;
+				TimeOfFlightEvent?.Invoke(this, tofEvent);
 			}
 		}
 
@@ -676,6 +714,7 @@ namespace MistyCharacter
 			if (TryGetAdjustedDistance(tofEvent, out double distance))
 			{
 				_currentCharacterState.LocomotionState.FrontCenterTOF = distance;
+				TimeOfFlightEvent?.Invoke(this, tofEvent);
 			}
 		}
 
@@ -684,6 +723,7 @@ namespace MistyCharacter
 			if (TryGetAdjustedDistance(tofEvent, out double distance))
 			{
 				_currentCharacterState.LocomotionState.BackTOF = distance;
+				TimeOfFlightEvent?.Invoke(this, tofEvent);
 			}
 		}
 		
@@ -735,19 +775,12 @@ namespace MistyCharacter
 
 		private void SyncEventCallback(IUserEvent userEvent)
 		{
-			//this is an external call to the animation manager of another bot (and self if set)			
-			//AnimationManager.HandleSyncEvent(userEvent);
-
-			//TODO Trigger in basecharacter
+			SyncEvent?.Invoke(this, userEvent);
 		}
 
 		private void RobotCommandCallback(IUserEvent userEvent)
 		{
-			//this is an external call to the animation manager of another bot (and self if set)		
-			//_ = AnimationManager.HandleExternalCommand(userEvent);
-
-			//TODO Trigger in basecharacter
-
+			RobotCommand?.Invoke(this, userEvent);
 		}
 
 		private void ExternalEventCallback(IUserEvent userEvent)
