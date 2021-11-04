@@ -453,50 +453,7 @@ namespace MistyCharacter
 
 				CharacterParameters.SpeechConfiguration = JsonConvert.DeserializeObject<SpeechConfiguration>(GetStringField(_parameters, ConversationConstants.SpeechConfiguration)) ?? new SpeechConfiguration();
 				SetSpeechParameters();
-
-				/*
-
-
-
-				CharacterParameters.AzureSpeechParameters = new AzureSpeechParameters();
-				CharacterParameters.GoogleSpeechParameters = new GoogleSpeechParameters();
-
-				//TODO Cleanup,. this doesn't allow multiple sub keys per account yet
-				if (!string.IsNullOrWhiteSpace(speechConfiguration?.SpeechRecognitionSubscriptionKey) || 
-					!string.IsNullOrWhiteSpace(speechConfiguration?.TextToSpeechSubscriptionKey))
-				{
-
-					if (speechConfiguration.SpeechRecognitionService == "Azure" ||
-						speechConfiguration.SpeechRecognitionService == "AzureOnboard" ||
-						speechConfiguration.TextToSpeechService == "Azure" ||
-						speechConfiguration.TextToSpeechService == "AzureOnboard")
-					{
-						CharacterParameters.AzureSpeechParameters.SubscriptionKey = speechConfiguration.SpeechRecognitionSubscriptionKey ?? speechConfiguration?.TextToSpeechSubscriptionKey;
-						CharacterParameters.AzureSpeechParameters.Region = speechConfiguration.SpeechRecognitionRegion ?? "";
-						CharacterParameters.AzureSpeechParameters.Endpoint = speechConfiguration.SpeechRecognitionEndpoint ?? "";
-						CharacterParameters.AzureSpeechParameters.SpeakingVoice = speechConfiguration.SpeakingVoice ?? "en-US-AriaNeural";
-						CharacterParameters.AzureSpeechParameters.TranslatedLanguage = speechConfiguration.TranslatedLanguage ?? "en";
-						CharacterParameters.AzureSpeechParameters.SpokenLanguage = speechConfiguration.SpokenLanguage ?? "en-US";
-						CharacterParameters.AzureSpeechParameters.ProfanitySetting = speechConfiguration.ProfanitySetting ?? "Raw";
-					}
-					
-					if (speechConfiguration.SpeechRecognitionService == "Google" ||
-						speechConfiguration.SpeechRecognitionService == "GoogleOnboard" ||
-						speechConfiguration.TextToSpeechService == "Google" ||
-						speechConfiguration.TextToSpeechService == "GoogleOnboard")
-					{
-						CharacterParameters.GoogleSpeechParameters.SubscriptionKey = speechConfiguration.SpeechRecognitionSubscriptionKey ?? speechConfiguration?.TextToSpeechSubscriptionKey;
-						CharacterParameters.GoogleSpeechParameters.STTEndpoint = speechConfiguration.SpeechRecognitionEndpoint ?? "https://speech.googleapis.com/v1p1beta1/speech:recognize?key=";
-						CharacterParameters.GoogleSpeechParameters.TTSEndpoint = speechConfiguration.TextToSpeechEndpoint ?? "https://texttospeech.googleapis.com/v1/text:synthesize?key=";
-						CharacterParameters.GoogleSpeechParameters.SpeakingVoice = speechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
-						CharacterParameters.GoogleSpeechParameters.SpeakingGender = speechConfiguration.SpeakingGender ?? "FEMALE";
-						CharacterParameters.GoogleSpeechParameters.SpokenLanguage = speechConfiguration.SpokenLanguage ?? "en-US";					
-					}
-				}*/
 				
-			//	CharacterParameters.SpeechRecognitionService = speechConfiguration.SpeechRecognitionService ?? "Azure";
-			//	CharacterParameters.TextToSpeechService = speechConfiguration.TextToSpeechService ?? "Misty";
-
 				CharacterParameters.TrackHistory = GetIntField(_parameters, ConversationConstants.TrackHistory) ?? 3;
 				CharacterParameters.PersonConfidence = GetDoubleField(_parameters, ConversationConstants.PersonConfidence) ?? 0.6;
 				CharacterParameters.LogInteraction = GetBoolField(_parameters, ConversationConstants.LogInteraction) ?? true;
@@ -604,7 +561,7 @@ namespace MistyCharacter
 					CharacterParameters.GoogleTTSParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
 				}
 
-				CharacterParameters.TextToSpeechService = recService ?? "Misty";
+				CharacterParameters.TextToSpeechService = recService ?? "misty";
 			}
 		}
 

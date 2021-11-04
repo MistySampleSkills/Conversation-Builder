@@ -78,6 +78,20 @@ namespace ConversationBuilder.DataModels
 
 		public IDictionary<string,string> InteractionPreSpeechAnimations { get; set; } = new Dictionary<string, string>();
 
+
+
+//TODO
+		public IDictionary<string,string> InteractionListeningAnimations { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionInitAnimations { get; set; } = new Dictionary<string, string>();
+
+		
+		public IDictionary<string,string> InteractionInitScripts { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionPreSpeechScripts { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionListeningScripts { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionScript { get; set; } = new Dictionary<string, string>();
+		
+
+
 		//key is interaction id
 		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();
 

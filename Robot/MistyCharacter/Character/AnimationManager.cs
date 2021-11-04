@@ -82,12 +82,7 @@ namespace MistyCharacter
 		public event EventHandler<IIMUEvent> IMUEvent;
 
 		public LocomotionState CurrentLocomotionState { get; private set; } = new LocomotionState();
-
-
-
-
-
-
+		
 		public event EventHandler<DateTime> CompletedAnimationScript;
 		public event EventHandler<DateTime> StartedAnimationScript;
 		public event EventHandler<DateTime> AnimationScriptActionsComplete;
@@ -173,8 +168,6 @@ namespace MistyCharacter
 
 		public async void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent)
 		{
-
-			//TODO
 			/*if (_animationsCanceled || (_currentInteraction.ProcessingAnimation != null && !await RunInternalScript(_currentInteraction.ProcessingAnimation, false, true)))
 			{
 				_interactionCancellationEvent?.TrySetResult(true);
@@ -194,6 +187,7 @@ namespace MistyCharacter
 
 		private async void _speechManager_UserDataAnimationScript(object sender, string script)
 		{
+			_headManager.StopMovement();
 			await StopRunningAnimationScripts();
 			_ = RunAnimationScript(script, false, _currentAnimation, _currentInteraction);
 		}
@@ -350,11 +344,7 @@ namespace MistyCharacter
 				}
 			}
 		}
-
-
-
-
-
+		
 		public async Task SendCrossRobotCommand(IList<Robot> robots, string command, bool includeSelf = false, bool awaitAck = false)
 		{
 			foreach (Robot robot in robots)
@@ -408,16 +398,21 @@ namespace MistyCharacter
 
 		public async Task StopRunningAnimationScripts()
 		{
-			_semaphoreSlim.Wait();
+			//_semaphoreSlim.Wait();
 			try
 			{
-				_animationsCanceled = true;
 				foreach (string command in _completionCommands)
 				{
 					await ProcessCommand(command, true, 0);
 				}
+				_animationsCanceled = true;
+
+				//await WaitOnCompletionEvent();
+
 				_completionCommands.Clear();
 				_runningAnimation = false;
+				_animationsCanceled = false;
+
 			}
 			catch (Exception ex)
 			{
@@ -425,18 +420,44 @@ namespace MistyCharacter
 			}
 			finally
 			{
-				_semaphoreSlim.Release();
+				//_semaphoreSlim.Release();
 			}
+		}
+
+		private async Task<bool> WaitOnCompletionEvent()
+		{
+			bool response = false;
+			_interactionCancellationEvent = null;
+			_interactionCancellationEvent = new TaskCompletionSource<bool>();
+			try
+			{
+				//wait a max of 5 seconds before starting next interaction. this can happen if people do long running actions and don't delay at the end
+				if (_interactionCancellationEvent.Task == await Task.WhenAny(_interactionCancellationEvent.Task, Task.Delay(5000)))
+				{
+					response = _interactionCancellationEvent.Task.Result;
+				}
+				else
+				{
+					Robot.SkillLogger.LogInfo("Timeout waiting for interaction cancellation.");
+				}
+			}
+			catch (Exception ex)
+			{
+				Robot.SkillLogger.LogError("Failed waiting for interaction cancellation.", ex);
+			}
+
+			_interactionCancellationEvent = null;
+			return response;
 		}
 
 		public async Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, bool stopOnFailedCommand = false)
 		{
 			try
 			{
-				if(_runningAnimation)
-				{
-					return false;
-				}
+				//if(_runningAnimation)
+				//{
+				//	return false;
+				//}
 				_runningAnimation = true;
 				if (!string.IsNullOrWhiteSpace(animationScript))
 				{
@@ -491,8 +512,12 @@ namespace MistyCharacter
 					do
 					{
 						loopCount++;
-
-						if ((loopCount > 1 && !_repeatScript) || _animationsCanceled)
+						if (_animationsCanceled)
+						{
+							_interactionCancellationEvent?.TrySetResult(true);
+							return false;
+						}
+						else if (loopCount > 1 && !_repeatScript)
 						{
 							return false;
 						}
@@ -507,10 +532,12 @@ namespace MistyCharacter
 							{
 								if (_animationsCanceled)
 								{
-									_semaphoreSlim.Wait();
+									//_semaphoreSlim.Wait();
 									try
 									{
-										_animationsCanceled = false;
+										_interactionCancellationEvent?.TrySetResult(true);
+										return false;
+										//_animationsCanceled = false;
 									}
 									catch (Exception ex)
 									{
@@ -518,13 +545,19 @@ namespace MistyCharacter
 									}
 									finally
 									{
-										_semaphoreSlim.Release();
+									//	_semaphoreSlim.Release();
 									}
 									return false;
 								}
 								else
 								{
-									if(!string.IsNullOrWhiteSpace(_waitingEvent) || _awaitAny)
+									if (_animationsCanceled)
+									{
+										_interactionCancellationEvent?.TrySetResult(true);
+										return false;
+									}
+
+									if (!string.IsNullOrWhiteSpace(_waitingEvent) || _awaitAny)
 									{
 										await WaitOnSyncEvent();
 									}
@@ -560,7 +593,7 @@ namespace MistyCharacter
 			}
 			finally
 			{
-				_runningAnimation = false;
+				//_runningAnimation = false;
 			}
 		}
 
@@ -942,6 +975,8 @@ namespace MistyCharacter
 								HeadLocation _currentHeadRequest = new HeadLocation(-40, -2, -45, 10, 2, 45, 0.5, null);
 								_currentHeadRequest.FollowFace = true;
 								_currentHeadRequest.FollowObject = "";
+
+								_mistyState.RegisterEvent(Triggers.ObjectSeen);
 								_headManager.HandleHeadAction(_currentHeadRequest);
 								break;
 							case "STOP-FOLLOW":
@@ -956,6 +991,7 @@ namespace MistyCharacter
 								HeadLocation _objectHeadRequest = new HeadLocation(-40, -2, -45, 10, 2, 45, 0.5, null);
 								_objectHeadRequest.FollowObject = Convert.ToString(commandData[1]);
 								_objectHeadRequest.FollowFace = false;
+								_mistyState.RegisterEvent(Triggers.ObjectSeen);
 								_headManager.HandleHeadAction(_objectHeadRequest);
 								break;
 							case "IMAGE-URL":
@@ -1777,6 +1813,7 @@ namespace MistyCharacter
 				if (disposing)
 				{
 					ClearAnimationDisplayLayers();
+					_headManager.StopMovement();
 					_ = StopRunningAnimationScripts();
 				}
 

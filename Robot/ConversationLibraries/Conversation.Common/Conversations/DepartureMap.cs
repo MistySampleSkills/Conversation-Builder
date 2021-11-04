@@ -39,5 +39,14 @@ namespace Conversation.Common
 		public string ConversationId {get; set;}
 		public string InteractionId {get; set;}
 		public string AnimationId {get; set;}
+		public string InitAnimationId { get; set; }
+		public string PreSpeechAnimationId { get; set; }
+		public string ListeningAnimationId { get; set; }
+
+		public string InitScript { get; set; }
+		public string AnimationScript { get; set; }
+		public string PreSpeechScript { get; set; }
+		public string ListeningScript { get; set; }
+
 	}
 }

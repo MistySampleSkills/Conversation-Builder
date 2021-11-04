@@ -51,8 +51,8 @@ namespace Conversation.Common
 
 		//public SpeechConfiguration SpeechService { get; set; }
 
-		public string TextToSpeechService { get; set; } = "Misty";
-		public string SpeechRecognitionService { get; set; } = "Azure";
+		public string TextToSpeechService { get; set; } = "misty";
+		public string SpeechRecognitionService { get; set; } = "vosk";
 		
 		public int FacePitchOffset { get; set; }
 		public double ObjectDetectionDebounce { get; set; } = 0.333;

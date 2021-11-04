@@ -57,6 +57,17 @@ namespace ConversationBuilder.ViewModels
 		public string RemovedTriggerAction { get; set; }
 		public string Animation { get; set; }		
 		public string PreSpeechAnimation { get; set; }
+		//TODO
+		public string ListeningAnimation { get; set; }
+
+		public string InitAnimation { get; set; }
+
+		public string InitScriptData { get; set; }
+		public string PreSpeechScriptData { get; set; }
+		public string ListeningScriptData { get; set; }
+		public string ScriptData { get; set; }
+
+
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

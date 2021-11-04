@@ -64,8 +64,10 @@ namespace MistyCharacter
 		private DateTime _followedObjectLastSeen = DateTime.Now;
 		private DateTime _lastMovementCommand = DateTime.Now;
 		private bool _tick = false;
+		int? _currentElevation = null;
+		int? _currentBearing = null;
 		//private int _lookAroundThrottle = 0;
-		
+
 		public HeadManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 			: base(misty, parameters, characterParameters)
 		{
@@ -103,6 +105,11 @@ namespace MistyCharacter
 			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorRollValidations, "HeadRoll", null));
 
 			//Robot.StartObjectDetector(characterParameters.PersonConfidence, 0, characterParameters.TrackHistory, null);
+		}
+
+		public void StopMovement()
+		{
+			_moveHeadTimer?.Dispose();
 		}
 
 		public void HandleHeadAction(HeadLocation headLocation)
@@ -204,7 +211,25 @@ namespace MistyCharacter
 				HandleHeadAction(headLocation);
 			}
 		}
-	
+
+		public void HandleFaceRecognitionEvent(object sender, IFaceRecognitionEvent faceRecognitionEvent)
+		{
+			if (_currentHeadRequest.FollowFace)
+			{
+				if (faceRecognitionEvent.Bearing >= -1 && faceRecognitionEvent.Bearing <= 1 && faceRecognitionEvent.Elevation >= -1 && faceRecognitionEvent.Elevation <= 1)
+				{
+					return;
+				}
+
+				_currentElevation = faceRecognitionEvent.Elevation;
+				_currentBearing = faceRecognitionEvent.Bearing;
+
+				//Robot.DisplayText($"Bearing {faceRecognitionEvent.Bearing.ToString()} - Pitch {faceRecognitionEvent.Elevation.ToString()}", "Debug", null);
+				//Robot.MoveHead(faceRecognitionEvent.Elevation - 10, 0, faceRecognitionEvent.Bearing * 2, null, 0.350, AngularUnit.Degrees, null);
+			}
+		}
+
+
 		public void HandleObjectDetectionEvent(object sender, IObjectDetectionEvent objEvent)
 		{
 			try
@@ -243,7 +268,13 @@ namespace MistyCharacter
 				bool _lookAroundFailover = false;
 				if(_currentHeadRequest.FollowFace)
 				{
-					if(_lastPersonEvent != null)
+					if (_currentElevation != null && _currentBearing != null)
+					{
+						Robot.MoveHead(_currentElevation - 10, 0, _currentBearing * 2, null, 0.350, AngularUnit.Degrees, null);
+						_currentElevation = null;
+						_currentBearing = null;
+					}
+					else if (_lastPersonEvent != null)
 					{
 						FindAndFollowPerson(_lastPersonEvent);
 						return;
@@ -414,7 +445,10 @@ namespace MistyCharacter
 				double? yaw = Math.Abs(objEvent.Yaw) > 0.02 ? (double?)(_lastYaw ?? 0) - (objEvent.Yaw * 10) : null;
 				double? pitch = Math.Abs(objEvent.Pitch) > 0.01 ? (double?)(_lastPitch ?? 0) + (objEvent.Pitch * 10) : null;
 
-				if(pitch == null && yaw == null)
+				//double? yaw = objEvent.Yaw;
+				//double? pitch = objEvent.Pitch;
+
+				if (pitch == null && yaw == null)
 				{
 					return;
 				}
@@ -462,14 +496,16 @@ namespace MistyCharacter
 		{
 			try
 			{
+				Console.WriteLine(objEvent.Pitch);
+
 				if(_finding)
 				{
 					return;
 				}
 				_finding = true;
-				double? yaw = null;
-				double? pitch = null;
-
+				double? yaw = objEvent.Yaw*10;
+				double? pitch = objEvent.Pitch*10;
+				/*
 				if (_lastActuatorYaw != null)
 				{
 					_lastYaw = _lastActuatorYaw;
@@ -525,7 +561,7 @@ namespace MistyCharacter
 						pitch = RobotConstants.MaximumPitchDegreesExclusive-1;
 					}
 				}
-
+				*/
 				if (pitch != null || yaw != null)
 				{
 					if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
@@ -566,9 +602,7 @@ namespace MistyCharacter
 				    {
 						_moveHeadTimer?.Dispose();
 						Robot.UnregisterAllEvents(null);
-					    _headMovingContinuously = false;
-                    
-						
+					    _headMovingContinuously = false;                    	
              	    }
 
 				    _isDisposed = true;

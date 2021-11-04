@@ -140,10 +140,10 @@ namespace SpeechTools
 			{
 				switch (_characterParameters.TextToSpeechService)
 				{
-					case "Google":
+					case "google":
 						name = _googleTTSParameters.SpokenLanguage + _googleTTSParameters.SpeakingVoice + _googleTTSParameters.SpeakingGender?[0] + name;
 						break;
-					case "Azure":
+					case "azure":
 						name = _azureTTSParameters.TranslatedLanguage + _azureTTSParameters.SpeakingVoice + name;
 						break;
 					default:
@@ -341,7 +341,7 @@ namespace SpeechTools
 
 				_listenAborted = false;
 
-				if (_characterParameters.TextToSpeechService == "Misty")
+				if (_characterParameters.TextToSpeechService == "misty")
 				{
 					if (currentInteraction.StartListening && !string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName))
 					{
@@ -352,6 +352,7 @@ namespace SpeechTools
 						}
 					}
 
+					//_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
@@ -360,7 +361,7 @@ namespace SpeechTools
 				if ((_azureCognitive != null && _azureCognitive.Authorized) || (_googleService != null && _googleService.Authorized))
 				{
 					string newText = currentAnimation.Speak;
-					bool usingSSML = _characterParameters.TextToSpeechService == "Azure" && TryGetSSMLText(currentAnimation.Speak, out  newText, currentAnimation);
+					bool usingSSML = _characterParameters.TextToSpeechService == "azure" && TryGetSSMLText(currentAnimation.Speak, out  newText, currentAnimation);
 					currentAnimation.Speak = newText ?? currentAnimation.Speak;
 
 					currentAnimation.SpeakFileName = AssetHelper.AddMissingWavExtension(currentAnimation.SpeakFileName);
@@ -393,10 +394,10 @@ namespace SpeechTools
 							
 							switch (_characterParameters.TextToSpeechService)
 							{
-								case "Google":
+								case "google":
 									await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName, Volume, usingSSML, 0);
 									break;
-								case "Azure":
+								case "azure":
 								default:
 									await _azureCognitive.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName, Volume, usingSSML, (int)(currentAnimation.TrimAudioSilence*1000));
 									break;
@@ -619,19 +620,20 @@ namespace SpeechTools
 				}
 
 				_misty.SkillLogger.LogVerbose("Voice Record Callback - processing");
-				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
-
-				string service = _characterParameters.SpeechRecognitionService.Trim().ToLower();
-				if (service == "googleonboard" || service == "azureonboard" || service == "deepspeech" || service == "vosk")
-				{
-					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
-					return;
-				}
-
+				
 				if (voiceRecordEvent.ErrorCode == 3)
 				{
 					_misty.SkillLogger.Log("Didn't hear anything with microphone.");
-					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));					
+					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
+					return;
+				}
+
+				
+				string service = _characterParameters.SpeechRecognitionService.Trim().ToLower();
+				if (service == "googleonboard" || service == "azureonboard" || service == "deepspeech" || service == "vosk")
+				{
+					StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
+					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
 					return;
 				}
 
@@ -657,13 +659,15 @@ namespace SpeechTools
 					return;
 				}
 
+				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
+
 				SpeechToTextData description = new SpeechToTextData();
 				switch (_characterParameters.SpeechRecognitionService)
 				{
-					case "Google":
+					case "google":
 						description = await _googleService.TranslateAudioStream((byte[])audioResponse.Data.Audio);
 						break;
-					case "Azure":
+					case "azure":
 					default:
 						description = await _azureCognitive.TranslateAudioStream((byte[])audioResponse.Data.Audio);
 						break;

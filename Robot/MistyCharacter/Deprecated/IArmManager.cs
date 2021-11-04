@@ -40,6 +40,7 @@ namespace MistyCharacter
 	public interface IArmManager
 	{
 		Task<bool> Initialize();
+		void StopMovement();
 		void HandleArmAction(AnimationRequest animationRequest, ConversationData conversation);
 		//event EventHandler<IActuatorEvent> RightArmActuatorEvent;
 		//event EventHandler<IActuatorEvent> LeftArmActuatorEvent;

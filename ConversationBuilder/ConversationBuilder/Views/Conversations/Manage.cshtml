@@ -97,11 +97,18 @@
 				Interrupt Audio
 			</th>
 			<th>
-				Animation
+				Main Animation
+			</th>
+			<th>
+				Init Animation
+			</th>
+			<th>
+				Listening Animation
 			</th>
 			<th>
 				PreSpeech Animation
 			</th>
+			
 			<th>
 				Weight
 			</th>
@@ -127,6 +134,8 @@
 			</td>
 			<td></td>	
 			<td></td>
+			<td></td>	
+			<td></td>	
 			<td></td>	
 			<td></td>	
 			<td>
@@ -188,13 +197,38 @@
 					</td>
 					<td>
 					<div class="form-group">
+						<select asp-for="InitAnimation" class="form-control">
+							@foreach (KeyValuePair<string, string> animation in @ViewBag.Animations)
+							{
+								<option value="@animation.Key">@animation.Value</option>
+							}
+							<option value="Init Default" >Init Default</option>
+							<option value="None" selected>None</option>								
+						</select>
+					</div>
+					
+					</td>
+					<td>
+					<div class="form-group">
+						<select asp-for="ListeningAnimation" class="form-control">
+							@foreach (KeyValuePair<string, string> animation in @ViewBag.Animations)
+							{
+								<option value="@animation.Key">@animation.Value</option>
+							}
+							<option value="Listening Default" >Listening Default</option>
+							<option value="None" selected>None</option>								
+						</select>
+					</div>
+					</td>
+					<td>
+					<div class="form-group">
 						<select asp-for="PreSpeechAnimation" class="form-control">
 							@foreach (KeyValuePair<string, string> animation in @ViewBag.Animations)
 							{
 								<option value="@animation.Key">@animation.Value</option>
 							}
 							<option value="PreSpeech Default" >PreSpeech Default</option>
-							<option value="None" selected>None</option>		
+							<option value="None" selected>None</option>								
 						</select>
 					</div>
 					</td>
@@ -263,11 +297,47 @@
 					{
 						prespeechAnimationName = "PreSpeech Default";
 					}
+				
+					string listeningAnimationName = "Listening Default";
+					if(ViewBag.InteractionListeningAnimationList.TryGetValue(intentAction.Id, out string listeningAnimation))
+					{
+						if(listeningAnimation == "None")
+						{
+							listeningAnimationName = "None";
+						}
+						else if(!@ViewBag.Animations.TryGetValue(listeningAnimation, out listeningAnimationName))
+						{
+							listeningAnimationName = "Listening Default";
+						}
+					}
+					else
+					{
+						listeningAnimationName = "Listening Default";
+					}
+
+					string initAnimationName = "Init Default";
+					if(ViewBag.InteractionInitAnimationList.TryGetValue(intentAction.Id, out string initAnimation))
+					{
+						if(initAnimation == "None")
+						{
+							initAnimationName = "None";
+						}
+						else if(!@ViewBag.Animations.TryGetValue(initAnimation, out initAnimationName))
+						{
+							initAnimationName = "Init Default";
+						}
+					}
+					else
+					{
+						initAnimationName = "Init Default";
+					}
 				}
 
 				<td>@goToInteractionName</td>
 				<td>@intentAction.InterruptCurrentAction</td>
 				<td>@animationName</td>
+				<td>@initAnimationName</td>
+				<td>@listeningAnimationName</td>
 				<td>@prespeechAnimationName</td>
 				<td>@intentAction.Weight</td>
 				<td>@intentAction.Retrigger</td>

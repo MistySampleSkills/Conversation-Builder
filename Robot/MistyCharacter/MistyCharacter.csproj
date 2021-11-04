@@ -120,16 +120,13 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Character\BaseCharacter - Copy.cs" />
     <Compile Include="Character\MistyState.cs" />
     <Compile Include="Data\TimerTriggerData.cs" />
     <Compile Include="Character\AnimationManager.cs" />
-    <Compile Include="Deprecated\LocomotionManager.cs" />
     <Compile Include="Data\ManagerConfiguration.cs" />
     <Compile Include="Character\IBaseCharacter.cs" />
     <Compile Include="Character\BaseManager.cs" />
     <Compile Include="Character\IAnimationManager.cs" />
-    <Compile Include="Deprecated\ILocomotionManager.cs" />
     <Compile Include="Deprecated\IArmManager.cs" />
     <Compile Include="Deprecated\IHeadManager.cs" />
     <Compile Include="Deprecated\ArmManager.cs" />

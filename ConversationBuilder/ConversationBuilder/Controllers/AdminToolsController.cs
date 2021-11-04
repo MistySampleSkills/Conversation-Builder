@@ -244,6 +244,13 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.ListenTimeout = interaction.ListenTimeout;
 								skillInteraction.Animation = interaction.Animation;
 								skillInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
+								skillInteraction.InitAnimation = interaction.InitAnimation;
+								skillInteraction.ListeningAnimation = interaction.ListeningAnimation;
+								
+								skillInteraction.AnimationScript = interaction.AnimationScript;
+								skillInteraction.InitScript = interaction.InitScript;
+								skillInteraction.ListeningScript = interaction.ListeningScript;
+								skillInteraction.PreSpeechScript = interaction.PreSpeechScript;
 
 								skillConversation.Interactions.Remove(skillInteraction);
 								skillConversation.Interactions.Add(skillInteraction);
@@ -272,6 +279,14 @@ namespace ConversationBuilder.Controllers
 					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;
 					skillConversation.InteractionAnimations = conversation.InteractionAnimations;
 					skillConversation.InteractionPreSpeechAnimations = conversation.InteractionPreSpeechAnimations;
+					skillConversation.InteractionInitAnimations = conversation.InteractionInitAnimations;
+					skillConversation.InteractionListeningAnimations = conversation.InteractionListeningAnimations;
+
+					skillConversation.InteractionInitScripts = conversation.InteractionInitScripts;
+					skillConversation.InteractionPreSpeechScripts = conversation.InteractionPreSpeechScripts;
+					skillConversation.InteractionListeningScripts = conversation.InteractionListeningScripts;
+					skillConversation.InteractionScripts = conversation.InteractionInitScripts;
+
 					skillConversation.Description = conversation.Description;
 					skillConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
 					skillConversation.Name = conversation.Name;
@@ -549,6 +564,16 @@ namespace ConversationBuilder.Controllers
 								if (conversation.InteractionPreSpeechAnimations.ContainsKey(triggerActionOption.Id))
 								{
 									newConversation.InteractionPreSpeechAnimations.Add(newTriggerActionOption.Id, conversation.InteractionPreSpeechAnimations[triggerActionOption.Id]);
+								}
+
+								if (conversation.InteractionInitAnimations.ContainsKey(triggerActionOption.Id))
+								{
+									newConversation.InteractionInitAnimations.Add(newTriggerActionOption.Id, conversation.InteractionInitAnimations[triggerActionOption.Id]);
+								}
+
+								if (conversation.InteractionListeningAnimations.ContainsKey(triggerActionOption.Id))
+								{
+									newConversation.InteractionListeningAnimations.Add(newTriggerActionOption.Id, conversation.InteractionListeningAnimations[triggerActionOption.Id]);
 								}
 							}
 							newInteraction.TriggerMap.Add(triggerOption.Key, newTriggerOptions);
@@ -959,6 +984,36 @@ namespace ConversationBuilder.Controllers
 			return interactionAnimations ?? new Dictionary<string, string>();
 		}
 
+		protected async Task<Dictionary<string, string>> InteractionInitAnimationList(string conversationId)
+		{
+			//TODO Deal with performance reloading and paging
+			Dictionary<string, string> interactionAnimations = new Dictionary<string, string>();
+			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+
+			foreach (KeyValuePair<string, string> interactionAnimation in conversation.InteractionInitAnimations)
+			{
+				if (interactionAnimation.Value == null) continue;
+
+				interactionAnimations.TryAdd(interactionAnimation.Key, interactionAnimation.Value);
+			}
+			return interactionAnimations ?? new Dictionary<string, string>();
+		}
+
+		protected async Task<Dictionary<string, string>> InteractionListeningAnimationList(string conversationId)
+		{
+			//TODO Deal with performance reloading and paging
+			Dictionary<string, string> interactionAnimations = new Dictionary<string, string>();
+			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+
+			foreach (KeyValuePair<string, string> interactionAnimation in conversation.InteractionListeningAnimations)
+			{
+				if (interactionAnimation.Value == null) continue;
+
+				interactionAnimations.TryAdd(interactionAnimation.Key, interactionAnimation.Value);
+			}
+			return interactionAnimations ?? new Dictionary<string, string>();
+		}
+
 		protected async Task<IDictionary<string, Dictionary<string, string>>> FullInteractionAndOptionList(string conversationId)
 		{
 			//Get conversations from this group
@@ -1004,6 +1059,13 @@ namespace ConversationBuilder.Controllers
 						interactionViewModel.Name = interaction.Name;
 						interactionViewModel.Animation = interaction.Animation;
 						interactionViewModel.PreSpeechAnimation = interaction.PreSpeechAnimation;
+						interactionViewModel.InitAnimation = interaction.InitAnimation;
+						interactionViewModel.ListeningAnimation = interaction.ListeningAnimation;
+
+						interactionViewModel.AnimationScript = interaction.AnimationScript;
+						interactionViewModel.ListeningScript = interaction.ListeningScript;
+						interactionViewModel.PreSpeechScript = interaction.PreSpeechScript;
+						interactionViewModel.InitScript = interaction.InitScript;
 
 						interactionViewModel.StartListening = interaction.StartListening;
 						interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;

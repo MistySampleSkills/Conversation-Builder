@@ -329,31 +329,31 @@ namespace MistyCharacter
 			_currentHeadRequest = new HeadLocation(null, null, null);
 
 			//Person object, used for following face
-			List<ObjectValidation> personValidations = new List<ObjectValidation>();
-			personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
-			LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
+			//List<ObjectValidation> personValidations = new List<ObjectValidation>();
+			//personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
+			//LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
 
-			List<ObjectValidation> objectValidations = new List<ObjectValidation>();
-			objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
-			LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
+			//List<ObjectValidation> objectValidations = new List<ObjectValidation>();
+			//objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
+			//LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
 
 			//Head Actuators for following actions.
 			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
 			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
 			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
-			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorYawValidations, "HeadYaw", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 200, true, actuatorYawValidations, "HeadYaw", null));
 
 			IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
 			actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
 			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorPitchValidations, "HeadPitch", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 200, true, actuatorPitchValidations, "HeadPitch", null));
 
 			IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
 			actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
 			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorRollValidations, "HeadRoll", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 250, true, actuatorRollValidations, "HeadRoll", null));
 
-			_misty.StartObjectDetector(_characterParameters.PersonConfidence, 0, _characterParameters.TrackHistory, null);
+		//	_misty.StartObjectDetector(_characterParameters.PersonConfidence, 0, _characterParameters.TrackHistory, null);
 
 		}
 
@@ -365,22 +365,22 @@ namespace MistyCharacter
 			//Front Right Time of Flight
 			List<TimeOfFlightValidation> tofFrontRightValidations = new List<TimeOfFlightValidation>();
 			tofFrontRightValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.FrontRight });
-			_misty.RegisterTimeOfFlightEvent(TOFFRRangeCallback, 0, true, tofFrontRightValidations, "FrontRight", null);
+			_misty.RegisterTimeOfFlightEvent(TOFFRRangeCallback, 150, true, tofFrontRightValidations, "FrontRight", null);
 
 			//Front Left Time of Flight
 			List<TimeOfFlightValidation> tofFrontLeftValidations = new List<TimeOfFlightValidation>();
 			tofFrontLeftValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.FrontLeft });
-			_misty.RegisterTimeOfFlightEvent(TOFFLRangeCallback, 0, true, tofFrontLeftValidations, "FrontLeft", null);
+			_misty.RegisterTimeOfFlightEvent(TOFFLRangeCallback, 150, true, tofFrontLeftValidations, "FrontLeft", null);
 
 			//Front Center Time of Flight
 			List<TimeOfFlightValidation> tofFrontCenterValidations = new List<TimeOfFlightValidation>();
 			tofFrontCenterValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.FrontCenter });
-			_misty.RegisterTimeOfFlightEvent(TOFCRangeCallback, 0, true, tofFrontCenterValidations, "FrontCenter", null);
+			_misty.RegisterTimeOfFlightEvent(TOFCRangeCallback, 150, true, tofFrontCenterValidations, "FrontCenter", null);
 
 			//Back Time of Flight
 			List<TimeOfFlightValidation> tofBackValidations = new List<TimeOfFlightValidation>();
 			tofBackValidations.Add(new TimeOfFlightValidation { Name = TimeOfFlightFilter.SensorName, Comparison = ComparisonOperator.Equal, ComparisonValue = TimeOfFlightPosition.Back });
-			_misty.RegisterTimeOfFlightEvent(TOFBRangeCallback, 0, true, tofBackValidations, "Back", null);
+			_misty.RegisterTimeOfFlightEvent(TOFBRangeCallback, 150, true, tofBackValidations, "Back", null);
 
 			//Setting debounce a little higher to avoid too much traffic
 			//Firmware will do the actual stop for edge detection
@@ -395,12 +395,13 @@ namespace MistyCharacter
 			IList<DriveEncoderValidation> driveValidations = new List<DriveEncoderValidation>();
 			LogEventDetails(_misty.RegisterDriveEncoderEvent(EncoderCallback, 250, true, driveValidations, "DriveEncoder", null));
 
-			LogEventDetails(_misty.RegisterIMUEvent(IMUCallback, 50, true, null, "IMU", null));
+			LogEventDetails(_misty.RegisterIMUEvent(IMUCallback, 100, true, null, "IMU", null));
 
 		}
 		
 		public void UnregisterEvent(string trigger)
 		{
+			//TODO NOT READY YET
 			if (string.IsNullOrWhiteSpace(trigger))
 			{
 				return;
@@ -480,6 +481,7 @@ namespace MistyCharacter
 			}
 			else if (!_arTagRegistered && string.Equals(trigger, Triggers.ArTagSeen, StringComparison.OrdinalIgnoreCase))
 			{
+				//TODO Allow pass in size and dictionary
 				_misty.StartArTagDetector(7, 140, null);
 				LogEventDetails(_misty.RegisterArTagDetectionEvent(ArTagCallback, 250, true, "ArTag", null));
 				_arTagRegistered = true;
@@ -497,22 +499,21 @@ namespace MistyCharacter
 			}
 			else if (!_faceRecognitionRegistered && string.Equals(trigger, Triggers.FaceRecognized, StringComparison.OrdinalIgnoreCase))
 			{
-				//Misty.StopObjectDetector(null);
 				_misty.StartFaceRecognition(null);
 				//Misty.StartFaceDetection(null);
-				LogEventDetails(_misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 250, true, null, "FaceRecognition", null));
+				LogEventDetails(_misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
 				_faceRecognitionRegistered = true;
 			}
 			else if (!_objectDetectionRegistered && string.Equals(trigger, Triggers.ObjectSeen, StringComparison.OrdinalIgnoreCase))
 			{
-				//TODO!!
+				//TODO test!!
 				_misty.StartObjectDetector(_characterParameters.PersonConfidence, 0, 2, null);
-				LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, 250, true, null, "ObjectDetection", null));
+				LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce*1000), true, null, "ObjectDetection", null));
 				_objectDetectionRegistered = true;
 			}
 			else if (!_tofRegistered && string.Equals(trigger, Triggers.TimeOfFlightRange, StringComparison.OrdinalIgnoreCase))
 			{
-				LogEventDetails(_misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 500, true, null, "TimeOfFlight", null));
+				LogEventDetails(_misty.RegisterTimeOfFlightEvent(TimeOfFlightCallback, 250, true, null, "TimeOfFlight", null));
 				_tofRegistered = true;
 			}
 		}

@@ -48,7 +48,6 @@ namespace Conversation.Common
 			MaxYaw = maxYaw;
 			MovementVelocity = movementVelocity;
 			MovementDuration = movementDuration;
-
 		}
 
 		public double? MinPitch { get; set; }

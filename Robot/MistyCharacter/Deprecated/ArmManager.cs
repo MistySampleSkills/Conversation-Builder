@@ -80,6 +80,11 @@ namespace MistyCharacter
 		//	RightArmActuatorEvent?.Invoke(this, rightArmEvent);
 		//}
 
+		public void StopMovement()
+		{
+			_moveArmsTimer?.Dispose();
+		}
+
 		private void MoveArmsCallback(object timerData)
 		{
 			if (_armsMovingContinuously)

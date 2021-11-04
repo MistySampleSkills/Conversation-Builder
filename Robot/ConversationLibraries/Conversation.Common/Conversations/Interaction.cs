@@ -43,12 +43,9 @@ namespace Conversation.Common
 		public string InitializationScript { get; set; }
 
 		public string Animation { get; set; }
-		public string InteractionScript { get; set; }
 
 		public string ListeningAnimation { get; set; }
-		public string ProcessingAnimation { get; set; }
-
-
+		
 		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();
 
 		public double InteractionFailedTimeout { get; set; } = 120;
@@ -75,6 +72,14 @@ namespace Conversation.Common
 
 		public string PreSpeechAnimation { get; set; }
 
+		public string InitAnimation { get; set; }
+
+		public string InitScript { get; set; }
+		public string AnimationScript { get; set; }
+		public string PreSpeechScript { get; set; }
+		public string ListeningScript { get; set; }
+
+
 		public Interaction() { }
 
 		public Interaction(Interaction state)
@@ -85,6 +90,12 @@ namespace Conversation.Common
 			InteractionFailedTimeout = state.InteractionFailedTimeout;
 			PreSpeechPhrases = state.PreSpeechPhrases;
 			PreSpeechAnimation = state.PreSpeechAnimation;
+			InitAnimation = state.InitAnimation;
+			InitScript = state.InitScript;
+			PreSpeechScript = state.PreSpeechScript;
+			ListeningScript = state.ListeningScript;
+			AnimationScript = state.AnimationScript;
+			ListeningAnimation = state.ListeningAnimation;
 			Retrigger = state.Retrigger;
 			UsePreSpeech = state.UsePreSpeech;
 			StartListening = state.StartListening;
