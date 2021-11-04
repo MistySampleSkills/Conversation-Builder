@@ -139,7 +139,7 @@ namespace MistyCharacter
 		private ManagerConfiguration _managerConfiguration;
 		private object _runningSkillLock = new object();
 		private IList<string> _runningSkills = new List<string>();
-		private ConversationData _currentConversationData;
+		private ConversationData _currentConversationData = new ConversationData();
 		private object _lockWaitingOnResponse = new object();
 		private SemaphoreSlim _processingTriggersSemaphore = new SemaphoreSlim(1, 1);
 		private Random _random = new Random();
@@ -214,25 +214,15 @@ namespace MistyCharacter
 				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Robot, OriginalParameters, CharacterParameters, MistyState.GetCharacterState(), /*StateAtAnimationStart, PreviousState,*/ _genericDataStores, SpeechIntentManager);
 				await SpeechManager.Initialize();
 
-				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager,	HeadManager);
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager,HeadManager);
 				await AnimationManager.Initialize();
 
 				IgnoreEvents();
 
-				//subscribe to head events for deprecated head mgr
-				//ObjectEvent += HeadManager.HandleObjectDetectionEvent;
+				//subscribe to head events for deprecated head mgr				
 				MistyState.HeadPitchActuatorEvent += HeadManager.HandleActuatorEvent;
 				MistyState.HeadYawActuatorEvent += HeadManager.HandleActuatorEvent;
-				//HeadRollActuatorEvent += HeadManager.HandleActuatorEvent;
-
-
-
-				//LogEventDetails(Robot.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
-				//LogEventDetails(Robot.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
-				//LogEventDetails(Robot.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
-				//LogEventDetails(Robot.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
-
-
+				
 				SpeechManager.SpeechIntent += MistyState.HandleSpeechIntentReceived;
 				SpeechManager.SpeechIntent += SpeechManager_SpeechIntent;
 				SpeechManager.PreSpeechCompleted += SpeechManager_PreSpeechCompleted;
@@ -267,10 +257,16 @@ namespace MistyCharacter
 				MistyState.LeftArmActuatorEvent += HandleLeftArmEvent;
 				MistyState.RightArmActuatorEvent += HandleRightArmEvent;
 				MistyState.TimeOfFlightEvent += HandleTimeOfFlightEvent;
-				
 
 				InteractionEnded += RunNextAnimation;
 
+				//ObjectEvent += HeadManager.HandleObjectDetectionEvent;
+				//HeadRollActuatorEvent += HeadManager.HandleActuatorEvent;				
+				//LogEventDetails(Robot.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
+				//LogEventDetails(Robot.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
+				//LogEventDetails(Robot.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
+				//LogEventDetails(Robot.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
+				
 				StreamAndLogInteraction($"Starting Base Character animation processing...");
 
 				_latestTriggerMatchData = new KeyValuePair<DateTime, TriggerData>(DateTime.Now, new TriggerData("", "", Triggers.None));
@@ -439,9 +435,9 @@ namespace MistyCharacter
 			});
 		}
 
-		public void ManualTrigger(object sender, TriggerData trigger)
-		{
-			_ = SendManagedResponseEvent(new TriggerData(trigger.Text, trigger.TriggerFilter, trigger.Trigger));
+		public async void ManualTrigger(object sender, TriggerData trigger)
+		{		
+			_ = SendManagedResponseEvent(trigger);			
 		}
 
 		//Script added triggers
@@ -508,6 +504,7 @@ namespace MistyCharacter
 				LiveTriggers.Contains(triggerData.Trigger) ||
 				triggerData.Trigger == Triggers.Timeout ||
 				triggerData.Trigger == Triggers.Timer ||
+				triggerData.Trigger == Triggers.Manual ||
 				triggerData.Trigger == Triggers.AudioCompleted ||
 				triggerData.Trigger == Triggers.KeyPhraseRecognized
 			)
@@ -545,7 +542,13 @@ namespace MistyCharacter
 					IList<TriggerActionOption> triggerDetailMap = new List<TriggerActionOption>();
 					TriggerDetail triggerDetail = null;
 
-					if (!conversationTriggerCheck)
+					if (triggerData.Trigger == Triggers.Manual)
+					{
+						match = true;
+						triggerDetailMap = new List<TriggerActionOption>();
+						triggerDetailMap.Add(new TriggerActionOption { Id = "-1", GoToConversation = _currentConversationData.Id, GoToInteraction = triggerData.Text, InterruptCurrentAction = true, Retrigger = false, Weight = 1 });
+					}
+					else if (!conversationTriggerCheck)
 					{
 						foreach (KeyValuePair<string, IList<TriggerActionOption>> possibleIntent in allowedTriggers)
 						{
@@ -564,6 +567,7 @@ namespace MistyCharacter
 								if (triggerData.Trigger == Triggers.Timeout ||
 									triggerData.Trigger == Triggers.AudioCompleted ||
 									triggerData.Trigger == Triggers.KeyPhraseRecognized ||
+									triggerData.Trigger == Triggers.Manual ||
 									triggerData.Trigger == Triggers.Timer)
 								{
 									match = true;
@@ -760,7 +764,7 @@ namespace MistyCharacter
 
 
 					//if a match and it is mapped to something, go there, otherwise ignore as a trigger
-					if (match && triggerDetailMap != null && triggerDetailMap.Count() > 0)
+					if (match && ((triggerDetailMap != null && triggerDetailMap.Count() > 0) || (triggerData.Trigger == Triggers.Manual)))
 					{
 						//this is it!
 						_triggerHandled = true;
@@ -770,6 +774,20 @@ namespace MistyCharacter
 						MistyState.GetCharacterState().LatestTriggerMatched = new KeyValuePair<DateTime, TriggerData>(DateTime.Now, triggerData);
 						ValidTriggerReceived?.Invoke(this, triggerData);
 						Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Valid intent {triggerData.Trigger} {triggerData.TriggerFilter}.");
+
+						if(!string.IsNullOrWhiteSpace(triggerData.OverrideInteraction))
+						{
+							Guid guid;
+							if (!Guid.TryParse(triggerData.OverrideInteraction, out guid))
+							{
+								//it's the name, map it to id...
+								Interaction interaction = _currentConversationData.Interactions.FirstOrDefault(x => x.Name.Trim().ToLower() == triggerData.OverrideInteraction.Trim().ToLower());
+								guid = Guid.Parse(interaction.Id);
+							}
+							
+							triggerDetailMap = new List<TriggerActionOption>();
+							triggerDetailMap.Add(new TriggerActionOption { Id = "-1", GoToConversation = _currentConversationData.Id, GoToInteraction = guid.ToString(), InterruptCurrentAction = true, Retrigger = false, Weight = 1 });
+						}
 
 						_ = GoToNextAnimation(triggerDetailMap);
 
@@ -1026,206 +1044,229 @@ namespace MistyCharacter
 
 		private async Task GoToNextAnimation(IList<TriggerActionOption> possibleActions)
 		{
-			if (possibleActions == null || possibleActions.Count == 0)
+			try
 			{
-				//TODO Go to No Interaction selection?
-				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Unmapped intent. Going to the start of the same conversation...");
-				Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == _currentConversationData.StartupInteraction);
-				QueueInteraction(interactionRequest);
-				return;
-			}
-
-			TriggerActionOption selectedAction = new TriggerActionOption();
-			int actionCount = possibleActions.Count;
-			if (actionCount == 1)
-			{
-				selectedAction = possibleActions.FirstOrDefault();
-			}
-			else
-			{
-				try
+				if (possibleActions == null || possibleActions.Count == 0)
 				{
-					int counter = 0;
-					IDictionary<KeyValuePair<int, int>, TriggerActionOption> weightedItems = new Dictionary<KeyValuePair<int, int>, TriggerActionOption>();
-					foreach (TriggerActionOption action in possibleActions)
-					{
-						counter += action.Weight;
-						weightedItems.TryAdd(new KeyValuePair<int, int>(counter, action.Weight), action);
-					}
+					//TODO Go to No Interaction selection?
+					Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Unmapped intent. Going to the start of the same conversation...");
+					Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == _currentConversationData.StartupInteraction);
+					QueueInteraction(interactionRequest);
+					return;
+				}
 
-					int randomChoice = _random.Next(1, counter + 1);
-
-					KeyValuePair<KeyValuePair<int, int>, TriggerActionOption> weightedDetails = weightedItems.FirstOrDefault(x => randomChoice > x.Key.Key - x.Key.Value && randomChoice <= x.Key.Key);
-					if (weightedDetails.Value != null)
+				TriggerActionOption selectedAction = new TriggerActionOption();
+				int actionCount = possibleActions.Count;
+				if (actionCount == 1)
+				{
+					selectedAction = possibleActions.FirstOrDefault();
+				}
+				else
+				{
+					try
 					{
-						selectedAction = weightedDetails.Value;
+						int counter = 0;
+						IDictionary<KeyValuePair<int, int>, TriggerActionOption> weightedItems = new Dictionary<KeyValuePair<int, int>, TriggerActionOption>();
+						foreach (TriggerActionOption action in possibleActions)
+						{
+							counter += action.Weight;
+							weightedItems.TryAdd(new KeyValuePair<int, int>(counter, action.Weight), action);
+						}
+
+						int randomChoice = _random.Next(1, counter + 1);
+
+						KeyValuePair<KeyValuePair<int, int>, TriggerActionOption> weightedDetails = weightedItems.FirstOrDefault(x => randomChoice > x.Key.Key - x.Key.Value && randomChoice <= x.Key.Key);
+						if (weightedDetails.Value != null)
+						{
+							selectedAction = weightedDetails.Value;
+						}
+						else
+						{
+							selectedAction = possibleActions.FirstOrDefault();
+						}
 					}
-					else
+					catch
 					{
 						selectedAction = possibleActions.FirstOrDefault();
 					}
 				}
-				catch
+
+				if (selectedAction != null)
 				{
-					selectedAction = possibleActions.FirstOrDefault();
+					string interaction = selectedAction.GoToInteraction;
+					string conversation = selectedAction.GoToConversation;
+
+					//Is this a conversation departure?  TODO Clean this up, use empty guid?
+					if (interaction == "* Conversation Departure Point")
+					{
+						//Look up where the departure goes
+						KeyValuePair<string, ConversationMappingDetail> detail = _conversationGroup.ConversationMappings.FirstOrDefault(x => x.Value.DepartureMap.TriggerOptionId == selectedAction.Id);
+						if (detail.Value != null)
+						{
+							interaction = detail.Value.EntryMap.InteractionId;
+							conversation = detail.Value.EntryMap.ConversationId;
+						}
+						else
+						{
+							//Exit and stop app
+
+							await AnimationManager.StopRunningAnimationScripts();
+							Robot.SkillCompleted();
+						}
+					}
+
+					//if coming from an internal redirect, may not have an Id
+					if (selectedAction.Id == null || (_currentConversationData.InteractionAnimations == null || !_currentConversationData.InteractionAnimations.TryGetValue(selectedAction.Id, out string overrideAnimation)))
+					{
+						overrideAnimation = null;
+					}
+
+					if (selectedAction.Id == null || _currentConversationData.InteractionPreSpeechAnimations == null ||
+						!_currentConversationData.InteractionPreSpeechAnimations.TryGetValue(selectedAction.Id, out string preSpeechOverrideAnimation))
+					{
+						preSpeechOverrideAnimation = null;
+					}
+
+					if (selectedAction.Id == null || _currentConversationData.InteractionInitAnimations == null ||
+						!_currentConversationData.InteractionInitAnimations.TryGetValue(selectedAction.Id, out string initOverrideAnimation))
+					{
+						initOverrideAnimation = null;
+					}
+
+					if (selectedAction.Id == null || _currentConversationData.InteractionListeningAnimations == null ||
+						!_currentConversationData.InteractionListeningAnimations.TryGetValue(selectedAction.Id, out string listeningOverrideAnimation))
+					{
+						listeningOverrideAnimation = null;
+					}
+
+
+					if (string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
+					{
+						Robot.SkillLogger.Log($"Trigger has been activated, but the destination is unmapped, continuing to wait for mapped trigger.");
+						return;
+					}
+					else
+					{
+						IgnoreEvents();
+						SpeechManager.AbortListening(_currentAnimation.SpeakFileName ?? _currentAnimation.AudioFile);
+						if (selectedAction.InterruptCurrentAction)
+						{
+							//TODO Hacky fix for not interupting prespeech with interrupt flag set
+							int sanity = 0;
+							while (_waitingOnPrespeech && sanity < 30) //3 seconds max wait on prespeech flag
+							{
+								sanity++;
+								await Task.Delay(100);
+							}
+							Robot.StopSpeaking(null);
+							Robot.StopAudio(null);
+							await Task.Delay(25);
+						}
+						else if (!string.IsNullOrWhiteSpace(_currentAnimation.Speak) || !string.IsNullOrWhiteSpace(_currentAnimation.AudioFile))
+						{
+							//this shouldn't be necessary
+							int sanity = 0;
+							while (MistyState.GetCharacterState().Speaking && sanity < 6000)
+							{
+								sanity++;
+								await Task.Delay(100);
+							}
+							if (sanity == 6000)
+							{
+								Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Possible error managing speech, unless Misty has actually been speaking in one interaction for a minute.");
+							}
+						}
+
+						if ((string.IsNullOrWhiteSpace(conversation) || conversation == _currentConversationData?.Id) && !string.IsNullOrWhiteSpace(interaction))
+						{
+							Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Going to interaction {interaction} in the same conversation...");
+							Interaction interactionRequest = _currentConversationData?.Interactions?.FirstOrDefault(x => x.Id == interaction);
+							if (interactionRequest != null)
+							{
+								interactionRequest.Retrigger = selectedAction.Retrigger;
+								if (overrideAnimation != null)
+								{
+									interactionRequest.Animation = overrideAnimation;
+								}
+								if (preSpeechOverrideAnimation != null)
+								{
+									interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
+								}
+								if (initOverrideAnimation != null)
+								{
+									interactionRequest.InitAnimation = initOverrideAnimation;
+								}
+								if (listeningOverrideAnimation != null)
+								{
+									interactionRequest.ListeningAnimation = listeningOverrideAnimation;
+								}
+								QueueInteraction(interactionRequest);
+							}
+						}
+						else if (!string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
+						{
+							Robot.SkillLogger.Log($"Going to the start of conversation {conversation}...");
+
+							_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
+
+							Interaction interactionRequest = _currentConversationData?.Interactions?.FirstOrDefault(x => x.Id == _currentConversationData.StartupInteraction);
+							if(interactionRequest != null)
+							{
+								interactionRequest.Retrigger = selectedAction.Retrigger;
+								if (overrideAnimation != null)
+								{
+									interactionRequest.Animation = overrideAnimation;
+								}
+								if (preSpeechOverrideAnimation != null)
+								{
+									interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
+								}
+								if (initOverrideAnimation != null)
+								{
+									interactionRequest.InitAnimation = initOverrideAnimation;
+								}
+								if (listeningOverrideAnimation != null)
+								{
+									interactionRequest.ListeningAnimation = listeningOverrideAnimation;
+								}
+								QueueInteraction(interactionRequest);
+							}
+						}
+						else if (!string.IsNullOrWhiteSpace(conversation) && !string.IsNullOrWhiteSpace(interaction))
+						{
+							Robot.SkillLogger.Log($"Going to interaction {interaction} in conversation {conversation}...");
+
+							_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
+
+							Interaction interactionRequest = _currentConversationData?.Interactions?.FirstOrDefault(x => x.Id == interaction);
+							if (interactionRequest != null)
+							{
+								interactionRequest.Retrigger = selectedAction.Retrigger;
+								if (overrideAnimation != null)
+								{
+									interactionRequest.Animation = overrideAnimation;
+								}
+								if (preSpeechOverrideAnimation != null)
+								{
+									interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
+								}
+								if (initOverrideAnimation != null)
+								{
+									interactionRequest.InitAnimation = initOverrideAnimation;
+								}
+								if (listeningOverrideAnimation != null)
+								{
+									interactionRequest.ListeningAnimation = listeningOverrideAnimation;
+								}
+								QueueInteraction(interactionRequest);
+							}
+						}
+					}
 				}
 			}
-
-			if (selectedAction != null)
+			catch (Exception ex)
 			{
-				string interaction = selectedAction.GoToInteraction;
-				string conversation = selectedAction.GoToConversation;
-
-				//Is this a conversation departure?  TODO Clean this up, use empty guid?
-				if (interaction == "* Conversation Departure Point")
-				{
-					//Look up where the departure goes
-					KeyValuePair<string, ConversationMappingDetail> detail = _conversationGroup.ConversationMappings.FirstOrDefault(x => x.Value.DepartureMap.TriggerOptionId == selectedAction.Id);
-					if (detail.Value != null)
-					{
-						interaction = detail.Value.EntryMap.InteractionId;
-						conversation = detail.Value.EntryMap.ConversationId;
-					}
-				}
-
-				//if coming from an internal redirect, may not have an Id
-				if (selectedAction.Id == null || (_currentConversationData.InteractionAnimations == null || !_currentConversationData.InteractionAnimations.TryGetValue(selectedAction.Id, out string overrideAnimation)))
-				{
-					overrideAnimation = null;
-				}
-
-				if (selectedAction.Id == null || _currentConversationData.InteractionPreSpeechAnimations == null ||
-					!_currentConversationData.InteractionPreSpeechAnimations.TryGetValue(selectedAction.Id, out string preSpeechOverrideAnimation))
-				{
-					preSpeechOverrideAnimation = null;
-				}
-
-				if (selectedAction.Id == null || _currentConversationData.InteractionInitAnimations == null ||
-					!_currentConversationData.InteractionInitAnimations.TryGetValue(selectedAction.Id, out string initOverrideAnimation))
-				{
-					initOverrideAnimation = null;
-				}
-
-				if (selectedAction.Id == null || _currentConversationData.InteractionListeningAnimations == null ||
-					!_currentConversationData.InteractionListeningAnimations.TryGetValue(selectedAction.Id, out string listeningOverrideAnimation))
-				{
-					listeningOverrideAnimation = null;
-				}
-
-
-				if (string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
-				{
-					Robot.SkillLogger.Log($"Trigger has been activated, but the destination is unmapped, continuing to wait for mapped trigger.");
-					return;
-				}
-				else
-				{
-					IgnoreEvents();
-					SpeechManager.AbortListening(_currentAnimation.SpeakFileName ?? _currentAnimation.AudioFile);
-					if (selectedAction.InterruptCurrentAction)
-					{
-						//TODO Hacky fix for not interupting prespeech with interrupt flag set
-						int sanity = 0;
-						while (_waitingOnPrespeech && sanity < 30) //3 seconds max wait on prespeech flag
-						{
-							sanity++;
-							await Task.Delay(100);
-						}
-						Robot.StopSpeaking(null);
-						Robot.StopAudio(null);
-						await Task.Delay(25);
-					}
-					else if (!string.IsNullOrWhiteSpace(_currentAnimation.Speak) || !string.IsNullOrWhiteSpace(_currentAnimation.AudioFile))
-					{
-						//this shouldn't be necessary
-						int sanity = 0;
-						while (MistyState.GetCharacterState().Speaking && sanity < 6000)
-						{
-							sanity++;
-							await Task.Delay(100);
-						}
-						if (sanity == 6000)
-						{
-							Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Possible error managing speech, unless Misty has actually been speaking in one interaction for a minute.");
-						}
-					}
-
-					if ((string.IsNullOrWhiteSpace(conversation) || conversation == _currentConversationData.Id) && !string.IsNullOrWhiteSpace(interaction))
-					{
-						Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Going to interaction {interaction} in the same conversation...");
-						Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == interaction);
-						interactionRequest.Retrigger = selectedAction.Retrigger;
-						if (overrideAnimation != null)
-						{
-							interactionRequest.Animation = overrideAnimation;
-						}
-						if (preSpeechOverrideAnimation != null)
-						{
-							interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
-						}
-						if (initOverrideAnimation != null)
-						{
-							interactionRequest.InitAnimation = initOverrideAnimation;
-						}
-						if (listeningOverrideAnimation != null)
-						{
-							interactionRequest.ListeningAnimation = listeningOverrideAnimation;
-						}
-						QueueInteraction(interactionRequest);
-					}
-					else if (!string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
-					{
-						Robot.SkillLogger.Log($"Going to the start of conversation {conversation}...");
-
-						_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
-
-						Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == _currentConversationData.StartupInteraction);
-						interactionRequest.Retrigger = selectedAction.Retrigger;
-						if (overrideAnimation != null)
-						{
-							interactionRequest.Animation = overrideAnimation;
-						}
-						if (preSpeechOverrideAnimation != null)
-						{
-							interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
-						}
-						if (initOverrideAnimation != null)
-						{
-							interactionRequest.InitAnimation = initOverrideAnimation;
-						}
-						if (listeningOverrideAnimation != null)
-						{
-							interactionRequest.ListeningAnimation = listeningOverrideAnimation;
-						}
-						QueueInteraction(interactionRequest);
-					}
-					else if (!string.IsNullOrWhiteSpace(conversation) && !string.IsNullOrWhiteSpace(interaction))
-					{
-						Robot.SkillLogger.Log($"Going to interaction {interaction} in conversation {conversation}...");
-
-						_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == conversation);
-
-						Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == interaction);
-						interactionRequest.Retrigger = selectedAction.Retrigger;
-						if (overrideAnimation != null)
-						{
-							interactionRequest.Animation = overrideAnimation;
-						}
-						if (preSpeechOverrideAnimation != null)
-						{
-							interactionRequest.PreSpeechAnimation = preSpeechOverrideAnimation;
-						}
-						if (initOverrideAnimation != null)
-						{
-							interactionRequest.InitAnimation = initOverrideAnimation;
-						}
-						if (listeningOverrideAnimation != null)
-						{
-							interactionRequest.ListeningAnimation = listeningOverrideAnimation;
-						}
-						QueueInteraction(interactionRequest);
-					}
-				}
+				Robot.SkillLogger.Log($"Exception thrown while going to next animation", ex);
 			}
 		}
 
@@ -1248,7 +1289,7 @@ namespace MistyCharacter
 				}
 				else
 				{
-					StopConversation("Skill shutting down, stopping conversation.");
+					StopConversation();
 				}
 			}
 			catch (Exception ex)
@@ -1576,7 +1617,7 @@ namespace MistyCharacter
 
 				if (!string.IsNullOrWhiteSpace(finalAnimation.AnimationScript))
 				{
-					_ = AnimationManager.RunAnimationScript(finalAnimation.AnimationScript, finalAnimation.RepeatScript, _currentAnimation, newInteraction);
+					_ = AnimationManager.RunAnimationScript(finalAnimation.AnimationScript.Replace("’", "'").Replace("“", "\"").Replace("”", "\""), finalAnimation.RepeatScript, _currentAnimation, newInteraction, _currentConversationData);
 				}
 
 			}
@@ -1596,14 +1637,17 @@ namespace MistyCharacter
 					return;
 				}
 
+				
 				AnimationRequest originalAnimationRequest = _currentConversationData.Animations.FirstOrDefault(x => x.Id == interaction.Animation);
 				if (originalAnimationRequest == null)
 				{
 					Robot.SkillLogger.Log($"Could not find animation for interaction {interaction?.Name ?? interaction?.Id}.");
 					return;
 				}
-				//Make copy cuz we are decorating and changing things here
+
 				AnimationRequest animationRequest = new AnimationRequest(originalAnimationRequest);
+				
+				//Make copy cuz we are decorating and changing things here
 				Interaction newInteraction = new Interaction(interaction);
 
 				if (animationRequest == null || newInteraction == null)
@@ -1614,8 +1658,8 @@ namespace MistyCharacter
 
 				//Await completion of final commands
 
-				//HeadManager.StopMovement();
-				//ArmManager.StopMovement();
+				HeadManager.StopMovement();
+				ArmManager.StopMovement();
 				//await AnimationManager.StopRunningAnimationScripts();
 
 				//should we start skill listening even if it may retrigger?
@@ -1817,7 +1861,7 @@ namespace MistyCharacter
 					ArmManager.StopMovement();
 					await AnimationManager.StopRunningAnimationScripts();
 
-					_ = AnimationManager.RunAnimationScript(CurrentInteraction.InitScript, false, _currentAnimation, CurrentInteraction);					
+					await AnimationManager.RunAnimationScript(CurrentInteraction.InitScript, false, _currentAnimation, CurrentInteraction, _currentConversationData);					
 				}
 				
 				AnimationRequest initAnimation;
@@ -1834,10 +1878,8 @@ namespace MistyCharacter
 							ArmManager.StopMovement();
 							await AnimationManager.StopRunningAnimationScripts();
 						}
-						_ = Task.Run(async () =>
-						{
-							await IntermediateAnimationRequestProcessor(initAnimation, newInteraction, "init");
-						});
+						
+						await IntermediateAnimationRequestProcessor(initAnimation, newInteraction, "init");						
 					}
 				}
 				
@@ -1929,9 +1971,13 @@ namespace MistyCharacter
 					});
 				}
 
-				if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
+				if (!string.IsNullOrWhiteSpace(newInteraction.AnimationScript))
 				{
-					_ = AnimationManager.RunAnimationScript(animationRequest.AnimationScript, animationRequest.RepeatScript, _currentAnimation, CurrentInteraction);
+					_ = AnimationManager.RunAnimationScript(newInteraction.AnimationScript, animationRequest.RepeatScript, animationRequest, CurrentInteraction, _currentConversationData);
+				}
+				else if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
+				{
+					_ = AnimationManager.RunAnimationScript(animationRequest.AnimationScript, animationRequest.RepeatScript, animationRequest, CurrentInteraction, _currentConversationData);
 				}
 
 				//If animation is shorter than audio, there could be some oddities in conversations... should we still allow it?
@@ -2054,7 +2100,7 @@ namespace MistyCharacter
 						_waitingOnPrespeech = true;
 						_ = Task.Run(async () =>
 						{
-							_ = await AnimationManager.RunAnimationScript(CurrentInteraction.PreSpeechScript, false, _currentAnimation, CurrentInteraction);
+							_ = await AnimationManager.RunAnimationScript(CurrentInteraction.PreSpeechScript, false, _currentAnimation, CurrentInteraction, _currentConversationData);
 						});						
 					}
 
@@ -2142,10 +2188,10 @@ namespace MistyCharacter
 				//don't await completion of those commands?
 				HeadManager.StopMovement();
 				ArmManager.StopMovement();
-				//await AnimationManager.StopRunningAnimationScripts();
+				await AnimationManager.StopRunningAnimationScripts();
 				runningInitScript = true;
 
-				_ = AnimationManager.RunAnimationScript(CurrentInteraction.ListeningScript, false, _currentAnimation, CurrentInteraction);
+				_ = AnimationManager.RunAnimationScript(CurrentInteraction.ListeningScript, false, _currentAnimation, CurrentInteraction, _currentConversationData);
 			}
 			
 			AnimationRequest listeningAnimation;
@@ -2157,7 +2203,7 @@ namespace MistyCharacter
 					{
 						HeadManager.StopMovement();
 						ArmManager.StopMovement();
-					//	await AnimationManager.StopRunningAnimationScripts();
+						await AnimationManager.StopRunningAnimationScripts();
 					}
 					listeningAnimation.Silence = true;
 					_ = IntermediateAnimationRequestProcessor(listeningAnimation, CurrentInteraction, "listening");
@@ -2779,8 +2825,8 @@ namespace MistyCharacter
 				{
 					Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Interaction timeout. No intents were triggered, stopping conversation.");
 					TriggerAnimationComplete(CurrentInteraction);
-					StopConversation();
-					Robot.Speak("Interaction timed out with unmapped conversation 'No Trigger Interaction' action.  Cancelling skill.", true, "InteractionTimeout", null);
+					//StopConversation();
+					//Robot.Speak("Interaction timed out with unmapped conversation 'No Trigger Interaction' action.  Cancelling skill.", true, "InteractionTimeout", null);
 					await Task.Delay(5000);
 					Robot.SkillCompleted();
 				}

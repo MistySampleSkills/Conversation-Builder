@@ -501,7 +501,7 @@ namespace MistyCharacter
 			{
 				_misty.StartFaceRecognition(null);
 				//Misty.StartFaceDetection(null);
-				LogEventDetails(_misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, 100, true, null, "FaceRecognition", null));
+				LogEventDetails(_misty.RegisterFaceRecognitionEvent(FaceRecognitionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce * 1000), true, null, "FaceRecognition", null));
 				_faceRecognitionRegistered = true;
 			}
 			else if (!_objectDetectionRegistered && string.Equals(trigger, Triggers.ObjectSeen, StringComparison.OrdinalIgnoreCase))

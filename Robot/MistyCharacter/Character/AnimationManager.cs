@@ -146,6 +146,7 @@ namespace MistyCharacter
 		public event EventHandler<KeyValuePair<string, TriggerData>> RegisterEvent;
 		public event EventHandler<string> RemoveTrigger;
 		public event EventHandler<TriggerData> ManualTrigger;
+		public ConversationData _currentConversationData;
 
 		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState, ITimeManager timeManager = null, IHeadManager headManager = null)
 		: base(misty, parameters, characterParameters)
@@ -189,7 +190,7 @@ namespace MistyCharacter
 		{
 			_headManager.StopMovement();
 			await StopRunningAnimationScripts();
-			_ = RunAnimationScript(script, false, _currentAnimation, _currentInteraction);
+			_ = RunAnimationScript(script, false, _currentAnimation, _currentInteraction, _currentConversationData);
 		}
 
 		private async void _speechManager_StoppedSpeaking(object sender, IAudioPlayCompleteEvent e)
@@ -450,7 +451,7 @@ namespace MistyCharacter
 			return response;
 		}
 
-		public async Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, bool stopOnFailedCommand = false)
+		public async Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, ConversationData currentConversationData, bool stopOnFailedCommand = false)
 		{
 			try
 			{
@@ -459,6 +460,7 @@ namespace MistyCharacter
 				//	return false;
 				//}
 				_runningAnimation = true;
+				_currentConversationData = currentConversationData;
 				if (!string.IsNullOrWhiteSpace(animationScript))
 				{
 					StartedAnimationScript?.Invoke(this, DateTime.Now);
@@ -466,7 +468,7 @@ namespace MistyCharacter
 					_currentAnimation = currentAnimation;
 					_currentInteraction = currentInteraction;
 					_animationsCanceled = false;
-					animationScript = animationScript.Trim().Replace(Environment.NewLine, "");
+					animationScript = animationScript.Trim().Replace(Environment.NewLine, "").Replace("’", "'").Replace("“", "\"").Replace("”", "\"");
 					string[] commands = animationScript.Split(";");
 					foreach (string command in commands)
 					{
@@ -649,7 +651,7 @@ namespace MistyCharacter
 
 		private double? GetNullableObject(string [] array, int index)
 		{
-			if (array == null || array.Length < index || array.ElementAtOrDefault(index) == null)
+			if (array == null || array.Length < index || array.ElementAtOrDefault(index) == null || array.ElementAtOrDefault(index).Trim() == "null")
 			{
 				return null;
 			}
@@ -969,7 +971,10 @@ namespace MistyCharacter
 									Visible = false
 								});
 								break;
-							
+							case "END-SKILL":
+								await StopRunningAnimationScripts();
+								Robot.SkillCompleted();
+								break;
 							case "FOLLOW-FACE":
 								//FOLLOW-FACE;
 								HeadLocation _currentHeadRequest = new HeadLocation(-40, -2, -45, 10, 2, 45, 0.5, null);
@@ -981,10 +986,10 @@ namespace MistyCharacter
 								break;
 							case "STOP-FOLLOW":
 								//STOP-FOLLOW;
-								HeadLocation _stopFollowHeadRequest = new HeadLocation(-40, -2, -45, 10, 2, 45, 0.5, null);
-								_stopFollowHeadRequest.FollowFace = false;
-								_stopFollowHeadRequest.FollowObject = "";
-								_headManager.HandleHeadAction(_stopFollowHeadRequest);
+								//HeadLocation _stopFollowHeadRequest = new HeadLocation(-40, -2, -45, 10, 2, 45, 0.5, null);
+								//_stopFollowHeadRequest.FollowFace = false;
+								//_stopFollowHeadRequest.FollowObject = "";
+								_headManager.StopMovement();//.HandleHeadAction(_stopFollowHeadRequest);
 								break;
 							case "FOLLOW-OBJECT":
 								//FOLLOW-OBJECT:objectName;
@@ -1005,8 +1010,8 @@ namespace MistyCharacter
 									});
 									_userImageLayerVisible = true;
 								}*/
-			//_ = Robot.DisplayImageAsync(commandData[1], "UserImageLayer", true);
-			_ = Robot.DisplayImageAsync(commandData[1], null, true);
+								//_ = Robot.DisplayImageAsync(commandData[1], "UserImageLayer", true);
+								_ = Robot.DisplayImageAsync(commandData[1], null, true);
 								break;
 							case "TEXT":
 								//TEXT:text to display;
@@ -1193,7 +1198,7 @@ namespace MistyCharacter
 								}
 
 								_currentInteraction.StartListening = false;
-								_speechManager.Speak(_currentAnimation, _currentInteraction);
+								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								break;
 
 							case "SPEAK-AND-WAIT":
@@ -1209,7 +1214,7 @@ namespace MistyCharacter
 								}
 
 								_currentInteraction.StartListening = false;
-								_speechManager.Speak(_currentAnimation, _currentInteraction);
+								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								await WaitOnSpeechCompletionEvent(Convert.ToInt32(sawData[1]));
 								break;
 
@@ -1227,9 +1232,9 @@ namespace MistyCharacter
 									_currentAnimation.Speak = sasData[0];
 								}
 								_currentInteraction.StartListening = false;
-								
-								
-								_speechManager.Speak(_currentAnimation, _currentInteraction);
+
+
+								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								//await Task.Delay(100);
 								_awaitingSyncToSend = new AwaitingSync
 								{
@@ -1251,8 +1256,8 @@ namespace MistyCharacter
 									_currentAnimation.Speak = saeData[0];
 								}
 								_currentInteraction.StartListening = false;
-								
-								_speechManager.Speak(_currentAnimation, _currentInteraction);
+
+								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								//await Task.Delay(100);
 								_awaitingEventToSend = new AwaitingEvent
 								{
@@ -1276,7 +1281,7 @@ namespace MistyCharacter
 									_currentAnimation.Speak = salData[0];
 								}
 								_currentInteraction.StartListening = true;
-								_speechManager.Speak(_currentAnimation, _currentInteraction);
+								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								break;
 							case "START-LISTEN":
 								//START-LISTEN;
@@ -1471,10 +1476,20 @@ namespace MistyCharacter
 							case "GOTO-ACTION":
 								//GOTO-ACTION:Action;
 								string[] gotoData = commandData[1].Split(",");
-								TriggerData newTriggerData0 = new TriggerData("", "Manual", "Manual") { OverrideInteraction = gotoData[0] };
+
+								Guid guid;
+								if(!Guid.TryParse(gotoData[0], out guid))
+								{
+									//it's the name, map it to id...
+									Interaction interaction = _currentConversationData.Interactions.FirstOrDefault(x => x.Name.Trim().ToLower() == gotoData[0].Trim().ToLower());
+									guid = Guid.Parse(interaction.Id);
+								}
+
+								TriggerData newTriggerData0 = new TriggerData(guid.ToString(), Triggers.Manual, Triggers.Manual) { OverrideInteraction = guid.ToString() };
 								newTriggerData0.KeepAlive = false;
-								newTriggerData0.OverrideInteraction = gotoData[0];
+								newTriggerData0.OverrideInteraction = guid.ToString();
 								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(gotoData[0], newTriggerData0));
+								//_mistyState.RegisterEvent(Triggers.Manual);
 								await Task.Delay(200);
 								ManualTrigger?.Invoke(this, newTriggerData0);
 								break;
@@ -1487,10 +1502,12 @@ namespace MistyCharacter
 									filter2 = triggerData2[3];
 								}
 								//?? Part of add trigger?  RegisterEvent(triggerData2[2]);
+								_mistyState.RegisterEvent(triggerData2[2]);
 								TriggerData newTriggerData = new TriggerData(null, filter2, triggerData2[2]);
 								newTriggerData.KeepAlive = false;
 								newTriggerData.OverrideInteraction = triggerData2[1];
 								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData2[0], newTriggerData));
+								
 								break;
 							case "T-ON":
 								//T-ON:Name,Trigger,TriggerFilter;
@@ -1501,6 +1518,7 @@ namespace MistyCharacter
 									filter = triggerData[2];
 								}
 								//?? Part of add trigger?  RegisterEvent(triggerData[1]);
+								_mistyState.RegisterEvent(triggerData[1]);
 								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData[0], new TriggerData(null, filter, triggerData[1])));
 								break;
 							case "T-ACTION!":
@@ -1512,6 +1530,7 @@ namespace MistyCharacter
 									filterA = triggerDataA[3];
 								}
 								//?? Part of add trigger?  RegisterEvent(triggerDataA[2]);
+								_mistyState.RegisterEvent(triggerDataA[2]);
 								TriggerData newTriggerDataA = new TriggerData(null, filterA, triggerDataA[2]);
 								newTriggerDataA.KeepAlive = true;
 								newTriggerDataA.OverrideInteraction = triggerDataA[1];
@@ -1526,6 +1545,7 @@ namespace MistyCharacter
 									filter4 = triggerData4[2];
 								}
 								//?? Part of add trigger?  RegisterEvent(triggerData4[1]);
+								_mistyState.RegisterEvent(triggerData4[1]);
 								TriggerData newTriggerData4 = new TriggerData(null, filter4, triggerData4[1]);
 								newTriggerData4.KeepAlive = true;
 								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData4[0], newTriggerData4));
@@ -1558,7 +1578,10 @@ namespace MistyCharacter
 								_ = Task.Run(async () =>
 								{
 									//Use timer instead?
-									await Task.Delay(Convert.ToInt32(timedTriggerEventData[0]));
+									await Task.Delay(Convert.ToInt32(timedTriggerEventData[0])-200);
+
+									//_mistyState.RegisterEvent(Triggers.Manual);
+									await Task.Delay(200);
 									ManualTrigger?.Invoke(this, new TriggerData(timedText, timedTriggerEventData[2], timedTriggerEventData[1]));
 								});
 								break;

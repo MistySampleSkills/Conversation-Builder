@@ -54,7 +54,7 @@ namespace SpeechTools
 
 		Task<bool> Initialize();
 		int Volume { get; set; }
-		void Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
+		Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
 		string GetLocaleName(string name);
 		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);

@@ -43,7 +43,7 @@ namespace MistyManager
 				_assetWrapper = new AssetWrapper(_misty);
 				await _assetWrapper.LoadAssets(true);
 
-				_assetWrapper.ShowSystemImage(SystemImage.SystemGearPrompt);
+				_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
 				await _misty.SetTextDisplaySettingsAsync("Text", new TextSettings
 				{
 					Wrap = true,
@@ -57,7 +57,7 @@ namespace MistyManager
 					Blue = 255,
 					PlaceOnTop = true,
 					FontFamily = "Courier New",
-					Height = 60
+					Height = 40
 				});
 				_misty.DisplayText("Initializing robot systems...", "Text", null);
 
@@ -65,11 +65,11 @@ namespace MistyManager
 				_misty.MoveArms(65.0, 65.0, 20, 20, null, AngularUnit.Degrees, null);
 				_misty.MoveHead(0, 0, 0, 75, AngularUnit.Degrees, null);
 				
-				await Task.Delay(2000);
+				//await Task.Delay(2000);
 				
-				_misty.DisplayText("Audio and camera check...", "Text", null);
-				_assetWrapper.ShowSystemImage(SystemImage.SystemCamera);
-				await Task.Delay(2000);
+				//_misty.DisplayText("Audio and camera check...", "Text", null);
+				//_assetWrapper.ShowSystemImage(SystemImage.SystemCamera);
+				//await Task.Delay(2000);
 
 				try
 				{
@@ -108,8 +108,7 @@ namespace MistyManager
 					//Warned them, but try anyway in case they are just slow to come up
 				}
 
-				_misty.DisplayText($"Configuring robot settings...", "Text", null);
-				_assetWrapper.ShowSystemImage(SystemImage.SystemLogoPrompt);
+				//_assetWrapper.ShowSystemImage(SystemImage.SystemLogoPrompt);
 				
 				_parameterManager = new ParameterManager(_misty, _parameters);
 				if (_parameterManager == null)
@@ -119,7 +118,10 @@ namespace MistyManager
 					_misty.SkillCompleted();
 					return false;
 				}
-				
+
+				await Task.Delay(2000);
+				_misty.DisplayText($"Retrieving conversation...", "Text", null);
+				_assetWrapper.ShowSystemImage(SystemImage.ContentLeft);
 				_characterParameters = await _parameterManager.Initialize();
 				if (_characterParameters != null && _characterParameters.InitializationErrorStatus != "Error")
 				{
@@ -130,10 +132,11 @@ namespace MistyManager
 					}
 					else
 					{
-						_misty.DisplayText($"Loading conversation.", "Text", null);
+						_misty.DisplayText($"Loading conversation...", "Text", null);
+						_assetWrapper.ShowSystemImage(SystemImage.ContentRight);
 						await _misty.TransitionLEDAsync(0, 255, 0, 30, 144, 255, LEDTransition.Breathe, 1000);
 					}
-
+					await Task.Delay(2000);
 
 					_misty.DisplayText($"Waking robot...", "Text", null);
 					_assetWrapper.ShowSystemImage(SystemImage.Joy);
@@ -154,13 +157,14 @@ namespace MistyManager
 					if (initialized)
 					{
 						_misty.DisplayText("Hello!", "Text", null);
+						_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
 					}
 					else
 					{
 						_misty.DisplayText("Failed to wake up robot!", "Text", null);
-						
+						_assetWrapper.ShowSystemImage(SystemImage.SleepingZZZ);
+
 					}
-					_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
 					await Task.Delay(2000);
 					return initialized;
 				}

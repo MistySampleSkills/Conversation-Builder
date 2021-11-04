@@ -42,6 +42,7 @@ using MistyRobotics.SDK.Messengers;
 namespace MistyCharacter
 {
 	//Deprecated, update for face and object follow only
+	//TODO Should cleanup, but really should go away	
 	public class HeadManager : BaseManager, IHeadManager
 	{
 		//public event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
@@ -62,10 +63,15 @@ namespace MistyCharacter
 		private object _findFaceLock = new object();
 		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
 		private DateTime _followedObjectLastSeen = DateTime.Now;
+		private DateTime _faceLastSeen = DateTime.Now;
+		private DateTime _lastHandledFaceTime = DateTime.Now;
 		private DateTime _lastMovementCommand = DateTime.Now;
 		private bool _tick = false;
 		int? _currentElevation = null;
 		int? _currentBearing = null;
+		private bool _finding = false;
+		private bool _findingPersonObject = false;
+		bool _handlingMove = false;
 		//private int _lookAroundThrottle = 0;
 
 		public HeadManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
@@ -179,7 +185,7 @@ namespace MistyCharacter
 				}
 				else
 				{
-					if (_currentHeadRequest.FollowFace || !string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject))
+					if (_currentHeadRequest.FollowFace || !string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject) && !_headMovingContinuously)
 					{
 						_headMovingContinuously = true;
 						lock (_timerLock)
@@ -214,20 +220,17 @@ namespace MistyCharacter
 
 		public void HandleFaceRecognitionEvent(object sender, IFaceRecognitionEvent faceRecognitionEvent)
 		{
-			if (_currentHeadRequest.FollowFace)
+			
+			if (faceRecognitionEvent.Bearing >= -1 && faceRecognitionEvent.Bearing <= 1 && faceRecognitionEvent.Elevation >= -1 && faceRecognitionEvent.Elevation <= 1)
 			{
-				if (faceRecognitionEvent.Bearing >= -1 && faceRecognitionEvent.Bearing <= 1 && faceRecognitionEvent.Elevation >= -1 && faceRecognitionEvent.Elevation <= 1)
-				{
-					return;
-				}
-
-				_currentElevation = faceRecognitionEvent.Elevation;
-				_currentBearing = faceRecognitionEvent.Bearing;
-
-				//Robot.DisplayText($"Bearing {faceRecognitionEvent.Bearing.ToString()} - Pitch {faceRecognitionEvent.Elevation.ToString()}", "Debug", null);
-				//Robot.MoveHead(faceRecognitionEvent.Elevation - 10, 0, faceRecognitionEvent.Bearing * 2, null, 0.350, AngularUnit.Degrees, null);
+				return;
 			}
+				
+			_faceLastSeen = DateTime.Now;
+			_currentElevation = faceRecognitionEvent.Elevation;
+			_currentBearing = faceRecognitionEvent.Bearing;			
 		}
+
 
 
 		public void HandleObjectDetectionEvent(object sender, IObjectDetectionEvent objEvent)
@@ -259,158 +262,183 @@ namespace MistyCharacter
 			}
 		}
 
+		//TODO Lotso cleanup
 		private void MoveHeadCallback(object timerData)
 		{
-			if(_headMovingContinuously)
+			try
 			{
-				_tick = !_tick;
-
-				bool _lookAroundFailover = false;
-				if(_currentHeadRequest.FollowFace)
+				if(_lastHandledFaceTime == _faceLastSeen)
 				{
-					if (_currentElevation != null && _currentBearing != null)
-					{
-						Robot.MoveHead(_currentElevation - 10, 0, _currentBearing * 2, null, 0.350, AngularUnit.Degrees, null);
-						_currentElevation = null;
-						_currentBearing = null;
-					}
-					else if (_lastPersonEvent != null)
-					{
-						FindAndFollowPerson(_lastPersonEvent);
-						return;
-					}
-					else if(_currentHeadRequest.StartLookAroundOnLostObject != null && _currentHeadRequest.StartLookAroundOnLostObject > 0)
-					{
-						//Look around if lost it for too long
-						if(_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject) &&
-							_lastMovementCommand < DateTime.Now.AddSeconds(-_currentHeadRequest.DelayBetweenMovements))
-						{
-							_lookAroundFailover = true;
-						}
-					}
+					return;
 				}
-				else if(!string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject))
-				{
-					if(_lastObjectEvent != null && _lastObjectEvent.Description.ToLower() == _currentHeadRequest.FollowObject.ToLower())
-					{
-						FindAndFollowObject(_lastObjectEvent);
-						return;
-					}
-					else if (_currentHeadRequest.StartLookAroundOnLostObject != null && _currentHeadRequest.StartLookAroundOnLostObject > 0)
-					{
-						//Look around if lost it for too long
-						if (_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject) &&
-							_lastMovementCommand < DateTime.Now.AddSeconds(-_currentHeadRequest.DelayBetweenMovements))
-						{
-							_lookAroundFailover = true;
-						}
-					}
-				}
-				
-				//Else, look around using ranges provided
-				if (_lookAroundFailover ||(!_currentHeadRequest.FollowFace && string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject)))
-				{   
-					//if the Min and Max of a movement match or one of them is null, go to that point exactly
-					//if both are null, don't move that axis
-					//if different, 
-					 //then check if this is an exact range movement
-					  // if it is, start to go there (whether you make it depends on the duration/velocity before the next movement is started
-					  // if not, pick a random range and try to go there...
-					  
-					//Goto location if given range
-					double? newPitch = null;
-					if (_currentHeadRequest.MinPitch != null && _currentHeadRequest.MaxPitch != null)
-					{
-						if(_currentHeadRequest.MinPitch == _currentHeadRequest.MaxPitch)
-						{
-							newPitch = _currentHeadRequest.MinPitch;
-						}
-						else
-						{
-							double? minPitch = _currentHeadRequest.MinPitch < _currentHeadRequest.MaxPitch ? _currentHeadRequest.MinPitch : _currentHeadRequest.MaxPitch;
-							double? maxPitch = _currentHeadRequest.MinPitch < _currentHeadRequest.MaxPitch ? _currentHeadRequest.MaxPitch : _currentHeadRequest.MinPitch;
+				_lastHandledFaceTime = _faceLastSeen;
 
-							if(_currentHeadRequest.RandomRange)
+				if (_handlingMove)
+				{
+					return;
+				}
+				_handlingMove = true;
+
+				if (_headMovingContinuously)
+				{
+					_tick = !_tick;
+
+					bool _lookAroundFailover = false;
+					if (_currentHeadRequest.FollowFace)
+					{
+						if (_currentElevation != null && _currentBearing != null)
+						{
+							
+							Robot.MoveHead(_currentElevation + CharacterParameters.FacePitchOffset, _random.Next(0, 5), _currentBearing, null, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce), AngularUnit.Degrees, null);
+							_currentElevation = null;
+							_currentBearing = null;
+						}
+						else if (_lastPersonEvent != null)
+						{
+							FindAndFollowPerson(_lastPersonEvent);
+							return;
+						}
+						//else if (_currentHeadRequest.StartLookAroundOnLostObject != null && _currentHeadRequest.StartLookAroundOnLostObject > 0)
+						//{
+						//	//Look around if lost it for too long
+						//	if (_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject) &&
+						//		_lastMovementCommand < DateTime.Now.AddSeconds(-_currentHeadRequest.DelayBetweenMovements))
+						//	{
+						//		_lookAroundFailover = true;
+						//	}
+						//}
+					}
+					else if (!string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject))
+					{
+						if (_lastObjectEvent != null && _lastObjectEvent.Description.ToLower() == _currentHeadRequest.FollowObject.ToLower())
+						{
+							FindAndFollowObject(_lastObjectEvent);
+							return;
+						}
+						//else if (_currentHeadRequest.StartLookAroundOnLostObject != null && _currentHeadRequest.StartLookAroundOnLostObject > 0)
+						//{
+						//	//Look around if lost it for too long
+						//	if (_followedObjectLastSeen < DateTime.Now.AddSeconds(-(double)_currentHeadRequest.StartLookAroundOnLostObject) &&
+						//		_lastMovementCommand < DateTime.Now.AddSeconds(-_currentHeadRequest.DelayBetweenMovements))
+						//	{
+						//		_lookAroundFailover = true;
+						//	}
+						//}
+					}
+
+					//Else, look around using ranges provided
+					if (_lookAroundFailover || (!_currentHeadRequest.FollowFace && string.IsNullOrWhiteSpace(_currentHeadRequest.FollowObject)))
+					{
+						//if the Min and Max of a movement match or one of them is null, go to that point exactly
+						//if both are null, don't move that axis
+						//if different, 
+						//then check if this is an exact range movement
+						// if it is, start to go there (whether you make it depends on the duration/velocity before the next movement is started
+						// if not, pick a random range and try to go there...
+
+						//Goto location if given range
+						double? newPitch = null;
+						if (_currentHeadRequest.MinPitch != null && _currentHeadRequest.MaxPitch != null)
+						{
+							if (_currentHeadRequest.MinPitch == _currentHeadRequest.MaxPitch)
 							{
-								newPitch = _random.Next((int)minPitch, (int)maxPitch);
-							}
-							else if (_tick)
-							{
-								newPitch = minPitch;
+								newPitch = _currentHeadRequest.MinPitch;
 							}
 							else
 							{
-								newPitch = maxPitch;
+								double? minPitch = _currentHeadRequest.MinPitch < _currentHeadRequest.MaxPitch ? _currentHeadRequest.MinPitch : _currentHeadRequest.MaxPitch;
+								double? maxPitch = _currentHeadRequest.MinPitch < _currentHeadRequest.MaxPitch ? _currentHeadRequest.MaxPitch : _currentHeadRequest.MinPitch;
+
+								if (_currentHeadRequest.RandomRange)
+								{
+									newPitch = _random.Next((int)minPitch, (int)maxPitch);
+								}
+								else if (_tick)
+								{
+									newPitch = minPitch;
+								}
+								else
+								{
+									newPitch = maxPitch;
+								}
 							}
 						}
-					}
-					else if (_currentHeadRequest.MinPitch != null && _currentHeadRequest.MaxPitch == null)
-					{
-						newPitch = _currentHeadRequest.MinPitch;
-					}
-					else if (_currentHeadRequest.MinPitch == null && _currentHeadRequest.MaxPitch != null)
-					{
-						newPitch = _currentHeadRequest.MaxPitch;
-					}
+						else if (_currentHeadRequest.MinPitch != null && _currentHeadRequest.MaxPitch == null)
+						{
+							newPitch = _currentHeadRequest.MinPitch;
+						}
+						else if (_currentHeadRequest.MinPitch == null && _currentHeadRequest.MaxPitch != null)
+						{
+							newPitch = _currentHeadRequest.MaxPitch;
+						}
 
-					double? newRoll = null;
-					if (_currentHeadRequest.MinRoll != null && _currentHeadRequest.MaxRoll != null)
-					{
-						if(_currentHeadRequest.MinRoll == _currentHeadRequest.MaxRoll)
+						double? newRoll = null;
+						if (_currentHeadRequest.MinRoll != null && _currentHeadRequest.MaxRoll != null)
+						{
+							if (_currentHeadRequest.MinRoll == _currentHeadRequest.MaxRoll)
+							{
+								newRoll = _currentHeadRequest.MinRoll;
+							}
+							else
+							{
+								double? minRoll = _currentHeadRequest.MinRoll < _currentHeadRequest.MaxRoll ? _currentHeadRequest.MinRoll : _currentHeadRequest.MaxRoll;
+								double? maxRoll = _currentHeadRequest.MinRoll < _currentHeadRequest.MaxRoll ? _currentHeadRequest.MaxRoll : _currentHeadRequest.MinRoll;
+								newRoll = _random.Next((int)minRoll, (int)maxRoll);
+							}
+						}
+						else if (_currentHeadRequest.MinRoll != null && _currentHeadRequest.MaxRoll == null)
 						{
 							newRoll = _currentHeadRequest.MinRoll;
 						}
-						else
+						else if (_currentHeadRequest.MinRoll == null && _currentHeadRequest.MaxRoll != null)
 						{
-							double? minRoll = _currentHeadRequest.MinRoll < _currentHeadRequest.MaxRoll ? _currentHeadRequest.MinRoll : _currentHeadRequest.MaxRoll;
-							double? maxRoll = _currentHeadRequest.MinRoll < _currentHeadRequest.MaxRoll ? _currentHeadRequest.MaxRoll : _currentHeadRequest.MinRoll;
-							newRoll = _random.Next((int)minRoll, (int)maxRoll);
+							newRoll = _currentHeadRequest.MaxRoll;
 						}
-					}
-					else if (_currentHeadRequest.MinRoll != null && _currentHeadRequest.MaxRoll == null)
-					{
-						newRoll = _currentHeadRequest.MinRoll;
-					}
-					else if (_currentHeadRequest.MinRoll == null && _currentHeadRequest.MaxRoll != null)
-					{
-						newRoll = _currentHeadRequest.MaxRoll;
-					}
 
-					double? newYaw = null;
-					if (_currentHeadRequest.MinYaw != null && _currentHeadRequest.MaxYaw != null)
-					{
-						if (_currentHeadRequest.MinYaw == _currentHeadRequest.MaxYaw)
+						double? newYaw = null;
+						if (_currentHeadRequest.MinYaw != null && _currentHeadRequest.MaxYaw != null)
+						{
+							if (_currentHeadRequest.MinYaw == _currentHeadRequest.MaxYaw)
+							{
+								newYaw = _currentHeadRequest.MinYaw;
+							}
+							else
+							{
+								double? minYaw = _currentHeadRequest.MinYaw < _currentHeadRequest.MaxYaw ? _currentHeadRequest.MinYaw : _currentHeadRequest.MaxYaw;
+								double? maxYaw = _currentHeadRequest.MinYaw < _currentHeadRequest.MaxYaw ? _currentHeadRequest.MaxYaw : _currentHeadRequest.MinYaw;
+								newYaw = _random.Next((int)minYaw, (int)maxYaw);
+							}
+						}
+						else if (_currentHeadRequest.MinYaw != null && _currentHeadRequest.MaxYaw == null)
 						{
 							newYaw = _currentHeadRequest.MinYaw;
 						}
-						else
+						else if (_currentHeadRequest.MinYaw == null && _currentHeadRequest.MaxYaw != null)
 						{
-							double? minYaw = _currentHeadRequest.MinYaw < _currentHeadRequest.MaxYaw ? _currentHeadRequest.MinYaw : _currentHeadRequest.MaxYaw;
-							double? maxYaw = _currentHeadRequest.MinYaw < _currentHeadRequest.MaxYaw ? _currentHeadRequest.MaxYaw : _currentHeadRequest.MinYaw;
-							newYaw = _random.Next((int)minYaw, (int)maxYaw);
+							newYaw = _currentHeadRequest.MaxYaw;
+						}
+
+						if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
+						{
+							_lastMovementCommand = DateTime.Now;
+							Robot.MoveHead(newPitch, newRoll, newYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
+						}
+						else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
+						{
+							_lastMovementCommand = DateTime.Now;
+							Robot.MoveHead(newPitch, newRoll, newYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
 						}
 					}
-					else if (_currentHeadRequest.MinYaw != null && _currentHeadRequest.MaxYaw == null)
-					{
-						newYaw = _currentHeadRequest.MinYaw;
-					}
-					else if (_currentHeadRequest.MinYaw == null && _currentHeadRequest.MaxYaw != null)
-					{
-						newYaw = _currentHeadRequest.MaxYaw;
-					}
-
-					if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)
-					{
-						_lastMovementCommand = DateTime.Now;
-						Robot.MoveHead(newPitch, newRoll, newYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
-					}
-					else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
-					{
-						_lastMovementCommand = DateTime.Now;
-						Robot.MoveHead(newPitch, newRoll, newYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
-					}
 				}
-			}			
+			}
+			catch
+			{
+				
+			}
+			finally
+			{
+				_handlingMove = false;
+			}		
 		}
 		
 		public void HandleActuatorEvent(object sender, IActuatorEvent actuatorEvent)
@@ -430,8 +458,6 @@ namespace MistyCharacter
 					break;
 			}
 		}
-
-		private bool _finding = false;
 
 		protected void FindAndFollowObject(IObjectDetectionEvent objEvent)
 		{
@@ -496,13 +522,11 @@ namespace MistyCharacter
 		{
 			try
 			{
-				Console.WriteLine(objEvent.Pitch);
-
-				if(_finding)
+				if (_findingPersonObject)
 				{
 					return;
 				}
-				_finding = true;
+				_findingPersonObject = true;
 				double? yaw = objEvent.Yaw*10;
 				double? pitch = objEvent.Pitch*10;
 				/*
@@ -585,7 +609,7 @@ namespace MistyCharacter
 			}
 			finally
 			{
-				_finding = false;
+				_findingPersonObject = false;
 			}
 		}
 		

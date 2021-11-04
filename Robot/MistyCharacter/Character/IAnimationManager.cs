@@ -44,7 +44,7 @@ namespace MistyCharacter
 
 		Task<bool> Initialize();
 
-		Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, bool stopOnFailedCommand = false);
+		Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, ConversationData currentConversationData, bool stopOnFailedCommand = false);
 
 		Task StopRunningAnimationScripts();
 

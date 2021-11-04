@@ -316,7 +316,7 @@ namespace SpeechTools
 			await _assetWrapper.RefreshAssetLists();
 		}
 		
-		public async virtual void Speak(AnimationRequest currentAnimation, Interaction currentInteraction)
+		public async virtual Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction)
 		{
 			try
 			{
@@ -352,8 +352,8 @@ namespace SpeechTools
 						}
 					}
 
-					//_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
+					//_misty.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
 				}

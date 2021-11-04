@@ -69,6 +69,8 @@ namespace Conversation.Common
 
 		public const string SyncEvent = "SyncEvent";
 
-		public const string TimeOfFlightRange = "TimeOfFlightRange";		
+		public const string TimeOfFlightRange = "TimeOfFlightRange";
+
+		public const string Manual = "Manual";
 	}	
 }
