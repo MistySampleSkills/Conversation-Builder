@@ -64,6 +64,12 @@ namespace SpeechTools
 		void SetAudioTrim(int trimMs);
 		void SetMaxSilence(int silenceTimeout);
 		void SetMaxListen(int listenTimeout);
+		void SetSpeechRate(double rate);
+		void SetSpeakingStyle(string speakingStyle);
+		void SetLanguage(string language);
+		void SetVoice(string voice);
+		void SetPitch(string pitch);
+		bool HandleExternalSpeech(string text);
 
 		//TODO and move into speech manager
 		//void UpdatePrespeech(string prespeech);

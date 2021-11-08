@@ -90,6 +90,8 @@ namespace MistyCharacter
 
 		public event EventHandler<TriggerData> SyncEvent;
 
+		public event EventHandler<KeyValuePair<AnimationRequest, Interaction>> TriggerAnimation;
+
 		private bool _userTextLayerVisible;
 		private bool _webLayerVisible;
 		private bool _videoLayerVisible;
@@ -956,7 +958,8 @@ namespace MistyCharacter
 									await Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
 									{
 										Visible = true,
-										PlaceOnTop = true
+										//PlaceOnTop = true
+										PlaceOnTop = false //TODOmake a param
 									});
 									_userImageLayerVisible = true;
 								}
@@ -1493,6 +1496,8 @@ namespace MistyCharacter
 								await Task.Delay(200);
 								ManualTrigger?.Invoke(this, newTriggerData0);
 								break;
+
+								//NEW FROM IM - TODO MORE TESTING!!!!
 							case "T-ACTION":
 								//T-ACTION:Name,OverrideAction,Trigger, TriggerFilter;
 								string[] triggerData2 = commandData[1].Split(",");
@@ -1506,8 +1511,7 @@ namespace MistyCharacter
 								TriggerData newTriggerData = new TriggerData(null, filter2, triggerData2[2]);
 								newTriggerData.KeepAlive = false;
 								newTriggerData.OverrideInteraction = triggerData2[1];
-								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData2[0], newTriggerData));
-								
+								AddTrigger?.Invoke(this, new KeyValuePair<string, TriggerData>(triggerData2[0], newTriggerData));								
 								break;
 							case "T-ON":
 								//T-ON:Name,Trigger,TriggerFilter;
@@ -1565,6 +1569,24 @@ namespace MistyCharacter
 							case "SET-MAX-LISTEN":
 								_speechManager.SetMaxListen(Convert.ToInt32(commandData[1]));
 								_maxListen = Convert.ToInt32(commandData[1]);
+								break;
+							case "SET-SPEECH-PITCH":
+								_speechManager.SetPitch(commandData[1]);
+								break;
+							case "SET-VOICE":
+								_speechManager.SetVoice(commandData[1]);
+								break;
+							case "SET-SPEECH-STYLE":
+								_speechManager.SetSpeakingStyle(commandData[1]);
+								break;
+							case "SET-LANGUAGE":
+								_speechManager.SetLanguage(commandData[1]);
+								break;
+							case "SET-SPEECH-RATE":
+								_speechManager.SetSpeechRate(Convert.ToDouble(commandData[1]));
+								break;
+							case "ANIMATE":
+								TriggerAnimation?.Invoke(this, new KeyValuePair<AnimationRequest, Interaction>());
 								break;
 							case "TIMED-TRIGGER":
 								//TIMED-TRIGGER:timeMs,trigger,triggerFilter,text;

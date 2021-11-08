@@ -73,6 +73,9 @@ namespace Conversation.Common
 		public string RequestedCharacter { get; set; }
 
 		public bool ShowListeningIndicator { get; set; } = true;
+
+		public bool ShowSpeakingIndicator { get; set; } = true;
+		public bool SendInteractionUIEvents { get; set; } = true;
 		public bool HeardSpeechToScreen { get; set; }
 		public bool DisplaySpoken { get; set; }
 		public bool LargePrint { get; set; }

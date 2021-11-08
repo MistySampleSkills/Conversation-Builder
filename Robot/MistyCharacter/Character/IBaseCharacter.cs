@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Conversation.Common;
 using MistyRobotics.SDK.Events;
@@ -281,6 +282,8 @@ namespace MistyCharacter
 		/// </summary>
 		/// <returns></returns>
 		Task<bool> Initialize(CharacterParameters characterParameters);
+
+		void HandleAnimationScriptRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action);
 
 		/// <summary>
 		/// Dispose of the character to prevent background tasks from continuing after cancellation

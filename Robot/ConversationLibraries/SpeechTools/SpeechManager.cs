@@ -32,6 +32,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -95,6 +96,13 @@ namespace SpeechTools
 		private IList<GenericDataStore> _genericDataStores = new List<GenericDataStore>();
 		private string _robotName = "Misty";
 		private CharacterState _characterState;
+		private string _speakingStyle;
+		private double _speechRate = 1.0;
+		private string _language = "en-US";
+		private string _emphasis = "none";
+		private string _sayAs = "";
+		private string _voice;
+		private string _pitch = "medium";
 
 		private IDictionary<string, object> _parameters { get; set; }
 		private IRobotMessenger _misty { get; set; }
@@ -133,23 +141,64 @@ namespace SpeechTools
 				}
 			}
 		}
+
+		private bool _speechOverridden = false;
+		private bool _externalOverridden = false;
+
+		public bool HandleExternalSpeech(string text)
+		{
+			if(_externalOverridden)
+			{
+				_externalOverridden = false;
+				return false;
+			}
+			_speechOverridden = true;
+			return HandleSpeechResponse(text);
+		}
 		
 		public string GetLocaleName(string name)
 		{
 			if (_characterParameters.AddLocaleToAudioNames)
 			{
+				string speakingVoice = "";
+
 				switch (_characterParameters.TextToSpeechService)
 				{
 					case "google":
-						name = _googleTTSParameters.SpokenLanguage + _googleTTSParameters.SpeakingVoice + _googleTTSParameters.SpeakingGender?[0] + name;
+						speakingVoice = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingVoice) ? "default" : _googleTTSParameters.SpeakingVoice);
+						string spokenLanguage = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpokenLanguage) ? "en-US" : _googleTTSParameters.SpokenLanguage);
+						string speakingGender = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingGender) ? "Female" : _googleTTSParameters.SpeakingGender);						
+						if (!name.Contains(speakingVoice))
+						{
+							name += speakingVoice;
+						}
+						if (!name.Contains(spokenLanguage))
+						{
+							name += spokenLanguage;
+						}
+						if (!name.Contains(speakingGender))
+						{
+							name += speakingGender;
+						}
 						break;
 					case "azure":
-						name = _azureTTSParameters.TranslatedLanguage + _azureTTSParameters.SpeakingVoice + name;
+						speakingVoice = (string.IsNullOrWhiteSpace(_azureTTSParameters.SpeakingVoice) ? "default" : _azureTTSParameters.SpeakingVoice);
+						string translatedLanguage = string.IsNullOrWhiteSpace(_azureTTSParameters.TranslatedLanguage) ? "en-US" : _azureTTSParameters.TranslatedLanguage;
+						if (!name.Contains(speakingVoice))
+						{
+							name += speakingVoice;
+						}
+						if (!name.Contains(translatedLanguage))
+						{
+							name += translatedLanguage;
+						}
 						break;
 					default:
 						name = TTSNamePreface + name;
 						break;
 				}
+
+				
 			}
 			return AssetHelper.AddMissingWavExtension(name);
 		}
@@ -327,11 +376,17 @@ namespace SpeechTools
 					_misty.SkillLogger.LogWarning("No text passed in to Speak command.");
 					return;
 				}
+
+				currentAnimation.Speak = currentAnimation.Speak.Replace("’", "'").Replace("“", "\"").Replace("”", "\"");
 				
-				if (string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName))
+				if (string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName) && !string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
 					currentAnimation.SpeakFileName = AssetHelper.MakeFileName(currentAnimation.Speak);
 				}
+				/*if(!currentInteraction.StartListening)
+				{
+					currentAnimation.SpeakFileName = currentAnimation.SpeakFileName + ConversationConstants.IgnoreCallback;
+				}*/
 
 				//This will save files with language and voice as part of the name
 				if (_characterParameters.AddLocaleToAudioNames)
@@ -340,7 +395,7 @@ namespace SpeechTools
 				}
 
 				_listenAborted = false;
-
+				
 				if (_characterParameters.TextToSpeechService == "misty")
 				{
 					if (currentInteraction.StartListening && !string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName))
@@ -351,14 +406,84 @@ namespace SpeechTools
 							_listeningCallbacks.Add(currentAnimation.SpeakFileName);
 						}
 					}
-
+					
+					string newText = currentAnimation.Speak;
+					bool usingSSML = TryGetSSMLText(currentAnimation.Speak, out newText, currentAnimation);
 					_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					//_misty.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
 				}
+				else if (_characterParameters.TextToSpeechService == "skill")
+				{
+					if (currentInteraction.StartListening && !string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName))
+					{
+						lock (_lockListenerData)
+						{
+							_listeningCallbacks.Remove(currentAnimation.SpeakFileName);
+							_listeningCallbacks.Add(currentAnimation.SpeakFileName);
+						}
+					}
+					
+					if (!textChanged)
+					{
+						if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
+							(!_characterParameters.RetranslateTTS &&
+							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
+						)
+						{
+							_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
+							_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
+						}
+						else
+						{
+							_misty.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
 
-				if ((_azureCognitive != null && _azureCognitive.Authorized) || (_googleService != null && _googleService.Authorized))
+							string newText = currentAnimation.Speak;
+							SkillSpeech sp = new SkillSpeech();
+
+							Stream audio;
+							if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
+							{
+								audio = await sp.SsmlToStream(newText);
+							}
+							else
+							{
+								audio = await sp.TextToStream(newText);
+							}
+
+							MemoryStream ms = new MemoryStream();
+							audio.CopyTo(ms);
+							_ = _misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
+							_audioTags.Add(currentAnimation.SpeakFileName);
+						}
+					}
+					else
+					{
+						string newText = currentAnimation.Speak;
+						SkillSpeech sp = new SkillSpeech();
+
+						Stream audio;
+						if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
+						{
+							audio = await sp.SsmlToStream(newText);
+						}
+						else
+						{
+							audio = await sp.TextToStream(newText);
+						}
+
+						MemoryStream ms = new MemoryStream();
+						audio.CopyTo(ms);
+						_ =_misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
+					}
+					
+					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
+					return;
+				}
+				else if ((_azureCognitive != null && _azureCognitive.Authorized) || (_googleService != null && _googleService.Authorized))
 				{
 					string newText = currentAnimation.Speak;
 					bool usingSSML = _characterParameters.TextToSpeechService == "azure" && TryGetSSMLText(currentAnimation.Speak, out  newText, currentAnimation);
@@ -410,11 +535,11 @@ namespace SpeechTools
 						//Make a new file						
 						switch (_characterParameters.TextToSpeechService)
 						{
-							case "Google":
+							case "google":
 								//TODO Make configurable
 								await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, 0);
 								break;
-							case "Azure":
+							case "azure":
 							default:
 								await _azureCognitive.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, (int)currentAnimation.TrimAudioSilence * 1000);
 								break;
@@ -429,49 +554,93 @@ namespace SpeechTools
 			}
 		}
 
+		public void SetSpeechRate(double rate)
+		{
+			_speechRate = rate;
+		}
+		public void SetSpeakingStyle(string speakingStyle)
+		{
+			if(!string.IsNullOrWhiteSpace(speakingStyle))
+			{
+				_speakingStyle = speakingStyle;
+			}
+		}
+		
+		public void SetLanguage(string language)
+		{
+			if (!string.IsNullOrWhiteSpace(language))
+			{
+				_language = language;
+			}
+		}
+		
+		public void SetVoice(string voice)
+		{
+			if (!string.IsNullOrWhiteSpace(voice))
+			{
+				_voice = voice;
+			}
+		}
+
+		public void SetPitch(string pitch)
+		{
+			if (!string.IsNullOrWhiteSpace(pitch))
+			{
+				_pitch = pitch;
+			}
+		}
 
 		private bool TryGetSSMLText(string text, out string newText, AnimationRequest animationRequest)
 		{
 			try
 			{
+				SetSpeakingStyle(animationRequest.SpeakingStyle);
+				SetSpeechRate(animationRequest.SpeechRate);
+
 				if (text.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
 				{
 					//Don't adjust if already ssml
 					newText = text;
 					return true;
 				}
+				
+				string[] startText = new string[3];
+				string[] endText = new string[3];
 
-				bool usingSSML = false;
-				string[] startText = new string[2];
-				string[] endText = new string[2];
-
-				if (animationRequest.SpeechRate != 1.0)
+				if (_characterParameters.TextToSpeechService == "misty" || _characterParameters.TextToSpeechService == "skill")//Verify skill values
 				{
-					startText[0] = $"<prosody rate=\"{animationRequest.SpeechRate}\">";
-					endText[0] = "</prosody>";
-					usingSSML = true;
-				}
-				else if (!string.IsNullOrWhiteSpace(animationRequest.SpeakingStyle))
-				{
-					startText[1] = $"<mstts:express-as style=\"{animationRequest.SpeakingStyle}\">";
-					endText[1] = "</mstts:express-as>";
-					usingSSML = true;
-				}
-
-				if (usingSSML)
-				{
-					/*
-					Speak = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xml:lang=\"en-US\">" +
-					"<voice name=\"en-US-GuyNeural\"><prosody rate=\"2.0\">" +
-					"California, the most populous US state and the first to implement a statewide lockdown to combat the coronavirus outbreak, is setting daily records this week for new cases as officials urge caution and dangle enforcement threats to try to curb the spikes." +
-					"The virus is spreading at private gatherings in homes, and more young people are testing positive, Gov.Gavin Newsom said Wednesday.Infections at some prisons are raising concerns." +
-					"</prosody></voice></speak>",*/
-
-					newText = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:mstts=\"https://www.w3.org/2001/mstts\" xml:lang=\"en-US\">";
+					newText = text;
 					
-					//TODO allow pass in override by animation
-					newText += $"<voice name=\"{(string.IsNullOrWhiteSpace(animationRequest.OverrideVoice) ? _azureTTSParameters.SpeakingVoice : animationRequest.OverrideVoice)}\">";
+					string prosody = $"<prosody rate=\"{_speechRate}\"";
+					if(!string.IsNullOrWhiteSpace(_pitch))
+					{
+						prosody += $" pitch=\"{_pitch}\">";
+					}
+					else
+					{
+						prosody += ">";
+					}
+					startText[0] = prosody;
+					endText[0] = "</prosody>";
 
+					if (!string.IsNullOrWhiteSpace(_sayAs))
+					{
+						startText[1] = $"<say-as interpret-as=\"{_sayAs}\">";
+						endText[1] = "</say-as>";
+					}
+					
+					if (!string.IsNullOrWhiteSpace(_emphasis))
+					{
+						startText[2] = $"<emphasis level=\"{_emphasis}\">";
+						endText[2] = "</emphasis>";
+					}
+
+					newText = $"?xml version=\"1.0\" encoding=\"utf-8\"?> <speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:mstts=\"https://www.w3.org/2001/mstts\" xml:lang=\"{_language}\">";
+
+					if(!string.IsNullOrWhiteSpace(_voice))
+					{
+						newText += $"<voice name=\"{_voice}\">";
+					}
 
 					if (startText[0] != null)
 					{
@@ -483,7 +652,18 @@ namespace SpeechTools
 						newText += startText[1];
 					}
 
+					if (startText[2] != null)
+					{
+						newText += startText[2];
+					}
+
+
 					newText += text;
+
+					if (endText[2] != null)
+					{
+						newText += endText[2];
+					}
 
 					if (endText[1] != null)
 					{
@@ -500,8 +680,57 @@ namespace SpeechTools
 					return true;
 				}
 
-				newText = text;
-				return false;
+				if (animationRequest.SpeechRate != 1.0)
+				{
+					startText[0] = $"<prosody rate=\"{_speechRate}\">";
+					endText[0] = "</prosody>";
+				}
+				else if (!string.IsNullOrWhiteSpace(_speakingStyle))
+				{
+					startText[1] = $"<mstts:express-as style=\"{_speakingStyle}\">";
+					endText[1] = "</mstts:express-as>";
+				}
+			
+				_azureTTSParameters.SpeakingVoice = _voice;
+
+				/*
+				Speak = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xml:lang=\"en-US\">" +
+				"<voice name=\"en-US-GuyNeural\"><prosody rate=\"2.0\">" +
+				"California, the most populous US state and the first to implement a statewide lockdown to combat the coronavirus outbreak, is setting daily records this week for new cases as officials urge caution and dangle enforcement threats to try to curb the spikes." +
+				"The virus is spreading at private gatherings in homes, and more young people are testing positive, Gov.Gavin Newsom said Wednesday.Infections at some prisons are raising concerns." +
+				"</prosody></voice></speak>",*/
+
+				newText = $"<?xml version=\"1.0\" encoding=\"utf-8\"?> <speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:mstts=\"https://www.w3.org/2001/mstts\" xml:lang=\"{_language}\">";
+					
+				//TODO allow pass in override by animation
+				newText += $"<voice name=\"{(string.IsNullOrWhiteSpace(_voice) ? _azureTTSParameters.SpeakingVoice : _voice)}\">";
+
+					
+				if (startText[0] != null)
+				{
+					newText += startText[0];
+				}
+
+				if (startText[1] != null)
+				{
+					newText += startText[1];
+				}
+
+				newText += text;
+
+				if (endText[1] != null)
+				{
+					newText += endText[1];
+				}
+
+				if (endText[0] != null)
+				{
+					newText += endText[0];
+				}
+
+				newText += "</voice></speak>";
+
+				return true;
 			}
 			catch
 			{
@@ -611,7 +840,13 @@ namespace SpeechTools
 		{
 			try
 			{
-				_recording = false;
+				if(_speechOverridden)
+				{
+					_speechOverridden = false;
+					return;
+				}
+				_externalOverridden = true;
+				_recording = false;				
 				StoppedListening?.Invoke(this, voiceRecordEvent);
 				if (_listenAborted)
 				{
@@ -685,21 +920,44 @@ namespace SpeechTools
 				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
 			}
 		}
-		
-		private void HandleSpeechResponse(string text)
-		{
-			if (!string.IsNullOrWhiteSpace(text))
-			{
-                SpeechMatchData intent = _speechIntentManager.GetIntent(text, _allowedTriggers);
 
-                //Old conversations trigger on name, new ones on id
-				SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
-				_misty.SkillLogger.LogInfo($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
-			}
-			else
+		bool _processingIntent = false;
+
+		private bool HandleSpeechResponse(string text)
+		{
+			if (_processingIntent)
 			{
-				_misty.SkillLogger.LogInfo("Didn't hear anything or can no longer translate.");
-				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
+				return false;
+			}
+
+			try
+			{
+				_processingIntent = true;
+				if (!string.IsNullOrWhiteSpace(text))
+				{
+					SpeechMatchData intent = _speechIntentManager.GetIntent(text, _allowedTriggers);
+
+					//Old conversations trigger on name, new ones on id
+					SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
+					
+					_misty.SkillLogger.LogInfo($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
+					//await Task.Delay(100);
+					return true;
+				}
+				else
+				{
+					_misty.SkillLogger.LogInfo("Didn't hear anything or can no longer translate.");
+					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
+					return false;
+				}
+			}
+			catch
+			{
+				return false;
+			}
+			finally
+			{
+				_processingIntent = false;
 			}
 		}
 

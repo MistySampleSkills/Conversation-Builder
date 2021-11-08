@@ -1,0 +1,535 @@
+﻿<!--
+Copyright 2021 Misty Robotics
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+**WARRANTY DISCLAIMER.**
+* General. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, MISTY
+ROBOTICS PROVIDES THIS SAMPLE SOFTWARE "AS-IS" AND DISCLAIMS ALL
+WARRANTIES AND CONDITIONS, WHETHER EXPRESS, IMPLIED, OR STATUTORY,
+INCLUDING THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, TITLE, QUIET ENJOYMENT, ACCURACY, AND NON-INFRINGEMENT OF
+THIRD-PARTY RIGHTS. MISTY ROBOTICS DOES NOT GUARANTEE ANY SPECIFIC
+RESULTS FROM THE USE OF THIS SAMPLE SOFTWARE. MISTY ROBOTICS MAKES NO
+WARRANTY THAT THIS SAMPLE SOFTWARE WILL BE UNINTERRUPTED, FREE OF VIRUSES
+OR OTHER HARMFUL CODE, TIMELY, SECURE, OR ERROR-FREE.
+* Use at Your Own Risk. YOU USE THIS SAMPLE SOFTWARE AND THE PRODUCT AT
+YOUR OWN DISCRETION AND RISK. YOU WILL BE SOLELY RESPONSIBLE FOR (AND MISTY
+ROBOTICS DISCLAIMS) ANY AND ALL LOSS, LIABILITY, OR DAMAGES, INCLUDING TO
+ANY HOME, PERSONAL ITEMS, PRODUCT, OTHER PERIPHERALS CONNECTED TO THE PRODUCT,
+COMPUTER, AND MOBILE DEVICE, RESULTING FROM YOUR USE OF THIS SAMPLE SOFTWARE
+OR PRODUCT.
+Please refer to the Misty Robotics End User License Agreement for further
+information and full details:
+    https://www.mistyrobotics.com/legal/end-user-license-agreement/
+-->
+<!--
+    {
+	"CurrentInteraction": {
+		"Id": "fc9541dc-d808-4866-978b-0a21497efc0b",
+		"Name": "Start",
+		"InitializationScript": null,
+		"Animation": "4dd65843-b74e-44eb-8593-5072aa2f3700",
+		"ListeningAnimation": null,
+		"TriggerMap": {
+			"8ec18f1c-4574-491a-8885-a3784181ecb0": [{
+				"Id": "a5e81394-fdce-4909-8236-29fbafc0bf42",
+				"Weight": 1,
+				"Retrigger": false,
+				"GoToConversation": "8ccbaf8c-a8ff-49db-a4a4-6fbce481bd9f",
+				"GoToInteraction": "b6f005bc-c402-4343-91b9-86558080225a",
+				"InterruptCurrentAction": true
+			}],
+			"4e7acb70-c961-44aa-87c9-20cd52b19f3e": [{
+				"Id": "f61240cd-8125-48a1-ab68-38cec458f7c4",
+				"Weight": 1,
+				"Retrigger": false,
+				"GoToConversation": "8ccbaf8c-a8ff-49db-a4a4-6fbce481bd9f",
+				"GoToInteraction": "b6f005bc-c402-4343-91b9-86558080225a",
+				"InterruptCurrentAction": true
+			}],
+			"2633a88c-cbe8-41d0-9f24-b5e35de90388": [{
+				"Id": "23dc1a36-6fb3-4015-9270-4e9ee881d725",
+				"Weight": 1,
+				"Retrigger": false,
+				"GoToConversation": "8ccbaf8c-a8ff-49db-a4a4-6fbce481bd9f",
+				"GoToInteraction": "fc9541dc-d808-4866-978b-0a21497efc0b",
+				"InterruptCurrentAction": true
+			}]
+		},
+		"InteractionFailedTimeout": 120.0,
+		"StartListening": false,
+		"AllowKeyPhraseRecognition": false,
+		"AllowConversationTriggers": true,
+		"AllowVoiceProcessingOverride": true,
+		"ListenTimeout": 10.0,
+		"SilenceTimeout": 10.0,
+		"SkillMessages": [],
+		"Retrigger": false,
+		"UsePreSpeech": true,
+		"PreSpeechPhrases": null,
+		"PreSpeechAnimation": null,
+		"InitAnimation": null,
+		"InitScript": null,
+		"AnimationScript": null,
+		"PreSpeechScript": null,
+		"ListeningScript": null
+	},
+	"Utterances": [],
+	"Triggers": [{
+		"Id": "8ec18f1c-4574-491a-8885-a3784181ecb0",
+		"Name": "Any Cap Touched",
+		"TriggerFilter": "",
+		"Trigger": "CapTouched",
+		"StartingTrigger": "Timer",
+		"StartingTriggerFilter": "",
+		"StartingTriggerDelay": 0.0,
+		"StoppingTrigger": "None",
+		"StoppingTriggerFilter": "",
+		"StoppingTriggerDelay": 0.0
+	}, {
+		"Id": "4e7acb70-c961-44aa-87c9-20cd52b19f3e",
+		"Name": "R:Face seen",
+		"TriggerFilter": "",
+		"Trigger": "FaceRecognized",
+		"StartingTrigger": "Timer",
+		"StartingTriggerFilter": "",
+		"StartingTriggerDelay": 1.0,
+		"StoppingTrigger": "None",
+		"StoppingTriggerFilter": "",
+		"StoppingTriggerDelay": 0.0
+	}, {
+		"Id": "2633a88c-cbe8-41d0-9f24-b5e35de90388",
+		"Name": "1 Minute Timeout",
+		"TriggerFilter": "",
+		"Trigger": "Timeout",
+		"StartingTrigger": "Timer",
+		"StartingTriggerFilter": "",
+		"StartingTriggerDelay": 60.0,
+		"StoppingTrigger": "None",
+		"StoppingTriggerFilter": "",
+		"StoppingTriggerDelay": 0.0
+	}],
+	"State": {
+		"LocomotionState": {
+			"FrontLeftTOF": 2.0,
+			"FrontRightTOF": 0.425,
+			"FrontCenterTOF": 0.514,
+			"BackTOF": 2.0,
+			"BackLeftBumpContacted": false,
+			"BackRightBumpContacted": false,
+			"FrontLeftBumpContacted": false,
+			"FrontRightBumpContacted": false,
+			"FrontRightEdgeTOF": 0.06,
+			"FrontLeftEdgeTOF": 0.063,
+			"BackRightEdgeTOF": 0.0,
+			"BackLeftEdgeTOF": 0.0,
+			"LeftVelocity": 0.0,
+			"RightVelocity": 0.0,
+			"LeftDistanceSinceLastStop": 0.0,
+			"RightDistanceSinceLastStop": 0.0,
+			"LeftDistanceSinceWayPoint": 0.0,
+			"RightDistanceSinceWayPoint": 0.0,
+			"LeftDistanceSinceStart": 0.0,
+			"RightDistanceSinceStart": 0.0,
+			"MovementHistory": null,
+			"LocomotionStatus": 0,
+			"LocomotionAction": null,
+			"RobotPitch": 4.1252961249419275,
+			"RobotYaw": 0.0,
+			"RobotRoll": 0.91673247220931708,
+			"XAcceleration": 0.17,
+			"YAcceleration": -0.71,
+			"ZAcceleration": -9.77,
+			"PitchVelocity": -0.057295779513082318,
+			"RollVelocity": -0.057295779513082318,
+			"YawVelocity": 0.0,
+			"LockedHeading": null
+		},
+		"FlashLightOn": false,
+		"AnimationLED": null,
+		"Image": null,
+		"Speaking": false,
+		"Saying": null,
+		"Listening": false,
+		"KeyPhraseRecognitionOn": false,
+		"Audio": null,
+		"Spoke": false,
+		"KnownFaceSeen": false,
+		"UnknownFaceSeen": false,
+		"LastKnownFaceSeen": null,
+		"LatestTriggerChecked": {
+			"Key": "0001-01-01T00:00:00",
+			"Value": null
+		},
+		"LatestTriggerMatched": {
+			"Key": "0001-01-01T00:00:00",
+			"Value": null
+		},
+		"SpeechResponseEvent": null,
+		"KeyPhraseRecognized": null,
+		"QrTagEvent": null,
+		"FaceRecognitionEvent": null,
+		"BumpEvent": null,
+		"CapTouchEvent": null,
+		"ArTagEvent": null,
+		"TimeOfFlightEvent": null,
+		"SerialMessageEvent": null,
+		"ExternalEvent": null,
+		"ObjectEvent": null,
+		"NonPersonObjectEvent": null,
+		"BatteryChargeEvent": {
+			"ChargePercent": 0.37,
+			"Temperature": 0,
+			"State": 2,
+			"Trained": false,
+			"Voltage": 7.071,
+			"Current": 0.906,
+			"HealthPercent": null,
+			"IsCharging": true,
+			"EventType": 13,
+			"EventId": 43,
+			"Created": "2021-11-07T10:26:27.3452233-07:00"
+		},
+		"RightArmActuatorEvent": {
+			"ActuatorValue": 67.036062030306311,
+			"SensorPosition": 4,
+			"EventType": 2,
+			"EventId": 31,
+			"Created": "2021-11-07T10:26:29.6426214-07:00"
+		},
+		"LeftArmActuatorEvent": {
+			"ActuatorValue": 65.317188644913841,
+			"SensorPosition": 5,
+			"EventType": 2,
+			"EventId": 30,
+			"Created": "2021-11-07T10:26:29.6441078-07:00"
+		},
+		"HeadPitchActuatorEvent": {
+			"ActuatorValue": 1.1459155902616465,
+			"SensorPosition": 1,
+			"EventType": 2,
+			"EventId": 33,
+			"Created": "2021-11-07T10:26:29.6443777-07:00"
+		},
+		"HeadYawActuatorEvent": {
+			"ActuatorValue": -0.57295779513082323,
+			"SensorPosition": 3,
+			"EventType": 2,
+			"EventId": 32,
+			"Created": "2021-11-07T10:26:29.6477681-07:00"
+		},
+		"HeadRollActuatorEvent": {
+			"ActuatorValue": 0.0,
+			"SensorPosition": 2,
+			"EventType": 2,
+			"EventId": 34,
+			"Created": "2021-11-07T10:26:29.6459831-07:00"
+		},
+		"AnimationEmotion": "Calmness",
+		"CurrentMood": "Calmness"
+	}
+}
+    -->
+
+
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../dependencies/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../dependencies/fontawesome/5.3.1/css/all.css" />
+    <link rel="stylesheet" href="../css/styles.css" type="text/css" />
+    <link rel="stylesheet" href="../dependencies/prism/prism.css" type="text/css" />
+    <link rel="stylesheet" href="css/datadashboard-styles.css" type="text/css" />
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png">
+
+    <title>Interaction Dashboard</title>
+</head>
+<body>
+    <nav id="datadashboard-nav" class="navbar navbar-expand-lg navbar-dark bg-dark bg-misty-black navbar-fixed-top">
+        <div class="container ml-1">
+            <div class="row">
+                <a href="/" class="navbar-brand">
+                    <img src="../img/misty_robotics@2x.png" width="245" height="20" alt="misty robotics" srcset="../img/misty_robotics@2x.png 508w, ../img/misty_robotics@2x-300x24.png 300w" sizes="(max-width: 508px) 100vw, 508px">	<div class="text">SDK</div>
+                </a>
+                <div class="navbar-nav mr-auto"></div>
+                <form class="form-inline my-md-2 my-lg-0 ml-3 " id="connect">
+                    <input id="ip-address" class="form-control ip-address mr-sm-2" type="text" placeholder="Robot IP Address" aria-label="Robot IP Address">
+                    <!-- <input id="imsIp-address" class="form-control imsIp-address mr-sm-2" type="text" placeholder="IMS IP Address" aria-label="IMS IP Address">-->
+                    <button id="connect-button" class="btn connect my-md-2 my-sm-0 ml-1 ml-md-0" type="submit">Connect</button>
+                    <button class="btn ml-2" type="button" data-toggle="modal" data-target="#wifi-modal" style="background-color:#241c35;border:1px solid #241c35;width:80px;">Wifi</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid d-flex flex-column pt-1">
+        <div class="row ml-2">
+            <label class="inline data-dashboard">Example Data Dashboard</label><label class="inline" id="data-dashboard"></label>
+        </div>
+        <div class="row">
+            <div class="row ml-1 datadashboard-align-head">
+                <div class="col">
+                    <form class="form-inline my-md-2 my-lg-0 ml-3 " id="send-speech">
+                        <input id="text" class="form-control mr-sm-2" type="text" placeholder="Text" aria-label="Text">
+                        <button id="send-speech-button" class="btn send-speech my-md-2 my-sm-0 ml-1 ml-md-0" type="submit">Send Speech</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div class="row">
+            <div class="row ml-1 datadashboard-align-head">
+                <div class="col">
+                    <div class="row ml-3">
+                        <div id="button-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="row ml-1 datadashboard-align-head">
+                <div class="col">
+                    <div class="row ml-3">
+                        <p><label for="robot-name">Robot</label><input type="text" id="robot-name" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-name">Demo</label><input type="text" id="demo-name" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="role-name">Role</label><input type="text" id="role-name" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="speaking">Speaking</label><input type="text" id="speaking" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="last-said">Last Said</label><input type="text" id="last-said" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="listening">Listening</label><input type="text" id="listening" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="last-heard">Last Heard</label><input type="text" id="last-heard" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                    </div>
+                    <div class="row ml-3">
+                    </div>
+
+                    <div class="row ml-3">
+                        <p><label for="last-face-seen">Last Face Seen</label><input type="text" id="last-face-seen" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="last-object-seen">Last Object Seen</label><input type="text" id="last-object-seen" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="last-ar-tag-seen">Last AR Tag Seen</label><input type="text" id="last-ar-tag-seen" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="last-qr-tag-seen">Last QR Tag Seen</label><input type="text" id="last-qr-tag-seen" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="last-serial-message">Last Serial Message</label><input type="text" id="last-serial-message" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="status">Status</label><input type="text" id="status" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="processing-speech">Processing Speech</label><input type="text" id="processing-speech" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="key-phrase-recognition-on">Key Phrase On</label><input type="text" id="key-phrase-recognition-on" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="volume">Volume</label><input type="text" id="volume" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="image">Image</label><input type="text" id="image" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+
+                        <p><label for="last-audio">Last Audio Played</label><input type="text" id="last-audio" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="flashlight-on">Flashlight</label><input type="text" id="flashlight-on" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="last-user-event">Last User Event</label><input type="text" id="last-user-event" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="chin">Chin</label><input type="text" id="chin" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="scruff">Scruff</label><input type="text" id="scruff" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="front-cap">Front Cap</label><input type="text" id="front-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="back-cap">Back Cap</label><input type="text" id="back-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="left-cap">Left Cap</label><input type="text" id="left-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="right-cap">Right Cap</label><input type="text" id="right-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="front-right-bumper">Front Right Bumper</label><input type="text" id="front-right-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="front-left-bumper">Front Left Bumper</label><input type="text" id="front-left-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="back-right-bumper">Back Right Bumper</label><input type="text" id="back-right-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="back-left-bumper">Back Left Bumper</label><input type="text" id="back-left-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="right-arm">Right Arm</label><input type="text" id="right-arm" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="left-arm">Left Arm</label><input type="text" id="left-arm" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="head-pitch">Head Pitch</label><input type="text" id="head-pitch" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="head-roll">Head Roll</label><input type="text" id="head-roll" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="head-yaw">Head Yaw</label><input type="text" id="head-yaw" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="robot-pitch">Robot Pitch</label><input type="text" id="robot-pitch" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="robot-roll">Robot Roll</label><input type="text" id="robot-roll" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="robot-yaw">Robot Yaw</label><input type="text" id="robot-yaw" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="row ml-1">
+                <div class="col">
+                    <div class="row ml-3">
+                        <p><label for="current-interaction">Current Interaction</label><input type="text" id="current-interaction" class="data-reading medium value-field" disabled="disabled" value="??" /></p>                        
+                    </div>
+                  <!--  <div class="row ml-3">
+                        <p><label for="demo-group-name-1">Group Name</label><input type="text" id="demo-group-name-1" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-group-description-1">Group Description</label><input type="text" id="demo-group-description-1" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="demo-name-2">Demo 2</label><input type="text" id="demo-name-2" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-handling-2">Handling</label><input type="text" id="demo-handling-2" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-storyid-2">Story Id</label><input type="text" id="demo-storyid-2" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-description-2">Description</label><input type="text" id="demo-description-2" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="demo-group-name-2">Group Name</label><input type="text" id="demo-group-name-2" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-group-description-2">Group Description</label><input type="text" id="demo-group-description-2" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="demo-name-3">Demo 3</label><input type="text" id="demo-name-3" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-handling-3">Handling</label><input type="text" id="demo-handling-3" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-storyid-3">Story Id</label><input type="text" id="demo-storyid-3" class="data-reading small value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-description-3">Description</label><input type="text" id="demo-description-3" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>
+                    <div class="row ml-3">
+                        <p><label for="demo-group-name-3">Group Name</label><input type="text" id="demo-group-name-3" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
+                        <p><label for="demo-group-description-3">Group Description</label><input type="text" id="demo-group-description-3" class="data-reading large value-field" disabled="disabled" value="??" /></p>
+                    </div>-->
+                </div>
+               
+            </div>
+
+            <div class="container-fluid d-flex flex-column pt-1">
+                <div class="row">
+                    <button class="btn medium" id="take-picture">Take Picture</button>
+                </div>
+            </div>
+            <div class="datadashboard-align-head" id="photo-container" style="overflow-y:auto;">
+                <img id="photo" alt="Picture from Misty, will attempt to load upon robot connection..." class="display-picture" src="" style="width:1500px;height:2000px;"> <!--3120 x 4160-->
+            </div>
+        </div>
+    </div>
+    <div id="toast-container">
+        <div id="toast"></div>
+    </div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="../dependencies/jquery/jquery.min.js"></script>
+    <script src="../dependencies/popper/popper.min.js"></script>
+    <script src="../dependencies/prism/prism.js"></script>
+    <script src="../dependencies/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="../dependencies/jszip/jszip.min.js"></script>
+    <script src="../js/fetchClient.js"></script>
+    <script src="../js/lightSocket.js"></script>
+    <script src="js/datadashboard.js"></script>
+    <script>
+        function deleteRow(ctl, row, currentAction, ...args) {
+
+            var currentRow = 0;
+            var newActionList = "";
+            args.forEach(arg => {
+                console.log(arg);
+                if (currentRow === row) {
+                    //$(ctl).parents("tr").remove();
+                }
+                else {
+
+                    if (newActionList != "") {
+                        newActionList = newActionList + ",";
+                    }
+                    newActionList = newActionList + arg;
+                }
+                currentRow++;
+            });
+
+            sessionStorage.setItem("actionStepList", newActionList.toString());
+            if (currentAction === "Drive") {
+                $("#action-steps-table").html(drawActionTable("Distance in meters", currentAction));
+
+            } else if (currentAction === "Turn") {
+                $("#action-steps-table").html(drawActionTable("Degrees", currentAction));
+            }
+        }
+
+        function drawActionTable(header, currentAction) {
+            var actionList = GetArray(sessionStorage.getItem("actionStepList"));
+            var tableHtml = "<table><tr><th>" + header + "</th></tr>";
+
+            for (index = 0; index < actionList.length; ++index) {
+                if (actionList[index] != null && actionList[index] != "" && !isNaN(actionList[index])) {
+                    tableHtml = tableHtml + "<tr><td>" + actionList[index] + "</td>" + "<td><button type='button' onclick='deleteRow(this," + index + ", \"" + currentAction + "\", " + sessionStorage.getItem("actionStepList") + ");' class='btn btn-default'>X</button></td>" + "</tr>";
+                }
+            }
+
+            tableHtml = tableHtml + "</table>"
+            return tableHtml;
+        }
+
+        function deleteDataDashBoardRow(ctl, row, ) {
+
+            var newActionList = "";
+            var datadashboardList = sessionStorage.getItem("datadashboardStepList");
+            var actionList = datadashboardList.trim().split("|");
+            for (index = 0; index < actionList.length; ++index) {
+                if (actionList[index] != null && actionList[index] != "") {
+                    if (index === row) {
+                        //	$(ctl).parents("tr").remove();
+                    }
+                    else {
+
+                        if (newActionList != "") {
+                            newActionList = newActionList + "|";
+                        }
+                        newActionList = newActionList + actionList[index];
+                    }
+                }
+            }
+
+            sessionStorage.setItem("datadashboardStepList", newActionList);
+            $("#datadashboard-table").html(drawDataDashBoardTable(""));
+
+        }
+
+        function GetArray(csv, delimiter = ",") {
+            return csv.trim().split(delimiter);
+        }
+
+        function drawDataDashBoardTable(header) {
+            if (!header) {
+                header = "";
+            }
+            var actionList = GetArray(sessionStorage.getItem("datadashboardStepList"), "|");
+            var tableHtml = "<table><tr><th>" + header + "</th></tr>";
+
+            for (index = 0; index < actionList.length; ++index) {
+                if (actionList[index] != null && actionList[index] != "") {
+                    tableHtml = tableHtml + "<tr><td>" + actionList[index] + "</td>" + '<td><button type="button" onclick="deleteDataDashBoardRow(this,' + index + ');\" class="btn btn-default">X</button></td>' + "</tr>";
+                }
+            }
+
+            tableHtml = tableHtml + "</table>"
+            return tableHtml;
+        }
+    </script>
+
+
+</body>
+</html>

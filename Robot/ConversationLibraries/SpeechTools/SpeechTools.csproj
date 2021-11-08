@@ -131,6 +131,7 @@
     <Compile Include="SpeechIntentInterpreter.cs" />
     <Compile Include="SpeechIntentManager.cs" />
     <Compile Include="SpeechManager.cs" />
+    <Compile Include="SkillSpeech.cs" />
     <Compile Include="TextComparisonObject.cs" />
     <EmbeddedResource Include="Properties\SpeechTools.rd.xml" />
   </ItemGroup>

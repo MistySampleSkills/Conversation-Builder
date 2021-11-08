@@ -59,18 +59,12 @@ namespace MistyManager
 					FontFamily = "Courier New",
 					Height = 40
 				});
-				_misty.DisplayText("Initializing robot systems...", "Text", null);
+				_misty.DisplayText("Waking robot...", "Text", null);
 
 				_misty.ChangeLED(0, 255, 255, null);
 				_misty.MoveArms(65.0, 65.0, 20, 20, null, AngularUnit.Degrees, null);
 				_misty.MoveHead(0, 0, 0, 75, AngularUnit.Degrees, null);
 				
-				//await Task.Delay(2000);
-				
-				//_misty.DisplayText("Audio and camera check...", "Text", null);
-				//_assetWrapper.ShowSystemImage(SystemImage.SystemCamera);
-				//await Task.Delay(2000);
-
 				try
 				{
 					bool audioEnabled = false;
@@ -107,8 +101,7 @@ namespace MistyManager
 					await Task.Delay(4000);
 					//Warned them, but try anyway in case they are just slow to come up
 				}
-
-				//_assetWrapper.ShowSystemImage(SystemImage.SystemLogoPrompt);
+				
 				
 				_parameterManager = new ParameterManager(_misty, _parameters);
 				if (_parameterManager == null)
@@ -118,10 +111,7 @@ namespace MistyManager
 					_misty.SkillCompleted();
 					return false;
 				}
-
-				await Task.Delay(2000);
-				_misty.DisplayText($"Retrieving conversation...", "Text", null);
-				_assetWrapper.ShowSystemImage(SystemImage.ContentLeft);
+				
 				_characterParameters = await _parameterManager.Initialize();
 				if (_characterParameters != null && _characterParameters.InitializationErrorStatus != "Error")
 				{
@@ -132,15 +122,9 @@ namespace MistyManager
 					}
 					else
 					{
-						_misty.DisplayText($"Loading conversation...", "Text", null);
-						_assetWrapper.ShowSystemImage(SystemImage.ContentRight);
 						await _misty.TransitionLEDAsync(0, 255, 0, 30, 144, 255, LEDTransition.Breathe, 1000);
 					}
-					await Task.Delay(2000);
 
-					_misty.DisplayText($"Waking robot...", "Text", null);
-					_assetWrapper.ShowSystemImage(SystemImage.Joy);
-					await Task.Delay(2000);
 
 					string startupConversation = _characterParameters.ConversationGroup.StartupConversation;
 					ConversationData conversationData = _characterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
@@ -157,7 +141,7 @@ namespace MistyManager
 					if (initialized)
 					{
 						_misty.DisplayText("Hello!", "Text", null);
-						_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
+						_assetWrapper.ShowSystemImage(SystemImage.Joy);
 					}
 					else
 					{
@@ -165,7 +149,7 @@ namespace MistyManager
 						_assetWrapper.ShowSystemImage(SystemImage.SleepingZZZ);
 
 					}
-					await Task.Delay(2000);
+					await Task.Delay(1000);
 					return initialized;
 				}
 				else

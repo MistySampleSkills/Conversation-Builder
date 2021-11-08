@@ -342,6 +342,9 @@ namespace MistyCharacter
 				CharacterParameters.DisplaySpoken = GetBoolField(_parameters, ConversationConstants.DisplaySpoken) ?? false;
 				CharacterParameters.LargePrint = GetBoolField(_parameters, ConversationConstants.LargePrint) ?? false;
 				CharacterParameters.ShowListeningIndicator = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? false;
+				CharacterParameters.ShowSpeakingIndicator = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? false;
+				CharacterParameters.SendInteractionUIEvents = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? true;
+				
 				CharacterParameters.HeardSpeechToScreen = GetBoolField(_parameters, ConversationConstants.HeardSpeechToScreen) ?? false;
 				CharacterParameters.StartVolume = GetIntField(_parameters, ConversationConstants.StartVolume) ?? null;
 
@@ -453,7 +456,10 @@ namespace MistyCharacter
 
 				CharacterParameters.SpeechConfiguration = JsonConvert.DeserializeObject<SpeechConfiguration>(GetStringField(_parameters, ConversationConstants.SpeechConfiguration)) ?? new SpeechConfiguration();
 				SetSpeechParameters();
-				
+
+				//TEST HACK!!!!
+				CharacterParameters.TextToSpeechService = "skill";
+
 				CharacterParameters.TrackHistory = GetIntField(_parameters, ConversationConstants.TrackHistory) ?? 3;
 				CharacterParameters.PersonConfidence = GetDoubleField(_parameters, ConversationConstants.PersonConfidence) ?? 0.6;
 				CharacterParameters.LogInteraction = GetBoolField(_parameters, ConversationConstants.LogInteraction) ?? true;
@@ -534,9 +540,7 @@ namespace MistyCharacter
 
 				CharacterParameters.SpeechRecognitionService = recService ?? "vosk";
 			}
-
-
-
+			
 			//TTS Parameters
 			if (!string.IsNullOrWhiteSpace(CharacterParameters.SpeechConfiguration?.TextToSpeechSubscriptionKey))
 			{

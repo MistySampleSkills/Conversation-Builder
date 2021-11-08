@@ -45,6 +45,7 @@ using MistyRobotics.SDK.Messengers;
 using MistyRobotics.SDK.Responses;
 using MistyRobotics.SDK;
 using MistyRobotics.Common.Data;
+using Newtonsoft.Json;
 using SkillTools.AssetTools;
 using TimeManager;
 using SpeechTools;
@@ -172,7 +173,8 @@ namespace MistyCharacter
 		private IList<string> _allowedUtterances = new List<string>();
 		
 		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
-		
+		private IList<string> _allowedTriggers;
+
 
 		public BaseCharacter(IRobotMessenger misty, 
 			IDictionary<string, object> originalParameters,
@@ -239,6 +241,7 @@ namespace MistyCharacter
 				AnimationManager.AddTrigger += AddTrigger;
 				AnimationManager.RemoveTrigger += RemoveTrigger;
 				AnimationManager.ManualTrigger += ManualTrigger;
+				AnimationManager.TriggerAnimation += HandleAnimationScriptRequest;
 
 				MistyState.ArTagEvent += HandleArTagEvent;
 				MistyState.BatteryChargeEvent += HandleBatteryChargeEvent;
@@ -274,12 +277,40 @@ namespace MistyCharacter
 				//hacky check for running skills, so there may be a 15 second delay if skill shuts down automatically to where we notice and try to restart				
 				_pollRunningSkillsTimer = new Timer(UpdateRunningSkillsCallback, null, 15000, Timeout.Infinite);
 				
+				_ = Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
+				{
+					PlaceOnTop = false
+				});
+				
+				if (CharacterParameters.ShowSpeakingIndicator)
+				{
+					_ = Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+					{
+						VerticalAlignment = ImageVerticalAlignment.Bottom,
+						HorizontalAlignment = ImageHorizontalAlignment.Center,
+						PlaceOnTop = true,
+						Stretch = ImageStretch.None,
+						Visible = false,
+						Height = 50
+					});
+				}
+
 				if (CharacterParameters.ShowListeningIndicator)
 				{
-					_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+					_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+					{
+						VerticalAlignment = ImageVerticalAlignment.Top,
+						HorizontalAlignment = ImageHorizontalAlignment.Right,
+						PlaceOnTop = true,
+						Stretch = ImageStretch.None,
+						Visible = false,
+						Height = 70
+					});
+
+					/*_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
 					{
                         Wrap = true,
-                        Visible = true,
+						Visible = false,
                         Weight = 25,
                         Size = 25,
                         HorizontalAlignment = ImageHorizontalAlignment.Center,
@@ -290,7 +321,7 @@ namespace MistyCharacter
                         PlaceOnTop = true,
                         FontFamily = "Courier New",
                         Height = 30
-                    });
+                    });*/
 				}
 
 				if (CharacterParameters.DisplaySpoken)
@@ -298,7 +329,7 @@ namespace MistyCharacter
 					_ = Robot.SetTextDisplaySettingsAsync("SpokeText", new TextSettings
 					{
 						Wrap = true,
-						Visible = true,
+						Visible = false,
 						Weight = CharacterParameters.LargePrint ? 20 : 15,
 						Size = CharacterParameters.LargePrint ? 40 : 20,
 						HorizontalAlignment = ImageHorizontalAlignment.Center,
@@ -317,7 +348,7 @@ namespace MistyCharacter
 					_ = Robot.SetTextDisplaySettingsAsync("SpeechText", new TextSettings
 					{
 						Wrap = true,
-						Visible = true,
+						Visible = false,
 						Weight = 15,
 						Size = 20,
 						HorizontalAlignment = ImageHorizontalAlignment.Center,
@@ -435,7 +466,7 @@ namespace MistyCharacter
 			});
 		}
 
-		public async void ManualTrigger(object sender, TriggerData trigger)
+		public void ManualTrigger(object sender, TriggerData trigger)
 		{		
 			_ = SendManagedResponseEvent(trigger);			
 		}
@@ -445,14 +476,22 @@ namespace MistyCharacter
 		{
 			TriggerDetail triggerDetail = new TriggerDetail(trigger.Key, trigger.Value.Trigger, trigger.Value.TriggerFilter);
 
+			_allowedTriggers.Add(trigger.Key);
+
 			ListenToEvent(triggerDetail, 0);
+
+			SendInteractionUIEvent();
 		}
 
 		public void RemoveTrigger(object sender, string trigger)
 		{
 			TriggerDetail triggerDetail = new TriggerDetail(trigger, trigger);
 
+			_allowedTriggers.Remove(trigger);
+
 			IgnoreEvent(triggerDetail, 0);
+
+			SendInteractionUIEvent();
 		}
 
 		private void IgnoreEvent(TriggerDetail detail, int delayMs)
@@ -1298,6 +1337,7 @@ namespace MistyCharacter
 			}
 		}
 
+
 		private async Task ProcessNextAnimationRequest()
 		{
 			try
@@ -1332,7 +1372,7 @@ namespace MistyCharacter
 
 				CurrentInteraction = new Interaction(interaction);
 
-				Robot.SkillLogger.Log($"STARTING NEW INTERACTION.");
+				Robot.SkillLogger.LogVerbose($"STARTING NEW INTERACTION.");
 				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Processing next interaction in queue.");
 				if (_skillsToStop != null && _skillsToStop.Count > 0)
 				{
@@ -1379,15 +1419,15 @@ namespace MistyCharacter
 				}
 
 				//Arrgh headaches
-				if (!string.IsNullOrWhiteSpace(animationRequest.Speak))
+				/*if (!string.IsNullOrWhiteSpace(animationRequest.Speak))
 				{
 					animationRequest.Speak = animationRequest.Speak.Replace("’", "'").Replace("“", "\"").Replace("”", "\"");
-				}
+				}*/
 
-				if (string.IsNullOrWhiteSpace(animationRequest.SpeakFileName) && !string.IsNullOrWhiteSpace(animationRequest.Speak))
+				/*if (string.IsNullOrWhiteSpace(animationRequest.SpeakFileName) && !string.IsNullOrWhiteSpace(animationRequest.Speak))
 				{
 					animationRequest.SpeakFileName = AssetHelper.MakeFileName(animationRequest.Speak);
-				}
+				}*/
 
 				//Restart trigger handling in case a developer stopped in template and didn't restart
 				RestartTriggerHandling();
@@ -1397,21 +1437,21 @@ namespace MistyCharacter
 				StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | New attitude adjustment:{animationRequest.Emotion} - Current mood:{MistyState.GetCharacterState().CurrentMood}");
 
 
-				IList<string> allowedTriggers = CurrentInteraction.TriggerMap.Keys.ToList();
+				_allowedTriggers = CurrentInteraction.TriggerMap.Keys.ToList();
 				if (CurrentInteraction.AllowConversationTriggers && _currentConversationData.ConversationTriggerMap != null && _currentConversationData.ConversationTriggerMap.Count > 0)
 				{
 					foreach (KeyValuePair<string, IList<TriggerActionOption>> actionOption in _currentConversationData.ConversationTriggerMap)
 					{
-						if (!allowedTriggers.Contains(actionOption.Key))
+						if (!_allowedTriggers.Contains(actionOption.Key))
 						{
 							//don't re-add trigger if in interaction
-							allowedTriggers.Add(actionOption.Key);
+							_allowedTriggers.Add(actionOption.Key);
 						}
 					}
 				}
 
 				_allowedUtterances.Clear();
-				foreach (string trigger in allowedTriggers)
+				foreach (string trigger in _allowedTriggers)
 				{
 					//get utterances
 					TriggerDetail triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == trigger || x.Name == trigger));
@@ -1423,11 +1463,75 @@ namespace MistyCharacter
 
 				SpeechManager.SetInteractionDetails((int)(animationRequest.ListenTimeout * 1000), (int)(animationRequest.SilenceTimeout * 1000), _allowedUtterances);
 
+				SendInteractionUIEvent();
+				
 				AnimationRequestProcessor(interaction);
 			}
 			catch (Exception ex)
 			{
 				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Exception processing animation request.", ex);
+			}
+		}
+
+		private void SendInteractionUIEvent()
+		{
+			//TODO Test resending as items are added!
+
+			if (!CharacterParameters.SendInteractionUIEvents)
+			{
+				return;
+			}
+			IList<TriggerDetail> triggerList = new List<TriggerDetail>();
+			IList<TriggerDetail> utteranceList = new List<TriggerDetail>();
+			
+			//Get trigger details from id
+			foreach (string triggerString in _allowedTriggers)
+			{
+				TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Id == triggerString);
+				if (trigger != null && !triggerList.Contains(trigger))
+				{
+					triggerList.Add(trigger);
+				}
+			}
+
+			foreach (string utteranceString in _allowedUtterances)
+			{
+				//get utterances
+				TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == utteranceString || x.Name == utteranceString));
+				
+				if (trigger != null && !triggerList.Contains(trigger))
+				{
+					utteranceList.Add(trigger);
+				}
+			}
+
+			//Send this? Others?
+			if (triggerList.FirstOrDefault(x => x.Trigger == Triggers.Timeout) == null)
+			{
+				triggerList.Add(new TriggerDetail("-1", Triggers.Timeout));
+			}
+			
+			IDictionary<string, object> data = new Dictionary<string, object>
+			{
+				{"CurrentInteraction", CurrentInteraction },
+				{"Utterances", utteranceList},
+				{"Triggers", triggerList},
+				{"State", MistyState.GetCharacterState()},
+			};
+
+			Robot.PublishMessage(JsonConvert.SerializeObject(data), null);
+		}
+
+
+		public void HandleAnimationScriptRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action)
+		{
+			try
+			{
+				_ = IntermediateAnimationRequestProcessor(action.Key, action.Value, "user-request");
+			}
+			catch (Exception ex)
+			{
+				Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Exception processing user requested script animation.", ex);
 			}
 		}
 
@@ -1446,6 +1550,7 @@ namespace MistyCharacter
 						finalAnimation = aReq;
 					}
 					script = newInteraction.InitScript;
+					newInteraction.StartListening = interaction.StartListening;
 				}
 				else if (actionType == "prespeech")
 				{
@@ -1455,6 +1560,7 @@ namespace MistyCharacter
 						finalAnimation = aReq;
 					}
 					script = newInteraction.PreSpeechScript;
+					newInteraction.StartListening = false;
 				}
 				else if (actionType == "listening")
 				{
@@ -1464,11 +1570,15 @@ namespace MistyCharacter
 						finalAnimation = aReq;
 					}
 					script = newInteraction.ListeningScript;
+					newInteraction.StartListening = false;
+				}
+				else
+				{
+					newInteraction.StartListening = interaction.StartListening;
 				}
 
-				finalAnimation.SpeakFileName = ConversationConstants.IgnoreCallback;
-				newInteraction.StartListening = false;
-
+				finalAnimation.SpeakFileName = "";
+				
 				bool hasAudio = false;
 				//Set values based upon defaults and passed in
 				if (!EmotionAnimations.TryGetValue(finalAnimation.Emotion, out AnimationRequest defaultAnimation))
@@ -1537,7 +1647,7 @@ namespace MistyCharacter
 					SpeechManager.TryToPersonalizeData(finalAnimation.Speak, finalAnimation, newInteraction, out string newText);
 					finalAnimation.Speak = newText;
 					newInteraction.StartListening = false;
-					SpeechManager.Speak(finalAnimation, newInteraction);
+					_ = SpeechManager.Speak(finalAnimation, newInteraction);
 
 					Robot.SkillLogger.Log($"Prespeech saying '{ finalAnimation.Speak}' for animation '{ finalAnimation.Name}'.");
 				}
@@ -2133,7 +2243,6 @@ namespace MistyCharacter
 						SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText);
 
 						animation.Speak = newText;
-						animation.SpeakFileName = ConversationConstants.IgnoreCallback;
 						interaction.StartListening = false;
 						Robot.SkillLogger.LogVerbose($"Prespeech saying '{animation?.Speak ?? "nothing"}' and not changing animation.");
 						if (_processingVoice)
@@ -2213,11 +2322,11 @@ namespace MistyCharacter
 
 		}
 
-		private void ManageListeningDisplay(ListeningState listeningState)
+		private async void ManageListeningDisplay(ListeningState listeningState)
 		{
 			if (CharacterParameters.ShowListeningIndicator)
 			{
-				lock (_listeningLock)
+				lock (_listeningLock)  //if needed, use semaphore
 				{
 					switch (listeningState)
 					{
@@ -2232,28 +2341,103 @@ namespace MistyCharacter
 						//	Misty.DisplayText("📢", "Listening", null);
 						//	break;
 						case ListeningState.Recording:
-							//Misty.DisplayText("🌟", "Listening", null);
-							Robot.DisplayText("LISTENING...", "Listening", null);
-							//Misty.DisplayText("🌟", "SPEAK NOW", null);
-							_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+							//Robot.DisplayImage("waveZ2.gif", "Speaking", false, null);
+							//Robot.DisplayImage("wave5.gif", "Speaking", false, null);
+							_ = Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
 							{
-								Visible = true
+								PlaceOnTop = true,
+								Visible = true,
+								Height = 70,
+								HorizontalAlignment = ImageHorizontalAlignment.Right
 							});
-							break;
+
+						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+						//{
+						//	Visible = false
+						//});
+						Robot.DisplayImage("listen12.gif", "Speaking", false, null);
+
+						//Misty.DisplayText("🌟", "Listening", null);
+						/*Robot.DisplayText("LISTENING...", "Listening", null);
+						//Misty.DisplayText("🌟", "SPEAK NOW", null);
+						_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+						{
+							Visible = true
+						});*/
+						break;
 						case ListeningState.ProcessingSpeech:
-							Robot.DisplayText("PROCESSING SPEECH...", "Listening", null);
+
 							// Misty.DisplayText("🌟", "Listening", null);
-							_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+							/*await Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
 							{
 								Visible = true
+							});*/
+							//Robot.DisplayText("PROCESSING SPEECH...", "Listening", null);
+							_ = Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+							{
+								PlaceOnTop = true,
+								Visible = true,
+								Height = 70,
+									HorizontalAlignment = ImageHorizontalAlignment.Right
 							});
-							break;
-						default:
-							_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+
+						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+						//{
+						//	PlaceOnTop = true,
+						//	Visible = true
+						//});
+						Robot.DisplayImage("proc11.gif", "Listening", false, null);
+						/*
+						Robot.SetImageDisplaySettings("Speaking", new ImageSettings
 							{
 								Visible = false
-							});
+							}, null);*/
 							break;
+						case ListeningState.Speaking:
+						/*_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+						{
+							Visible = false
+						});*/
+
+						//Robot.DisplayText("PROCESSING SPEECH...", "Listening", null);
+
+						//Robot.DisplayImage("waveZ.gif", "Speaking", false, null);
+						//Robot.DisplayImage("spikewave3.gif", "Speaking", false, null);
+						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+						//{
+						//	Visible = false
+						//});
+
+						_ =  Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+						{
+							PlaceOnTop = true,
+							Visible = true,
+							Height = 50,
+							HorizontalAlignment = ImageHorizontalAlignment.Center
+						});
+							Robot.DisplayImage("eq2.gif", "Speaking", false, null);
+						break;
+
+					// Misty.DisplayText("🌟", "Listening", null);
+					//_ = Robot.SetTextDisplaySettingsAsync("Speaking", new TextSettings
+					//{
+					//	Visible = true
+					//});
+					//break;
+					default:
+							//_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+							//{
+							//	Visible = false
+							//});
+							Robot.SetImageDisplaySettings("Speaking", new ImageSettings
+							{
+								Visible = false
+							}, null);
+						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+						//{
+						//	Visible = false
+						//});
+						break;
 
 					}
 
@@ -2304,7 +2488,17 @@ namespace MistyCharacter
 				if (_conversationGroup.IntentUtterances.TryGetValue(speechIntent.TriggerFilter, out UtteranceData utteranceData))
 				{
 					triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, utteranceData.Name, Triggers.SpeechHeard));
+
+					if (!triggerSuccessful)
+					{
+						triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard));
+						if (!triggerSuccessful)
+						{
+							triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard));
+						}
+					}
 				}
+
 
 				if (!triggerSuccessful)
 				{
@@ -2317,7 +2511,12 @@ namespace MistyCharacter
 
 						if (!triggerSuccessful)
 						{
-							triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard), true);
+							//triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard), true);
+							triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard), true);
+							if (!triggerSuccessful)
+							{
+								triggerSuccessful = await SendManagedResponseEvent(new TriggerData(speechIntent.Text, "", Triggers.SpeechHeard), true);
+							}
 						}
 					}
 				}
@@ -2383,10 +2582,10 @@ namespace MistyCharacter
 			}
 			if (!await SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), arTagEvent.TagId.ToString(), Triggers.ArTagSeen)))
 			{
-				if (!await SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), "", Triggers.ArTagSeen)))
+				if (!await SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), arTagEvent.TagId.ToString(), Triggers.ArTagSeen), true))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), arTagEvent.TagId.ToString(), Triggers.ArTagSeen), true))
-					{
+					if (!await SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), "", Triggers.ArTagSeen)))
+					{					
 						await SendManagedResponseEvent(new TriggerData(arTagEvent.TagId.ToString(), "", Triggers.ArTagSeen), true);
 					}
 				}
@@ -2404,10 +2603,10 @@ namespace MistyCharacter
 
 			if (!await SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo?.ToString(), qrTagEvent.DecodedInfo?.ToString(), Triggers.QrTagSeen)))
 			{
-				if (!await SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo.ToString(), "", Triggers.QrTagSeen)))
+				if (!await SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo?.ToString(), qrTagEvent.DecodedInfo?.ToString(), Triggers.QrTagSeen), true))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo?.ToString(), qrTagEvent.DecodedInfo?.ToString(), Triggers.QrTagSeen), true))
-					{
+					if (!await SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo.ToString(), "", Triggers.QrTagSeen)))
+					{					
 						await SendManagedResponseEvent(new TriggerData(qrTagEvent.DecodedInfo.ToString(), "", Triggers.QrTagSeen), true);
 					}
 				}
@@ -2424,10 +2623,10 @@ namespace MistyCharacter
 			}
 
 			if (!await SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, serialMessageEvent.Message, Triggers.SerialMessage)))
-			{
-				if (!await SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, "", Triggers.SerialMessage)))
+			{				
+				if (!await SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, serialMessageEvent.Message, Triggers.SerialMessage), true))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, serialMessageEvent.Message, Triggers.SerialMessage), true))
+					if (!await SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, "", Triggers.SerialMessage)))
 					{
 						await SendManagedResponseEvent(new TriggerData(serialMessageEvent.Message, "", Triggers.SerialMessage), true);
 					}
@@ -2454,6 +2653,11 @@ namespace MistyCharacter
 			if (faceRecognitionEvent.Label == ConversationConstants.UnknownPersonFaceLabel)
 			{
 				sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeUnknownFaceTrigger, Triggers.FaceRecognized));
+
+				if(!sentMsg)
+				{
+					sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeUnknownFaceTrigger, Triggers.FaceRecognized), true);
+				}
 			}
 			else
 			{
@@ -2462,50 +2666,32 @@ namespace MistyCharacter
 					if (_lastKnownFace != MistyState.GetCharacterState().LastKnownFaceSeen)
 					{
 						sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeNewFaceTrigger, Triggers.FaceRecognized));
+						if (!sentMsg)
+						{
+							sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeNewFaceTrigger, Triggers.FaceRecognized), true);
+						}
 					}
 				}
 
 				if (!sentMsg)
 				{
 					sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeKnownFaceTrigger, Triggers.FaceRecognized));
+					if (!sentMsg)
+					{
+						sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeKnownFaceTrigger, Triggers.FaceRecognized), true);
+					}
 				}
 			}
 
 			if (!sentMsg)
 			{
 				sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, "", Triggers.FaceRecognized));
-
-
-				//dupe code to cleanup
 				if (!sentMsg)
 				{
-					if (faceRecognitionEvent.Label == ConversationConstants.UnknownPersonFaceLabel)
-					{
-						sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeUnknownFaceTrigger, Triggers.FaceRecognized), true);
-					}
-					else
-					{
-						if (!await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, faceRecognitionEvent.Label, Triggers.FaceRecognized), true))
-						{
-							if (_lastKnownFace != MistyState.GetCharacterState().LastKnownFaceSeen)
-							{
-								sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeNewFaceTrigger, Triggers.FaceRecognized), true);
-							}
-						}
-
-						if (!sentMsg)
-						{
-							sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, ConversationConstants.SeeKnownFaceTrigger, Triggers.FaceRecognized), true);
-						}
-					}
-
-					if (!sentMsg)
-					{
-						sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, "", Triggers.FaceRecognized), true);
-					}
-				}
+					sentMsg = await SendManagedResponseEvent(new TriggerData(faceRecognitionEvent.Label, "", Triggers.FaceRecognized), true);
+				}				
 			}
-
+			
 			FaceRecognitionEvent?.Invoke(this, faceRecognitionEvent);
 		}
 		
@@ -2541,28 +2727,76 @@ namespace MistyCharacter
 				string text = textObject == null ? null : Convert.ToString(textObject);
 				string triggerFilter = triggerFilterObject == null ? null : Convert.ToString(triggerFilterObject);
 
+				//HACK for user data, need to know if succeeded, to send again?
+				if (trigger == Triggers.SpeechHeard && triggerFilter == ConversationConstants.HeardUnknownTrigger
+					&& (!string.IsNullOrWhiteSpace(text) && text.ToLower().Trim() != ConversationConstants.HeardUnknownTrigger))
+				{
+					if(SpeechManager.HandleExternalSpeech(text))
+					{
+						return;
+					}
+				}
+
 				if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger)))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(text, "", trigger)))
+					if (!await SendManagedResponseEvent(new TriggerData(text, ConversationConstants.HeardUnknownTrigger, trigger)))
 					{
-						if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger), true))
+						if (!await SendManagedResponseEvent(new TriggerData(text, "", trigger)))
 						{
-							await SendManagedResponseEvent(new TriggerData(text, "", trigger), true);
+							if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger), true))
+							{
+								if (!await SendManagedResponseEvent(new TriggerData(text, ConversationConstants.HeardUnknownTrigger, trigger), true))
+								{
+									await SendManagedResponseEvent(new TriggerData(text, "", trigger), true);
+								}
+							}
 						}
 					}
 				}
+				
+
+				//if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger)))
+				//{
+				//	if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger), true))
+				//	{
+				//		if (!await SendManagedResponseEvent(new TriggerData(text, "", trigger)))
+				//		{						
+				//			if(!await SendManagedResponseEvent(new TriggerData(text, "", trigger), true))
+				//			{
+				//				//is this a user data response?
+				//				if (trigger == Triggers.SpeechHeard && triggerFilter == ConversationConstants.HeardUnknownTrigger)
+				//				{
+				//					SpeechManager.HandleExternalSpeech(text);
+				//					//SpeechManager_SpeechIntent(this, new TriggerData(text, triggerFilter, trigger));
+				//					return;
+				//				}
+
+				//			}
+				//		}
+				//	}
+				//}
 				ExternalEvent?.Invoke(this, userEvent);
 			}
 		}
 
 		public async void HandlePersonObjectEvent(object sender, IObjectDetectionEvent objectDetectionEvent)
 		{
+			//if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen)))
+			//{
+			//	if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen)))
+			//	{
+			//		if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))
+			//		{
+			//			await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen), true);
+			//		}
+			//	}
+			//}
 			if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen)))
 			{
-				if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen)))
+				if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))
-					{
+					if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen)))
+					{					
 						await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen), true);
 					}
 				}
@@ -2576,9 +2810,9 @@ namespace MistyCharacter
 		{
 			if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen)))
 			{
-				if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen)))
+				if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))
+					if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen)))
 					{
 						await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen), true);
 					}
@@ -2593,10 +2827,10 @@ namespace MistyCharacter
 		{
 			if (!await SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", capTouchEvent.SensorPosition.ToString(), capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased)))
 			{
-				if (!await SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", "", capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased)))
+				if (!await SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", capTouchEvent.SensorPosition.ToString(), capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased), true))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", capTouchEvent.SensorPosition.ToString(), capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased), true))
-					{
+					if (!await SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", "", capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased)))
+					{					
 						await SendManagedResponseEvent(new TriggerData(capTouchEvent.IsContacted ? "Contacted" : "Released", "", capTouchEvent.IsContacted ? Triggers.CapTouched : Triggers.CapReleased), true);
 					}
 				}
@@ -2609,9 +2843,9 @@ namespace MistyCharacter
 
 			if (!await SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", bumpEvent.SensorPosition.ToString(), bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased)))
 			{
-				if (!await SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", "", bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased)))
+				if (!await SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", bumpEvent.SensorPosition.ToString(), bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased), true))
 				{
-					if (!await SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", bumpEvent.SensorPosition.ToString(), bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased), true))
+					if (!await SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", "", bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased)))
 					{
 						await SendManagedResponseEvent(new TriggerData(bumpEvent.IsContacted ? "Contacted" : "Released", "", bumpEvent.IsContacted ? Triggers.BumperPressed : Triggers.BumperReleased), true);
 					}
@@ -2896,6 +3130,7 @@ namespace MistyCharacter
 		#endregion
 	}
 }
+ 
  
  
  

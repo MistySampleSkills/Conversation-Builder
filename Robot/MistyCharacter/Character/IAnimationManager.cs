@@ -62,6 +62,7 @@ namespace MistyCharacter
 
 		event EventHandler<TriggerData> ManualTrigger;
 
+		event EventHandler<KeyValuePair<AnimationRequest, Interaction>> TriggerAnimation;
 	}
 }
  
