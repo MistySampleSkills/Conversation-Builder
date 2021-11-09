@@ -1201,6 +1201,7 @@ namespace MistyCharacter
 								}
 
 								_currentInteraction.StartListening = false;
+								_currentAnimation.SpeakFileName = "";
 								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								break;
 
@@ -1217,7 +1218,8 @@ namespace MistyCharacter
 								}
 
 								_currentInteraction.StartListening = false;
-								await _speechManager.Speak(_currentAnimation, _currentInteraction);
+								_currentAnimation.SpeakFileName = "";
+								_ = _speechManager.Speak(_currentAnimation, _currentInteraction);
 								await WaitOnSpeechCompletionEvent(Convert.ToInt32(sawData[1]));
 								break;
 
@@ -1234,6 +1236,7 @@ namespace MistyCharacter
 								{
 									_currentAnimation.Speak = sasData[0];
 								}
+								_currentAnimation.SpeakFileName = "";
 								_currentInteraction.StartListening = false;
 
 
@@ -1259,6 +1262,7 @@ namespace MistyCharacter
 									_currentAnimation.Speak = saeData[0];
 								}
 								_currentInteraction.StartListening = false;
+								_currentAnimation.SpeakFileName = "";
 
 								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								//await Task.Delay(100);
@@ -1284,6 +1288,7 @@ namespace MistyCharacter
 									_currentAnimation.Speak = salData[0];
 								}
 								_currentInteraction.StartListening = true;
+								_currentAnimation.SpeakFileName = "";
 								await _speechManager.Speak(_currentAnimation, _currentInteraction);
 								break;
 							case "START-LISTEN":

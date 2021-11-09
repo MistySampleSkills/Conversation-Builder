@@ -1540,7 +1540,7 @@ namespace MistyCharacter
 			try
 			{
 				Interaction newInteraction = new Interaction(interaction);
-				AnimationRequest finalAnimation = intermediateAnimation;
+				AnimationRequest finalAnimation = new AnimationRequest(intermediateAnimation);
 				string script = "";
 				if(actionType == "init")
 				{
@@ -1549,6 +1549,7 @@ namespace MistyCharacter
 					{
 						finalAnimation = aReq;
 					}
+					finalAnimation.SpeakFileName = "";
 					script = newInteraction.InitScript;
 					newInteraction.StartListening = interaction.StartListening;
 				}
@@ -1560,6 +1561,8 @@ namespace MistyCharacter
 						finalAnimation = aReq;
 					}
 					script = newInteraction.PreSpeechScript;
+
+					finalAnimation.SpeakFileName = AssetHelper.MakeFileName(finalAnimation.Speak) + ConversationConstants.IgnoreCallback;
 					newInteraction.StartListening = false;
 				}
 				else if (actionType == "listening")
@@ -1569,6 +1572,7 @@ namespace MistyCharacter
 					{
 						finalAnimation = aReq;
 					}
+					finalAnimation.SpeakFileName = AssetHelper.MakeFileName(finalAnimation.Speak) + ConversationConstants.IgnoreCallback;
 					script = newInteraction.ListeningScript;
 					newInteraction.StartListening = false;
 				}
@@ -1577,7 +1581,6 @@ namespace MistyCharacter
 					newInteraction.StartListening = interaction.StartListening;
 				}
 
-				finalAnimation.SpeakFileName = "";
 				
 				bool hasAudio = false;
 				//Set values based upon defaults and passed in
@@ -1648,7 +1651,6 @@ namespace MistyCharacter
 					finalAnimation.Speak = newText;
 					newInteraction.StartListening = false;
 					_ = SpeechManager.Speak(finalAnimation, newInteraction);
-
 					Robot.SkillLogger.Log($"Prespeech saying '{ finalAnimation.Speak}' for animation '{ finalAnimation.Name}'.");
 				}
 				else if (!string.IsNullOrWhiteSpace(finalAnimation.AudioFile))
@@ -1727,7 +1729,8 @@ namespace MistyCharacter
 
 				if (!string.IsNullOrWhiteSpace(finalAnimation.AnimationScript))
 				{
-					_ = AnimationManager.RunAnimationScript(finalAnimation.AnimationScript.Replace("’", "'").Replace("“", "\"").Replace("”", "\""), finalAnimation.RepeatScript, _currentAnimation, newInteraction, _currentConversationData);
+					//_ = AnimationManager.RunAnimationScript(finalAnimation.AnimationScript.Replace("’", "'").Replace("“", "\"").Replace("”", "\""), finalAnimation.RepeatScript, _currentAnimation, newInteraction, _currentConversationData);
+					_ = AnimationManager.RunAnimationScript(finalAnimation.AnimationScript.Replace("’", "'").Replace("“", "\"").Replace("”", "\""), false, _currentAnimation, newInteraction, _currentConversationData);
 				}
 
 			}

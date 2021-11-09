@@ -66,7 +66,8 @@ namespace SpeechTools
 		public event EventHandler<string> UserDataAnimationScript;
 
 		private const string MissingInlineData = "Missing";
-		private const string TTSNamePreface = "misty-en-";		
+		private const string TTSNamePreface = "misty-en-";
+		private const string SkillNamePreface = "skill-";
 		private IList<string> _audioTags = new List<string>();
 		private ISpeechIntentManager _speechIntentManager;
 		private AzureSpeechService _azureCognitive;
@@ -165,6 +166,7 @@ namespace SpeechTools
 				switch (_characterParameters.TextToSpeechService)
 				{
 					case "google":
+					case "googleonboard":
 						speakingVoice = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingVoice) ? "default" : _googleTTSParameters.SpeakingVoice);
 						string spokenLanguage = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpokenLanguage) ? "en-US" : _googleTTSParameters.SpokenLanguage);
 						string speakingGender = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingGender) ? "Female" : _googleTTSParameters.SpeakingGender);						
@@ -182,6 +184,7 @@ namespace SpeechTools
 						}
 						break;
 					case "azure":
+					case "azureonboard":
 						speakingVoice = (string.IsNullOrWhiteSpace(_azureTTSParameters.SpeakingVoice) ? "default" : _azureTTSParameters.SpeakingVoice);
 						string translatedLanguage = string.IsNullOrWhiteSpace(_azureTTSParameters.TranslatedLanguage) ? "en-US" : _azureTTSParameters.TranslatedLanguage;
 						if (!name.Contains(speakingVoice))
@@ -193,8 +196,17 @@ namespace SpeechTools
 							name += translatedLanguage;
 						}
 						break;
+					case "skill":
+						if(!name.Contains(SkillNamePreface))
+						{
+							name = SkillNamePreface + name;
+						}
+						break;
 					default:
-						name = TTSNamePreface + name;
+						if (!name.Contains(TTSNamePreface))
+						{
+							name = TTSNamePreface + name;
+						}
 						break;
 				}
 
@@ -759,6 +771,7 @@ namespace SpeechTools
 				}
 				_processingAudioCallback = true;
 				
+				//TODO This is not used!!!
 				if (audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
 				{
 					PreSpeechCompleted?.Invoke(this, audioComplete);
