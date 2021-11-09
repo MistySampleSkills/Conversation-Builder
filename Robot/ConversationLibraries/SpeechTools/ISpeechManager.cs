@@ -54,13 +54,14 @@ namespace SpeechTools
 
 		Task<bool> Initialize();
 		int Volume { get; set; }
-		Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction);
-		string GetLocaleName(string name);
+		Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction, bool backgroundSpeech);
+		//string GetLocaleName(string name);
 		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
 		void AbortListening(string audioName);		
 		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
-		
+
+		string MakeTextBasedFileName(string text);
 		void SetAudioTrim(int trimMs);
 		void SetMaxSilence(int silenceTimeout);
 		void SetMaxListen(int listenTimeout);

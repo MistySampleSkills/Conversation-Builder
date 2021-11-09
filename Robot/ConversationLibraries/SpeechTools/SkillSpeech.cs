@@ -40,21 +40,42 @@ namespace SpeechTools
 {
 	public class SkillSpeech
 	{
+		private VoiceInformation _voice = SpeechSynthesizer.DefaultVoice;
+		double _pitch = 1.0;
+		double _rate = 1.0;
+
+		public void SetPitch(double pitch)
+		{
+			_pitch = pitch;
+		}
+
+		public void SetRate(double rate)
+		{
+			_rate = rate;
+		}
+
+		public bool SetVoice(string voice)
+		{
+			var voices = SpeechSynthesizer.AllVoices;
+			foreach (VoiceInformation voiceInfo in voices)
+			{
+				if (voiceInfo.DisplayName.Contains(voice))
+				{
+					_voice = voiceInfo;
+					return true;
+				}
+			}
+			return false;
+		}
+		
+
 		public async Task<Stream> TextToStream(string text)
 		{
 			using (var synth = new SpeechSynthesizer())
 			{
-				var voices = SpeechSynthesizer.AllVoices;
-				foreach(VoiceInformation voice in voices)
-				{
-					string testX = voice.DisplayName;
-					if (testX.Contains("Zira"))
-					{
-						synth.Voice = voice;
-					}
-				}
-
-				var defaultVoice = SpeechSynthesizer.DefaultVoice;
+				synth.Options.SpeakingRate = _rate;
+				synth.Options.AudioPitch = _pitch;
+				synth.Voice = _voice;
 				var test = synth.Options;
 				SpeechSynthesisStream stream = await synth.SynthesizeTextToStreamAsync(text);
 				return stream.AsStream();
@@ -81,3 +102,4 @@ namespace SpeechTools
 		}
 	}
 }
+ 

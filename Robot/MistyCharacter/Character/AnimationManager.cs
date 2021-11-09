@@ -217,7 +217,7 @@ namespace MistyCharacter
 			_ = Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
 			{
 				Visible = true,
-				PlaceOnTop = true
+				PlaceOnTop = false
 			});
 
 			_ = Robot.SetTextDisplaySettingsAsync("AnimationText", new TextSettings
@@ -872,7 +872,7 @@ namespace MistyCharacter
 								break;
 							case "VOLUME":
 								//VOLUME:newVolume;
-								_ = await Robot.SetDefaultVolumeAsync(Convert.ToInt32(commandData[1]));
+								_speechManager.Volume = Convert.ToInt32(commandData[1]);
 								break;
 
 							case "DEBUG":
@@ -1202,7 +1202,7 @@ namespace MistyCharacter
 
 								_currentInteraction.StartListening = false;
 								_currentAnimation.SpeakFileName = "";
-								await _speechManager.Speak(_currentAnimation, _currentInteraction);
+								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
 								break;
 
 							case "SPEAK-AND-WAIT":
@@ -1219,7 +1219,7 @@ namespace MistyCharacter
 
 								_currentInteraction.StartListening = false;
 								_currentAnimation.SpeakFileName = "";
-								_ = _speechManager.Speak(_currentAnimation, _currentInteraction);
+								_ = _speechManager.Speak(_currentAnimation, _currentInteraction, false);
 								await WaitOnSpeechCompletionEvent(Convert.ToInt32(sawData[1]));
 								break;
 
@@ -1240,7 +1240,7 @@ namespace MistyCharacter
 								_currentInteraction.StartListening = false;
 
 
-								await _speechManager.Speak(_currentAnimation, _currentInteraction);
+								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
 								//await Task.Delay(100);
 								_awaitingSyncToSend = new AwaitingSync
 								{
@@ -1264,7 +1264,7 @@ namespace MistyCharacter
 								_currentInteraction.StartListening = false;
 								_currentAnimation.SpeakFileName = "";
 
-								await _speechManager.Speak(_currentAnimation, _currentInteraction);
+								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
 								//await Task.Delay(100);
 								_awaitingEventToSend = new AwaitingEvent
 								{
@@ -1289,7 +1289,7 @@ namespace MistyCharacter
 								}
 								_currentInteraction.StartListening = true;
 								_currentAnimation.SpeakFileName = "";
-								await _speechManager.Speak(_currentAnimation, _currentInteraction);
+								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
 								break;
 							case "START-LISTEN":
 								//START-LISTEN;

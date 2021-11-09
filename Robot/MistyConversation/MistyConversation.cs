@@ -83,6 +83,8 @@ namespace MistyConversation
 					return;
 				}
 
+				//Reset screen if successfully started
+				await _misty.SetDisplaySettingsAsync(true);
 				await _conversationManager.StartConversation();
 
 			}

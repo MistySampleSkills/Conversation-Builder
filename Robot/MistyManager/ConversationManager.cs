@@ -36,7 +36,7 @@ namespace MistyManager
 			{
 				_misty.UnregisterAllEvents(null);
 
-				//Revert display to defaults before starting...
+				//Revert display to defaults before starting init process...
 				await _misty.SetDisplaySettingsAsync(true);
 				_misty.SetBlinkSettings(true, null, null, null, null, null, null);
 				
@@ -146,7 +146,8 @@ namespace MistyManager
 					else
 					{
 						_misty.DisplayText("Failed to wake up robot!", "Text", null);
-						_assetWrapper.ShowSystemImage(SystemImage.SleepingZZZ);
+						_assetWrapper.ShowSystemImage(SystemImage.Disoriented);
+						await Task.Delay(5000);
 
 					}
 					await Task.Delay(1000);

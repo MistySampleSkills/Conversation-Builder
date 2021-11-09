@@ -116,7 +116,7 @@ namespace MistyCharacter
 		public Interaction CurrentInteraction { get; private set; } = new Interaction();
 
 		//private IList<string> _listeningCallbacks = new List<string>();
-		private IList<string> _audioAnimationCallbacks = new List<string>();
+		//private IList<string> _audioAnimationCallbacks = new List<string>();
 		private bool _waitingOnPrespeech;
 
 		private Timer _noInteractionTimer;
@@ -151,7 +151,7 @@ namespace MistyCharacter
 		public bool WaitingForOverrideTrigger { get; private set; }
 		private bool _ignoreTriggeringEvents;
 		
-		private object _lockListenerData = new object();
+		//private object _lockListenerData = new object();
 
 		private ConcurrentQueue<Interaction> _interactionQueue = new ConcurrentQueue<Interaction>();
 		private ConcurrentQueue<Interaction> _interactionPriorityQueue = new ConcurrentQueue<Interaction>();
@@ -362,7 +362,7 @@ namespace MistyCharacter
 					});
 				}
 
-				ManageListeningDisplay(ListeningState.Waiting);
+				_ = ManageListeningDisplay(ListeningState.Waiting);
 				_ = ProcessNextAnimationRequest();
 				return true;
 			}
@@ -1025,7 +1025,8 @@ namespace MistyCharacter
 
 			if (CharacterParameters.StartVolume != null && CharacterParameters.StartVolume > 0)
 			{
-				Robot.SetDefaultVolume((int)CharacterParameters.StartVolume, null);
+				//Robot.SetDefaultVolume((int)CharacterParameters.StartVolume, null);
+				SpeechManager.Volume = (int)CharacterParameters.StartVolume;
 			}
 
 			string startConversation = conversationId ?? _conversationGroup.StartupConversation;
@@ -1077,7 +1078,10 @@ namespace MistyCharacter
 			Robot.StopArTagDetector(null);
 			Robot.StopQrTagDetector(null);
 
-			Robot.Speak(string.IsNullOrWhiteSpace(speak) ? "Ending conversation." : speak, true, "InteractionTimeout", null);
+			if(!string.IsNullOrWhiteSpace(speak))
+			{
+				Robot.Speak(speak, true, "InteractionTimeout", null);
+			}
 			ConversationEnded?.Invoke(this, DateTime.Now);
 		}
 
@@ -1539,9 +1543,11 @@ namespace MistyCharacter
 		{
 			try
 			{
+				//TODO CLEAN ME UP!!!
 				Interaction newInteraction = new Interaction(interaction);
 				AnimationRequest finalAnimation = new AnimationRequest(intermediateAnimation);
 				string script = "";
+				bool backgroundSpeech = false;
 				if(actionType == "init")
 				{
 					AnimationRequest aReq = _currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.InitAnimation);
@@ -1561,8 +1567,8 @@ namespace MistyCharacter
 						finalAnimation = aReq;
 					}
 					script = newInteraction.PreSpeechScript;
-
-					finalAnimation.SpeakFileName = AssetHelper.MakeFileName(finalAnimation.Speak) + ConversationConstants.IgnoreCallback;
+					backgroundSpeech = true;
+					//finalAnimation.SpeakFileName = AssetHelper.MakeFileName(finalAnimation.Speak) + ConversationConstants.IgnoreCallback;
 					newInteraction.StartListening = false;
 				}
 				else if (actionType == "listening")
@@ -1572,7 +1578,8 @@ namespace MistyCharacter
 					{
 						finalAnimation = aReq;
 					}
-					finalAnimation.SpeakFileName = AssetHelper.MakeFileName(finalAnimation.Speak) + ConversationConstants.IgnoreCallback;
+					backgroundSpeech = true;
+					//finalAnimation.SpeakFileName = AssetHelper.MakeFileName(finalAnimation.Speak) + ConversationConstants.IgnoreCallback;
 					script = newInteraction.ListeningScript;
 					newInteraction.StartListening = false;
 				}
@@ -1623,24 +1630,24 @@ namespace MistyCharacter
 					SpeechManager.Volume = (int)defaultAnimation.Volume;
 				}
 
-				if (hasAudio)
-				{
-					lock (_lockListenerData)
-					{
-						string audioFile = "";
-						if (!string.IsNullOrWhiteSpace(finalAnimation.AudioFile))
-						{
-							audioFile = SpeechManager.GetLocaleName(finalAnimation.AudioFile);
-						}
-						else
-						{
-							audioFile = SpeechManager.GetLocaleName(finalAnimation.SpeakFileName);
-						}
+				//if (hasAudio)
+				//{
+				//	lock (_lockListenerData)
+				//	{
+				//		string audioFile = "";
+				//		if (!string.IsNullOrWhiteSpace(finalAnimation.AudioFile))
+				//		{
+				//			audioFile = SpeechManager.GetLocaleName(finalAnimation.AudioFile);
+				//		}
+				//		else if (!string.IsNullOrWhiteSpace(finalAnimation.SpeakFileName))
+				//		{
+				//			audioFile = SpeechManager.GetLocaleName(finalAnimation.SpeakFileName);
+				//		}
 
-						_audioAnimationCallbacks.Remove(audioFile);
-						_audioAnimationCallbacks.Add(audioFile);
-					}
-				}
+				//		//_audioAnimationCallbacks.Remove(audioFile);
+				//		//_audioAnimationCallbacks.Add(audioFile);
+				//	}
+				//}
 
 				//Start speech or audio playing
 				if (!string.IsNullOrWhiteSpace(finalAnimation.Speak))
@@ -1650,18 +1657,17 @@ namespace MistyCharacter
 					SpeechManager.TryToPersonalizeData(finalAnimation.Speak, finalAnimation, newInteraction, out string newText);
 					finalAnimation.Speak = newText;
 					newInteraction.StartListening = false;
-					_ = SpeechManager.Speak(finalAnimation, newInteraction);
-					Robot.SkillLogger.Log($"Prespeech saying '{ finalAnimation.Speak}' for animation '{ finalAnimation.Name}'.");
+					_ = SpeechManager.Speak(finalAnimation, newInteraction, backgroundSpeech);
+					Robot.SkillLogger.Log($"Saying '{ finalAnimation.Speak}' for intermediate animation '{ finalAnimation.Name}'.");
 				}
 				else if (!string.IsNullOrWhiteSpace(finalAnimation.AudioFile))
 				{
 					hasAudio = true;
 					MistyState.GetCharacterState().Audio = finalAnimation.AudioFile;
 					Robot.PlayAudio(finalAnimation.AudioFile, null, null);
-					Robot.SkillLogger.Log($"Prespeech playing audio '{ finalAnimation.AudioFile}' for animation '{ finalAnimation.Name}'.");
+					Robot.SkillLogger.Log($"Playing audio '{ finalAnimation.AudioFile}' for intermediate animation '{ finalAnimation.Name}'.");
 				}
-
-
+				
 				//Display image
 				if (!string.IsNullOrWhiteSpace(finalAnimation.ImageFile))
 				{
@@ -1769,11 +1775,11 @@ namespace MistyCharacter
 					return;
 				}
 
-				//Await completion of final commands
-
+				//Await completion of final commands??
+				//Add options like IM?
 				HeadManager.StopMovement();
 				ArmManager.StopMovement();
-				//await AnimationManager.StopRunningAnimationScripts();
+				await AnimationManager.StopRunningAnimationScripts();
 
 				//should we start skill listening even if it may retrigger?
 				foreach (string skillMessageId in CurrentInteraction.SkillMessages)
@@ -1943,24 +1949,24 @@ namespace MistyCharacter
 				}
 
 
-				if (hasAudio)
-				{
-					lock (_lockListenerData)
-					{
-						string audioFile = "";
-						if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile))
-						{
-							audioFile = SpeechManager.GetLocaleName(animationRequest.AudioFile);
-						}
-						else
-						{
-							audioFile = SpeechManager.GetLocaleName(animationRequest.SpeakFileName);
-						}
+				//if (hasAudio)
+				//{
+				//	lock (_lockListenerData)
+				//	{
+				//		string audioFile = "";
+				//		if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile))
+				//		{
+				//			audioFile = SpeechManager.GetLocaleName(animationRequest.AudioFile);
+				//		}
+				//		else if(!string.IsNullOrWhiteSpace(animationRequest.SpeakFileName))
+				//		{
+				//			audioFile = SpeechManager.GetLocaleName(animationRequest.SpeakFileName);
+				//		}
 
-						_audioAnimationCallbacks.Remove(audioFile);
-						_audioAnimationCallbacks.Add(audioFile);
-					}
-				}
+				//		//_audioAnimationCallbacks.Remove(audioFile);
+				//		//_audioAnimationCallbacks.Add(audioFile);
+				//	}
+				//}
 
 				bool runningInitScript = false;
 				if (!string.IsNullOrWhiteSpace(CurrentInteraction.InitScript))
@@ -2005,7 +2011,7 @@ namespace MistyCharacter
 					SpeechManager.TryToPersonalizeData(animationRequest.Speak, animationRequest, newInteraction, out string newText);
 					animationRequest.Speak = newText;
 
-					SpeechManager.Speak(animationRequest, newInteraction);
+					SpeechManager.Speak(animationRequest, newInteraction, false);
 
 					Robot.SkillLogger.Log($"Saying '{ animationRequest.Speak}' for animation '{ animationRequest.Name}'.");
 				}
@@ -2159,11 +2165,11 @@ namespace MistyCharacter
 			KeyPhraseRecognized?.Invoke(this, keyPhraseEvent);
 		}
 
-		private void SpeechManager_StartedProcessingVoice(object sender, IVoiceRecordEvent e)
+		private async void SpeechManager_StartedProcessingVoice(object sender, IVoiceRecordEvent e)
 		{
 			StartedProcessingVoice?.Invoke(this, e);
 			_processingVoice = true;
-			ManageListeningDisplay(ListeningState.ProcessingSpeech);
+			_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
 
 			if (CharacterParameters.UsePreSpeech && CurrentInteraction.UsePreSpeech)
 			{
@@ -2250,7 +2256,7 @@ namespace MistyCharacter
 						Robot.SkillLogger.LogVerbose($"Prespeech saying '{animation?.Speak ?? "nothing"}' and not changing animation.");
 						if (_processingVoice)
 						{
-							SpeechManager.Speak(animation, interaction);
+							SpeechManager.Speak(animation, interaction, true);
 						}
 					}
 				}
@@ -2258,11 +2264,11 @@ namespace MistyCharacter
 
 		}
 
-		private void SpeechManager_CompletedProcessingVoice(object sender, IVoiceRecordEvent e)
+		private async void SpeechManager_CompletedProcessingVoice(object sender, IVoiceRecordEvent e)
 		{
 			_processingVoice = false;
 			CompletedProcessingVoice?.Invoke(this, e);
-			ManageListeningDisplay(ListeningState.Waiting);
+			_ = ManageListeningDisplay(ListeningState.Waiting);
 		}
 
 		private void SpeechManager_KeyPhraseRecognitionOn(object sender, bool e)
@@ -2277,11 +2283,11 @@ namespace MistyCharacter
 		}
 
 
-		private void SpeechManager_StoppedListening(object sender, IVoiceRecordEvent e)
+		private async void SpeechManager_StoppedListening(object sender, IVoiceRecordEvent e)
 		{
 			if (!CurrentInteraction.AllowKeyPhraseRecognition)
 			{
-				ManageListeningDisplay(ListeningState.Waiting);
+				_ = ManageListeningDisplay(ListeningState.Waiting);
 			}
 
 			StoppedListening?.Invoke(this, e);
@@ -2291,7 +2297,7 @@ namespace MistyCharacter
 
 		private async void SpeechManager_StartedListening(object sender, DateTime e)
 		{
-			ManageListeningDisplay(ListeningState.Recording);
+			_ = ManageListeningDisplay(ListeningState.Recording);
 			StartedListening?.Invoke(this, e);
 			bool runningInitScript = false;
 			if (!string.IsNullOrWhiteSpace(CurrentInteraction.ListeningScript))
@@ -2325,153 +2331,112 @@ namespace MistyCharacter
 
 		}
 
-		private async void ManageListeningDisplay(ListeningState listeningState)
+		private SemaphoreSlim _listeningSlim = new SemaphoreSlim(1, 1);
+		
+		private async Task ManageListeningDisplay(ListeningState listeningState)
 		{
-			if (CharacterParameters.ShowListeningIndicator)
+			try
 			{
-				lock (_listeningLock)  //if needed, use semaphore
+				await _listeningSlim.WaitAsync();
+				if (CharacterParameters.ShowListeningIndicator && _listeningState != listeningState)
 				{
-					switch (listeningState)
+					//lock (_listeningSlim)  //if needed, use semaphore
 					{
-						//TODO Allow people to choose own listening display
-						//case ListeningState.Waiting:
-						//	Misty.DisplayText("🛑", "Listening", null);
-						//	break;
-						//case ListeningState.Speaking:
-						//	Misty.DisplayText("📋", "Listening", null);
-						//	break;
-						//case ListeningState.WaitingForKeyPhrase:
-						//	Misty.DisplayText("📢", "Listening", null);
-						//	break;
-						case ListeningState.Recording:
-							//Robot.DisplayImage("waveZ2.gif", "Speaking", false, null);
-							//Robot.DisplayImage("wave5.gif", "Speaking", false, null);
-							_ = Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-							{
-								PlaceOnTop = true,
-								Visible = true,
-								Height = 70,
-								HorizontalAlignment = ImageHorizontalAlignment.Right
-							});
-
-						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-						//{
-						//	Visible = false
-						//});
-						Robot.DisplayImage("listen12.gif", "Speaking", false, null);
-
-						//Misty.DisplayText("🌟", "Listening", null);
-						/*Robot.DisplayText("LISTENING...", "Listening", null);
-						//Misty.DisplayText("🌟", "SPEAK NOW", null);
-						_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
+						switch (listeningState)
 						{
-							Visible = true
-						});*/
-						break;
-						case ListeningState.ProcessingSpeech:
-
-							// Misty.DisplayText("🌟", "Listening", null);
-							/*await Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
-							{
-								Visible = true
-							});*/
-							//Robot.DisplayText("PROCESSING SPEECH...", "Listening", null);
-							_ = Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-							{
-								PlaceOnTop = true,
-								Visible = true,
-								Height = 70,
+							case ListeningState.Waiting:
+								await Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								{
+									Visible = false
+								});
+								break;
+							case ListeningState.Recording:
+								//Robot.DisplayImage("waveZ2.gif", "Speaking", false, null);
+								//Robot.DisplayImage("wave5.gif", "Speaking", false, null);
+								await Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								{
+									PlaceOnTop = true,
+									Visible = true,
+									//	Height = 70,
 									HorizontalAlignment = ImageHorizontalAlignment.Right
-							});
+								});
 
-						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-						//{
-						//	PlaceOnTop = true,
-						//	Visible = true
-						//});
-						Robot.DisplayImage("proc11.gif", "Listening", false, null);
-						/*
-						Robot.SetImageDisplaySettings("Speaking", new ImageSettings
-							{
-								Visible = false
-							}, null);*/
-							break;
-						case ListeningState.Speaking:
-						/*_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
-						{
-							Visible = false
-						});*/
+								Robot.DisplayImage("listen12.gif", "Speaking", false, null);
+								break;
+							case ListeningState.ProcessingSpeech:
 
-						//Robot.DisplayText("PROCESSING SPEECH...", "Listening", null);
+								await Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								{
+									PlaceOnTop = true,
+									Visible = true,
+									//Height = 70,
+									HorizontalAlignment = ImageHorizontalAlignment.Right
+								});
 
-						//Robot.DisplayImage("waveZ.gif", "Speaking", false, null);
-						//Robot.DisplayImage("spikewave3.gif", "Speaking", false, null);
-						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-						//{
-						//	Visible = false
-						//});
+								Robot.DisplayImage("proc11.gif", "Listening", false, null);
 
-						_ =  Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-						{
-							PlaceOnTop = true,
-							Visible = true,
-							Height = 50,
-							HorizontalAlignment = ImageHorizontalAlignment.Center
-						});
-							Robot.DisplayImage("eq2.gif", "Speaking", false, null);
-						break;
+								break;
+							case ListeningState.Speaking:
 
-					// Misty.DisplayText("🌟", "Listening", null);
-					//_ = Robot.SetTextDisplaySettingsAsync("Speaking", new TextSettings
-					//{
-					//	Visible = true
-					//});
-					//break;
-					default:
-							//_ = Robot.SetTextDisplaySettingsAsync("Listening", new TextSettings
-							//{
-							//	Visible = false
-							//});
-							Robot.SetImageDisplaySettings("Speaking", new ImageSettings
-							{
-								Visible = false
-							}, null);
-						//_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-						//{
-						//	Visible = false
-						//});
-						break;
+								await Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								{
+									PlaceOnTop = true,
+									Visible = true,
+									Height = 50,
+									HorizontalAlignment = ImageHorizontalAlignment.Center
+								});
+								Robot.DisplayImage("eq2.gif", "Speaking", false, null);
+								break;
+							default:
+								await Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								{
+									Visible = false
+								});
+								break;
 
+						}
+
+						_listeningState = listeningState;
 					}
-
-					_listeningState = listeningState;
 				}
 			}
+			catch
+			{ }
+			finally
+			{
+				_listeningSlim.Release();
+			}
+			
 		}
 
 		private async void SpeechManager_StoppedSpeaking(object sender, IAudioPlayCompleteEvent e)
 		{
-			//e could be null if exception thrown when trying to speak
-
-			await SendManagedResponseEvent(new TriggerData(e?.Name, "", Triggers.AudioCompleted));
-			StoppedSpeaking?.Invoke(this, e);
-
 			if (!CurrentInteraction.StartListening)
 			{
-				ManageListeningDisplay(ListeningState.Waiting);
+				_ = ManageListeningDisplay(ListeningState.Waiting);
 			}
+			//e could be null if exception thrown when trying to speak
+
+			//await SendManagedResponseEvent(new TriggerData(e?.Name, "", Triggers.AudioCompleted));
+			_ = SendManagedResponseEvent(new TriggerData(e?.Name, "", Triggers.AudioCompleted));
+			StoppedSpeaking?.Invoke(this, e);
+
+			
 			_ = SpeechManager.UpdateKeyPhraseRecognition(CurrentInteraction, CurrentInteraction.StartListening);
 		}
 
-		private void SpeechManager_StartedSpeaking(object sender, string e)
+		private async void SpeechManager_StartedSpeaking(object sender, string e)
 		{
-			ManageListeningDisplay(ListeningState.Speaking);
-			StartedSpeaking?.Invoke(this, e);
-
 			if (!string.IsNullOrWhiteSpace(e) && CharacterParameters.DisplaySpoken)
 			{
 				Robot.DisplayText(e, "SpokeText", null);
 			}
+			StartedSpeaking?.Invoke(this, e);
+
+			//A little async cleanup to do, but for now since the sound comes a little slower and there is a race condition on the speakingmanager events
+			//TODO Move management to speech manager?
+			await Task.Delay(250); ///:^O Don't tell my boss.
+			_ = ManageListeningDisplay(ListeningState.Speaking);
 		}
 
 		private async void SpeechManager_SpeechIntent(object sender, TriggerData speechIntent)

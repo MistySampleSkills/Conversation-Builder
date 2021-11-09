@@ -34,6 +34,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,7 +53,6 @@ namespace SpeechTools
 {
 	public class SpeechManager : ISpeechManager
 	{
-
 		public event EventHandler<string> StartedSpeaking;
 		public event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
 		public event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
@@ -97,13 +97,14 @@ namespace SpeechTools
 		private IList<GenericDataStore> _genericDataStores = new List<GenericDataStore>();
 		private string _robotName = "Misty";
 		private CharacterState _characterState;
-		private string _speakingStyle;
+		private string _speakingStyle = "";
 		private double _speechRate = 1.0;
 		private string _language = "en-US";
 		private string _emphasis = "none";
 		private string _sayAs = "";
-		private string _voice;
+		private string _voice = "";
 		private string _pitch = "medium";
+		private SkillSpeech _skillSpeech = new SkillSpeech();
 
 		private IDictionary<string, object> _parameters { get; set; }
 		private IRobotMessenger _misty { get; set; }
@@ -125,6 +126,29 @@ namespace SpeechTools
 				}
 			}
 		}
+		
+		public string MakeTextBasedFileName(string text)
+		{
+			if (string.IsNullOrWhiteSpace(text))
+			{
+				return null;
+			}
+
+			StringBuilder sb = new StringBuilder();
+			using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+			{
+				byte[] inputBytes = Encoding.ASCII.GetBytes(text);
+				byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+				for (int i = 0; i < hashBytes.Length; i++)
+				{
+					sb.Append(hashBytes[i].ToString("X2"));
+				}
+			}
+
+			return AssetHelper.AddMissingWavExtension(_characterParameters.AddLocaleToAudioNames ? GetLocaleName(sb.ToString()): sb.ToString());
+		}
+
 
 		protected void LogEventDetails(IEventDetails eventDetails)
 		{
@@ -157,7 +181,7 @@ namespace SpeechTools
 			return HandleSpeechResponse(text);
 		}
 		
-		public string GetLocaleName(string name)
+		private string GetLocaleName(string name)
 		{
 			if (_characterParameters.AddLocaleToAudioNames)
 			{
@@ -169,7 +193,8 @@ namespace SpeechTools
 					case "googleonboard":
 						speakingVoice = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingVoice) ? "default" : _googleTTSParameters.SpeakingVoice);
 						string spokenLanguage = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpokenLanguage) ? "en-US" : _googleTTSParameters.SpokenLanguage);
-						string speakingGender = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingGender) ? "Female" : _googleTTSParameters.SpeakingGender);						
+						string speakingGender = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingGender) ? "Female" : _googleTTSParameters.SpeakingGender);
+
 						if (!name.Contains(speakingVoice))
 						{
 							name += speakingVoice;
@@ -197,9 +222,13 @@ namespace SpeechTools
 						}
 						break;
 					case "skill":
-						if(!name.Contains(SkillNamePreface))
+						if (!name.Contains(SkillNamePreface))
 						{
 							name = SkillNamePreface + name;
+						}
+						if (!name.Contains("_v_"))
+						{
+							name += $"_v_{_voice.Replace(".", "p").Replace(",", "c")}";
 						}
 						break;
 					default:
@@ -207,12 +236,35 @@ namespace SpeechTools
 						{
 							name = TTSNamePreface + name;
 						}
+						if (!name.Contains("_v_"))
+						{
+							name += $"_v_{_voice.Replace(".", "p").Replace(",", "c")}";
+						}
 						break;
 				}
 
-				
+				if (!name.Contains("_p_"))
+				{
+					name += $"_p_{_pitch.Replace(".", "p").Replace(",", "c")}";
+				}
+				if (!name.Contains("_r_"))
+				{
+					name += $"_r_{_speechRate.ToString().Replace(".", "p").Replace(",", "c")}";
+				}
+				if (!name.Contains("_st_"))
+				{
+					name += $"_st_{_speakingStyle.Replace(".", "p").Replace(",", "c")}";
+				}
+				if (!name.Contains("_emp_"))
+				{
+					name += $"_emp_{_emphasis.Replace(".", "p").Replace(",", "c")}";
+				}
+				if (!name.Contains("_sayAs_"))
+				{
+					name += $"_sayAs_{_sayAs.Replace(".", "p").Replace(",", "c")}";
+				}
 			}
-			return AssetHelper.AddMissingWavExtension(name);
+			return name;
 		}
 
 		public void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances)
@@ -377,7 +429,7 @@ namespace SpeechTools
 			await _assetWrapper.RefreshAssetLists();
 		}
 		
-		public async virtual Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction)
+		public async virtual Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction, bool backgroundSpeech)
 		{
 			try
 			{
@@ -393,18 +445,18 @@ namespace SpeechTools
 				
 				if (string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName) && !string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
-					currentAnimation.SpeakFileName = AssetHelper.MakeFileName(currentAnimation.Speak);
+					currentAnimation.SpeakFileName = MakeTextBasedFileName(currentAnimation.Speak);					
 				}
-				/*if(!currentInteraction.StartListening)
+				if(backgroundSpeech)
 				{
-					currentAnimation.SpeakFileName = currentAnimation.SpeakFileName + ConversationConstants.IgnoreCallback;
-				}*/
+					currentAnimation.SpeakFileName = ConversationConstants.IgnoreCallback+currentAnimation.SpeakFileName;
+				}
 
 				//This will save files with language and voice as part of the name
-				if (_characterParameters.AddLocaleToAudioNames)
-				{
-					currentAnimation.SpeakFileName = GetLocaleName(currentAnimation.SpeakFileName);
-				}
+				//if (_characterParameters.AddLocaleToAudioNames)
+				//{
+				//	currentAnimation.SpeakFileName = GetLocaleName(currentAnimation.SpeakFileName);
+				//}
 
 				_listenAborted = false;
 				
@@ -421,9 +473,9 @@ namespace SpeechTools
 					
 					string newText = currentAnimation.Speak;
 					bool usingSSML = TryGetSSMLText(currentAnimation.Speak, out newText, currentAnimation);
+					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
 					//_misty.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
-					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
 				}
 				else if (_characterParameters.TextToSpeechService == "skill")
@@ -446,6 +498,7 @@ namespace SpeechTools
 						{
 							_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
 							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
+							StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 							_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
 						}
 						else
@@ -454,16 +507,16 @@ namespace SpeechTools
 							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
 
 							string newText = currentAnimation.Speak;
-							SkillSpeech sp = new SkillSpeech();
 
+							StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 							Stream audio;
 							if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
 							{
-								audio = await sp.SsmlToStream(newText);
+								audio = await _skillSpeech.SsmlToStream(newText);
 							}
 							else
 							{
-								audio = await sp.TextToStream(newText);
+								audio = await _skillSpeech.TextToStream(newText);
 							}
 
 							MemoryStream ms = new MemoryStream();
@@ -477,6 +530,7 @@ namespace SpeechTools
 						string newText = currentAnimation.Speak;
 						SkillSpeech sp = new SkillSpeech();
 
+						StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 						Stream audio;
 						if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
 						{
@@ -492,7 +546,6 @@ namespace SpeechTools
 						_ =_misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
 					}
 					
-					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					return;
 				}
 				else if ((_azureCognitive != null && _azureCognitive.Authorized) || (_googleService != null && _googleService.Authorized))
@@ -568,6 +621,11 @@ namespace SpeechTools
 
 		public void SetSpeechRate(double rate)
 		{
+			if (_characterParameters.TextToSpeechService == "skill")
+			{
+				_skillSpeech.SetRate(rate);
+			}
+
 			_speechRate = rate;
 		}
 		public void SetSpeakingStyle(string speakingStyle)
@@ -590,16 +648,33 @@ namespace SpeechTools
 		{
 			if (!string.IsNullOrWhiteSpace(voice))
 			{
+				if(_characterParameters.TextToSpeechService == "skill")
+				{
+					_skillSpeech.SetVoice(voice);
+				}
 				_voice = voice;
 			}
 		}
 
 		public void SetPitch(string pitch)
 		{
-			if (!string.IsNullOrWhiteSpace(pitch))
+			try
 			{
-				_pitch = pitch;
+				//overloaded poorly
+				if (!string.IsNullOrWhiteSpace(pitch))
+				{
+					if (_characterParameters.TextToSpeechService == "skill")
+					{
+						_skillSpeech.SetPitch(Convert.ToDouble(pitch));
+					}
+					_pitch = pitch;
+				}
 			}
+			catch
+			{
+
+			}
+			
 		}
 
 		private bool TryGetSSMLText(string text, out string newText, AnimationRequest animationRequest)
