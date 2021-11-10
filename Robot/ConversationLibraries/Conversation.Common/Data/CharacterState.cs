@@ -36,110 +36,6 @@ using MistyRobotics.SDK.Events;
 
 namespace Conversation.Common
 {
-	
-	public enum LocomotionStatus
-	{
-		Unknown,
-		Initialized,
-		Starting,
-		Stopped,
-		ScriptDriving,
-		WaypointDriving,
-		RecalculatingRoute,
-		PathBlocked,
-		Wandering
-	}
-
-	public class LocomotionState
-	{
-		public double FrontLeftTOF { get; set; }
-
-		public double FrontRightTOF { get; set; }
-
-		public double FrontCenterTOF { get; set; }
-
-		public double BackTOF { get; set; }
-
-		public bool BackLeftBumpContacted { get; set; }
-
-		public bool BackRightBumpContacted { get; set; }
-
-		public bool FrontLeftBumpContacted { get; set; }
-
-		public bool FrontRightBumpContacted { get; set; }
-
-		public double FrontRightEdgeTOF { get; set; }
-
-		public double FrontLeftEdgeTOF { get; set; }
-
-		public double BackRightEdgeTOF { get; set; }
-
-		public double BackLeftEdgeTOF { get; set; }
-
-		public double LeftVelocity { get; set; }
-		public double RightVelocity { get; set; }
-
-		public double LeftDistanceSinceLastStop { get; set; }
-		public double RightDistanceSinceLastStop { get; set; }
-
-		public double LeftDistanceSinceWayPoint { get; set; }
-		public double RightDistanceSinceWayPoint { get; set; }
-
-		public double LeftDistanceSinceStart { get; set; }
-		public double RightDistanceSinceStart { get; set; }
-
-		public string[] MovementHistory { get; set; }
-
-		public LocomotionStatus LocomotionStatus { get; set; }
-
-		public LocomotionAction LocomotionAction { get; set; }
-
-		public double RobotPitch { get; set; }
-		public double RobotYaw { get; set; }
-		public double RobotRoll { get; set; }
-
-		public double XAcceleration { get; set; }
-		public double YAcceleration { get; set; }
-		public double ZAcceleration { get; set; }
-
-		public double PitchVelocity { get; set; }
-		public double RollVelocity { get; set; }
-		public double YawVelocity { get; set; }
-
-		public double? LockedHeading { get; set; }
-	}
-
-	public enum LocomotionCommand
-	{
-		Drive,
-		Heading,
-		Turn,
-		Arc,
-		Waypoint,
-		Wander,
-		Return,//ToLastWaypoint
-		Stop,
-		Halt,
-		TurnHeading,
-	}
-
-	public class LocomotionAction
-	{
-		public AnimationRequest AnimationRequest { get; set; }
-		public ConversationData Conversation { get; set; }
-
-		public LocomotionCommand Action { get; set; }
-		public double? DistanceMeters { get; set; }
-		public int? TimeMs { get; set; }
-		public double? Velocity { get; set; }
-		public double? Degrees { get; set; }
-		public double? Heading { get; set; }
-		public double? Radius { get; set; }
-		public bool Reverse { get; set; }
-
-		public bool AllowRerouting { get; set; } = true;
-	}
-
 	public class CharacterState
 	{
 		public CharacterState() { }
@@ -172,27 +68,15 @@ namespace Conversation.Common
 			Saying = state.Saying;
 			SerialMessageEvent = state.SerialMessageEvent;
 			Speaking = state.Speaking;
-			//SpeechResponseEvent = state.SpeechResponseEvent;
-			//RightDistance = state.RightDistance;
-			//DriveEncoder = state.DriveEncoder;
-			//LeftDistance = state.LeftDistance;
-			//LeftVelocity = state.LeftVelocity;
 			AnimationEmotion = state.AnimationEmotion;
 			CurrentMood = state.CurrentMood;
-
-			//TODO
+			
 			LocomotionState = state.LocomotionState;
 		}
 
 		//Commanded State Info
-
-		//Dupe, clean me up
+		//TODO Cleanup data
 		public LocomotionState LocomotionState { get; set; } = new LocomotionState();
-		//public DriveEncoderEvent DriveEncoder { get; set; }
-		//public DriveEncoderEvent LeftVelocity { get; set; }
-		//public DriveEncoderEvent RightDistance { get; set; }
-		//public DriveEncoderEvent LeftDistance { get; set; }
-
 
 		public bool FlashLightOn { get; set; }
 		public LEDTransitionAction AnimationLED { get; set; }

@@ -48,9 +48,7 @@ namespace Conversation.Common
 		public SpeechConfiguration SpeechConfiguration { get; set; }
 
 		public bool RetranslateTTS { get; set; }// = true;
-
-		//public SpeechConfiguration SpeechService { get; set; }
-
+		
 		public string TextToSpeechService { get; set; } = "misty";
 		public string SpeechRecognitionService { get; set; } = "vosk";
 		
@@ -90,6 +88,10 @@ namespace Conversation.Common
 
 		public string RobotIp { get; set; }
 
+		public string SpeakingImage { get; set; }
+		public string ListeningImage { get; set; }
+		public string ProcessingImage { get; set; }
+
 		public bool UsePreSpeech { get; set; }
 
 		public IList<string> PreSpeechPhrases { get; set; } = new List<string>();
@@ -97,7 +99,6 @@ namespace Conversation.Common
 		public IList<Robot> Robots { get; set; } = new List<Robot>();
 
 		public IList<Recipe> Recipes { get; set; } = new List<Recipe>();
-
-		public string FurhatIp { get; set; }
+		
 	}
 }

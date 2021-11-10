@@ -124,14 +124,13 @@ namespace MistyManager
 					{
 						await _misty.TransitionLEDAsync(0, 255, 0, 30, 144, 255, LEDTransition.Breathe, 1000);
 					}
-
-
+					
 					string startupConversation = _characterParameters.ConversationGroup.StartupConversation;
 					ConversationData conversationData = _characterParameters.ConversationGroup.Conversations.FirstOrDefault(x => x.Id == startupConversation);
 					if (conversationData == null)
 					{
 						_misty.SkillLogger.Log($"Could not locate the starting conversation.");
-						_misty.DisplayText($"Failed to start conversation.", "SpokeText", null);
+						_misty.DisplayText($"Failed to start conversation.", "Text", null);
 						return false;
 					}
 
@@ -142,20 +141,29 @@ namespace MistyManager
 					{
 						_misty.DisplayText("Hello!", "Text", null);
 						_assetWrapper.ShowSystemImage(SystemImage.Joy);
+						await Task.Delay(1000);
 					}
 					else
 					{
 						_misty.DisplayText("Failed to wake up robot!", "Text", null);
 						_assetWrapper.ShowSystemImage(SystemImage.Disoriented);
 						await Task.Delay(5000);
-
 					}
-					await Task.Delay(1000);
 					return initialized;
+				}
+				else if(_characterParameters == null)
+				{
+					_misty.SkillLogger.Log($"Failed retrieving parameters and conversation.");
+					_misty.DisplayText($"Failed to start conversation.", "Text", null);
+					await Task.Delay(5000);
+					return false;
 				}
 				else
 				{
-
+					_misty.SkillLogger.Log($"Failed retrieving parameters and conversation. {_characterParameters.InitializationStatusMessage}");
+					_misty.DisplayText(_characterParameters.InitializationStatusMessage, "Text", null);
+					await Task.Delay(5000);
+					return false;
 				}
 			}
 			catch (Exception ex)

@@ -63,7 +63,6 @@ namespace Conversation.Weather.OpenWeather
 
 			_weatherService = new OpenWeatherService(_openWeatherApiAuth, _ipStackApiAuth);
 			_weatherUpdate = new Timer(UpdateWeather, null, 1000, 5000 * 60 * 5); //update weather info every 5 minutes
-
 		}
 
 		public string GetWeatherString()

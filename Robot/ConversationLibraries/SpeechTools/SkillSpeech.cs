@@ -76,26 +76,18 @@ namespace SpeechTools
 				synth.Options.SpeakingRate = _rate;
 				synth.Options.AudioPitch = _pitch;
 				synth.Voice = _voice;
-				var test = synth.Options;
 				SpeechSynthesisStream stream = await synth.SynthesizeTextToStreamAsync(text);
 				return stream.AsStream();
 			}
 		}
+
 		public async Task<Stream> SsmlToStream(string text)
 		{
 			using (var synth = new SpeechSynthesizer())
 			{
-				var voices = SpeechSynthesizer.AllVoices;
-				foreach (VoiceInformation voice in voices)
-				{
-					string testX = voice.DisplayName;
-					if(testX.Contains("Zira"))
-					{
-						synth.Voice = voice;
-					}
-				}
-				var defaultVoice = SpeechSynthesizer.DefaultVoice;
-				var test = synth.Options;
+				//synth.Options.SpeakingRate = _rate;
+				//synth.Options.AudioPitch = _pitch;
+				//synth.Voice = _voice;
 				SpeechSynthesisStream stream = await synth.SynthesizeSsmlToStreamAsync(text);
 				return stream.AsStream();
 			}

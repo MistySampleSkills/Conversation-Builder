@@ -41,9 +41,8 @@ namespace MistyManager
 	/// Simple template character using defaults
     /// Used if no, or invalid, character passed in
     /// Overriding a character also allows for manager overriding
-    /// Characters can be used to supplement different actions without skills
-    /// Experimental, concepts may change or be deprecated
-	/// </summary>
+    /// Characters can be used to supplement different actions without skills by subscribing to events
+    /// </summary>
 	public class BasicMisty : BaseCharacter
 	{
 		public BasicMisty(IRobotMessenger misty,IDictionary<string, object> originalParameters,ManagerConfiguration managerConfiguration = null)

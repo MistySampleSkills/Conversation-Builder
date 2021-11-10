@@ -105,7 +105,6 @@ namespace SpeechTools
 		private string _voice = "";
 		private string _pitch = "medium";
 		private SkillSpeech _skillSpeech = new SkillSpeech();
-
 		private IDictionary<string, object> _parameters { get; set; }
 		private IRobotMessenger _misty { get; set; }
 		private CharacterParameters _characterParameters { get; set; }
@@ -267,10 +266,8 @@ namespace SpeechTools
 			return name;
 		}
 
-		public void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances)
+		public void SetAllowedUtterances(IList<string> allowedUtterances)
 		{
-			_listenTimeout = listenTimeout >= 1000 ? listenTimeout : 1000;
-			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;
 			_allowedTriggers = allowedUtterances;
 		}
 
@@ -281,12 +278,12 @@ namespace SpeechTools
 
 		public void SetMaxSilence(int silenceTimeout)
 		{
-			_silenceTimeout = silenceTimeout;
+			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;
 		}
 
 		public void SetMaxListen(int listenTimeout)
 		{
-			_listenTimeout = listenTimeout;
+			_listenTimeout = listenTimeout >= 1000 ? listenTimeout : 1000;
 		}
 
 		public async Task<bool> Initialize()
@@ -390,7 +387,7 @@ namespace SpeechTools
 			return _keyPhraseOn;
 		}
 
-		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, /*CharacterState stateAtAnimationStart, CharacterState previousState,*/ IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)			
+		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)			
 		{
 			_parameters = parameters;
 			_misty = misty;
@@ -399,8 +396,6 @@ namespace SpeechTools
 			_genericDataStores = genericDataStores;
 			_speechIntentManager = speechIntentManager;
 			_characterState = characterState;
-			//_stateAtAnimationStart = stateAtAnimationStart;
-			//_previousState = previousState;
 		}
 
 		public void AbortListening(string audioName)
@@ -445,19 +440,13 @@ namespace SpeechTools
 				
 				if (string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName) && !string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
-					currentAnimation.SpeakFileName = MakeTextBasedFileName(currentAnimation.Speak);					
+					currentAnimation.SpeakFileName = MakeTextBasedFileName(currentAnimation.Speak);
+					if (backgroundSpeech)
+					{
+						currentAnimation.SpeakFileName = ConversationConstants.IgnoreCallback + currentAnimation.SpeakFileName;
+					}
 				}
-				if(backgroundSpeech)
-				{
-					currentAnimation.SpeakFileName = ConversationConstants.IgnoreCallback+currentAnimation.SpeakFileName;
-				}
-
-				//This will save files with language and voice as part of the name
-				//if (_characterParameters.AddLocaleToAudioNames)
-				//{
-				//	currentAnimation.SpeakFileName = GetLocaleName(currentAnimation.SpeakFileName);
-				//}
-
+				
 				_listenAborted = false;
 				
 				if (_characterParameters.TextToSpeechService == "misty")
@@ -601,7 +590,6 @@ namespace SpeechTools
 						switch (_characterParameters.TextToSpeechService)
 						{
 							case "google":
-								//TODO Make configurable
 								await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, 0);
 								break;
 							case "azure":
@@ -677,6 +665,7 @@ namespace SpeechTools
 			
 		}
 
+		//TODO this isn't really being used right in conversation...
 		private bool TryGetSSMLText(string text, out string newText, AnimationRequest animationRequest)
 		{
 			try
@@ -694,7 +683,7 @@ namespace SpeechTools
 				string[] startText = new string[3];
 				string[] endText = new string[3];
 
-				if (_characterParameters.TextToSpeechService == "misty" || _characterParameters.TextToSpeechService == "skill")//Verify skill values
+				if (_characterParameters.TextToSpeechService == "misty")
 				{
 					newText = text;
 					
@@ -846,7 +835,6 @@ namespace SpeechTools
 				}
 				_processingAudioCallback = true;
 				
-				//TODO This is not used!!!
 				if (audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
 				{
 					PreSpeechCompleted?.Invoke(this, audioComplete);
@@ -933,15 +921,17 @@ namespace SpeechTools
 					_speechOverridden = false;
 					return;
 				}
+
+				StoppedListening?.Invoke(this, voiceRecordEvent);
 				_externalOverridden = true;
 				_recording = false;				
-				StoppedListening?.Invoke(this, voiceRecordEvent);
 				if (_listenAborted)
 				{
 					_misty.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
 					return;
 				}
 
+				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 				_misty.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				
 				if (voiceRecordEvent.ErrorCode == 3)
@@ -955,7 +945,6 @@ namespace SpeechTools
 				string service = _characterParameters.SpeechRecognitionService.Trim().ToLower();
 				if (service == "googleonboard" || service == "azureonboard" || service == "deepspeech" || service == "vosk")
 				{
-					StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
 					return;
 				}
@@ -982,7 +971,7 @@ namespace SpeechTools
 					return;
 				}
 
-				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
+				//StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 
 				SpeechToTextData description = new SpeechToTextData();
 				switch (_characterParameters.SpeechRecognitionService)
@@ -1029,7 +1018,6 @@ namespace SpeechTools
 					SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
 					
 					_misty.SkillLogger.LogInfo($"VoiceRecordCallback - Heard: '{text}' - Intent: {intent.Name}");
-					//await Task.Delay(100);
 					return true;
 				}
 				else
@@ -1049,7 +1037,7 @@ namespace SpeechTools
 			}
 		}
 
-
+		//TODO Simplify and cleanup
 		public bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText)
 		{
 			newText = text;
@@ -1343,32 +1331,22 @@ namespace SpeechTools
 				case "face":
 					newData = _characterState.LastKnownFaceSeen ??
 						_characterState.FaceRecognitionEvent?.Label ??
-						//_stateAtAnimationStart?.FaceRecognitionEvent?.Label ??
-						//_previousState?.FaceRecognitionEvent?.Label ?? 
 						MissingInlineData;
 					break;
 				case "qrcode":
 					newData = _characterState.QrTagEvent?.DecodedInfo ??
-						//_stateAtAnimationStart?.QrTagEvent?.DecodedInfo ??
-						//_previousState?.QrTagEvent?.DecodedInfo ?? 
 						MissingInlineData;
 					break;
 				case "arcode":
-					newData = _characterState.ArTagEvent?.TagId.ToString() ??
-						//_stateAtAnimationStart?.ArTagEvent?.TagId.ToString() ??
-						//_previousState?.ArTagEvent?.TagId.ToString() ?? 
+					newData = _characterState.ArTagEvent?.TagId.ToString() ??						
 						MissingInlineData;
 					break;
 				case "text":
 					newData = _characterState.SpeechResponseEvent?.Text ??
-						//_stateAtAnimationStart?.SpeechResponseEvent?.Text ??
-						//_previousState?.SpeechResponseEvent?.Text ?? 
 						MissingInlineData;
 					break;
 				case "intent":
 					newData = _characterState.SpeechResponseEvent?.TriggerFilter ??
-						//_stateAtAnimationStart?.SpeechResponseEvent?.TriggerFilter ??
-						//_previousState?.SpeechResponseEvent?.TriggerFilter ?? 
 						MissingInlineData;
 					break;
 				case "robotname":

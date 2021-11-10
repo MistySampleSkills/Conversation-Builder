@@ -40,8 +40,7 @@ namespace VisionTools.AzureCognitive
 		{
 			return AnalyzeImageInternal(stream as Stream).AsAsyncOperation();
 		}
-
-
+		
 		private async Task<string> AnalyzeImageInternal(Stream stream)
 		{
 			_computerVisionSemaphore.Wait();

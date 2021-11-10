@@ -102,11 +102,8 @@ namespace MistyCharacter
 		private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 		private IList<string> _completionCommands = new List<string>();
 		private IList<string> _startupCommands = new List<string>();
-		//private IFurhatManager _furhatManager;
 		private ISpeechManager _speechManager;
 		private ITimeManager _timeManager;
-		//private ILocomotionManager _locomotionManager;
-		//private IArmManager _armManager;
 		private IHeadManager _headManager;
 		private AnimationRequest _currentAnimation;
 		private Interaction _currentInteraction;
@@ -129,16 +126,7 @@ namespace MistyCharacter
 		private string _waitingEvent;
 		private bool _awaitAny;
 		private object _waitingLock = new object();
-
-		//TODO move to arm and head managers or replace with script only?
-		//private double _rightArmDegrees;
-		//private double _leftArmDegrees;
-		//private double _headPitchDegrees;
-		//private double _headRollDegrees;
-		//private double _headYawDegrees;
-		private int _maxSilence = 10000;
-		private int _maxListen = 10000;
-
+		
 		private bool _responsiveState = true; //by default, let other bots call this bot if it knows the IP
 
 		private IMistyState _mistyState;
@@ -191,7 +179,8 @@ namespace MistyCharacter
 		private async void _speechManager_UserDataAnimationScript(object sender, string script)
 		{
 			_headManager.StopMovement();
-			await StopRunningAnimationScripts();
+			//await StopRunningAnimationScripts();
+			_ = StopRunningAnimationScripts();
 			_ = RunAnimationScript(script, false, _currentAnimation, _currentInteraction, _currentConversationData);
 		}
 
@@ -410,7 +399,7 @@ namespace MistyCharacter
 				}
 				_animationsCanceled = true;
 
-				//await WaitOnCompletionEvent();
+				await WaitOnCompletionEvent();
 
 				_completionCommands.Clear();
 				_runningAnimation = false;
@@ -874,7 +863,10 @@ namespace MistyCharacter
 								//VOLUME:newVolume;
 								_speechManager.Volume = Convert.ToInt32(commandData[1]);
 								break;
-
+							case "VOLUME-OFFSET":
+								//VOLUME:volumeOffset;
+								_speechManager.Volume = Convert.ToInt32(commandData[1]) + _speechManager.Volume;
+								break;
 							case "DEBUG":
 								//DEBUG: User websocket message to send if skill is debug level;
 								_ = await Robot.SendDebugMessageAsync(Convert.ToString(commandData[1]));
@@ -1569,11 +1561,9 @@ namespace MistyCharacter
 								break;
 							case "SET-MAX-SILENCE":
 								_speechManager.SetMaxSilence(Convert.ToInt32(commandData[1]));
-								_maxSilence = Convert.ToInt32(commandData[1]);
 								break;
 							case "SET-MAX-LISTEN":
 								_speechManager.SetMaxListen(Convert.ToInt32(commandData[1]));
-								_maxListen = Convert.ToInt32(commandData[1]);
 								break;
 							case "SET-SPEECH-PITCH":
 								_speechManager.SetPitch(commandData[1]);

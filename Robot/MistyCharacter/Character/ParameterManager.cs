@@ -136,7 +136,6 @@ namespace MistyCharacter
 		
 		public async Task<CharacterParameters> Initialize()
 		{
-
 			try
 			{
 				if (!_parameters.ContainsKey("ConversationGroup"))
@@ -156,6 +155,7 @@ namespace MistyCharacter
 					if (string.IsNullOrWhiteSpace(endpoint))
                     {
                         _misty.SkillLogger.Log("No endpoint provided, using last saved conversation.");
+						CharacterParameters.InitializationErrorStatus = "Warning";
 						CharacterParameters.InitializationStatusMessage = "No endpoint provided. Running saved conversation.";
 					}
 					else
@@ -371,6 +371,10 @@ namespace MistyCharacter
 				CharacterParameters.ConversationGroup = conversationGroup;
 
 				CharacterParameters.Character = GetStringField(_parameters, ConversationConstants.Character) ?? "basic";
+				CharacterParameters.SpeakingImage = GetStringField(_parameters, ConversationConstants.SpeakingImage) ?? "eq2.gif";
+				CharacterParameters.ListeningImage = GetStringField(_parameters, ConversationConstants.ListeningImage) ?? "listen12.gif";
+				CharacterParameters.ProcessingImage = GetStringField(_parameters, ConversationConstants.ProcessingImage) ?? "proc11.gif";
+					
 				CharacterParameters.RequestedCharacter = GetStringField(_parameters, ConversationConstants.Character) ?? "";
 
 				CharacterParameters.UsePreSpeech = GetBoolField(_parameters, ConversationConstants.UsePreSpeech) ?? false;
@@ -387,6 +391,17 @@ namespace MistyCharacter
 							CharacterParameters.PreSpeechPhrases = preSpeechStrings.ToList();
 						}
 					}
+					else if (CharacterParameters.UsePreSpeech)
+					{
+						CharacterParameters.PreSpeechPhrases = new List<string>
+						{
+							"One second please.",
+							"Hold on one moment.",
+							"I think I can help with that.",
+							"Let me see.",
+							"Let me find that.",
+						};
+					}
 				}
 				catch
 				{
@@ -396,7 +411,7 @@ namespace MistyCharacter
 				}
 				finally
 				{
-					if(CharacterParameters.PreSpeechPhrases == null || CharacterParameters.PreSpeechPhrases.Count == 0)
+					if(CharacterParameters.UsePreSpeech && (CharacterParameters.PreSpeechPhrases == null || CharacterParameters.PreSpeechPhrases.Count == 0))
 					{
 						CharacterParameters.PreSpeechPhrases = new List<string>
 						{

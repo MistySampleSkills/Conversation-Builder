@@ -41,15 +41,11 @@ using MistyRobotics.SDK.Messengers;
 
 namespace MistyCharacter
 {
-	//Deprecated, update for face and object follow only
-	//TODO Should cleanup, but really should go away	
+	/// <summary>
+	/// //Deprecated, should go away!
+	/// </summary>
 	public class HeadManager : BaseManager, IHeadManager
 	{
-		//public event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
-		//public event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
-		//public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;		
-		//public event EventHandler<IObjectDetectionEvent> ObjectEvent;
-
 		private IObjectDetectionEvent _lastObjectEvent;
 		private IObjectDetectionEvent _lastPersonEvent;
         private object _timerLock = new object();
@@ -72,47 +68,12 @@ namespace MistyCharacter
 		private bool _finding = false;
 		private bool _findingPersonObject = false;
 		bool _handlingMove = false;
-		//private int _lookAroundThrottle = 0;
 
 		public HeadManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 			: base(misty, parameters, characterParameters)
 		{
-			//Robot.UnregisterEvent("GenericODEvent", null);
-			//Robot.UnregisterEvent("ODEventForObjectFollow", null);			
-			//Robot.UnregisterEvent("HeadYaw", null);
-			//Robot.UnregisterEvent("HeadPitch", null);
-			//Robot.UnregisterEvent("HeadRoll", null);
-
 			_currentHeadRequest = new HeadLocation(null, null, null);
-
-			//Person object, used for following face
-			//List<ObjectValidation> personValidations = new List<ObjectValidation>();
-			//personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
-			//LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
-			
-			//List<ObjectValidation> objectValidations = new List<ObjectValidation>();
-			//objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
-			//LogEventDetails(Robot.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
-			
-			////Head Actuators for following actions.
-			//IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
-			//actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
-			////LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
-			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorYawValidations, "HeadYaw", null));
-
-			//IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
-			//actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
-			////LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorPitchValidations, "HeadPitch", null));
-
-			//IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
-			//actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
-			////LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			//LogEventDetails(Robot.RegisterActuatorEvent(ActuatorCallback, 0, true, actuatorRollValidations, "HeadRoll", null));
-
-			//Robot.StartObjectDetector(characterParameters.PersonConfidence, 0, characterParameters.TrackHistory, null);
 		}
-
 		public void StopMovement()
 		{
 			_moveHeadTimer?.Dispose();
@@ -230,9 +191,7 @@ namespace MistyCharacter
 			_currentElevation = faceRecognitionEvent.Elevation;
 			_currentBearing = faceRecognitionEvent.Bearing;			
 		}
-
-
-
+		
 		public void HandleObjectDetectionEvent(object sender, IObjectDetectionEvent objEvent)
 		{
 			try
@@ -254,7 +213,6 @@ namespace MistyCharacter
 					_lastObjectEvent = null;
 					_lastPersonEvent = null;
 				}
-				//ObjectEvent?.Invoke(this, objEvent);
 			}
 			catch (Exception ex)
 			{
@@ -447,14 +405,9 @@ namespace MistyCharacter
 			{
 				case ActuatorPosition.HeadPitch:
 					_lastActuatorPitch = actuatorEvent.ActuatorValue;
-					//HeadPitchActuatorEvent?.Invoke(this, actuatorEvent);
 					break;
 				case ActuatorPosition.HeadYaw:
 					_lastActuatorYaw = actuatorEvent.ActuatorValue;
-					//HeadYawActuatorEvent?.Invoke(this, actuatorEvent);
-					break;
-				case ActuatorPosition.HeadRoll:
-					//HeadRollActuatorEvent?.Invoke(this, actuatorEvent);
 					break;
 			}
 		}
@@ -469,10 +422,7 @@ namespace MistyCharacter
 				}
 				_finding = true;
 				double? yaw = Math.Abs(objEvent.Yaw) > 0.02 ? (double?)(_lastYaw ?? 0) - (objEvent.Yaw * 10) : null;
-				double? pitch = Math.Abs(objEvent.Pitch) > 0.01 ? (double?)(_lastPitch ?? 0) + (objEvent.Pitch * 10) : null;
-
-				//double? yaw = objEvent.Yaw;
-				//double? pitch = objEvent.Pitch;
+				double? pitch = Math.Abs(objEvent.Pitch) > 0.01 ? (double?)(_lastPitch ?? 0) + (objEvent.Pitch * 10) : null;			
 
 				if (pitch == null && yaw == null)
 				{
@@ -529,63 +479,7 @@ namespace MistyCharacter
 				_findingPersonObject = true;
 				double? yaw = objEvent.Yaw*10;
 				double? pitch = objEvent.Pitch*10;
-				/*
-				if (_lastActuatorYaw != null)
-				{
-					_lastYaw = _lastActuatorYaw;
-				}
-
-				if (_lastActuatorPitch != null)
-				{
-					_lastPitch = _lastActuatorPitch;
-				}
-
-				// 0 is Left 320 is Right  - Convert it ==>  L:1 to R:-1
-				double widthOfHuman = objEvent.ImageLocationRight - objEvent.ImageLocationLeft;
-				double xError = (160.0 - ((objEvent.ImageLocationLeft + objEvent.ImageLocationRight) / 2.0)) / 160.0;
-
-				// Use this for human tracking
-				double yError = (160.0 - 1.2 * objEvent.ImageLocationTop + 0.2 * objEvent.ImageLocationBottom) / 160.0;
-
-				// Target is to get move Misty's head to get X and Y Errors to be close to 0.0
-				// Head moves only if error is greater than threshold ; Error range is 1 to -1
-				double threshold = Math.Max(0.2, (321.0 - widthOfHuman) / 1000.0);
-
-				// Higher the number higher the damping - 0 damping at 1.0
-				double damperGain = 7.0;
-
-				if (Math.Abs(xError) > threshold) //use threshold?
-				{
-					yaw = (_lastYaw + xError * (RobotConstants.MaximumYawDegreesExclusive - RobotConstants.MinimumYawDegreesInclusive) / damperGain);
-
-					if (yaw < RobotConstants.MinimumYawDegreesInclusive)
-					{
-						yaw = RobotConstants.MinimumYawDegreesInclusive;
-					}
-					if (yaw >= RobotConstants.MaximumYawDegreesExclusive)
-					{
-						yaw = RobotConstants.MaximumYawDegreesExclusive-1;
-					}
-				}
-
-				if (Math.Abs(yError) >= threshold)
-				{
-					pitch = _lastPitch - yError * ((RobotConstants.MaximumPitchDegreesExclusive - RobotConstants.MinimumPitchDegreesInclusive) / 3.0) - (RobotConstants.MaximumPitchDegreesExclusive + RobotConstants.MinimumPitchDegreesInclusive);
-					if(objEvent.Description == "person")
-					{
-						pitch = pitch + CharacterParameters.FacePitchOffset;
-					}
-						
-					if (pitch < RobotConstants.MinimumPitchDegreesInclusive)
-					{
-						pitch = RobotConstants.MinimumPitchDegreesInclusive;
-					}
-					if (pitch >= RobotConstants.MaximumPitchDegreesExclusive)
-					{
-						pitch = RobotConstants.MaximumPitchDegreesExclusive-1;
-					}
-				}
-				*/
+			
 				if (pitch != null || yaw != null)
 				{
 					if (_currentHeadRequest.MovementDuration != null && _currentHeadRequest.MovementDuration > 0)

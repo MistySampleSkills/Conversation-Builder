@@ -30,25 +30,24 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System;
-using System.Threading.Tasks;
-using Conversation.Common;
-using MistyRobotics.SDK.Events;
+using Windows.Foundation.Metadata;
 
-namespace MistyCharacter
+namespace Conversation.Common
 {
-	public interface IHeadManager
+	public class ArmLocation
 	{
-		Task<bool> Initialize();
-		void StopMovement();
-		void HandleHeadAction(HeadLocation headLocation);
-		void HandleHeadAction(AnimationRequest animationRequest, ConversationData conversation);
+		public string Name { get; set; }
 
-		void HandleActuatorEvent(object sender, IActuatorEvent actuatorEvent);
-		void HandleObjectDetectionEvent(object sender, IObjectDetectionEvent objEvent);
-		void HandleFaceRecognitionEvent(object sender, IFaceRecognitionEvent faceRecognitionEvent);
+		public string Id { get; set; }
+		
+		public double? MaxRightArm { get; set; }
+		public double? MaxLeftArm { get; set; }
 
-		void Dispose();
+		public double? MinRightArm { get; set; }
+		public double? MinLeftArm { get; set; }
+		public double DelayBetweenMovements { get; set; }
+		public double? MovementDuration { get; set; }
+		public int? MovementVelocity { get; set; }
+		public bool RandomRange { get; set; }
 	}
 }
- 

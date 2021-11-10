@@ -328,15 +328,6 @@ namespace MistyCharacter
 		{
 			_currentHeadRequest = new HeadLocation(null, null, null);
 
-			//Person object, used for following face
-			//List<ObjectValidation> personValidations = new List<ObjectValidation>();
-			//personValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.Equal, ComparisonValue = "person" });
-			//LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce * 1000), true, personValidations, "ODEventForFace", null));
-
-			//List<ObjectValidation> objectValidations = new List<ObjectValidation>();
-			//objectValidations.Add(new ObjectValidation { Name = ObjectFilter.Description, Comparison = ComparisonOperator.NotEqual, ComparisonValue = "person" });
-			//LogEventDetails(_misty.RegisterObjectDetectionEvent(ObjectDetectionCallback, (int)Math.Abs(_characterParameters.ObjectDetectionDebounce * 1000), true, objectValidations, "GenericODEvent", null));
-
 			//Head Actuators for following actions.
 			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
 			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
@@ -352,15 +343,11 @@ namespace MistyCharacter
 			actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
 			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
 			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 250, true, actuatorRollValidations, "HeadRoll", null));
-
-		//	_misty.StartObjectDetector(_characterParameters.PersonConfidence, 0, _characterParameters.TrackHistory, null);
-
+			
 		}
 
 		public void RegisterLocomotionEvents()
 		{
-			//Register Bump Sensors with a callback
-			//_misty.RegisterBumpSensorEvent(BumpCallback, 0, true, null, null, null);
 
 			//Front Right Time of Flight
 			List<TimeOfFlightValidation> tofFrontRightValidations = new List<TimeOfFlightValidation>();

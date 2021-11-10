@@ -80,10 +80,8 @@ namespace MistyConversation
 
 		private void RegisterOptionalEvents()
 		{
-			//Handled trigger event
+			//Example of subscribing to other events where you can do other things if desired...
 			ValidTriggerReceived += CuriousMisty_ResponseEventReceived;
-
-			//Other events...
 			SpeechIntentEvent += CuriousMisty_SpeechIntent;
 			FaceRecognitionEvent += CuriousMisty_FaceRecognitionEvent;
 			CapTouchEvent += CuriousMisty_CapTouchEvent;

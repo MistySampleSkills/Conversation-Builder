@@ -200,22 +200,7 @@ namespace MistyCharacter
 		/// Triggered when any face recognition event occurs
 		/// </summary>
 		event EventHandler<bool> KeyPhraseRecognitionOn;
-
-		/// <summary>
-		/// Current state of robot and character
-		/// </summary>
-		//	CharacterState CurrentCharacterState { get; }
-
-		/// <summary>
-		/// The state of robot and character at the end of the last interaction
-		/// </summary>
-		//CharacterState PreviousState { get; }
-
-		/// <summary>
-		/// The state of robot and character at the start of this interaction
-		/// </summary>
-		//CharacterState StateAtAnimationStart { get; }
-
+		
 		/// <summary>
 		/// The current interaction being performed
 		/// </summary>

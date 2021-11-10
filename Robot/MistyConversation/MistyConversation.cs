@@ -50,7 +50,6 @@ namespace MistyConversation
 		public INativeRobotSkill Skill { get; set; }
 		private IRobotMessenger _misty;
 		private ConversationManager _conversationManager;
-		private bool _cancelledByUser = false;
 
 		public MistyConversationSkill()
 		{
@@ -71,14 +70,13 @@ namespace MistyConversation
 		{
 			try
 			{
-				_cancelledByUser = false;
 				_conversationManager = new ConversationManager(_misty, parameters, new ManagerConfiguration());
 
 				//Can also use BaseCharacter templates if desired...
 				//eg: if (!await _conversationManager.Initialize(new EventTemplateMisty(_misty, parameters, new ManagerConfiguration())))
 				if (!await _conversationManager.Initialize(new BasicMisty(_misty, parameters, new ManagerConfiguration())))				
 				{
-					_misty.SkillLogger.Log($"Failed to initialize conversation manager.");
+					_misty.SkillLogger.Log($"Failed to initialize conversation manager. Cancelling skill.");
 					_misty.SkillCompleted();
 					return;
 				}
@@ -90,7 +88,6 @@ namespace MistyConversation
 			}
 			catch (OperationCanceledException)
 			{
-				_cancelledByUser = true;
 				return;
 			}
 			catch (Exception ex)
@@ -115,9 +112,10 @@ namespace MistyConversation
 
 		public void OnCancel(object sender, IDictionary<string, object> parameters)
 		{
-			_misty.SkillLogger.Log($"Conversation skill cancelled.");			
-			_misty.SetBlinkSettings(true, null, null, null, null, null, null);
-			_misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm}, null);
+			_misty.SkillLogger.Log($"Conversation skill cancelled.");
+			_misty.Halt(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm, MotorMask.LeftDrive, MotorMask.RightDrive }, null);
+			_misty.SetDisplaySettings(true, null);
+			_misty.SetBlinkSettings(true, null, null, null, null, null, null);			
 		}
 
 		public void OnTimeout(object sender, IDictionary<string, object> parameters)

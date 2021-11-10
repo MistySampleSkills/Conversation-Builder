@@ -47,6 +47,5 @@ namespace Conversation.Common
 		public string AnimationScript { get; set; }
 		public string PreSpeechScript { get; set; }
 		public string ListeningScript { get; set; }
-
 	}
 }

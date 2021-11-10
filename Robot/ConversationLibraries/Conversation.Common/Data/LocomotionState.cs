@@ -32,20 +32,62 @@
 
 namespace Conversation.Common
 {
-	public class ArmLocation
+	public class LocomotionState
 	{
-		public string Name { get; set; }
+		public double FrontLeftTOF { get; set; }
 
-		public string Id { get; set; }
-		
-		public double? MaxRightArm { get; set; }
-		public double? MaxLeftArm { get; set; }
+		public double FrontRightTOF { get; set; }
 
-		public double? MinRightArm { get; set; }
-		public double? MinLeftArm { get; set; }
-		public double DelayBetweenMovements { get; set; }
-		public double? MovementDuration { get; set; }
-		public int? MovementVelocity { get; set; }
-		public bool RandomRange { get; set; }
+		public double FrontCenterTOF { get; set; }
+
+		public double BackTOF { get; set; }
+
+		public bool BackLeftBumpContacted { get; set; }
+
+		public bool BackRightBumpContacted { get; set; }
+
+		public bool FrontLeftBumpContacted { get; set; }
+
+		public bool FrontRightBumpContacted { get; set; }
+
+		public double FrontRightEdgeTOF { get; set; }
+
+		public double FrontLeftEdgeTOF { get; set; }
+
+		public double BackRightEdgeTOF { get; set; }
+
+		public double BackLeftEdgeTOF { get; set; }
+
+		public double LeftVelocity { get; set; }
+		public double RightVelocity { get; set; }
+
+		public double LeftDistanceSinceLastStop { get; set; }
+		public double RightDistanceSinceLastStop { get; set; }
+
+		public double LeftDistanceSinceWayPoint { get; set; }
+		public double RightDistanceSinceWayPoint { get; set; }
+
+		public double LeftDistanceSinceStart { get; set; }
+		public double RightDistanceSinceStart { get; set; }
+
+		public string[] MovementHistory { get; set; }
+
+		public LocomotionStatus LocomotionStatus { get; set; }
+
+		public LocomotionAction LocomotionAction { get; set; }
+
+		public double RobotPitch { get; set; }
+		public double RobotYaw { get; set; }
+		public double RobotRoll { get; set; }
+
+		public double XAcceleration { get; set; }
+		public double YAcceleration { get; set; }
+		public double ZAcceleration { get; set; }
+
+		public double PitchVelocity { get; set; }
+		public double RollVelocity { get; set; }
+		public double YawVelocity { get; set; }
+
+		public double? LockedHeading { get; set; }
 	}
 }

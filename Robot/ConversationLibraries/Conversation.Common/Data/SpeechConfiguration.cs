@@ -63,7 +63,7 @@ namespace Conversation.Common
 
 		public string ProfanitySetting { get; set; }
 
-		public int SpeechSilenceTimeoutMs { get; set; } = 5000;
+		public int SpeechSilenceTimeoutMs { get; set; } = 10000;
 		public int SpeechListenTimeoutMs { get; set; } = 10000;
 		public int TrimSilenceMs { get; set; } = 0;
 	}

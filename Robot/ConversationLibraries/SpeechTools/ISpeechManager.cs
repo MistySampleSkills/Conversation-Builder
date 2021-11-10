@@ -55,8 +55,7 @@ namespace SpeechTools
 		Task<bool> Initialize();
 		int Volume { get; set; }
 		Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction, bool backgroundSpeech);
-		//string GetLocaleName(string name);
-		void SetInteractionDetails(int listenTimeout, int silenceTimeout, IList<string> allowedUtterances);
+		void SetAllowedUtterances(IList<string> allowedUtterances);
 		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
 		void AbortListening(string audioName);		
 		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
@@ -71,12 +70,12 @@ namespace SpeechTools
 		void SetVoice(string voice);
 		void SetPitch(string pitch);
 		bool HandleExternalSpeech(string text);
-
-		//TODO and move into speech manager
-		//void UpdatePrespeech(string prespeech);
 		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
-		
+
 		void Dispose();
+		
+		//TODO Move prespeech into speech manager
+		//void UpdatePrespeech(string prespeech);
 	}
 }
  

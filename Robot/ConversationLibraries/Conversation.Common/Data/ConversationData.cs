@@ -70,10 +70,7 @@ namespace Conversation.Common
 		public bool InitiateSkillsAtConversationStart { get; set; }
 		public IDictionary<string, string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
 		public IDictionary<string, string> InteractionPreSpeechAnimations { get; set; } = new Dictionary<string, string>();
-
-
-
-		//TODO
+		
 		public IDictionary<string, string> InteractionListeningAnimations { get; set; } = new Dictionary<string, string>();
 		public IDictionary<string, string> InteractionInitAnimations { get; set; } = new Dictionary<string, string>();
 
