@@ -60,6 +60,8 @@ namespace MistyConversation
 				StartupRules = new List<NativeStartupRule> { NativeStartupRule.Manual }
 			};
 		}
+		
+		public event EventHandler<bool> SkillRunState;
 
 		public void LoadRobotConnection(IRobotMessenger robotInterface)
 		{
@@ -70,6 +72,7 @@ namespace MistyConversation
 		{
 			try
 			{
+				SkillRunState?.Invoke(this, true);
 				_conversationManager = new ConversationManager(_misty, parameters, new ManagerConfiguration());
 
 				//Can also use BaseCharacter templates if desired...
@@ -88,6 +91,7 @@ namespace MistyConversation
 			}
 			catch (OperationCanceledException)
 			{
+				SkillRunState?.Invoke(this, false);
 				return;
 			}
 			catch (Exception ex)
@@ -97,6 +101,8 @@ namespace MistyConversation
 				_misty.Speak("Sorry, I am unable to initialize the skill. You need to restart the skill or the robot.", true, null, null);
 				await Task.Delay(5000);
 				_misty.SkillCompleted();
+				SkillRunState?.Invoke(this, false);
+				return;
 			}
 		}
 
@@ -136,6 +142,7 @@ namespace MistyConversation
 					_conversationManager?.Dispose();
 					_misty.UnregisterAllEvents(null);
 					_misty.SkillCompleted();
+					SkillRunState?.Invoke(this, false);
 				}
 
 				_isDisposed = true;

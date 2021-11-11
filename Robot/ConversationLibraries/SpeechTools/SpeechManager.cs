@@ -352,7 +352,7 @@ namespace SpeechTools
 
 			if (_characterParameters.ShowSpeakingIndicator)
 			{
-				_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+				await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
 				{
 					VerticalAlignment = ImageVerticalAlignment.Bottom,
 					HorizontalAlignment = ImageHorizontalAlignment.Center,
@@ -365,7 +365,7 @@ namespace SpeechTools
 
 			if (_characterParameters.ShowListeningIndicator)
 			{
-				_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+				await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
 				{
 					VerticalAlignment = ImageVerticalAlignment.Bottom,
 					HorizontalAlignment = ImageHorizontalAlignment.Right,
@@ -376,7 +376,7 @@ namespace SpeechTools
 				});
 			}
 
-			_ = ManageListeningDisplay(ListeningState.Waiting);
+			await ManageListeningDisplay(ListeningState.Waiting);
 
 			return true;
 		}
@@ -473,12 +473,12 @@ namespace SpeechTools
 					case ListeningState.Speaking:
 						if (!string.IsNullOrWhiteSpace(_characterParameters.SpeakingImage) && _characterParameters.ShowSpeakingIndicator)
 						{
-							_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+							await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
 							{
 								Visible = false
 							});
 
-							_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+							await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
 							{
 								PlaceOnTop = true,
 								Visible = true,
@@ -493,12 +493,12 @@ namespace SpeechTools
 						{
 							if((_listeningState != ListeningState.ProcessingSpeech  && _listeningState != ListeningState.Recording))
 							{
-								_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
 								{
 									Visible = false
 								});
 
-								_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+								await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
 								{
 									PlaceOnTop = true,
 									Visible = true,
@@ -512,11 +512,11 @@ namespace SpeechTools
 					default:
 						if (_characterParameters.ShowSpeakingIndicator || _characterParameters.ShowListeningIndicator)
 						{
-							_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+							await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
 							{
 								Visible = false
 							});
-							_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+							await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
 							{
 								Visible = false
 							});
@@ -556,7 +556,7 @@ namespace SpeechTools
 				}
 				
 				_listenAborted = false;
-				_ = ManageListeningDisplay(ListeningState.Speaking);
+				await ManageListeningDisplay(ListeningState.Speaking);
 
 				if (_characterParameters.TextToSpeechService == "misty")
 				{
@@ -992,11 +992,11 @@ namespace SpeechTools
 				if(_recording)
 				{
 					StartedListening?.Invoke(this, DateTime.Now);
-					_ = ManageListeningDisplay(ListeningState.Recording);
+					await ManageListeningDisplay(ListeningState.Recording);
 				}
 				else
 				{
-					_ = ManageListeningDisplay(ListeningState.Waiting);
+					await ManageListeningDisplay(ListeningState.Waiting);
 				}
 			}
 		}
@@ -1018,7 +1018,7 @@ namespace SpeechTools
 
 				StartedListening?.Invoke(this, DateTime.Now);
 
-				_ = ManageListeningDisplay(ListeningState.Recording);
+				await ManageListeningDisplay(ListeningState.Recording);
 				return;
 			}
 			catch (Exception ex)
@@ -1048,7 +1048,7 @@ namespace SpeechTools
 					_misty.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
 					return;
 				}
-				_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
+				await ManageListeningDisplay(ListeningState.ProcessingSpeech);
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 				_misty.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				
@@ -1064,7 +1064,7 @@ namespace SpeechTools
 				{
 					succesfulRetrieval = true;
 					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-					_ = ManageListeningDisplay(ListeningState.Waiting);
+					await ManageListeningDisplay(ListeningState.Waiting);
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
 					return;
 				}
@@ -1107,7 +1107,7 @@ namespace SpeechTools
 
 				succesfulRetrieval = true;
 				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-				_ = ManageListeningDisplay(ListeningState.Waiting);
+				await ManageListeningDisplay(ListeningState.Waiting);
 				HandleSpeechResponse(description.Text);
 			}
 			catch (Exception ex)
@@ -1120,7 +1120,7 @@ namespace SpeechTools
 				if(!succesfulRetrieval)
 				{
 					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-					_ = ManageListeningDisplay(ListeningState.Waiting);
+					await ManageListeningDisplay(ListeningState.Waiting);
 				}
 			}
 		}

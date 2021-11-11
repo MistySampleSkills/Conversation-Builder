@@ -38,9 +38,32 @@ namespace MistyConversation
 {
     public sealed class StartupTask : IBackgroundTask
     {
+		private static bool _isRunning = false;
+		private static IRobotMessenger _robotMessenger;
+
+		private void HandleSkillRunState(object sender, bool running)
+		{
+			_isRunning = running;
+		}
+		
         public void Run(IBackgroundTaskInstance taskInstance)
         {
-            RobotMessenger.LoadAndPrepareSkill(taskInstance, new MistyConversationSkill(), SkillLogLevel.Warning, "");
+			if(!_isRunning)
+			{
+				MistyConversationSkill skill = new MistyConversationSkill();
+				skill.SkillRunState += HandleSkillRunState;
+
+				_robotMessenger = RobotMessenger.LoadAndPrepareSkill(taskInstance, skill, SkillLogLevel.Info, "");
+			}
+			else
+			{
+				if(_robotMessenger != null)
+				{
+					//_robotMessenger.PlayAudio("s_SystemFailure.wav", null, null);
+					_robotMessenger.SkillLogger.LogError("Skill trying to start again while running.");
+				}
+			}
+			
         }
     }
 }
