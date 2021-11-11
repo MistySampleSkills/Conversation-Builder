@@ -399,7 +399,7 @@ namespace MistyCharacter
 				}
 				_animationsCanceled = true;
 
-				await WaitOnCompletionEvent();
+				await WaitOnCompletionEvent(3000);
 
 				_completionCommands.Clear();
 				_runningAnimation = false;
@@ -416,15 +416,24 @@ namespace MistyCharacter
 			}
 		}
 
-		private async Task<bool> WaitOnCompletionEvent()
+		private async Task<bool> WaitOnCompletionEvent(int timeout)
 		{
+			if (!_runningAnimation)
+			{
+				return false;
+			}
+			if(timeout < 100)
+			{
+				timeout = 100;
+			}
+
 			bool response = false;
 			_interactionCancellationEvent = null;
 			_interactionCancellationEvent = new TaskCompletionSource<bool>();
 			try
 			{
 				//wait a max of 5 seconds before starting next interaction. this can happen if people do long running actions and don't delay at the end
-				if (_interactionCancellationEvent.Task == await Task.WhenAny(_interactionCancellationEvent.Task, Task.Delay(5000)))
+				if (_interactionCancellationEvent.Task == await Task.WhenAny(_interactionCancellationEvent.Task, Task.Delay(timeout)))
 				{
 					response = _interactionCancellationEvent.Task.Result;
 				}
@@ -454,11 +463,11 @@ namespace MistyCharacter
 				_currentConversationData = currentConversationData;
 				if (!string.IsNullOrWhiteSpace(animationScript))
 				{
+					_animationsCanceled = false;
 					StartedAnimationScript?.Invoke(this, DateTime.Now);
 					_repeatScript = repeatScript;
 					_currentAnimation = currentAnimation;
 					_currentInteraction = currentInteraction;
-					_animationsCanceled = false;
 					animationScript = animationScript.Trim().Replace(Environment.NewLine, "").Replace("’", "'").Replace("“", "\"").Replace("”", "\"");
 					string[] commands = animationScript.Split(";");
 					foreach (string command in commands)
@@ -554,7 +563,13 @@ namespace MistyCharacter
 									{
 										await WaitOnSyncEvent();
 									}
-									
+
+									if (_animationsCanceled)
+									{
+										_interactionCancellationEvent?.TrySetResult(true);
+										return false;
+									}
+
 									CommandResult commandResult = await ProcessCommand(runCommand, false, loopCount);
 									if (!commandResult.Success && stopOnFailedCommand)
 									{
@@ -572,7 +587,8 @@ namespace MistyCharacter
 						AnimationScriptActionsComplete?.Invoke(this, DateTime.Now);
 					}
 					while (_repeatScript && !_animationsCanceled && _runningAnimation);
-					
+
+					_runningAnimation = false;
 					CompletedAnimationScript?.Invoke(this, DateTime.Now);
 					return true;
 				}
@@ -592,12 +608,17 @@ namespace MistyCharacter
 
 		private async Task<bool> WaitOnSyncEvent()
 		{
+			if(!_runningAnimation)
+			{
+				return false;
+			}
 			bool response = false;
 			_receivedSyncEvent = null;
 			_receivedSyncEvent = new TaskCompletionSource<bool>();
+			_interactionCancellationEvent = new TaskCompletionSource<bool>();
 			try
 			{
-				if (_receivedSyncEvent.Task == await Task.WhenAny(_receivedSyncEvent.Task, Task.Delay(_waitingTimeoutMs)))
+				if (_receivedSyncEvent.Task == await Task.WhenAny(_receivedSyncEvent.Task, _interactionCancellationEvent?.Task, Task.Delay(_waitingTimeoutMs)))
 				{
 					response = _receivedSyncEvent.Task.Result;
 				}
@@ -617,12 +638,17 @@ namespace MistyCharacter
 
 		private async Task<bool> WaitOnSpeechCompletionEvent(int timeoutMs)
 		{
+			if (!_runningAnimation)
+			{
+				return false;
+			}
 			bool response = false;
 			_receivedSpeechCompletionEvent = null;
 			_receivedSpeechCompletionEvent = new TaskCompletionSource<bool>();
+			_interactionCancellationEvent = new TaskCompletionSource<bool>();
 			try
 			{
-				if (_receivedSpeechCompletionEvent.Task == await Task.WhenAny(_receivedSpeechCompletionEvent.Task, Task.Delay(timeoutMs)))
+				if (_receivedSpeechCompletionEvent.Task == await Task.WhenAny(_receivedSpeechCompletionEvent.Task, Task.Delay(timeoutMs), _interactionCancellationEvent?.Task))
 				{
 					response = _receivedSpeechCompletionEvent.Task.Result;
 				}
@@ -1595,10 +1621,14 @@ namespace MistyCharacter
 								_ = Task.Run(async () =>
 								{
 									//Use timer instead?
-									await Task.Delay(Convert.ToInt32(timedTriggerEventData[0])-200);
+									int delay = Convert.ToInt32(timedTriggerEventData[0]);// - 200;
+									if(delay > 0)
+									{
+										await Task.Delay(delay);
+									}
 
 									//_mistyState.RegisterEvent(Triggers.Manual);
-									await Task.Delay(200);
+									//await Task.Delay(200);
 									ManualTrigger?.Invoke(this, new TriggerData(timedText, timedTriggerEventData[2], timedTriggerEventData[1]));
 								});
 								break;

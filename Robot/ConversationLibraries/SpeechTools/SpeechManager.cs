@@ -349,7 +349,35 @@ namespace SpeechTools
 			LogEventDetails(_misty.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 100, true, "KeyPhrase", null));
 			LogEventDetails(_misty.RegisterAudioPlayCompleteEvent(AudioCallback, 100, true, "CharacterAudioComplete", null));
 			LogEventDetails(_misty.RegisterTextToSpeechCompleteEvent(TTSCallback, 100, true, "CharacterTTSComplete", null));
-					
+
+			if (_characterParameters.ShowSpeakingIndicator)
+			{
+				_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+				{
+					VerticalAlignment = ImageVerticalAlignment.Bottom,
+					HorizontalAlignment = ImageHorizontalAlignment.Center,
+					PlaceOnTop = true,
+					Stretch = ImageStretch.None,
+					Visible = false,
+					Height = 50
+				});
+			}
+
+			if (_characterParameters.ShowListeningIndicator)
+			{
+				_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+				{
+					VerticalAlignment = ImageVerticalAlignment.Bottom,
+					HorizontalAlignment = ImageHorizontalAlignment.Right,
+					PlaceOnTop = true,
+					Stretch = ImageStretch.None,
+					Visible = false,
+					Height = 50
+				});
+			}
+
+			_ = ManageListeningDisplay(ListeningState.Waiting);
+
 			return true;
 		}
 
@@ -423,13 +451,93 @@ namespace SpeechTools
 		{
 			await _assetWrapper.RefreshAssetLists();
 		}
-		
+
+		private ListeningState _listeningState = ListeningState.Waiting;
+
+		private SemaphoreSlim _listeningSlim = new SemaphoreSlim(1, 1);
+
+		private async Task ManageListeningDisplay(ListeningState listeningState)
+		{
+			try
+			{
+				//TODO Cleanup
+				await _listeningSlim.WaitAsync();
+
+				if (_listeningState == listeningState)
+				{
+					return;
+				}
+
+				switch (listeningState)
+				{
+					case ListeningState.Speaking:
+						if (!string.IsNullOrWhiteSpace(_characterParameters.SpeakingImage) && _characterParameters.ShowSpeakingIndicator)
+						{
+							_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+							{
+								Visible = false
+							});
+
+							_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+							{
+								PlaceOnTop = true,
+								Visible = true,
+							});
+
+							_misty.DisplayImage(_characterParameters.SpeakingImage, "Speaking", false, null);
+						}
+						break;
+					case ListeningState.ProcessingSpeech:
+					case ListeningState.Recording:
+						if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage) && _characterParameters.ShowListeningIndicator)
+						{
+							if((_listeningState != ListeningState.ProcessingSpeech  && _listeningState != ListeningState.Recording))
+							{
+								_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								{
+									Visible = false
+								});
+
+								_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+								{
+									PlaceOnTop = true,
+									Visible = true,
+								});
+							}
+
+							_misty.DisplayImage(listeningState == ListeningState.ProcessingSpeech ? _characterParameters.ProcessingImage : _characterParameters.ListeningImage, "Listening", false, null);
+						}
+						break;
+					case ListeningState.Waiting:
+					default:
+						if (_characterParameters.ShowSpeakingIndicator || _characterParameters.ShowListeningIndicator)
+						{
+							_ = _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+							{
+								Visible = false
+							});
+							_ = _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+							{
+								Visible = false
+							});
+						}
+						break;
+				}
+				_listeningState = listeningState;
+			}
+			catch
+			{ }
+			finally
+			{
+				_listeningSlim.Release();
+			}
+
+		}
+
 		public async virtual Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction, bool backgroundSpeech)
 		{
 			try
 			{
-				bool textChanged = false;
-
 				if (string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
 					_misty.SkillLogger.LogWarning("No text passed in to Speak command.");
@@ -448,7 +556,8 @@ namespace SpeechTools
 				}
 				
 				_listenAborted = false;
-				
+				_ = ManageListeningDisplay(ListeningState.Speaking);
+
 				if (_characterParameters.TextToSpeechService == "misty")
 				{
 					if (currentInteraction.StartListening && !string.IsNullOrWhiteSpace(currentAnimation.SpeakFileName))
@@ -463,8 +572,8 @@ namespace SpeechTools
 					string newText = currentAnimation.Speak;
 					bool usingSSML = TryGetSSMLText(currentAnimation.Speak, out newText, currentAnimation);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-					_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
-					//_misty.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
+					//_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
+					_misty.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
 					return;
 				}
 				else if (_characterParameters.TextToSpeechService == "skill")
@@ -478,8 +587,8 @@ namespace SpeechTools
 						}
 					}
 					
-					if (!textChanged)
-					{
+					//if (!textChanged)
+					//{
 						if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
 							(!_characterParameters.RetranslateTTS &&
 							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
@@ -510,30 +619,30 @@ namespace SpeechTools
 
 							MemoryStream ms = new MemoryStream();
 							audio.CopyTo(ms);
-							_ = _misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
 							_audioTags.Add(currentAnimation.SpeakFileName);
+							_ = _misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
 						}
-					}
-					else
-					{
-						string newText = currentAnimation.Speak;
-						SkillSpeech sp = new SkillSpeech();
+					//}
+					//else
+					//{
+					//	string newText = currentAnimation.Speak;
+					//	SkillSpeech sp = new SkillSpeech();
 
-						StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-						Stream audio;
-						if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
-						{
-							audio = await sp.SsmlToStream(newText);
-						}
-						else
-						{
-							audio = await sp.TextToStream(newText);
-						}
+					//	StartedSpeaking?.Invoke(this, currentAnimation.Speak);
+					//	Stream audio;
+					//	if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
+					//	{
+					//		audio = await sp.SsmlToStream(newText);
+					//	}
+					//	else
+					//	{
+					//		audio = await sp.TextToStream(newText);
+					//	}
 
-						MemoryStream ms = new MemoryStream();
-						audio.CopyTo(ms);
-						_ =_misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
-					}
+					//	MemoryStream ms = new MemoryStream();
+					//	audio.CopyTo(ms);
+					//	_ =_misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
+					//}
 					
 					return;
 				}
@@ -555,8 +664,8 @@ namespace SpeechTools
 					}
 
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-					if (!textChanged)
-					{
+					//(if (!textChanged)
+					//{
 						if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
 							(!_characterParameters.RetranslateTTS &&
 							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
@@ -583,21 +692,21 @@ namespace SpeechTools
 							}
 							_audioTags.Add(currentAnimation.SpeakFileName);
 						}
-					}
-					else
-					{
-						//Make a new file						
-						switch (_characterParameters.TextToSpeechService)
-						{
-							case "google":
-								await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, 0);
-								break;
-							case "azure":
-							default:
-								await _azureCognitive.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, (int)currentAnimation.TrimAudioSilence * 1000);
-								break;
-						}
-					}
+					//}
+					//else
+					//{
+					//	//Make a new file						
+					//	switch (_characterParameters.TextToSpeechService)
+					//	{
+					//		case "google":
+					//			await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, 0);
+					//			break;
+					//		case "azure":
+					//		default:
+					//			await _azureCognitive.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, (int)currentAnimation.TrimAudioSilence * 1000);
+					//			break;
+					//	}
+					//}
 				}
 			}
 			catch(Exception ex)
@@ -822,7 +931,7 @@ namespace SpeechTools
 			AudioCallback(new AudioPlayCompleteEvent(ttsComplete.UttteranceId, -1));
 		}
 		
-		protected void AudioCallback(IAudioPlayCompleteEvent audioComplete)
+		protected async void AudioCallback(IAudioPlayCompleteEvent audioComplete)
 		{
 			try
 			{
@@ -850,8 +959,6 @@ namespace SpeechTools
 					if (!_recording && !_listenAborted && (_listeningCallbacks.Remove(audioComplete.Name) || _listeningCallbacks.Remove(audioComplete.Name+".wav")))
 					{
 						_recording = true;
-
-						_misty.SkillLogger.LogVerbose("Capture Speech called.");
 						switch (_characterParameters.SpeechRecognitionService.Trim().ToLower())
 						{
 							case "googleonboard":
@@ -870,6 +977,8 @@ namespace SpeechTools
 								_ = _misty.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
 								return;
 						}
+
+						_misty.SkillLogger.LogInfo("Capture Speech called.");
 					}
 				}
 			}
@@ -883,11 +992,16 @@ namespace SpeechTools
 				if(_recording)
 				{
 					StartedListening?.Invoke(this, DateTime.Now);
+					_ = ManageListeningDisplay(ListeningState.Recording);
+				}
+				else
+				{
+					_ = ManageListeningDisplay(ListeningState.Waiting);
 				}
 			}
 		}
 
-		private void KeyPhraseCallback(IKeyPhraseRecognizedEvent keyPhraseEvent)
+		private async void KeyPhraseCallback(IKeyPhraseRecognizedEvent keyPhraseEvent)
 		{ 
 			try
 			{
@@ -903,6 +1017,8 @@ namespace SpeechTools
 				_ = _misty.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
 
 				StartedListening?.Invoke(this, DateTime.Now);
+
+				_ = ManageListeningDisplay(ListeningState.Recording);
 				return;
 			}
 			catch (Exception ex)
@@ -911,40 +1027,44 @@ namespace SpeechTools
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard));
 			}
 		}
-		
+
+
 		private async void VoiceRecordCallback(IVoiceRecordEvent voiceRecordEvent)
 		{
+			bool succesfulRetrieval = false;
 			try
 			{
-				if(_speechOverridden)
+				if (_speechOverridden)
 				{
 					_speechOverridden = false;
 					return;
 				}
 
+				_recording = false;
 				StoppedListening?.Invoke(this, voiceRecordEvent);
 				_externalOverridden = true;
-				_recording = false;				
 				if (_listenAborted)
 				{
 					_misty.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
 					return;
 				}
-
+				_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 				_misty.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				
 				if (voiceRecordEvent.ErrorCode == 3)
 				{
-					_misty.SkillLogger.Log("Didn't hear anything with microphone.");
+					_misty.SkillLogger.Log($"Didn't hear anything with microphone. {voiceRecordEvent.ErrorMessage}");
 					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 					return;
 				}
-
 				
 				string service = _characterParameters.SpeechRecognitionService.Trim().ToLower();
 				if (service == "googleonboard" || service == "azureonboard" || service == "deepspeech" || service == "vosk")
 				{
+					succesfulRetrieval = true;
+					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
+					_ = ManageListeningDisplay(ListeningState.Waiting);
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
 					return;
 				}
@@ -985,6 +1105,9 @@ namespace SpeechTools
 						break;
 				}
 
+				succesfulRetrieval = true;
+				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
+				_ = ManageListeningDisplay(ListeningState.Waiting);
 				HandleSpeechResponse(description.Text);
 			}
 			catch (Exception ex)
@@ -994,25 +1117,25 @@ namespace SpeechTools
 			}
 			finally
 			{
-				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
+				if(!succesfulRetrieval)
+				{
+					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
+					_ = ManageListeningDisplay(ListeningState.Waiting);
+				}
 			}
 		}
 
-		bool _processingIntent = false;
+		//bool _processingIntent = false;
 
 		private bool HandleSpeechResponse(string text)
 		{
-			if (_processingIntent)
-			{
-				return false;
-			}
-
 			try
 			{
-				_processingIntent = true;
+				//_processingIntent = true;
 				if (!string.IsNullOrWhiteSpace(text))
 				{
 					SpeechMatchData intent = _speechIntentManager.GetIntent(text, _allowedTriggers);
+
 
 					//Old conversations trigger on name, new ones on id
 					SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
@@ -1033,7 +1156,7 @@ namespace SpeechTools
 			}
 			finally
 			{
-				_processingIntent = false;
+				//_processingIntent = false;
 			}
 		}
 

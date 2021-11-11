@@ -46,16 +46,12 @@ namespace MistyCharacter
 	/// </summary>
 	public class ArmManager : BaseManager, IArmManager
 	{
-		public event EventHandler<IActuatorEvent> RightArmActuatorEvent;
-		public event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
 		private Timer _moveArmsTimer;
 		private bool _armsMovingContinuously;
 		private Random _random = new Random();
 		private ArmLocation _currentArmRequest = new ArmLocation();
 		private bool _tick = false;
         private object _timerLock = new object();
-
-		
 
         public ArmManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
 		: base(misty, parameters, characterParameters) {}
@@ -202,15 +198,18 @@ namespace MistyCharacter
 					}
 					else
 					{
-						_armsMovingContinuously = true;
-                        lock (_timerLock)
-                        {
-                            _moveArmsTimer?.Dispose();
-                            if (!_isDisposed)
-                            {
-                                _moveArmsTimer = new Timer(MoveArmsCallback, null, (int)Math.Abs(_currentArmRequest.DelayBetweenMovements * 1000), (int)Math.Abs(_currentArmRequest.DelayBetweenMovements * 1000));
-                            }
-                        }
+						if(!_armsMovingContinuously)
+						{
+							_armsMovingContinuously = true;
+							lock (_timerLock)
+							{
+								_moveArmsTimer?.Dispose();
+								if (!_isDisposed)
+								{
+									_moveArmsTimer = new Timer(MoveArmsCallback, null, (int)Math.Abs(_currentArmRequest.DelayBetweenMovements * 1000), (int)Math.Abs(_currentArmRequest.DelayBetweenMovements * 1000));
+								}
+							}
+						}
 					}
 				}
 			}
@@ -225,10 +224,10 @@ namespace MistyCharacter
                 if (!_isDisposed)
                 {
                     if (disposing)
-                    {
-                        Robot.UnregisterAllEvents(null);
-                        _armsMovingContinuously = false;
-                        _moveArmsTimer?.Dispose();
+					{
+						_armsMovingContinuously = false;
+						_moveArmsTimer?.Dispose();
+						//Robot.UnregisterAllEvents(null);
                     }
 
                     _isDisposed = true;
