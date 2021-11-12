@@ -131,9 +131,10 @@ namespace MistyCharacter
 
 		private IMistyState _mistyState;
 
-		//TODO PLUG THESE IN!
+		//TODO Cleanup of event vs commands since passing in anyway
+
 		public event EventHandler<KeyValuePair<string, TriggerData>> AddTrigger;
-		public event EventHandler<KeyValuePair<string, TriggerData>> RegisterEvent;
+		//public event EventHandler<KeyValuePair<string, TriggerData>> RegisterEvent;
 		public event EventHandler<string> RemoveTrigger;
 		public event EventHandler<TriggerData> ManualTrigger;
 		public ConversationData _currentConversationData;
@@ -159,27 +160,17 @@ namespace MistyCharacter
 
 		public async void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent)
 		{
-			/*if (_animationsCanceled || (_currentInteraction.ProcessingAnimation != null && !await RunInternalScript(_currentInteraction.ProcessingAnimation, false, true)))
-			{
-				_interactionCancellationEvent?.TrySetResult(true);
-				return;
-			}*/
+			//TODO?
 		}
 
 		public async void HandleStartedListening(object sender, DateTime time)
 		{
-			//TODO
-			/*if (_animationsCanceled || (_currentInteraction.ListeningAnimation != null && !await RunInternalScript(_currentInteraction.ListeningAnimation, false, true)))
-			{
-				_interactionCancellationEvent?.TrySetResult(true);
-				return;
-			}*/
+			//TODO?
 		}
 
 		private async void _speechManager_UserDataAnimationScript(object sender, string script)
 		{
 			_headManager.StopMovement();
-			//await StopRunningAnimationScripts();
 			_ = StopRunningAnimationScripts();
 			_ = RunAnimationScript(script, false, _currentAnimation, _currentInteraction, _currentConversationData);
 		}
@@ -809,6 +800,8 @@ namespace MistyCharacter
 					
 					if(includeSelf)
 					{
+						//TODO Replace with command classes
+
 						//split the rest based on action, hacky wacky for now
 						//deal with inconsistencies for arms and head, so all scripting is ms
 						switch (action.ToUpper())

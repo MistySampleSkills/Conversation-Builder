@@ -68,6 +68,7 @@ namespace SpeechTools
 		private const string MissingInlineData = "Missing";
 		private const string TTSNamePreface = "misty-en-";
 		private const string SkillNamePreface = "skill-";
+
 		private IList<string> _audioTags = new List<string>();
 		private ISpeechIntentManager _speechIntentManager;
 		private AzureSpeechService _azureCognitive;
@@ -85,15 +86,14 @@ namespace SpeechTools
 		private object _lockListenerData = new object();
 		private bool _listenAborted;
 		private int _audioTrim = 0;
-		private int _silenceTimeout = 6000;
-		private int _listenTimeout = 6000;
+		private int _silenceTimeout = 10000;
+		private int _listenTimeout = 10000;
 		private IList<string> _allowedTriggers = new List<string>();
 		private bool _keyPhraseTriggered;
 		private bool _keyPhraseOn;
-		private bool _processingAudioCallback;
-		private SemaphoreSlim _keyPhraseOnSlim = new SemaphoreSlim(1, 1);
 		private Random _random = new Random();
-		private IList<string> _replacementValues = new List<string> { "face", "filter", "qrcode", "arcode", "text", "intent", "time", "robotname" };
+		private IList<string> _replacementValues = new List<string> { "face", "filter", "qrcode", "arcode", "text", "intent", "time", "robotname", "emotion", "audio", "charge", "image", "serial", "object" };
+
 		private IList<GenericDataStore> _genericDataStores = new List<GenericDataStore>();
 		private string _robotName = "Misty";
 		private CharacterState _characterState;
@@ -105,9 +105,17 @@ namespace SpeechTools
 		private string _voice = "";
 		private string _pitch = "medium";
 		private SkillSpeech _skillSpeech = new SkillSpeech();
+
+		private ListeningState _listeningState = ListeningState.Waiting;
+
+		private SemaphoreSlim _displaySlim = new SemaphoreSlim(1, 1);
+		private SemaphoreSlim _speakingSlim = new SemaphoreSlim(1, 1);
+		private SemaphoreSlim _keyPhraseOnSlim = new SemaphoreSlim(1, 1);
 		private IDictionary<string, object> _parameters { get; set; }
 		private IRobotMessenger _misty { get; set; }
 		private CharacterParameters _characterParameters { get; set; }
+		private bool _speechOverridden = false;
+		private bool _externalOverridden = false;
 
 		private int _volume = 20;
 		public int Volume
@@ -165,10 +173,7 @@ namespace SpeechTools
 				}
 			}
 		}
-
-		private bool _speechOverridden = false;
-		private bool _externalOverridden = false;
-
+		
 		public bool HandleExternalSpeech(string text)
 		{
 			if(_externalOverridden)
@@ -190,7 +195,7 @@ namespace SpeechTools
 				{
 					case "google":
 					case "googleonboard":
-						speakingVoice = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingVoice) ? "default" : _googleTTSParameters.SpeakingVoice);
+						speakingVoice = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingVoice) ? "def" : _googleTTSParameters.SpeakingVoice);
 						string spokenLanguage = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpokenLanguage) ? "en-US" : _googleTTSParameters.SpokenLanguage);
 						string speakingGender = (string.IsNullOrWhiteSpace(_googleTTSParameters.SpeakingGender) ? "Female" : _googleTTSParameters.SpeakingGender);
 
@@ -209,7 +214,7 @@ namespace SpeechTools
 						break;
 					case "azure":
 					case "azureonboard":
-						speakingVoice = (string.IsNullOrWhiteSpace(_azureTTSParameters.SpeakingVoice) ? "default" : _azureTTSParameters.SpeakingVoice);
+						speakingVoice = (string.IsNullOrWhiteSpace(_azureTTSParameters.SpeakingVoice) ? "def" : _azureTTSParameters.SpeakingVoice);
 						string translatedLanguage = string.IsNullOrWhiteSpace(_azureTTSParameters.TranslatedLanguage) ? "en-US" : _azureTTSParameters.TranslatedLanguage;
 						if (!name.Contains(speakingVoice))
 						{
@@ -242,25 +247,25 @@ namespace SpeechTools
 						break;
 				}
 
-				if (!name.Contains("_p_"))
+				if (!name.Contains("_p"))
 				{
-					name += $"_p_{_pitch.Replace(".", "p").Replace(",", "c")}";
+					name += $"_p{_pitch.Replace(".", "p").Replace(",", "c")}";
 				}
-				if (!name.Contains("_r_"))
+				if (!name.Contains("_r"))
 				{
-					name += $"_r_{_speechRate.ToString().Replace(".", "p").Replace(",", "c")}";
+					name += $"_r{_speechRate.ToString().Replace(".", "p").Replace(",", "c")}";
 				}
-				if (!name.Contains("_st_"))
+				if (!name.Contains("_st"))
 				{
-					name += $"_st_{_speakingStyle.Replace(".", "p").Replace(",", "c")}";
+					name += $"_st{_speakingStyle.Replace(".", "p").Replace(",", "c")}";
 				}
-				if (!name.Contains("_emp_"))
+				if (!name.Contains("_e"))
 				{
-					name += $"_emp_{_emphasis.Replace(".", "p").Replace(",", "c")}";
+					name += $"_e{_emphasis.Replace(".", "p").Replace(",", "c")}";
 				}
-				if (!name.Contains("_sayAs_"))
+				if (!name.Contains("_sa"))
 				{
-					name += $"_sayAs_{_sayAs.Replace(".", "p").Replace(",", "c")}";
+					name += $"_sa{_sayAs.Replace(".", "p").Replace(",", "c")}";
 				}
 			}
 			return name;
@@ -288,11 +293,6 @@ namespace SpeechTools
 
 		public async Task<bool> Initialize()
 		{
-			_misty.UnregisterEvent("KeyPhrase", null);
-			_misty.UnregisterEvent("VoiceRecord", null);
-			_misty.UnregisterEvent("CharacterAudioComplete", null);
-			_misty.UnregisterEvent("CharacterTTSComplete", null);
-
 			_azureSpeechRecognitionParameters = _characterParameters.AzureSpeechRecognitionParameters;
 			_googleSpeechRecognitionParameters = _characterParameters.GoogleSpeechRecognitionParameters;
 			_azureTTSParameters = _characterParameters.AzureTTSParameters;
@@ -345,10 +345,10 @@ namespace SpeechTools
 				_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage;
 			}
 			
-			LogEventDetails(_misty.RegisterVoiceRecordEvent(VoiceRecordCallback, 100, true, "VoiceRecord", null));
-			LogEventDetails(_misty.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 100, true, "KeyPhrase", null));
-			LogEventDetails(_misty.RegisterAudioPlayCompleteEvent(AudioCallback, 100, true, "CharacterAudioComplete", null));
-			LogEventDetails(_misty.RegisterTextToSpeechCompleteEvent(TTSCallback, 100, true, "CharacterTTSComplete", null));
+			LogEventDetails(_misty.RegisterVoiceRecordEvent(VoiceRecordCallback, 0, true, "VoiceRecord", null));
+			LogEventDetails(_misty.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 0, true, "KeyPhrase", null));
+			LogEventDetails(_misty.RegisterAudioPlayCompleteEvent(AudioCallback, 0, true, "CharacterAudioComplete", null));
+			LogEventDetails(_misty.RegisterTextToSpeechCompleteEvent(TTSCallback, 0, true, "CharacterTTSComplete", null));
 
 			if (_characterParameters.ShowSpeakingIndicator)
 			{
@@ -376,7 +376,7 @@ namespace SpeechTools
 				});
 			}
 
-			await ManageListeningDisplay(ListeningState.Waiting);
+			_ = ManageListeningDisplay(ListeningState.Waiting);
 
 			return true;
 		}
@@ -434,34 +434,13 @@ namespace SpeechTools
 
 			_misty.StopRecordingAudio(null);
 		}
-
-		private void ProcessVolumeResponse(IGetVolumeResponse volumeResponse)
-		{
-			if (volumeResponse?.Data != null && volumeResponse?.Data >= 0 && volumeResponse?.Data <= 100)
-			{
-				_volume = volumeResponse.Data;
-			}
-			else
-			{
-				_volume = 0;
-			}
-		}
-
-		public async Task RefreshAssetLists()
-		{
-			await _assetWrapper.RefreshAssetLists();
-		}
-
-		private ListeningState _listeningState = ListeningState.Waiting;
-
-		private SemaphoreSlim _listeningSlim = new SemaphoreSlim(1, 1);
-
+		
 		private async Task ManageListeningDisplay(ListeningState listeningState)
 		{
 			try
 			{
 				//TODO Cleanup
-				await _listeningSlim.WaitAsync();
+				await _displaySlim.WaitAsync();
 
 				if (_listeningState == listeningState)
 				{
@@ -488,10 +467,9 @@ namespace SpeechTools
 						}
 						break;
 					case ListeningState.ProcessingSpeech:
-					case ListeningState.Recording:
-						if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage) && _characterParameters.ShowListeningIndicator)
+						if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage) && _characterParameters.ShowListeningIndicator && !_characterParameters.UsePreSpeech)
 						{
-							if((_listeningState != ListeningState.ProcessingSpeech  && _listeningState != ListeningState.Recording))
+							if ((_listeningState != ListeningState.ProcessingSpeech && _listeningState != ListeningState.Recording))
 							{
 								await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
 								{
@@ -505,7 +483,27 @@ namespace SpeechTools
 								});
 							}
 
-							_misty.DisplayImage(listeningState == ListeningState.ProcessingSpeech ? _characterParameters.ProcessingImage : _characterParameters.ListeningImage, "Listening", false, null);
+							_misty.DisplayImage(_characterParameters.ProcessingImage, "Listening", false, null);
+						}
+						break;
+					case ListeningState.Recording:
+						if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage) && _characterParameters.ShowListeningIndicator)
+						{
+							if ((_listeningState != ListeningState.ProcessingSpeech && _listeningState != ListeningState.Recording))
+							{
+								await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								{
+									Visible = false
+								});
+
+								await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+								{
+									PlaceOnTop = true,
+									Visible = true,
+								});
+							}
+
+							_misty.DisplayImage(_characterParameters.ListeningImage, "Listening", false, null);
 						}
 						break;
 					case ListeningState.Waiting:
@@ -529,7 +527,7 @@ namespace SpeechTools
 			{ }
 			finally
 			{
-				_listeningSlim.Release();
+				_displaySlim.Release();
 			}
 
 		}
@@ -538,6 +536,7 @@ namespace SpeechTools
 		{
 			try
 			{
+				await _speakingSlim.WaitAsync();
 				if (string.IsNullOrWhiteSpace(currentAnimation.Speak))
 				{
 					_misty.SkillLogger.LogWarning("No text passed in to Speak command.");
@@ -556,7 +555,7 @@ namespace SpeechTools
 				}
 				
 				_listenAborted = false;
-				await ManageListeningDisplay(ListeningState.Speaking);
+				_ = ManageListeningDisplay(ListeningState.Speaking);
 
 				if (_characterParameters.TextToSpeechService == "misty")
 				{
@@ -587,63 +586,39 @@ namespace SpeechTools
 						}
 					}
 					
-					//if (!textChanged)
-					//{
-						if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
-							(!_characterParameters.RetranslateTTS &&
-							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
-						)
+					if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
+						(!_characterParameters.RetranslateTTS &&
+						_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
+					)
+					{
+						_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+						_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
+						StartedSpeaking?.Invoke(this, currentAnimation.Speak);
+						_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
+					}
+					else
+					{
+						_misty.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+						_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
+
+						string newText = currentAnimation.Speak;
+
+						StartedSpeaking?.Invoke(this, currentAnimation.Speak);
+						Stream audio;
+						if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
 						{
-							_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
-							StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-							_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
+							audio = await _skillSpeech.SsmlToStream(newText);
 						}
 						else
 						{
-							_misty.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
-
-							string newText = currentAnimation.Speak;
-
-							StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-							Stream audio;
-							if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
-							{
-								audio = await _skillSpeech.SsmlToStream(newText);
-							}
-							else
-							{
-								audio = await _skillSpeech.TextToStream(newText);
-							}
-
-							MemoryStream ms = new MemoryStream();
-							audio.CopyTo(ms);
-							_audioTags.Add(currentAnimation.SpeakFileName);
-							_ = _misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
+							audio = await _skillSpeech.TextToStream(newText);
 						}
-					//}
-					//else
-					//{
-					//	string newText = currentAnimation.Speak;
-					//	SkillSpeech sp = new SkillSpeech();
 
-					//	StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-					//	Stream audio;
-					//	if (newText.Trim().ToLower().Replace(" ", "").EndsWith("</speak>"))
-					//	{
-					//		audio = await sp.SsmlToStream(newText);
-					//	}
-					//	else
-					//	{
-					//		audio = await sp.TextToStream(newText);
-					//	}
-
-					//	MemoryStream ms = new MemoryStream();
-					//	audio.CopyTo(ms);
-					//	_ =_misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
-					//}
-					
+						MemoryStream ms = new MemoryStream();
+						audio.CopyTo(ms);
+						_audioTags.Add(currentAnimation.SpeakFileName);
+						_ = _misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
+					}					
 					return;
 				}
 				else if ((_azureCognitive != null && _azureCognitive.Authorized) || (_googleService != null && _googleService.Authorized))
@@ -663,56 +638,44 @@ namespace SpeechTools
 						}
 					}
 
-					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-					//(if (!textChanged)
-					//{
-						if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
-							(!_characterParameters.RetranslateTTS &&
-							_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
-						)
-						{
-							_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);							
-							_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
-						}
-						else
-						{
-							_misty.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
-							_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
+					StartedSpeaking?.Invoke(this, currentAnimation.Speak);					
+					if (_audioTags.Contains(currentAnimation.SpeakFileName) ||
+						(!_characterParameters.RetranslateTTS &&
+						_assetWrapper.AudioList.Where(x => AssetHelper.AreEqualAudioFilenames(x.Name, currentAnimation.SpeakFileName, _characterParameters.AddLocaleToAudioNames)).Any())
+					)
+					{
+						_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+						_misty.SkillLogger.LogVerbose(currentAnimation.Speak);							
+						_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
+					}
+					else
+					{
+						_misty.SkillLogger.LogInfo($"Creating new audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
+						_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
 							
-							switch (_characterParameters.TextToSpeechService)
-							{
-								case "google":
-									await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName, Volume, usingSSML, 0);
-									break;
-								case "azure":
-								default:
-									await _azureCognitive.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName, Volume, usingSSML, (int)(currentAnimation.TrimAudioSilence*1000));
-									break;
-							}
-							_audioTags.Add(currentAnimation.SpeakFileName);
+						switch (_characterParameters.TextToSpeechService)
+						{
+							case "google":
+								await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName, Volume, usingSSML, 0);
+								break;
+							case "azure":
+							default:
+								await _azureCognitive.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName, Volume, usingSSML, (int)(currentAnimation.TrimAudioSilence*1000));
+								break;
 						}
-					//}
-					//else
-					//{
-					//	//Make a new file						
-					//	switch (_characterParameters.TextToSpeechService)
-					//	{
-					//		case "google":
-					//			await _googleService.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, 0);
-					//			break;
-					//		case "azure":
-					//		default:
-					//			await _azureCognitive.Speak(currentAnimation.Speak, currentAnimation.SpeakFileName ?? "TTSAudio", Volume, usingSSML, (int)currentAnimation.TrimAudioSilence * 1000);
-					//			break;
-					//	}
-					//}
+						_audioTags.Add(currentAnimation.SpeakFileName);
+					}
+				
 				}
 			}
 			catch(Exception ex)
 			{
 				_misty.SkillLogger.Log("Failed processing Speak action in Character.", ex);
 				StoppedSpeaking?.Invoke(this, null);
+			}
+			finally
+			{
+				_speakingSlim.Release();
 			}
 		}
 
@@ -937,13 +900,6 @@ namespace SpeechTools
 			{
 				_recording = false;
 				_misty.SkillLogger.LogVerbose($"Audio Callback. Name: {audioComplete.Name}");
-				if(_processingAudioCallback)
-				{
-					_misty.SkillLogger.LogWarning($"Audio Callback ignored as system is still processing previous callback. Name: {audioComplete.Name}");
-					return;
-				}
-				_processingAudioCallback = true;
-				
 				if (audioComplete.Name.Contains(ConversationConstants.IgnoreCallback))
 				{
 					PreSpeechCompleted?.Invoke(this, audioComplete);
@@ -963,19 +919,19 @@ namespace SpeechTools
 						{
 							case "googleonboard":
 								_ = _misty.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey, _characterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage);
-								return;
+								break;
 							case "azureonboard":
 								_ = _misty.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.AzureSpeechRecognitionParameters.SubscriptionKey, _characterParameters.AzureSpeechRecognitionParameters.Region, _characterParameters.AzureSpeechRecognitionParameters.SpokenLanguage);
-								return;
+								break;
 							case "vosk":
 								_ = _misty.CaptureSpeechVoskAsync(false, _listenTimeout, _silenceTimeout);
-								return;
+								break;
 							case "deepspeech":
 								_ = _misty.CaptureSpeechDeepSpeechAsync(false, _listenTimeout, _silenceTimeout);
-								return;
+								break;
 							default:
 								_ = _misty.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
-								return;
+								break;
 						}
 
 						_misty.SkillLogger.LogInfo("Capture Speech called.");
@@ -988,15 +944,14 @@ namespace SpeechTools
 			}
 			finally
 			{
-				_processingAudioCallback = false;
 				if(_recording)
 				{
 					StartedListening?.Invoke(this, DateTime.Now);
-					await ManageListeningDisplay(ListeningState.Recording);
+					_ = ManageListeningDisplay(ListeningState.Recording);
 				}
 				else
 				{
-					await ManageListeningDisplay(ListeningState.Waiting);
+					_ = ManageListeningDisplay(ListeningState.Waiting);
 				}
 			}
 		}
@@ -1018,12 +973,12 @@ namespace SpeechTools
 
 				StartedListening?.Invoke(this, DateTime.Now);
 
-				await ManageListeningDisplay(ListeningState.Recording);
+				_ = ManageListeningDisplay(ListeningState.Recording);
 				return;
 			}
 			catch (Exception ex)
 			{
-				_misty.SkillLogger.Log("Failed to process Voice Command event.", ex);
+				_misty.SkillLogger.Log("Failed to process Key Phrase Callback.", ex);
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard));
 			}
 		}
@@ -1045,11 +1000,11 @@ namespace SpeechTools
 				_externalOverridden = true;
 				if (_listenAborted)
 				{
-					_misty.SkillLogger.LogInfo("Voice Record Callback called while processing, ignoring.");
+					_misty.SkillLogger.LogInfo("Listening stopped early.");
 					return;
 				}
-				await ManageListeningDisplay(ListeningState.ProcessingSpeech);
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
+				_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
 				_misty.SkillLogger.LogVerbose("Voice Record Callback - processing");
 				
 				if (voiceRecordEvent.ErrorCode == 3)
@@ -1064,7 +1019,7 @@ namespace SpeechTools
 				{
 					succesfulRetrieval = true;
 					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-					await ManageListeningDisplay(ListeningState.Waiting);
+					_ = ManageListeningDisplay(ListeningState.Waiting);
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
 					return;
 				}
@@ -1090,9 +1045,7 @@ namespace SpeechTools
 					SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 					return;
 				}
-
-				//StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
-
+				
 				SpeechToTextData description = new SpeechToTextData();
 				switch (_characterParameters.SpeechRecognitionService)
 				{
@@ -1107,7 +1060,7 @@ namespace SpeechTools
 
 				succesfulRetrieval = true;
 				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-				await ManageListeningDisplay(ListeningState.Waiting);
+				_ = ManageListeningDisplay(ListeningState.Waiting);
 				HandleSpeechResponse(description.Text);
 			}
 			catch (Exception ex)
@@ -1120,18 +1073,15 @@ namespace SpeechTools
 				if(!succesfulRetrieval)
 				{
 					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-					await ManageListeningDisplay(ListeningState.Waiting);
+					_ = ManageListeningDisplay(ListeningState.Waiting);
 				}
 			}
 		}
-
-		//bool _processingIntent = false;
 
 		private bool HandleSpeechResponse(string text)
 		{
 			try
 			{
-				//_processingIntent = true;
 				if (!string.IsNullOrWhiteSpace(text))
 				{
 					SpeechMatchData intent = _speechIntentManager.GetIntent(text, _allowedTriggers);
@@ -1150,13 +1100,11 @@ namespace SpeechTools
 					return false;
 				}
 			}
-			catch
+			catch (Exception ex)
 			{
+				_misty.SkillLogger.LogInfo("Failed processing speech response.", ex);
+				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardNothingTrigger, Triggers.SpeechHeard));
 				return false;
-			}
-			finally
-			{
-				//_processingIntent = false;
 			}
 		}
 
@@ -1164,255 +1112,263 @@ namespace SpeechTools
 		public bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText)
 		{
 			newText = text;
-			if (_characterState == null)
+			try
 			{
-				return false;
-			}
-
-			if (newText.Contains("{{") && newText.Contains("}}"))
-			{
-				int replacementItemCount = Regex.Matches(newText, "{{").Count;
-
-				//Loop through all inline text groups
-				for (int i = 0; i < replacementItemCount; i++)
+				if (_characterState == null)
 				{
+					return false;
+				}
 
-					int indexOpen = 0;
-					int indexClose = 0;
-					string replacementTextList = "";
+				if (newText.Contains("{{") && newText.Contains("}}"))
+				{
+					int replacementItemCount = Regex.Matches(newText, "{{").Count;
 
-					indexOpen = newText.IndexOf("{{");
-					indexClose = newText.IndexOf("}}");
-
-					if (indexClose - 2 <= indexOpen)
+					//Loop through all inline text groups
+					for (int i = 0; i < replacementItemCount; i++)
 					{
-						continue;
-					}
 
-					replacementTextList = newText.Substring(indexOpen + 2, (indexClose - 2) - indexOpen);
+						int indexOpen = 0;
+						int indexClose = 0;
+						string replacementTextList = "";
 
-					if (string.IsNullOrWhiteSpace(replacementTextList))
-					{
-						continue;
-					}
+						indexOpen = newText.IndexOf("{{");
+						indexClose = newText.IndexOf("}}");
 
-					IList<string> optionList = new List<string>();
-					if (!replacementTextList.Contains("||"))
-					{
-						optionList.Add(replacementTextList);
-					}
-
-					if (replacementTextList.Contains("||"))
-					{
-						string[] dataArray = replacementTextList.ToLower().Trim().Split("||");
-						if (dataArray != null && dataArray.Count() > 0)
-						{
-							foreach (string option in dataArray)
-							{
-								if (!optionList.Contains(option))
-								{
-									optionList.Add(option);
-								}
-							}
-						}
-					}
-
-					//Loop through the options to find match
-					int optionCount = 0;
-					bool textChanged = false;
-					foreach (string option in optionList)
-					{
-						if (textChanged)
-						{
-							break;
-						}
-
-						//Extract the replacement Name/Key pair if it exists - old format vs new format
-						int nameKeyIndexOpen = option.IndexOf("[[");
-						int nameKeyIndexClose = option.IndexOf("]]");
-
-						string replacementNameKey;
-						if (nameKeyIndexClose - 2 <= nameKeyIndexOpen)
-						{
-							replacementNameKey = option;
-						}
-						else
-						{
-							replacementNameKey = option.Substring(nameKeyIndexOpen + 2, (nameKeyIndexClose - 2) - nameKeyIndexOpen);
-						}
-
-						if (string.IsNullOrWhiteSpace(replacementNameKey))
+						if (indexClose - 2 <= indexOpen)
 						{
 							continue;
 						}
 
-						optionCount++;
-						//does it contain a :
-						if (replacementNameKey.Contains(":"))
+						replacementTextList = newText.Substring(indexOpen + 2, (indexClose - 2) - indexOpen);
+
+						if (string.IsNullOrWhiteSpace(replacementTextList))
 						{
-							string[] dataArray = replacementNameKey.ToLower().Trim().Split(":");
-							if (dataArray != null && dataArray.Count() == 2)
+							continue;
+						}
+
+						IList<string> optionList = new List<string>();
+						if (!replacementTextList.Contains("||"))
+						{
+							optionList.Add(replacementTextList);
+						}
+
+						if (replacementTextList.Contains("||"))
+						{
+							string[] dataArray = replacementTextList.ToLower().Trim().Split("||");
+							if (dataArray != null && dataArray.Count() > 0)
 							{
-								string userDataName = dataArray[0].Trim().ToLower();
-
-								if (_replacementValues != null &&
-								   _replacementValues.Count() > 0 &&
-								   _replacementValues.Contains(userDataName))
+								foreach (string option in dataArray)
 								{
-									//if it is a built in item in the FIRST position, it replaces the NAME with the lookup item
-									//{ { face: team} }
-									//looks up as { { Brad: team} }
-									//where face/ Brad is the Name of the user data and team is the key
-
-									string newData = GetBuiltInReplacement(userDataName);
-									if (newData == MissingInlineData)
+									if (!optionList.Contains(option))
 									{
-										newData = userDataName;
-									}
-
-									//try looking up the user data by name now
-									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.ToLower().Trim());
-									if (dataStore != null)
-									{
-										//found a match for the name, now look up the key 2nd position
-
-										string dataKey = dataArray[1].Trim().ToLower();
-										string newKey = dataKey;
-
-										if (_replacementValues.Contains(dataKey))
-										{
-											newKey = GetBuiltInReplacement(dataKey);
-										}
-										if (newKey == MissingInlineData)
-										{
-											newKey = dataKey;
-										}
-
-										if (dataKey == "random")
-										{
-											//grab a random user data item from this group
-											//{{Greetings:random}}
-											GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
-											if (genericDataStore != null)
-											{
-												int dataCount = genericDataStore.Data.Count();
-												int randomItem = _random.Next(optionCount, dataCount);
-												GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
-												if (genericData?.Value != null)
-												{
-													textChanged = true;
-													ProcessUserDataUpdates(genericData);
-													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-												}
-											}
-										}
-										else if (dataStore.TreatKeyAsUtterance)
-										{
-											GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-											}
-										}
-										else
-										{
-											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key.ToLower().Trim() == newKey.ToLower().Trim());
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
-											}
-										}
-									}
-								}
-								else
-								{
-									GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == userDataName);
-									if (dataStore != null)
-									{
-										//found a match for the name, now look up the key 2nd position
-										string dataKey = dataArray[1].Trim().ToLower();
-										string newKey = dataKey;
-										if (_replacementValues.Contains(dataKey))
-										{
-											newKey = GetBuiltInReplacement(dataKey);
-										}
-										if (newKey == MissingInlineData)
-										{
-											newKey = dataKey;
-										}
-
-										if (dataKey == "random")
-										{
-											//grab a random user data item from this group
-											//{{Greetings:random}}
-											GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
-											if (genericDataStore != null)
-											{
-												int dataCount = genericDataStore.Data.Count();
-												int randomItem = _random.Next(optionCount, dataCount);
-												GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
-												if (genericData?.Value != null)
-												{
-													textChanged = true;
-													ProcessUserDataUpdates(genericData);
-													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-												}
-											}
-										}
-										else if (dataStore.TreatKeyAsUtterance)
-										{
-											GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
-											}
-										}
-										else
-										{
-											KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key == newKey);
-											if (genericData.Value != null)
-											{
-												textChanged = true;
-												ProcessUserDataUpdates(genericData.Value);
-												newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
-											}
-										}
+										optionList.Add(option);
 									}
 								}
 							}
 						}
-						else
+
+						//Loop through the options to find match
+						int optionCount = 0;
+						bool textChanged = false;
+						foreach (string option in optionList)
 						{
-							//no, then check for a replacement value
-							if (_replacementValues != null &&
-							_replacementValues.Count() > 0 &&
-							_replacementValues.Contains(replacementNameKey))
+							if (textChanged)
 							{
-								string newData = GetBuiltInReplacement(replacementNameKey);
-								if (newData != MissingInlineData)
+								break;
+							}
+
+							//Extract the replacement Name/Key pair if it exists - old format vs new format
+							int nameKeyIndexOpen = option.IndexOf("[[");
+							int nameKeyIndexClose = option.IndexOf("]]");
+
+							string replacementNameKey;
+							if (nameKeyIndexClose - 2 <= nameKeyIndexOpen)
+							{
+								replacementNameKey = option;
+							}
+							else
+							{
+								replacementNameKey = option.Substring(nameKeyIndexOpen + 2, (nameKeyIndexClose - 2) - nameKeyIndexOpen);
+							}
+
+							if (string.IsNullOrWhiteSpace(replacementNameKey))
+							{
+								continue;
+							}
+
+							optionCount++;
+							//does it contain a :
+							if (replacementNameKey.Contains(":"))
+							{
+								string[] dataArray = replacementNameKey.ToLower().Trim().Split(":");
+								if (dataArray != null && dataArray.Count() == 2)
 								{
-									textChanged = true;
-									newText = newText.Replace("{{" + replacementTextList + "}}", newData);
+									string userDataName = dataArray[0].Trim().ToLower();
+
+									if (_replacementValues != null &&
+									   _replacementValues.Count() > 0 &&
+									   _replacementValues.Contains(userDataName))
+									{
+										//if it is a built in item in the FIRST position, it replaces the NAME with the lookup item
+										//{ { face: team} }
+										//looks up as { { Brad: team} }
+										//where face/ Brad is the Name of the user data and team is the key
+
+										string newData = GetBuiltInReplacement(userDataName);
+										if (newData == MissingInlineData)
+										{
+											newData = userDataName;
+										}
+
+										//try looking up the user data by name now
+										GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.ToLower().Trim());
+										if (dataStore != null)
+										{
+											//found a match for the name, now look up the key 2nd position
+
+											string dataKey = dataArray[1].Trim().ToLower();
+											string newKey = dataKey;
+
+											if (_replacementValues.Contains(dataKey))
+											{
+												newKey = GetBuiltInReplacement(dataKey);
+											}
+											if (newKey == MissingInlineData)
+											{
+												newKey = dataKey;
+											}
+
+											if (dataKey == "random")
+											{
+												//grab a random user data item from this group
+												//{{Greetings:random}}
+												GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+												if (genericDataStore != null)
+												{
+													int dataCount = genericDataStore.Data.Count();
+													int randomItem = _random.Next(optionCount, dataCount);
+													GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
+													if (genericData?.Value != null)
+													{
+														textChanged = true;
+														ProcessUserDataUpdates(genericData);
+														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+													}
+												}
+											}
+											else if (dataStore.TreatKeyAsUtterance)
+											{
+												GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
+												if (genericData.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+												}
+											}
+											else
+											{
+												KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key.ToLower().Trim() == newKey.ToLower().Trim());
+												if (genericData.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData.Value);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+												}
+											}
+										}
+									}
+									else
+									{
+										GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == userDataName);
+										if (dataStore != null)
+										{
+											//found a match for the name, now look up the key 2nd position
+											string dataKey = dataArray[1].Trim().ToLower();
+											string newKey = dataKey;
+											if (_replacementValues.Contains(dataKey))
+											{
+												newKey = GetBuiltInReplacement(dataKey);
+											}
+											if (newKey == MissingInlineData)
+											{
+												newKey = dataKey;
+											}
+
+											if (dataKey == "random")
+											{
+												//grab a random user data item from this group
+												//{{Greetings:random}}
+												GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+												if (genericDataStore != null)
+												{
+													int dataCount = genericDataStore.Data.Count();
+													int randomItem = _random.Next(optionCount, dataCount);
+													GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
+													if (genericData?.Value != null)
+													{
+														textChanged = true;
+														ProcessUserDataUpdates(genericData);
+														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+													}
+												}
+											}
+											else if (dataStore.TreatKeyAsUtterance)
+											{
+												GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
+												if (genericData.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+												}
+											}
+											else
+											{
+												KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key == newKey);
+												if (genericData.Value != null)
+												{
+													textChanged = true;
+													ProcessUserDataUpdates(genericData.Value);
+													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+												}
+											}
+										}
+									}
 								}
 							}
 							else
 							{
-								//replace it with this option as is
-								textChanged = true;
-								newText = newText.Replace("{{" + replacementTextList + "}}", replacementNameKey);
+								//no, then check for a replacement value
+								if (_replacementValues != null &&
+								_replacementValues.Count() > 0 &&
+								_replacementValues.Contains(replacementNameKey))
+								{
+									string newData = GetBuiltInReplacement(replacementNameKey);
+									if (newData != MissingInlineData)
+									{
+										textChanged = true;
+										newText = newText.Replace("{{" + replacementTextList + "}}", newData);
+									}
+								}
+								else
+								{
+									//replace it with this option as is
+									textChanged = true;
+									newText = newText.Replace("{{" + replacementTextList + "}}", replacementNameKey);
+								}
 							}
 						}
 					}
+					return true;
 				}
-				return true;
+				return false;
 			}
-			return false;
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogInfo("Failed personalizing data.", ex);
+				return false;
+			}
 		}
 
 
@@ -1425,8 +1381,8 @@ namespace SpeechTools
 				{
 					Wrap = true,
 					Visible = true,
-					Weight = 25,
-					Size = 30,
+					Weight = 40,
+					Size = 25,
 					HorizontalAlignment = ImageHorizontalAlignment.Center,
 					VerticalAlignment = ImageVerticalAlignment.Bottom,
 					Red = 255,
@@ -1453,24 +1409,19 @@ namespace SpeechTools
 			{
 				case "face":
 					newData = _characterState.LastKnownFaceSeen ??
-						_characterState.FaceRecognitionEvent?.Label ??
-						MissingInlineData;
+						_characterState.FaceRecognitionEvent?.Label ?? MissingInlineData;
 					break;
 				case "qrcode":
-					newData = _characterState.QrTagEvent?.DecodedInfo ??
-						MissingInlineData;
+					newData = _characterState.QrTagEvent?.DecodedInfo ?? MissingInlineData;
 					break;
 				case "arcode":
-					newData = _characterState.ArTagEvent?.TagId.ToString() ??						
-						MissingInlineData;
+					newData = _characterState.ArTagEvent?.TagId.ToString() ?? MissingInlineData;
 					break;
 				case "text":
-					newData = _characterState.SpeechResponseEvent?.Text ??
-						MissingInlineData;
+					newData = _characterState.SpeechResponseEvent?.Text ?? MissingInlineData;
 					break;
 				case "intent":
-					newData = _characterState.SpeechResponseEvent?.TriggerFilter ??
-						MissingInlineData;
+					newData = _characterState.SpeechResponseEvent?.TriggerFilter ?? MissingInlineData;
 					break;
 				case "robotname":
 					newData = string.IsNullOrWhiteSpace(_robotName) ? "Misty" : _robotName;
@@ -1478,12 +1429,30 @@ namespace SpeechTools
 				case "time":
 					newData = _timeManager.GetTimeObject().SpokenTime ?? MissingInlineData;
 					break;
+				case "emotion":
+					newData = _characterState.CurrentMood ?? MissingInlineData;
+					break;
+				case "audio":
+					newData = _characterState.Audio ?? MissingInlineData;
+					break;
+				case "charge":
+					newData = (Convert.ToInt32(_characterState.BatteryChargeEvent.ChargePercent*100)).ToString() ?? MissingInlineData;
+					break;
+				case "image":
+					newData = _characterState.Image ?? MissingInlineData;
+					break;
+				case "serial":
+					newData = _characterState.SerialMessageEvent?.Message ?? MissingInlineData;
+					break;
+				case "object":
+					newData = _characterState.ObjectEvent?.Description ?? MissingInlineData;
+					break;
+			
 			}
 			return newData;
 
 		}
-
-
+		
 		private bool _isDisposed = false;
 
 		private void Dispose(bool disposing)

@@ -316,11 +316,11 @@ namespace MistyCharacter
 			//Arm Actuators
 			IList<ActuatorPositionValidation> actuatorLeftArmValidations = new List<ActuatorPositionValidation>();
 			actuatorLeftArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.LeftArm));
-			LogEventDetails(_misty.RegisterActuatorEvent(LeftArmCallback, 50, true, actuatorLeftArmValidations, "LeftArm", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(LeftArmCallback, 250, true, actuatorLeftArmValidations, "LeftArm", null));
 
 			IList<ActuatorPositionValidation> actuatorRightArmValidations = new List<ActuatorPositionValidation>();
 			actuatorRightArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.RightArm));
-			LogEventDetails(_misty.RegisterActuatorEvent(RightArmCallback, 50, true, actuatorRightArmValidations, "RightArm", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(RightArmCallback, 250, true, actuatorRightArmValidations, "RightArm", null));
 		}
 		
 		//TODO Only register as needed
@@ -332,17 +332,17 @@ namespace MistyCharacter
 			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
 			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
 			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
-			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 200, true, actuatorYawValidations, "HeadYaw", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 100, true, actuatorYawValidations, "HeadYaw", null));
 
 			IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
 			actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
 			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 200, true, actuatorPitchValidations, "HeadPitch", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 100, true, actuatorPitchValidations, "HeadPitch", null));
 
 			IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
 			actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
 			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 250, true, actuatorRollValidations, "HeadRoll", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 100, true, actuatorRollValidations, "HeadRoll", null));
 			
 		}
 

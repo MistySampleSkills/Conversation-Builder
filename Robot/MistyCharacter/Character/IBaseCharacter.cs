@@ -260,7 +260,7 @@ namespace MistyCharacter
 		/// Stop the conversation
 		/// </summary>
 		/// <param name="speak"></param>
-		void StopConversation(string speak = null);
+		Task StopConversation(string speak = null);
 
 		/// <summary>
 		/// Must be called after character creation, before use.

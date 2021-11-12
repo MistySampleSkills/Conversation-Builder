@@ -34,7 +34,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
@@ -52,13 +51,6 @@ using SpeechTools;
 
 namespace MistyCharacter
 {
-	public class TOFCounter
-	{
-		public DateTime Started { get; set; }
-		public int Count { get; set; }
-	}
-	
-
 	public abstract class BaseCharacter : IBaseCharacter
 	{
 		//Dupe events in MistyState and here, cleanup and use MistyState as subscribable item
@@ -80,7 +72,6 @@ namespace MistyCharacter
 		public event EventHandler<DateTime> StartedListening;
 		public event EventHandler<IVoiceRecordEvent> StoppedListening;
 		public event EventHandler<bool> KeyPhraseRecognitionOn;
-		public event EventHandler<IDriveEncoderEvent> DriveEncoder;//TODO
 		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
 		public event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
@@ -88,8 +79,7 @@ namespace MistyCharacter
 		public event EventHandler<IActuatorEvent> RightArmActuatorEvent;
 		public event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
 		public event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
-		public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
-		
+		public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;		
 		public event EventHandler<IUserEvent> SyncEvent;
 		public event EventHandler<IUserEvent> RobotCommand;
 		
@@ -98,9 +88,13 @@ namespace MistyCharacter
 		public event EventHandler<DateTime> ConversationEnded;
 		public event EventHandler<DateTime> InteractionStarted;
 		public event EventHandler<DateTime> InteractionEnded;
-		
+
+		public event EventHandler<IDriveEncoderEvent> DriveEncoder;//TODO
+
 		private const int MaxProcessingVoiceWaits = 30;
 		private const int DelayBetweenProcessingVoiceChecksMs = 100;
+
+		private const string ConversationDeparturePoint = "* Conversation Departure Point";
 		private int _currentProcessingVoiceWaits = 0;
 		private KeyValuePair<DateTime, TriggerData> _latestTriggerMatchData = new KeyValuePair<DateTime, TriggerData>();
 		private IList<string> _skillsToStop = new List<string>();
@@ -109,9 +103,7 @@ namespace MistyCharacter
 		protected IMistyState MistyState;
 		protected ISDKLogger Logger;
 		protected CharacterParameters CharacterParameters { get; private set; } = new CharacterParameters();
-		protected ConcurrentDictionary<string, AnimationRequest> EmotionAnimations = new ConcurrentDictionary<string, AnimationRequest>();
-		//private SemaphoreSlim _listeningSlim = new SemaphoreSlim(1, 1);
-		//public LocomotionState CurrentLocomotionState { get; private set; } = new LocomotionState();
+		protected ConcurrentDictionary<string, AnimationRequest> EmotionAnimations = new ConcurrentDictionary<string, AnimationRequest>();		
 		public Interaction CurrentInteraction { get; private set; } = new Interaction();
 		private bool _waitingOnPrespeech;
 		private Timer _noInteractionTimer;
@@ -138,11 +130,11 @@ namespace MistyCharacter
 		private object _lockWaitingOnResponse = new object();
 		private SemaphoreSlim _processingTriggersSemaphore = new SemaphoreSlim(1, 1);
 		private Random _random = new Random();
-		//private ListeningState _listeningState = ListeningState.Waiting;
 		private object _listeningLock = new object();
 		public bool WaitingForOverrideTrigger { get; private set; }
 		private bool _ignoreTriggeringEvents;
 		
+		//TODO Queues not really needed anymore with new pipeline process
 		private ConcurrentQueue<Interaction> _interactionQueue = new ConcurrentQueue<Interaction>();
 		private ConcurrentQueue<Interaction> _interactionPriorityQueue = new ConcurrentQueue<Interaction>();
 
@@ -163,8 +155,7 @@ namespace MistyCharacter
 		private IList<string> _allowedUtterances = new List<string>();
 		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
 		private IList<string> _allowedTriggers;
-
-
+		
 		public BaseCharacter(IRobotMessenger misty, 
 			IDictionary<string, object> originalParameters,
 			ManagerConfiguration managerConfiguration = null)
@@ -205,6 +196,8 @@ namespace MistyCharacter
 				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Robot, OriginalParameters, CharacterParameters, MistyState.GetCharacterState(), /*StateAtAnimationStart, PreviousState,*/ _genericDataStores, SpeechIntentManager);
 				await SpeechManager.Initialize();
 
+				Robot.GetVolume(GetVolumeCallback);
+				
 				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager,HeadManager);
 				await AnimationManager.Initialize();
 
@@ -226,8 +219,10 @@ namespace MistyCharacter
 				SpeechManager.StartedProcessingVoice += SpeechManager_StartedProcessingVoice;
 				SpeechManager.KeyPhraseRecognitionOn += SpeechManager_KeyPhraseRecognitionOn;
 
+				//TODO Cleanup of event vs commands since passing in anyway
 				AnimationManager.SyncEvent += AnimationManager_SyncEvent;
 				AnimationManager.AddTrigger += AddTrigger;
+				AnimationManager.AddTrigger += SpeechManager.AddValidIntent;
 				AnimationManager.RemoveTrigger += RemoveTrigger;
 				AnimationManager.ManualTrigger += ManualTrigger;
 				AnimationManager.TriggerAnimation += HandleAnimationScriptRequest;
@@ -252,13 +247,7 @@ namespace MistyCharacter
 				MistyState.SyncEvent += HandleSyncEvent;
 				MistyState.RobotCommand += HandleRobotCommand;
 				MistyState.BatteryChargeEvent += HandleBatteryChargeEvent;
-
-				InteractionEnded += RunNextAnimation;
-
-				//Under test
-				AnimationManager.AddTrigger += SpeechManager.AddValidIntent;
-
-
+				
 				StreamAndLogInteraction($"Starting Base Character animation processing...");
 
 				_latestTriggerMatchData = new KeyValuePair<DateTime, TriggerData>(DateTime.Now, new TriggerData("", "", Triggers.None));
@@ -277,7 +266,7 @@ namespace MistyCharacter
 					_ = Robot.SetTextDisplaySettingsAsync("SpokeText", new TextSettings
 					{
 						Wrap = true,
-						Visible = false,
+						Visible = true,
 						Weight = CharacterParameters.LargePrint ? 20 : 15,
 						Size = CharacterParameters.LargePrint ? 40 : 20,
 						HorizontalAlignment = ImageHorizontalAlignment.Center,
@@ -296,21 +285,20 @@ namespace MistyCharacter
 					_ = Robot.SetTextDisplaySettingsAsync("SpeechText", new TextSettings
 					{
 						Wrap = true,
-						Visible = false,
+						Visible = true,
 						Weight = 15,
 						Size = 20,
 						HorizontalAlignment = ImageHorizontalAlignment.Center,
-						VerticalAlignment = ImageVerticalAlignment.Bottom,
+						VerticalAlignment = ImageVerticalAlignment.Top,
 						Red = 255,
 						Green = 221,
 						Blue = 71,
 						PlaceOnTop = true,
 						FontFamily = "Courier New",
-						Height = 250
+						Height = 60
 					});
 				}
-
-				//_ = ManageListeningDisplay(ListeningState.Waiting);
+				
 				_ = ProcessNextAnimationRequest();
 				return true;
 			}
@@ -319,7 +307,12 @@ namespace MistyCharacter
 				return false;
 			}
 		}
-		
+
+		private void GetVolumeCallback(IGetVolumeResponse volumeResponse)
+		{
+			SpeechManager.Volume = volumeResponse != null && volumeResponse.Status == ResponseStatus.Success ? volumeResponse.Data : 20;
+		}
+
 		public void ChangeVolume(int volume)
 		{
 			SpeechManager.Volume = volume;
@@ -334,7 +327,6 @@ namespace MistyCharacter
 
 		public void RestartTriggerHandling()
 		{
-			//_processingTriggersSemaphore.Wait();
 			try
 			{
 				WaitingForOverrideTrigger = false;
@@ -344,14 +336,9 @@ namespace MistyCharacter
 			{
 				Robot.SkillLogger.Log($"Failed to restart trigger handling.", ex);
 			}
-			finally
-			{
-				//_processingTriggersSemaphore.Release();
-			}
 		}
 		public void PauseTriggerHandling(bool ignoreTriggeringEvents = true)
 		{
-			//_processingTriggersSemaphore.Wait();
 			try
 			{
 				WaitingForOverrideTrigger = true;
@@ -360,10 +347,6 @@ namespace MistyCharacter
 			catch (Exception ex)
 			{
 				Robot.SkillLogger.Log($"Failed to pause trigger handling.", ex);
-			}
-			finally
-			{
-			//	_processingTriggersSemaphore.Release();
 			}
 		}
 
@@ -464,7 +447,7 @@ namespace MistyCharacter
 							if (LiveTriggers.Contains(detail.Trigger))
 							{
 								LiveTriggers.Remove(detail.Trigger);
-								//MistyState.UnregisterEvent(detail.Trigger); //? TODO only if all off
+								//MistyState.UnregisterEvent(detail.Trigger); //? TODO only if all users of the event are off, currently, once events are on, we keep them on, but just ignore them
 								StreamAndLogInteraction($"Ignoring event type {detail.Trigger}");
 								return;
 							}
@@ -496,7 +479,7 @@ namespace MistyCharacter
 				triggerData.Trigger == Triggers.KeyPhraseRecognized
 			)
 			{
-				if (ProcessAndVerifyTrigger(triggerData, conversationTriggerCheck))
+				if (await ProcessAndVerifyTrigger(triggerData, conversationTriggerCheck))
 				{
 					StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | Sent Handled Trigger | {triggerData.Trigger} - {triggerData.TriggerFilter} - {triggerData.Text}.");
 					return true;
@@ -506,7 +489,7 @@ namespace MistyCharacter
 		}
 
 		//Fixing order of checking, conversation should not be checked until ALL local are checked, needs cleanup
-		private bool ProcessAndVerifyTrigger(TriggerData triggerData, bool conversationTriggerCheck)
+		private async Task<bool> ProcessAndVerifyTrigger(TriggerData triggerData, bool conversationTriggerCheck)
 		{
 
 			_processingTriggersSemaphore.Wait();
@@ -776,7 +759,7 @@ namespace MistyCharacter
 							triggerDetailMap.Add(new TriggerActionOption { Id = "-1", GoToConversation = _currentConversationData.Id, GoToInteraction = guid.ToString(), InterruptCurrentAction = true, Retrigger = false, Weight = 1 });
 						}
 
-						_ = GoToNextAnimation(triggerDetailMap);
+						await GoToNextAnimation(triggerDetailMap);
 
 						TriggerAnimationComplete(CurrentInteraction);
 						return true;
@@ -1017,10 +1000,12 @@ namespace MistyCharacter
 			return false;
 		}
 
-		public void StopConversation(string speak = null)
+		public async Task StopConversation(string speak = null)
 		{
+			
 			_interactionQueue.Clear();
 			IgnoreEvents();
+			await AnimationManager.StopRunningAnimationScripts();
 
 			Robot.StopFaceRecognition(null);
 			Robot.StopArTagDetector(null);
@@ -1087,8 +1072,8 @@ namespace MistyCharacter
 					string interaction = selectedAction.GoToInteraction;
 					string conversation = selectedAction.GoToConversation;
 
-					//Is this a conversation departure?  TODO Clean this up, use empty guid?
-					if (interaction == "* Conversation Departure Point")
+					//TODO Clean this up, use empty guid, not string
+					if (interaction == ConversationDeparturePoint)
 					{
 						//Look up where the departure goes
 						KeyValuePair<string, ConversationMappingDetail> detail = _conversationGroup.ConversationMappings.FirstOrDefault(x => x.Value.DepartureMap.TriggerOptionId == selectedAction.Id);
@@ -1100,8 +1085,7 @@ namespace MistyCharacter
 						else
 						{
 							//Exit and stop app
-
-							await AnimationManager.StopRunningAnimationScripts();
+							StopConversation();
 							Robot.SkillCompleted();
 						}
 					}
@@ -1144,7 +1128,7 @@ namespace MistyCharacter
 						{
 							//TODO Hacky fix for not interupting prespeech with interrupt flag set
 							int sanity = 0;
-							while (_waitingOnPrespeech && sanity < 30) //3 seconds max wait on prespeech flag
+							while (_waitingOnPrespeech && sanity < 50) //5 seconds max wait on prespeech flag
 							{
 								sanity++;
 								await Task.Delay(100);
@@ -1155,7 +1139,7 @@ namespace MistyCharacter
 						}
 						else if (!string.IsNullOrWhiteSpace(_currentAnimation.Speak) || !string.IsNullOrWhiteSpace(_currentAnimation.AudioFile))
 						{
-							//this shouldn't be necessary
+							//TODO Test, this shouldn't be necessary
 							int sanity = 0;
 							while (MistyState.GetCharacterState().Speaking && sanity < 6000)
 							{
@@ -1261,26 +1245,33 @@ namespace MistyCharacter
 			}
 		}
 
-		private void RunNextAnimation(object sender, DateTime e)
+		private object _locky = new object();
+
+		private void RunNextAnimation()
+		//private void RunNextAnimation(object sender, DateTime e)
 		{
+			
 			try
 			{
-				_latestTriggerMatchData = MistyState.GetCharacterState().LatestTriggerMatched;
-				UniqueAnimationId = Guid.NewGuid();
+				//lock (_locky)
+				{
+					_latestTriggerMatchData = MistyState.GetCharacterState().LatestTriggerMatched;
+					UniqueAnimationId = Guid.NewGuid();
 
-				if (Robot.SkillStatus == NativeSkillStatus.Running)
-				{
-					MistyState.GetCharacterState().Spoke = false;
-					MistyState.GetCharacterState().UnknownFaceSeen = false;
-					MistyState.GetCharacterState().KnownFaceSeen = false;
-					MistyState.GetCharacterState().Listening = false;
-					MistyState.GetCharacterState().Saying = "";
-					_triggerHandled = false;
-					_ = ProcessNextAnimationRequest();
-				}
-				else
-				{
-					StopConversation();
+					if (Robot.SkillStatus == NativeSkillStatus.Running)
+					{
+						MistyState.GetCharacterState().Spoke = false;
+						MistyState.GetCharacterState().UnknownFaceSeen = false;
+						MistyState.GetCharacterState().KnownFaceSeen = false;
+						MistyState.GetCharacterState().Listening = false;
+						MistyState.GetCharacterState().Saying = "";
+						_triggerHandled = false;
+						_ = ProcessNextAnimationRequest();
+					}
+					else
+					{
+						StopConversation();
+					}
 				}
 			}
 			catch (Exception ex)
@@ -1375,9 +1366,9 @@ namespace MistyCharacter
 				MistyState.GetCharacterState().AnimationEmotion = animationRequest.Emotion;
 				MistyState.GetCharacterState().CurrentMood = EmotionManager.GetNextEmotion(MistyState.GetCharacterState().AnimationEmotion);
 				StreamAndLogInteraction($"Interaction: {CurrentInteraction?.Name} | New attitude adjustment:{animationRequest.Emotion} - Current mood:{MistyState.GetCharacterState().CurrentMood}");
-
-
+				
 				_allowedTriggers = CurrentInteraction.TriggerMap.Keys.ToList();
+
 				if (CurrentInteraction.AllowConversationTriggers && _currentConversationData.ConversationTriggerMap != null && _currentConversationData.ConversationTriggerMap.Count > 0)
 				{
 					foreach (KeyValuePair<string, IList<TriggerActionOption>> actionOption in _currentConversationData.ConversationTriggerMap)
@@ -1391,6 +1382,7 @@ namespace MistyCharacter
 				}
 
 				_allowedUtterances.Clear();
+
 				foreach (string trigger in _allowedTriggers)
 				{
 					//get utterances
@@ -1469,6 +1461,10 @@ namespace MistyCharacter
 		{
 			try
 			{
+
+				HeadManager.StopMovement();
+				ArmManager.StopMovement();
+				_ = AnimationManager.StopRunningAnimationScripts();//or overlap?
 				_ = IntermediateAnimationRequestProcessor(action.Key, action.Value, "user-request");
 			}
 			catch (Exception ex)
@@ -1507,6 +1503,11 @@ namespace MistyCharacter
 					script = newInteraction.PreSpeechScript;
 					backgroundSpeech = true;
 					newInteraction.StartListening = false;
+
+					if(!_processingVoice)
+					{
+						return;
+					}
 				}
 				else if (actionType == "listening")
 				{
@@ -1564,6 +1565,11 @@ namespace MistyCharacter
 				else if (defaultAnimation.Volume != null && defaultAnimation.Volume > 0)
 				{
 					SpeechManager.Volume = (int)defaultAnimation.Volume;
+				}
+
+				if (!_processingVoice && actionType == "prespeech")
+				{
+					return;
 				}
 
 				//Start speech or audio playing
@@ -1695,7 +1701,6 @@ namespace MistyCharacter
 				HeadManager.StopMovement();
 				ArmManager.StopMovement();
 				await AnimationManager.StopRunningAnimationScripts();
-				//_ = AnimationManager.StopRunningAnimationScripts();
 
 				//should we start skill listening even if it may retrigger?
 				foreach (string skillMessageId in CurrentInteraction.SkillMessages)
@@ -1870,15 +1875,6 @@ namespace MistyCharacter
 				//bool runningInitScript = false;
 				if (!string.IsNullOrWhiteSpace(CurrentInteraction.InitScript))
 				{
-					//runningInitScript = true;
-
-					//Stop any running scripts from previous animations
-					//don't await completion of those commands?
-
-					//HeadManager.StopMovement();
-					//ArmManager.StopMovement();
-					//await AnimationManager.StopRunningAnimationScripts();
-
 					await AnimationManager.RunAnimationScript(CurrentInteraction.InitScript, false, _currentAnimation, CurrentInteraction, _currentConversationData);					
 				}
 				
@@ -1887,16 +1883,6 @@ namespace MistyCharacter
 				{
 					if ((initAnimation = _currentConversationData.Animations.FirstOrDefault(x => x.Id == CurrentInteraction.InitAnimation)) != null)
 					{
-						//if(!runningInitScript)
-						//{
-						//	//Stop any running scripts from previous animations
-						//	//don't await completion of those commands?
-
-						//	HeadManager.StopMovement();
-						//	ArmManager.StopMovement();
-						//	await AnimationManager.StopRunningAnimationScripts();
-						//}
-						
 						await IntermediateAnimationRequestProcessor(initAnimation, newInteraction, "init");						
 					}
 				}
@@ -2013,16 +1999,17 @@ namespace MistyCharacter
 
 		public void TriggerAnimationComplete(Interaction interaction)
 		{
-			UniqueAnimationId = Guid.NewGuid();
 			InteractionEnded?.Invoke(this, DateTime.Now);
 		}
-		
+
 		private void QueueInteraction(Interaction interaction)
 		{
 			try
 			{
 				Robot.SkillLogger.Log($"QUEUEING NEXT INTERACTION : {interaction.Name}");
 				_interactionQueue.Enqueue(interaction);
+
+				RunNextAnimation();
 
 				//We'll wait for an intent for the next animation
 				//Eventually the Timeout trigger will be sent if no other intents are handled...				
@@ -2058,12 +2045,11 @@ namespace MistyCharacter
 			}
 			KeyPhraseRecognized?.Invoke(this, keyPhraseEvent);
 		}
-
+		
 		private async void SpeechManager_StartedProcessingVoice(object sender, IVoiceRecordEvent e)
 		{
-			StartedProcessingVoice?.Invoke(this, e);
 			_processingVoice = true;
-			//_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
+			StartedProcessingVoice?.Invoke(this, e);
 
 			if (CharacterParameters.UsePreSpeech && CurrentInteraction.UsePreSpeech)
 			{
@@ -2101,6 +2087,7 @@ namespace MistyCharacter
 					string selectedPhrase = preSpeechOverrides[_random.Next(0, preSpeechOverrides.Length - 1)];
 					
 					bool runningInitScript = false;
+					
 					if (_processingVoice && !string.IsNullOrWhiteSpace(CurrentInteraction.PreSpeechScript))
 					{
 						runningInitScript = true;
@@ -2108,33 +2095,30 @@ namespace MistyCharacter
 						//don't await completion of those commands?
 						HeadManager.StopMovement();
 						ArmManager.StopMovement();
-						//await AnimationManager.StopRunningAnimationScripts();
 						_ = AnimationManager.StopRunningAnimationScripts();
 
-						_waitingOnPrespeech = true;
-						_ = Task.Run(async () =>
+						if (_processingVoice)
 						{
-							_ = await AnimationManager.RunAnimationScript(CurrentInteraction.PreSpeechScript, false, _currentAnimation, CurrentInteraction, _currentConversationData);
-						});						
+							_waitingOnPrespeech = true;
+
+							_ = AnimationManager.RunAnimationScript(CurrentInteraction.PreSpeechScript, false, _currentAnimation, CurrentInteraction, _currentConversationData);
+						}						
 					}
-
-
 					if (_processingVoice && changeAnimationMovements)
 					{
 						animation.Speak = selectedPhrase;
-						_waitingOnPrespeech = true;
 						if (!runningInitScript)
 						{
 							//Stop any running scripts from previous animations
 							//don't await completion of those commands?
 							HeadManager.StopMovement();
 							ArmManager.StopMovement();
-							//await AnimationManager.StopRunningAnimationScripts();
 							_ = AnimationManager.StopRunningAnimationScripts();
 						}
 
 						if (_processingVoice)
 						{
+							_waitingOnPrespeech = true;
 							_  = IntermediateAnimationRequestProcessor(animation, interaction, "prespeech");							
 						}
 
@@ -2142,7 +2126,6 @@ namespace MistyCharacter
 					else if (_processingVoice)
 					{
 						animation = new AnimationRequest(_currentAnimation);
-						_waitingOnPrespeech = true;
 
 						//just speak and don't move...
 						SpeechManager.TryToPersonalizeData(selectedPhrase, animation, interaction, out string newText);
@@ -2152,63 +2135,46 @@ namespace MistyCharacter
 						Robot.SkillLogger.LogVerbose($"Prespeech saying '{animation?.Speak ?? "nothing"}' and not changing animation.");
 						if (_processingVoice)
 						{
+							_waitingOnPrespeech = true;
 							_ = SpeechManager.Speak(animation, interaction, true);
 						}
 					}
 				}
 			}
-
 		}
 
 		private async void SpeechManager_CompletedProcessingVoice(object sender, IVoiceRecordEvent e)
 		{
 			_processingVoice = false;
 			CompletedProcessingVoice?.Invoke(this, e);
-			//_ = ManageListeningDisplay(ListeningState.Waiting);
 		}
 
 		private void SpeechManager_KeyPhraseRecognitionOn(object sender, bool e)
 		{
 
 			KeyPhraseRecognitionOn?.Invoke(this, e);
-
-			//if(e || (!e && !CurrentInteraction.StartListening))
-			//{
-			//	ManageListeningDisplay(e ? ListeningState.WaitingForKeyPhrase : ListeningState.Waiting);
-			//}
 		}
 
 
 		private async void SpeechManager_StoppedListening(object sender, IVoiceRecordEvent e)
 		{
-			//if (!CurrentInteraction.AllowKeyPhraseRecognition)
-			//{
-			//	_ = ManageListeningDisplay(ListeningState.Waiting);
-			//}
-			//else
-			//{
-
-			//	_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
-			//}
 			StoppedListening?.Invoke(this, e);
 			_ = SpeechManager.UpdateKeyPhraseRecognition(CurrentInteraction, false);
-
-			//_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
+			
 		}
 
 		private async void SpeechManager_StartedListening(object sender, DateTime e)
 		{
-			//_ = ManageListeningDisplay(ListeningState.Recording);
 			StartedListening?.Invoke(this, e);
 			bool runningInitScript = false;
+	
 			if (!string.IsNullOrWhiteSpace(CurrentInteraction.ListeningScript))
 			{
 				//Stop any running scripts from previous animations
 				//don't await completion of those commands?
 				HeadManager.StopMovement();
 				ArmManager.StopMovement();
-				await AnimationManager.StopRunningAnimationScripts();
-				//_ = AnimationManager.StopRunningAnimationScripts();
+				_ = AnimationManager.StopRunningAnimationScripts();
 				runningInitScript = true;
 
 				_ = AnimationManager.RunAnimationScript(CurrentInteraction.ListeningScript, false, _currentAnimation, CurrentInteraction, _currentConversationData);
@@ -2223,8 +2189,7 @@ namespace MistyCharacter
 					{
 						HeadManager.StopMovement();
 						ArmManager.StopMovement();
-						await AnimationManager.StopRunningAnimationScripts();
-						//_ = AnimationManager.StopRunningAnimationScripts();
+						_ = AnimationManager.StopRunningAnimationScripts();
 					}
 					listeningAnimation.Silence = true;
 					_ = IntermediateAnimationRequestProcessor(listeningAnimation, CurrentInteraction, "listening");
@@ -2233,113 +2198,9 @@ namespace MistyCharacter
 			}
 
 		}
-		
-		//private async Task ManageListeningDisplay(ListeningState listeningState)
-		//{
-		//	try
-		//	{
-		//		await _listeningSlim.WaitAsync();
-		//		if (CharacterParameters.ShowListeningIndicator && _listeningState != listeningState)
-		//		{
-		//			switch (listeningState)
-		//			{
-		//				case ListeningState.Waiting:
-		//					await Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-		//					{
-		//						Visible = false
-		//					});
-		//					await Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-		//					{
-		//						Visible = false
-		//					});
-							
-		//					break;
-		//				case ListeningState.Recording:
-		//					if(!string.IsNullOrWhiteSpace(CharacterParameters.ListeningImage))
-		//					{
-		//						_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-		//						{
-		//							PlaceOnTop = true,
-		//							Visible = true,
-		//						});
-
-		//						_ = Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-		//						{
-		//							Visible = false
-		//						});
-
-		//						Robot.DisplayImage(CharacterParameters.ListeningImage, "Listening", false, null);
-		//					}
-		//					break;
-		//				case ListeningState.ProcessingSpeech:
-		//					if (!string.IsNullOrWhiteSpace(CharacterParameters.ProcessingImage))
-		//					{
-		//						_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-		//						{
-		//							Visible = false
-		//						});
-
-		//						_ =  Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-		//						{
-		//							PlaceOnTop = true,
-		//							Visible = true,
-		//						});
-
-		//						Robot.DisplayImage(CharacterParameters.ProcessingImage, "Speaking", false, null);
-		//					}
-
-		//					break;
-		//				case ListeningState.Speaking:
-		//					if (!string.IsNullOrWhiteSpace(CharacterParameters.SpeakingImage))
-		//					{
-		//						_ = Robot.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-		//						{
-		//							Visible = false
-		//						});
-
-		//						_ = Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-		//						{
-		//							PlaceOnTop = true,
-		//							Visible = true,
-		//						});
-
-		//						Robot.DisplayImage(CharacterParameters.SpeakingImage, "Speaking", false, null);
-		//					}							
-		//					break;
-		//				default:
-		//					await Robot.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
-		//					{
-		//						Visible = false
-		//					});
-		//					break;
-		//			}
-
-		//			_listeningState = listeningState;					
-		//		}
-		//	}
-		//	catch
-		//	{ }
-		//	finally
-		//	{
-		//		_listeningSlim.Release();
-		//	}
-			
-		//}
-
+	
 		private async void SpeechManager_StoppedSpeaking(object sender, IAudioPlayCompleteEvent e)
 		{
-			//if (!CurrentInteraction.StartListening)
-			//{
-			//	_ = ManageListeningDisplay(ListeningState.Waiting);
-			//}
-			//else
-			//{
-			//	_ = ManageListeningDisplay(ListeningState.Recording);
-			//} 
-
-			//e could be null if exception thrown when trying to speak
-
-			//await SendManagedResponseEvent(new TriggerData(e?.Name, "", Triggers.AudioCompleted));
 			_ = SendManagedResponseEvent(new TriggerData(e?.Name, "", Triggers.AudioCompleted));
 			StoppedSpeaking?.Invoke(this, e);
 
@@ -2948,8 +2809,7 @@ namespace MistyCharacter
 				{
 					Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Interaction timeout. No intents were triggered, stopping conversation.");
 					TriggerAnimationComplete(CurrentInteraction);
-					//StopConversation();
-					//Robot.Speak("Interaction timed out with unmapped conversation 'No Trigger Interaction' action.  Cancelling skill.", true, "InteractionTimeout", null);
+					await StopConversation();
 					await Task.Delay(5000);
 					Robot.SkillCompleted();
 				}
@@ -2993,7 +2853,6 @@ namespace MistyCharacter
 					ArmManager.Dispose();
 					HeadManager.Dispose();
 					TimeManager.Dispose();
-					//LocomotionManager.Dispose();
 					
 					Robot.UnregisterAllEvents(null);
 					Robot.Stop(null);
