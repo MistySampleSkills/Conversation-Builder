@@ -103,7 +103,7 @@ namespace ConversationBuilder.Controllers
 				skillConversationGroup.CharacterConfiguration = conversationGroup.CharacterConfiguration;
 				skillConversationGroup.StartupConversation = conversationGroup.StartupConversation;
 				skillConversationGroup.ConversationMappings = conversationGroup.ConversationMappings;
-
+				
 				IList<SpeechHandler> allSpeechHandlers = null;
 				foreach (string conversationId in conversationGroup.Conversations)
 				{
@@ -285,7 +285,7 @@ namespace ConversationBuilder.Controllers
 					skillConversation.InteractionInitScripts = conversation.InteractionInitScripts;
 					skillConversation.InteractionPreSpeechScripts = conversation.InteractionPreSpeechScripts;
 					skillConversation.InteractionListeningScripts = conversation.InteractionListeningScripts;
-					skillConversation.InteractionScripts = conversation.InteractionInitScripts;
+					skillConversation.InteractionScripts = conversation.InteractionScripts;
 
 					skillConversation.Description = conversation.Description;
 					skillConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
@@ -414,6 +414,10 @@ namespace ConversationBuilder.Controllers
 					newConversation.ManagementAccess = "Public";
 					newConversation.StartingEmotion = conversation.StartingEmotion;
 					newConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
+					newConversation.InteractionListeningScripts = conversation.InteractionListeningScripts;
+					newConversation.InteractionInitScripts = conversation.InteractionInitScripts;
+					newConversation.InteractionPreSpeechScripts = conversation.InteractionPreSpeechScripts;
+					newConversation.InteractionScripts = conversation.InteractionScripts;
 					newConversation.CreatedBy = _userInformation?.AccessId;
 					//go through top level items and add them if needed (id doesn't exist)
 
@@ -527,9 +531,17 @@ namespace ConversationBuilder.Controllers
 						newInteraction.Name = interaction.Name;
 						newInteraction.Animation = interaction.Animation;
 						newInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
+						newInteraction.InitAnimation = interaction.InitAnimation;
+						newInteraction.ListeningAnimation = interaction.ListeningAnimation;
+						newInteraction.Updated = now;
 						newInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;
 						newInteraction.SkillMessages = interaction.SkillMessages;
 						newInteraction.ConversationId = newConversation.Id;
+						newInteraction.InitScript = interaction.InitScript;
+						newInteraction.AnimationScript = interaction.AnimationScript;
+						newInteraction.PreSpeechScript = interaction.PreSpeechScript;
+						newInteraction.ListeningScript = interaction.ListeningScript;
+						newInteraction.UsePreSpeech = interaction.UsePreSpeech;
 						newInteraction.Updated = now;
 						newInteraction.Created = now;
 						newInteraction.CreatedBy = _userInformation?.AccessId;
@@ -549,8 +561,14 @@ namespace ConversationBuilder.Controllers
 								}
 								else
 								{
-									newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
-									newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
+									if(conversationGuidMap.TryGetValue(triggerActionOption.GoToConversation, out string convo))
+									{
+										newTriggerActionOption.GoToConversation = convo;
+									}
+									if(interactionGuidMap.TryGetValue(triggerActionOption.GoToInteraction, out string inter))
+									{
+										newTriggerActionOption.GoToInteraction = inter;
+									}
 								}
 								newTriggerActionOption.Retrigger = triggerActionOption.Retrigger;
 								newTriggerActionOption.Weight = triggerActionOption.Weight;
@@ -618,7 +636,7 @@ namespace ConversationBuilder.Controllers
 				}
 				return true;
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
 				return false;
 			}

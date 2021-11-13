@@ -48,22 +48,14 @@ namespace MistyConversation
 		
         public void Run(IBackgroundTaskInstance taskInstance)
         {
-			if(!_isRunning)
+			if (_isRunning)
 			{
-				MistyConversationSkill skill = new MistyConversationSkill();
-				skill.SkillRunState += HandleSkillRunState;
+				_robotMessenger.SkillLogger.LogError("Skill was not shut down properly last time. May require robot reboot.");
+			}
 
-				_robotMessenger = RobotMessenger.LoadAndPrepareSkill(taskInstance, skill, SkillLogLevel.Info, "");
-			}
-			else
-			{
-				if(_robotMessenger != null)
-				{
-					//_robotMessenger.PlayAudio("s_SystemFailure.wav", null, null);
-					_robotMessenger.SkillLogger.LogError("Skill trying to start again while running.");
-				}
-			}
-			
-        }
+			MistyConversationSkill skill = new MistyConversationSkill();
+			skill.SkillRunState += HandleSkillRunState;
+			_robotMessenger = RobotMessenger.LoadAndPrepareSkill(taskInstance, skill, SkillLogLevel.Info, "");
+		}
     }
 }

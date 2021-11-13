@@ -173,8 +173,8 @@ namespace SpeechTools
 				}
 			}
 		}
-		
-		public bool HandleExternalSpeech(string text)
+	
+		public bool HandleExternalSpeech(string text = null)
 		{
 			if(_externalOverridden)
 			{
@@ -182,7 +182,11 @@ namespace SpeechTools
 				return false;
 			}
 			_speechOverridden = true;
-			return HandleSpeechResponse(text);
+			if(!string.IsNullOrWhiteSpace(text))
+			{
+				return HandleSpeechResponse(text);
+			}
+			return false;
 		}
 		
 		private string GetLocaleName(string name)
@@ -579,7 +583,7 @@ namespace SpeechTools
 					bool usingSSML = TryGetSSMLText(currentAnimation.Speak, out newText, currentAnimation);
 					StartedSpeaking?.Invoke(this, currentAnimation.Speak);
 					//_misty.Speak(currentAnimation.Speak, _characterParameters.UsePreSpeech ? false : true, currentAnimation.SpeakFileName, null);
-					_misty.Speak(currentAnimation.Speak, true, currentAnimation.SpeakFileName, null);
+					await _misty.SpeakAsync(currentAnimation.Speak, true, currentAnimation.SpeakFileName);
 					return;
 				}
 				else if (_characterParameters.TextToSpeechService == "skill")
@@ -601,7 +605,7 @@ namespace SpeechTools
 						_misty.SkillLogger.LogInfo($"Speaking with existing audio file {currentAnimation.SpeakFileName} at volume {Volume}.");
 						_misty.SkillLogger.LogVerbose(currentAnimation.Speak);
 						StartedSpeaking?.Invoke(this, currentAnimation.Speak);
-						_misty.PlayAudio(currentAnimation.SpeakFileName, Volume, null);
+						await _misty.PlayAudioAsync(currentAnimation.SpeakFileName, Volume);
 					}
 					else
 					{
@@ -624,7 +628,7 @@ namespace SpeechTools
 						MemoryStream ms = new MemoryStream();
 						audio.CopyTo(ms);
 						_audioTags.Add(currentAnimation.SpeakFileName);
-						_ = _misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
+						await _misty.SaveAudioAsync(currentAnimation.SpeakFileName, ms.ToArray(), true, true);
 					}					
 					return;
 				}
@@ -682,6 +686,10 @@ namespace SpeechTools
 			}
 			finally
 			{
+				//Don't hate me
+				//There is a possibility, even with my skill locks, that 2 audio files can be sent so close together that they process out of order, even if sent in order
+				//assuming any speech is at least 250
+				await Task.Delay(250);
 				_speakingSlim.Release();
 			}
 		}
@@ -921,6 +929,12 @@ namespace SpeechTools
 				{
 					if (!_recording && !_listenAborted && (_listeningCallbacks.Remove(audioComplete.Name) || _listeningCallbacks.Remove(audioComplete.Name+".wav")))
 					{
+						if (_speechOverridden)
+						{
+							_speechOverridden = false;
+							return;
+						}
+
 						_recording = true;
 						switch (_characterParameters.SpeechRecognitionService.Trim().ToLower())
 						{

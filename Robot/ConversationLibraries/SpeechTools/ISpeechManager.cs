@@ -69,7 +69,9 @@ namespace SpeechTools
 		void SetLanguage(string language);
 		void SetVoice(string voice);
 		void SetPitch(string pitch);
-		bool HandleExternalSpeech(string text);
+		//hacky
+		bool HandleExternalSpeech(string text = null);
+		
 		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
 
 		void Dispose();
