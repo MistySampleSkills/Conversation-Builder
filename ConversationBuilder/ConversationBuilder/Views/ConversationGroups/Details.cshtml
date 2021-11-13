@@ -121,11 +121,11 @@
 <div>
 	@if(ViewBag.ShowBetaItems)
 	{
-		<h5>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id }) | @Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id })</h5>
+		<p>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id }) | @Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id })</p>
 	}
 	else
 	{
-		<h5>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id })</h5>
+		<p>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id })</p>
 	}
 </div>
 
