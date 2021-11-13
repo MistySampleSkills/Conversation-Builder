@@ -14,25 +14,25 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="Create">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
 				<label asp-for="Name" class="control-label"></label>				
-				<label title="Try to keep your names descriptive and unique as you will use them in animation creation.">ℹ️</label>
+				<label title="Try to keep your names descriptive and unique as you will use them in animation creation.">💡</label>
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 			<div class="row">
 				<div class="form-group col-md-4">				
 					<label asp-for="MinLeftArm " class="control-label"></label>
-					<label title="The minimum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
+					<label title="The minimum location, in degrees, where the left arm will attempt to move.">💡</label>
 					<input asp-for="MinLeftArm" class="form-control" />
 					<span asp-validation-for="MinLeftArm" class="text-danger"></span>
 				</div>
 				<div class="form-group col-md-4">
 					<label asp-for="MaxLeftArm " class="control-label"></label>
-					<label title="The maximum location, in degrees, where the left arm will attempt to move.">ℹ️</label>
+					<label title="The maximum location, in degrees, where the left arm will attempt to move.">💡</label>
 					<input asp-for="MaxLeftArm" class="form-control" />
 					<span asp-validation-for="MaxLeftArm" class="text-danger"></span>
 				</div>
@@ -40,32 +40,32 @@
 			<div class="row">
 				<div class="form-group col-md-4">				
 					<label asp-for="MinRightArm" class="control-label"></label>
-					<label title="The minimum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
+					<label title="The minimum location, in degrees, where the right arm will attempt to move.">💡</label>
 					<input asp-for="MinRightArm" class="form-control" />
 					<span asp-validation-for="MinRightArm" class="text-danger"></span>
 				</div>
 				<div class="form-group col-md-4">
 					<label asp-for="MaxRightArm" class="control-label"></label>
-					<label title="The maximum location, in degrees, where the right arm will attempt to move.">ℹ️</label>
+					<label title="The maximum location, in degrees, where the right arm will attempt to move.">💡</label>
 					<input asp-for="MaxRightArm" class="form-control" />
 					<span asp-validation-for="MaxRightArm" class="text-danger"></span>
 				</div>
 			</div>
 			<div class="form-group">
 				<label asp-for="DelayBetweenMovements " class="control-label"></label>
-				<label title="The delay in seconds between starting movements if different max and minimum ranges are selected.">ℹ️</label>
+				<label title="The delay in seconds between starting movements if different max and minimum ranges are selected.">💡</label>
 				<input asp-for="DelayBetweenMovements" class="form-control" />
 				<span asp-validation-for="DelayBetweenMovements" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MovementDuration" class="control-label"></label>
-				<label title="How long the movement should take to reach it's goal. Use this OR Velocity.">ℹ️</label>
+				<label title="How long the movement should take to reach it's goal. Use this OR Velocity.">💡</label>
 				<input asp-for="MovementDuration" class="form-control" />
 				<span asp-validation-for="MovementDuration" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MovementVelocity" class="control-label"></label>
-				<label title="How fast the movement should be performed, from 1 to 100. Use this OR Duration.">ℹ️</label>
+				<label title="How fast the movement should be performed, from 1 to 100. Use this OR Duration.">💡</label>
 				<input asp-for="MovementVelocity" class="form-control" />
 				<span asp-validation-for="MovementVelocity" class="text-danger"></span>
 			</div>
@@ -74,7 +74,7 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="RandomRange" /> @Html.DisplayNameFor(model => model.RandomRange)
-						<label title="If selected, will pick a random location within the range.  If not selected, will attempt to move to the specific ranges specified.">ℹ️</label>
+						<label title="If selected, will pick a random location within the range.  If not selected, will attempt to move to the specific ranges specified.">💡</label>
 					</label>
 				</div>
 			</div>

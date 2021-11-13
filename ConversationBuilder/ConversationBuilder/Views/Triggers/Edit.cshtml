@@ -15,19 +15,19 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="Edit">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
 				<label asp-for="Name" class="control-label"></label>
-				<label title="Try to keep your names descriptive and unique as you will use them in conversation creation.">ℹ️</label>
+				<label title="Try to keep your names descriptive and unique as you will use them in conversation creation.">💡</label>
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 
 			<div class="form-group">
 				<label asp-for="Trigger"></label>		
-				<label title="The trigger type.">ℹ️</label>		
+				<label title="The trigger type.">💡</label>		
 				<select asp-for="Trigger" class="form-control">
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Triggers)
 					{
@@ -44,7 +44,7 @@
 			</div>
 			<div class="form-group">					
 				<label asp-for="TriggerFilter"></label>		
-				<label title="Known robot and speech trigger filters.  Leave blank to handle any of the selected trigger type.  If you select a field here, you should not enter a User DefinedTrigger Filter.">ℹ️</label>		
+				<label title="Known robot and speech trigger filters.  Leave blank to handle any of the selected trigger type.  If you select a field here, you should not enter a User DefinedTrigger Filter.">💡</label>		
 				<select asp-for="TriggerFilter" class="form-control">
 					<option value="" selected></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.TriggerFilters)
@@ -55,7 +55,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="UserDefinedTriggerFilter" class="control-label"></label>
-				<label title="User defined trigger filters.  Leave blank to handle any of the selected trigger type. If you enter data here, you should not select a Trigger Filter.">ℹ️</label>		
+				<label title="User defined trigger filters.  Leave blank to handle any of the selected trigger type. If you enter data here, you should not select a Trigger Filter.">💡</label>		
 				<input asp-for="UserDefinedTriggerFilter" class="form-control" />
 				<span asp-validation-for="UserDefinedTriggerFilter" class="text-danger"></span>
 			</div>
@@ -63,7 +63,7 @@
 			<div class="form-group">
 				
 				<label asp-for="StartingTrigger"></label>	
-				<label title="Trigger that must happing in the interaction for this trigger to become active.">ℹ️</label>					
+				<label title="Trigger that must happing in the interaction for this trigger to become active.">💡</label>					
 				<select asp-for="StartingTrigger" class="form-control">
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Triggers)
 					{
@@ -81,7 +81,7 @@
 			<div class="form-group">
 				
 				<label asp-for="StartingTriggerFilter"></label>			
-				<label title="Known robot and speech starting trigger filters.">ℹ️</label>		
+				<label title="Known robot and speech starting trigger filters.">💡</label>		
 				<select asp-for="StartingTriggerFilter" class="form-control">
 					<option value="" selected></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.TriggerFilters)
@@ -92,20 +92,20 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="UserDefinedStartingTriggerFilter" class="control-label"></label>
-				<label title="User defined starting trigger filters.">ℹ️</label>	
+				<label title="User defined starting trigger filters.">💡</label>	
 				<input asp-for="UserDefinedStartingTriggerFilter" class="form-control" />
 				<span asp-validation-for="UserDefinedStartingTriggerFilter" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="StartingTriggerDelay" class="control-label"></label>
-				<label title="Will delay looking for this trigger for the specified number of seconds after the start of the interaction.">ℹ️</label>	
+				<label title="Will delay looking for this trigger for the specified number of seconds after the start of the interaction.">💡</label>	
 				<input asp-for="StartingTriggerDelay" class="form-control" />
 				<span asp-validation-for="StartingTriggerDelay" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				
 				<label asp-for="StoppingTrigger"></label>				
-				<label title="If the stopping trigger occurs, this trigger is deactivated during the current interaction.">ℹ️</label>					
+				<label title="If the stopping trigger occurs, this trigger is deactivated during the current interaction.">💡</label>					
 				<select asp-for="StoppingTrigger" class="form-control">
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Triggers)
 					{
@@ -122,7 +122,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="StoppingTriggerFilter"></label>				
-				<label title="Known robot and speech stopping trigger filters.">ℹ️</label>		
+				<label title="Known robot and speech stopping trigger filters.">💡</label>		
 				<select asp-for="StoppingTriggerFilter" class="form-control">
 					<option value="" selected></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.TriggerFilters)
@@ -133,7 +133,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="UserDefinedStoppingTriggerFilter" class="control-label"></label>
-				<label title="User defined stopping trigger filters.">ℹ️</label>	
+				<label title="User defined stopping trigger filters.">💡</label>	
 				<input asp-for="UserDefinedStoppingTriggerFilter" class="form-control" />
 				<span asp-validation-for="UserDefinedStoppingTriggerFilter" class="text-danger"></span>
 			</div>
@@ -142,7 +142,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="StoppingTriggerDelay" class="control-label"></label>
-				<label title="Will delay looking for this trigger for the specified number of seconds after the start of the interaction.">ℹ️</label>	
+				<label title="Will delay looking for this trigger for the specified number of seconds after the start of the interaction.">💡</label>	
 				<input asp-for="StoppingTriggerDelay" class="form-control" />
 				<span asp-validation-for="StoppingTriggerDelay" class="text-danger"></span>
 			</div>

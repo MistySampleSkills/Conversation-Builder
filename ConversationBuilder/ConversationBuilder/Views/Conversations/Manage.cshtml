@@ -13,7 +13,7 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="AddTrigger">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -45,7 +45,7 @@
 </div>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="RemoveTrigger">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -240,8 +240,11 @@
 					</td>
 					<td>
 					<div class="form-group">
-						<input asp-for="Retrigger" class="form-control" />
-						<span asp-validation-for="Retrigger" class="text-danger"></span>
+						<div class="checkbox">
+							<label>
+								<input asp-for="Retrigger" />
+							</label>
+						</div>
 					</div>
 					</td>
 					

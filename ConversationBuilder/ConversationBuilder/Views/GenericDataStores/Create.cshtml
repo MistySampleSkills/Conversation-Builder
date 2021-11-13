@@ -15,7 +15,7 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="Create">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
@@ -57,7 +57,7 @@
 			</div>
 			<div class="form-group">					
 				<label asp-for="WordMatchRule"></label>		
-				<label title="Tell the intent system how to interpret the word comparison is it is not expecting an exact phrase match.">ℹ️</label>		
+				<label title="Tell the intent system how to interpret the word comparison is it is not expecting an exact phrase match.">💡</label>		
 				<select asp-for="WordMatchRule" class="form-control">
 					<option value="" selected></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.WordMatchRules)
@@ -74,8 +74,7 @@
 </div>
 
 <div>
-	@Html.ActionLink("Back to List", "Index",  "GenericDataStores") |
-	@Html.ActionLink("Manage Data", "Manage",  "GenericDataStores")
+	@Html.ActionLink("Back to List", "Index",  "GenericDataStores")
 </div>
 
 @section Scripts {

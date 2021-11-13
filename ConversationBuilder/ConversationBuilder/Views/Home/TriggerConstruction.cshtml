@@ -5,14 +5,9 @@
 	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
 }
 
-<div class="text-center">
-		
-	<h4>Manage Triggers</h4>
-	<h5>Robot and speech triggers to get Misty's attention</h5>
-	<hr/>	
-
-	<h6><a class="nav-link" asp-action="index" asp-controller="speechhandlers">Speech Handlers</a></h6>	
-
-	<h6><a class="nav-link" asp-action="index" asp-controller="triggers">Triggers</a></h6>
-	
+<div style="padding-top:70px;">
+	<dl>
+		<dt><label title="Speech handlers to be used as speech intent triggers on the 'Triggers' page."><a class="nav-item" asp-action="index" asp-controller="speechhandlers">Speech Handlers</a>	</label></dt>
+		<dt><label title="Library of triggers to be used in interactions to indicate an action."><a class="nav-item" asp-action="index" asp-controller="triggers">Triggers</a></label></dt>
+  	</dl>	
 </div>

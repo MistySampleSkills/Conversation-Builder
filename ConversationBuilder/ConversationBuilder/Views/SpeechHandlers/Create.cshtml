@@ -14,24 +14,24 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="Create">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
 				<label asp-for="Name" class="control-label"></label>
-				<label title="Try to keep your names descriptive and unique as you will use them in trigger creation.">ℹ️</label>
+				<label title="Try to keep your names descriptive and unique as you will use them in trigger creation.">💡</label>
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="Description" class="control-label"></label>
-				<label title="Optional description.">ℹ️</label>
+				<label title="Optional description.">💡</label>
 				<textarea asp-for="Description" class="form-control"></textarea>
 				<span asp-validation-for="Description" class="text-danger"></span>
 			</div>			
 			<div class="form-group">
 				<label asp-for="UtteranceString" class="control-label"></label>
-				<label title="Comma separated list of phrases that indicate this speech trigger.">ℹ️</label>
+				<label title="Comma separated list of phrases that indicate this speech trigger.">💡</label>
 				<textarea asp-for="UtteranceString" class="form-control"></textarea>
 				<span asp-validation-for="UtteranceString" class="text-danger"></span>
 			</div>	
@@ -39,13 +39,13 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="ExactPhraseMatchesOnly" /> @Html.DisplayNameFor(model => model.ExactPhraseMatchesOnly)
-						<label title="If selected, will only match if comma separated phrases contains what is said exactly.">ℹ️</label>
+						<label title="If selected, will only match if comma separated phrases contains what is said exactly.">💡</label>
 					</label>
 				</div>
 			</div>
 			<div class="form-group">					
 				<label asp-for="WordMatchRule"></label>		
-				<label title="Tell the intent system how to interpret the word comparison is it is not expecting an exact phrase match.">ℹ️</label>		
+				<label title="Tell the intent system how to interpret the word comparison is it is not expecting an exact phrase match.">💡</label>		
 				<select asp-for="WordMatchRule" class="form-control">
 					<option value="" selected></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.WordMatchRules)

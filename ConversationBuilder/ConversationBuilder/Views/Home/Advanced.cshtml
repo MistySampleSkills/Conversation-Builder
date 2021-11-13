@@ -5,14 +5,15 @@
 	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
 }
 
-<div class="text-center">	
+<div style="padding-top:70px;">
+	<dl>
+		<dt><label title="Skill messages to communicate with other skills."><a class="nav-item" asp-action="index" asp-controller="skillmessages">Skill Messages</a></label></dt>
+		<dt><label title="Dynamic lookup data that can be used in speaking and as speech trigger lookup text."><a class="nav-item" asp-action="index" asp-controller="genericdatastores">User Lookup Data</a></label></dt>
 		
-	<h4>Advanced</h4>
-	<h5>Skill messages to plug in optional skills and user data for inline speech animations</h5>
-	<hr/>	
+	@if (User.IsInRole("MistyAdministrator"))
+	{
+		<dt><label title="Dynamic lookup data that can be used in speaking and as speech trigger lookup text."><a class="nav-item" asp-area="identity" asp-page="/account/register">Add New User</a></label></dt>		
+	}
 
-	<h6><a class="nav-link" asp-action="index" asp-controller="skillmessages">Skill Messages</a></h6>
-
-	<h6><a class="nav-link" asp-action="index" asp-controller="genericdatastores">User Lookup Data</a></h6>
-	
+  	</dl>	
 </div>

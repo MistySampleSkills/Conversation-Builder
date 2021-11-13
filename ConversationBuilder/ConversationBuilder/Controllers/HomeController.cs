@@ -76,12 +76,19 @@ namespace ConversationBuilder.Controllers
 		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
 		public async Task<IActionResult> Advanced()
 		{
+			await SetViewBagData(); 
+			return View();
+		}
+
+		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
+		public async Task<IActionResult> ActionLibrary()
+		{
 			await SetViewBagData();
 			return View();
 		}
 
 		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
-		public async Task<IActionResult> AnimationConstruction()
+		public async Task<IActionResult> Speech()
 		{
 			await SetViewBagData();
 			return View();
@@ -89,6 +96,13 @@ namespace ConversationBuilder.Controllers
 
 		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
 		public async Task<IActionResult> TriggerConstruction()
+		{
+			await SetViewBagData();
+			return View();
+		}
+
+		[AuthorizeRoles(Roles.SiteAdministrator, Roles.Customer)]
+		public async Task<IActionResult> Conversations()
 		{
 			await SetViewBagData();
 			return View();

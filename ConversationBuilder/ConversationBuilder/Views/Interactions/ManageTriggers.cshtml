@@ -28,7 +28,7 @@ Uses Pre-speech: @Model.UsePreSpeech
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="AddTrigger">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -66,7 +66,7 @@ Uses Pre-speech: @Model.UsePreSpeech
 </div>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="RemoveTrigger">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -273,8 +273,11 @@ Uses Pre-speech: @Model.UsePreSpeech
 					</td>
 					<td>
 					<div class="form-group">
-						<input asp-for="Retrigger" class="form-control" />
-						<span asp-validation-for="Retrigger" class="text-danger"></span>
+						<div class="checkbox">
+							<label>
+								<input asp-for="Retrigger" />
+							</label>
+						</div>
 					</div>
 					</td>
 					
@@ -402,7 +405,7 @@ Uses Pre-speech: @Model.UsePreSpeech
 else
 {
 	<div class="row">
-		<div class="col-md-4">
+		<div>
 			<form asp-action="AddSkillMessage">
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -444,7 +447,7 @@ else
 @if(Model.SkillMessages != null && Model.SkillMessages.Count() > 0)
 {
 	<div class="row">
-		<div class="col-md-4">
+		<div>
 			<form asp-action="RemoveSkillMessage">
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 

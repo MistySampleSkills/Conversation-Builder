@@ -5,7 +5,7 @@
 	Layout = "~/Views/Shared/_Layout.cshtml";
 	TempData.Keep("Message");
 }
-@section Styles {
+@section Styles { 
 	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
 }
 
@@ -15,19 +15,19 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="Create">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
 				<label asp-for="Name" class="control-label"></label>
-				<label title="Try to keep your names descriptive and unique.">ℹ️</label>
+				<label title="Try to keep your names descriptive and unique.">💡</label>
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 
 			<div class="form-group">
 				<label asp-for="Animation"></label>
-				<label title="Pick one from the list of animations you have already created.">ℹ️</label>
+				<label title="Pick one from the list of animations you have already created.">💡</label>
 				<select asp-for="Animation" class="form-control">
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Animations)
 					{
@@ -37,7 +37,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="InitAnimation"></label>
-				<label title="Pick one from the list of animations you have already created.">ℹ️</label>
+				<label title="Pick one from the list of animations you have already created.">💡</label>
 				<select asp-for="InitAnimation" class="form-control">
 					<option value=""></option>	
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Animations)
@@ -48,7 +48,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="ListeningAnimation"></label>
-				<label title="Pick one from the list of animations you have already created.">ℹ️</label>
+				<label title="Pick one from the list of animations you have already created.">💡</label>
 				<select asp-for="ListeningAnimation" class="form-control">
 					<option value=""></option>	
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Animations)
@@ -59,7 +59,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="PreSpeechAnimation"></label>
-				<label title="Pick one from the list of animations you have already created.">ℹ️</label>
+				<label title="Pick one from the list of animations you have already created.">💡</label>
 				<select asp-for="PreSpeechAnimation" class="form-control">
 					<option value=""></option>	
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Animations)
@@ -93,7 +93,7 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="InteractionFailedTimeout" class="control-label"></label>
-				<label title="How long in seconds before the interaction will time out and go to the 'No interaction' default interaction.">ℹ️</label>
+				<label title="How long in seconds before the interaction will time out and go to the 'No interaction' default interaction.">💡</label>
 				<input asp-for="InteractionFailedTimeout" class="form-control" />
 				<span asp-validation-for="InteractionFailedTimeout" class="text-danger"></span>
 			</div>
@@ -101,7 +101,7 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="StartListening" /> @Html.DisplayNameFor(model => model.StartListening)
-						<label title="Start listening at start of interaction, will start after speech or audio, or immediately if neither.">ℹ️</label>
+						<label title="Start listening at start of interaction, will start after speech or audio, or immediately if neither.">💡</label>
 					</label>
 				</div>
 			</div>
@@ -109,7 +109,7 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="AllowKeyPhraseRecognition" /> @Html.DisplayNameFor(model => model.AllowKeyPhraseRecognition)
-						<label title="Allow 'Hey Misty' requests to be handled as speech intents if Misty isn't speaking or already listening.">ℹ️</label>
+						<label title="Allow 'Hey Misty' requests to be handled as speech intents if Misty isn't speaking or already listening.">💡</label>
 					</label>
 				</div>
 			</div>
@@ -117,7 +117,7 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="AllowConversationTriggers" /> @Html.DisplayNameFor(model => model.AllowConversationTriggers)
-						<label title="Allow conversation triggers to be handled in this interaction after checking the interaction specific triggers.">ℹ️</label>
+						<label title="Allow conversation triggers to be handled in this interaction after checking the interaction specific triggers.">💡</label>
 					</label>
 				</div>
 			</div>
@@ -125,7 +125,7 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="ConversationEntryPoint" /> @Html.DisplayNameFor(model => model.ConversationEntryPoint)
-						<label title="If selected, this interaction can be used as an entry point from another conversation, when mapping conversation groups.">ℹ️</label>
+						<label title="If selected, this interaction can be used as an entry point from another conversation, when mapping conversation groups.">💡</label>
 					</label>
 				</div>
 			</div>
@@ -142,7 +142,7 @@
 				<div class="form-group">
 					<label asp-for="PreSpeechPhrases" class="control-label"></label>
 					<textarea rows=5 asp-for="PreSpeechPhrases" class="form-control" > </textarea>
-					<label title="Semicolon separated list of pre speech-phrases.">ℹ️</label>					
+					<label title="Semicolon separated list of pre speech-phrases.">💡</label>					
 					<span asp-validation-for="PreSpeechPhrases" class="text-danger"></span>
 				</div>
 				
@@ -156,13 +156,13 @@
 
 				<div class="form-group">
 					<label asp-for="ListenTimeout" class="control-label"></label>
-					<label title="How long to listen in seconds before cancelling speech recording if no one has spoken. Maximum of 10 seconds.">ℹ️</label>
+					<label title="How long to listen in seconds before cancelling speech recording if no one has spoken. Maximum of 10 seconds.">💡</label>
 					<input asp-for="ListenTimeout" class="form-control" />
 					<span asp-validation-for="ListenTimeout" class="text-danger"></span>
 				</div>
 				<div class="form-group">
 					<label asp-for="SilenceTimeout" class="control-label"></label>
-					<label title="How long to wait in seconds after speaking, before assuming they are done speaking. Maximum of 10 seconds.">ℹ️</label>
+					<label title="How long to wait in seconds after speaking, before assuming they are done speaking. Maximum of 10 seconds.">💡</label>
 					<input asp-for="SilenceTimeout" class="form-control" />
 					<span asp-validation-for="SilenceTimeout" class="text-danger"></span>
 				</div>
