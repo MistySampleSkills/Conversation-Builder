@@ -310,6 +310,7 @@ namespace ConversationBuilder.Controllers
 						skillParameters.HeardSpeechToScreen = characterConfiguration.HeardSpeechToScreen;
 						skillParameters.LargePrint = characterConfiguration.LargePrint;
 						skillParameters.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
+						skillParameters.ShowSpeakingIndicator = characterConfiguration.ShowSpeakingIndicator;
 						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;
 						skillParameters.StartVolume = characterConfiguration.StartVolume;
 						skillParameters.UsePreSpeech = characterConfiguration.UsePreSpeech;

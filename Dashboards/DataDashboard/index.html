@@ -270,7 +270,6 @@ information and full details:
                 <div class="navbar-nav mr-auto"></div>
                 <form class="form-inline my-md-2 my-lg-0 ml-3 " id="connect">
                     <input id="ip-address" class="form-control ip-address mr-sm-2" type="text" placeholder="Robot IP Address" aria-label="Robot IP Address">
-                    <!-- <input id="imsIp-address" class="form-control imsIp-address mr-sm-2" type="text" placeholder="IMS IP Address" aria-label="IMS IP Address">-->
                     <button id="connect-button" class="btn connect my-md-2 my-sm-0 ml-1 ml-md-0" type="submit">Connect</button>
                     <button class="btn ml-2" type="button" data-toggle="modal" data-target="#wifi-modal" style="background-color:#241c35;border:1px solid #241c35;width:80px;">Wifi</button>
                 </form>
@@ -280,19 +279,8 @@ information and full details:
 
     <div class="container-fluid d-flex flex-column pt-1">
         <div class="row ml-2">
-            <label class="inline data-dashboard">Example Data Dashboard</label><label class="inline" id="data-dashboard"></label>
+            <label class="inline data-dashboard">Interaction Dashboard</label><label class="inline" id="data-dashboard"></label>
         </div>
-        <div class="row">
-            <div class="row ml-1 datadashboard-align-head">
-                <div class="col">
-                    <form class="form-inline my-md-2 my-lg-0 ml-3 " id="send-speech">
-                        <input id="text" class="form-control mr-sm-2" type="text" placeholder="Text" aria-label="Text">
-                        <button id="send-speech-button" class="btn send-speech my-md-2 my-sm-0 ml-1 ml-md-0" type="submit">Send Speech</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
         <div class="row">
             <div class="row ml-1 datadashboard-align-head">
                 <div class="col">
@@ -305,125 +293,29 @@ information and full details:
         <div class="row">
             <div class="row ml-1 datadashboard-align-head">
                 <div class="col">
-                    <div class="row ml-3">
-                        <p><label for="robot-name">Robot</label><input type="text" id="robot-name" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-name">Demo</label><input type="text" id="demo-name" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="role-name">Role</label><input type="text" id="role-name" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="speaking">Speaking</label><input type="text" id="speaking" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="last-said">Last Said</label><input type="text" id="last-said" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="listening">Listening</label><input type="text" id="listening" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="last-heard">Last Heard</label><input type="text" id="last-heard" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                    </div>
-                    <div class="row ml-3">
-                    </div>
-
-                    <div class="row ml-3">
-                        <p><label for="last-face-seen">Last Face Seen</label><input type="text" id="last-face-seen" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="last-object-seen">Last Object Seen</label><input type="text" id="last-object-seen" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="last-ar-tag-seen">Last AR Tag Seen</label><input type="text" id="last-ar-tag-seen" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="last-qr-tag-seen">Last QR Tag Seen</label><input type="text" id="last-qr-tag-seen" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="last-serial-message">Last Serial Message</label><input type="text" id="last-serial-message" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="status">Status</label><input type="text" id="status" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="processing-speech">Processing Speech</label><input type="text" id="processing-speech" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="key-phrase-recognition-on">Key Phrase On</label><input type="text" id="key-phrase-recognition-on" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="volume">Volume</label><input type="text" id="volume" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="image">Image</label><input type="text" id="image" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-
-                        <p><label for="last-audio">Last Audio Played</label><input type="text" id="last-audio" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="flashlight-on">Flashlight</label><input type="text" id="flashlight-on" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="last-user-event">Last User Event</label><input type="text" id="last-user-event" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="chin">Chin</label><input type="text" id="chin" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="scruff">Scruff</label><input type="text" id="scruff" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="front-cap">Front Cap</label><input type="text" id="front-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="back-cap">Back Cap</label><input type="text" id="back-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="left-cap">Left Cap</label><input type="text" id="left-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="right-cap">Right Cap</label><input type="text" id="right-cap" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="front-right-bumper">Front Right Bumper</label><input type="text" id="front-right-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="front-left-bumper">Front Left Bumper</label><input type="text" id="front-left-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="back-right-bumper">Back Right Bumper</label><input type="text" id="back-right-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="back-left-bumper">Back Left Bumper</label><input type="text" id="back-left-bumper" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="right-arm">Right Arm</label><input type="text" id="right-arm" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="left-arm">Left Arm</label><input type="text" id="left-arm" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="head-pitch">Head Pitch</label><input type="text" id="head-pitch" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="head-roll">Head Roll</label><input type="text" id="head-roll" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="head-yaw">Head Yaw</label><input type="text" id="head-yaw" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="robot-pitch">Robot Pitch</label><input type="text" id="robot-pitch" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="robot-roll">Robot Roll</label><input type="text" id="robot-roll" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="robot-yaw">Robot Yaw</label><input type="text" id="robot-yaw" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                    </div>
-
+                    <form class="form-inline my-md-2 my-lg-0 ml-3 " id="send-speech">
+                        <input id="text" class="form-control mr-sm-2" type="text" placeholder="Text" aria-label="Text">
+                        <button id="send-speech-button" class="btn send-speech my-md-2 my-sm-0 ml-1 ml-md-0" type="submit">Send Speech</button>
+                    </form>
                 </div>
             </div>
-
+        </div>
+        <div class="row">
             <div class="row ml-1">
                 <div class="col">
                     <div class="row ml-3">
-                        <p><label for="current-interaction">Current Interaction</label><input type="text" id="current-interaction" class="data-reading medium value-field" disabled="disabled" value="??" /></p>                        
-                    </div>
-                  <!--  <div class="row ml-3">
-                        <p><label for="demo-group-name-1">Group Name</label><input type="text" id="demo-group-name-1" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-group-description-1">Group Description</label><input type="text" id="demo-group-description-1" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="demo-name-2">Demo 2</label><input type="text" id="demo-name-2" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-handling-2">Handling</label><input type="text" id="demo-handling-2" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-storyid-2">Story Id</label><input type="text" id="demo-storyid-2" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-description-2">Description</label><input type="text" id="demo-description-2" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="demo-group-name-2">Group Name</label><input type="text" id="demo-group-name-2" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-group-description-2">Group Description</label><input type="text" id="demo-group-description-2" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="demo-name-3">Demo 3</label><input type="text" id="demo-name-3" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-handling-3">Handling</label><input type="text" id="demo-handling-3" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-storyid-3">Story Id</label><input type="text" id="demo-storyid-3" class="data-reading small value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-description-3">Description</label><input type="text" id="demo-description-3" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>
-                    <div class="row ml-3">
-                        <p><label for="demo-group-name-3">Group Name</label><input type="text" id="demo-group-name-3" class="data-reading medium value-field" disabled="disabled" value="??" /></p>
-                        <p><label for="demo-group-description-3">Group Description</label><input type="text" id="demo-group-description-3" class="data-reading large value-field" disabled="disabled" value="??" /></p>
-                    </div>-->
-                </div>
-               
+                        <h3><label for="current-interaction">Current Interaction</label><input type="text" id="current-interaction" class="data-reading medium value-field" disabled="disabled" value="??" /></h3>
+                    </div>       
+                </div>               
             </div>
-
+       
             <div class="container-fluid d-flex flex-column pt-1">
                 <div class="row">
                     <button class="btn medium" id="take-picture">Take Picture</button>
                 </div>
             </div>
             <div class="datadashboard-align-head" id="photo-container" style="overflow-y:auto;">
-                <img id="photo" alt="Picture from Misty, will attempt to load upon robot connection..." class="display-picture" src="" style="width:1500px;height:2000px;"> <!--3120 x 4160-->
+                <img id="photo" alt="Picture from Misty, will attempt to load upon robot connection..." class="display-picture" src="" style="width:312px;height:416px;">
             </div>
         </div>
     </div>

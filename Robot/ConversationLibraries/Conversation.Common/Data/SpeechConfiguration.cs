@@ -66,5 +66,9 @@ namespace Conversation.Common
 		public int SpeechSilenceTimeoutMs { get; set; } = 10000;
 		public int SpeechListenTimeoutMs { get; set; } = 10000;
 		public int TrimSilenceMs { get; set; } = 0;
+		public string SpeakingImage { get; set; }
+		public string ListeningImage { get; set; }
+		public string ProcessingImage { get; set; }
+
 	}
 }

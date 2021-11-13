@@ -138,6 +138,8 @@ namespace MistyCharacter
 		{
 			try
 			{
+				CharacterParameters.RetranslateTTS = GetBoolField(_parameters, "RetranslateTTS") ?? false;
+
 				if (!_parameters.ContainsKey("ConversationGroup"))
 				{
 					string robotIp = GetStringField(_parameters, "RobotIp");
@@ -342,9 +344,8 @@ namespace MistyCharacter
 				CharacterParameters.DisplaySpoken = GetBoolField(_parameters, ConversationConstants.DisplaySpoken) ?? false;
 				CharacterParameters.LargePrint = GetBoolField(_parameters, ConversationConstants.LargePrint) ?? false;
 				CharacterParameters.ShowListeningIndicator = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? false;
-				CharacterParameters.ShowSpeakingIndicator = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? false;
-				CharacterParameters.SendInteractionUIEvents = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? true;
-				
+				CharacterParameters.ShowSpeakingIndicator = GetBoolField(_parameters, ConversationConstants.ShowSpeakingIndicator) ?? false;
+				CharacterParameters.SendInteractionUIEvents = GetBoolField(_parameters, ConversationConstants.SendInteractionUIEvents) ?? true;				
 				CharacterParameters.HeardSpeechToScreen = GetBoolField(_parameters, ConversationConstants.HeardSpeechToScreen) ?? false;
 				CharacterParameters.StartVolume = GetIntField(_parameters, ConversationConstants.StartVolume) ?? null;
 
@@ -371,14 +372,11 @@ namespace MistyCharacter
 				CharacterParameters.ConversationGroup = conversationGroup;
 
 				CharacterParameters.Character = GetStringField(_parameters, ConversationConstants.Character) ?? "basic";
-				CharacterParameters.SpeakingImage = GetStringField(_parameters, ConversationConstants.SpeakingImage) ?? "eq2.gif";
-				CharacterParameters.ListeningImage = GetStringField(_parameters, ConversationConstants.ListeningImage) ?? "listen12.gif";
-				CharacterParameters.ProcessingImage = GetStringField(_parameters, ConversationConstants.ProcessingImage) ?? "proc11.gif";
-					
-				CharacterParameters.RequestedCharacter = GetStringField(_parameters, ConversationConstants.Character) ?? "";
-
 				CharacterParameters.UsePreSpeech = GetBoolField(_parameters, ConversationConstants.UsePreSpeech) ?? false;
 
+				//Deprecated
+				CharacterParameters.RequestedCharacter = GetStringField(_parameters, ConversationConstants.Character) ?? "basic";
+				
 				//Parse string into prespeech by semicolon
 				try
 				{
@@ -424,15 +422,7 @@ namespace MistyCharacter
 					}
 				}
 
-				if (CharacterParameters.Character != CharacterParameters.RequestedCharacter)
-				{
-					string msg = $"Requested character '{CharacterParameters.RequestedCharacter}' could not be found, using {CharacterParameters.Character}.";
-					CharacterParameters.InitializationStatusMessage = $"Requested character not found, using {CharacterParameters.Character}.";
-					CharacterParameters.InitializationErrorStatus = "Warning";
-					_misty.SkillLogger.Log(msg);
-					_misty.PublishMessage(msg, null);
-				}
-
+		
 				//Get speech configuration from string
 				SpeechConfiguration speechConfiguration = null;
 				string speechConfigurationJson = GetStringField(_parameters, ConversationConstants.SpeechConfiguration) ?? null;
@@ -463,6 +453,13 @@ namespace MistyCharacter
 					CharacterParameters.InitializationErrorStatus = "Warning";
 					CharacterParameters.InitializationStatusMessage = $"Speech configuration not set, speech intent will not work.";
 				}
+				else
+				{
+					CharacterParameters.SpeakingImage = speechConfiguration.SpeakingImage?? "";
+					CharacterParameters.ListeningImage = speechConfiguration.ListeningImage ?? "";
+					CharacterParameters.ProcessingImage = speechConfiguration.ProcessingImage ?? "";
+
+				}
 
 				CharacterParameters.AzureTTSParameters = new AzureSpeechParameters();
 				CharacterParameters.GoogleTTSParameters = new GoogleSpeechParameters();
@@ -471,10 +468,7 @@ namespace MistyCharacter
 
 				CharacterParameters.SpeechConfiguration = JsonConvert.DeserializeObject<SpeechConfiguration>(GetStringField(_parameters, ConversationConstants.SpeechConfiguration)) ?? new SpeechConfiguration();
 				SetSpeechParameters();
-
-				//TEST HACK!!!!
-				CharacterParameters.TextToSpeechService = "skill";
-
+				
 				CharacterParameters.TrackHistory = GetIntField(_parameters, ConversationConstants.TrackHistory) ?? 3;
 				CharacterParameters.PersonConfidence = GetDoubleField(_parameters, ConversationConstants.PersonConfidence) ?? 0.6;
 				CharacterParameters.LogInteraction = GetBoolField(_parameters, ConversationConstants.LogInteraction) ?? true;
@@ -553,15 +547,15 @@ namespace MistyCharacter
 				}
 
 
-				CharacterParameters.SpeechRecognitionService = recService ?? "vosk";
+				CharacterParameters.SpeechRecognitionService = recService?.ToLower().Trim() ?? "vosk";
 			}
 			
 			//TTS Parameters
 			if (!string.IsNullOrWhiteSpace(CharacterParameters.SpeechConfiguration?.TextToSpeechSubscriptionKey))
 			{
-				string recService = CharacterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
+				string ttsService = CharacterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
 
-				if (recService == "azure" || recService == "azureonboard")
+				if (ttsService == "azure" || ttsService == "azureonboard")
 				{
 					CharacterParameters.AzureTTSParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
 					CharacterParameters.AzureTTSParameters.Region = CharacterParameters.SpeechConfiguration.SpeechRecognitionRegion ?? "";
@@ -571,7 +565,7 @@ namespace MistyCharacter
 					CharacterParameters.AzureTTSParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
 					CharacterParameters.AzureTTSParameters.ProfanitySetting = CharacterParameters.SpeechConfiguration.ProfanitySetting ?? "Raw";
 				}
-				else if (recService == "google" || recService == "googleonboard")
+				else if (ttsService == "google" || ttsService == "googleonboard")
 				{
 					CharacterParameters.GoogleTTSParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
 					CharacterParameters.GoogleTTSParameters.Endpoint = CharacterParameters.SpeechConfiguration.TextToSpeechEndpoint ?? "https://texttospeech.googleapis.com/v1/text:synthesize?key=";
@@ -580,8 +574,13 @@ namespace MistyCharacter
 					CharacterParameters.GoogleTTSParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
 				}
 
-				CharacterParameters.TextToSpeechService = recService ?? "misty";
+				CharacterParameters.TextToSpeechService = ttsService ?? "misty";
 			}
+			else
+			{
+				CharacterParameters.TextToSpeechService = CharacterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
+			}
+			
 		}
 
 		private ConversationGroup GetDefaultSurvey()

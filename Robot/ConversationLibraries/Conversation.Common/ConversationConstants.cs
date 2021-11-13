@@ -35,8 +35,6 @@ namespace Conversation.Common
 	public class ConversationConstants
 	{
 		//Speech data keys
-		//public readonly static string AzureSpeechKey = "AzureSpeechKey";
-		//public readonly static string GoogleSpeechKey = "GoogleSpeechKey";
 		public readonly static string SpeechRegion = "SpeechRegion";
 		public readonly static string SpeechEndpoint = "SpeechEndpoint";
 		public readonly static string SpeakingVoice = "SpeakingVoice";
@@ -45,8 +43,6 @@ namespace Conversation.Common
 		public readonly static string ProfanitySetting = "ProfanitySetting";
 		public readonly static string SpeechRecognitionService = "SpeechRecognitionService";
 		public readonly static string TextToSpeechService = "TextToSpeechService";
-		//public readonly static string TTSEndpoint = "TTSEndpoint";
-		//public readonly static string STTEndpoint = "STTEndpoint";
 		public readonly static string SpeakingGender = "SpeakingGender";
 		public readonly static string RetranslateTTS = "RetranslateTTS";
 		public readonly static string RecognizeKeyPhrase = "RecognizeKeyPhrase";

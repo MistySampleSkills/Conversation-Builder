@@ -75,8 +75,12 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Large Print, check to show the words Misty says in large print (beta)")]
 		public bool LargePrint { get; set; }
 		
-		[Display(Name = "Show Listening Indicator, check to show the listening/speaking indicator on the screen")]
+		[Display(Name = "Show Listening Indicator, check to show the listening/processing indicator on the screen")]
 		public bool ShowListeningIndicator { get; set; } = true;
+
+		
+		[Display(Name = "Show Speaking Indicator, check to show the speaking indicator on the screen")]
+		public bool ShowSpeakingIndicator { get; set; } = true;
 
 		[Display(Name = "Starting volume of Misty")]
 		public int? StartVolume { get; set; }		

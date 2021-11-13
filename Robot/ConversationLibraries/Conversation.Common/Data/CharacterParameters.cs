@@ -47,7 +47,7 @@ namespace Conversation.Common
 		
 		public SpeechConfiguration SpeechConfiguration { get; set; }
 
-		public bool RetranslateTTS { get; set; }// = true;
+		public bool RetranslateTTS { get; set; }
 		
 		public string TextToSpeechService { get; set; } = "misty";
 		public string SpeechRecognitionService { get; set; } = "vosk";

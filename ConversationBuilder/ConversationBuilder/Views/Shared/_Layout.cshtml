@@ -32,11 +32,6 @@
 		<hr />	
 	</header>
 	<div class="container">
-		<main role="main" class="pb-3">
-			@RenderBody()
-		</main>
-	</div>
-	<div class="container">
 		@if(User.IsInRole(ConversationBuilder.Roles.SiteAdministrator) || User.IsInRole(ConversationBuilder.Roles.Customer))
 		{
 			<div class="container" style = "text-align: center;">
@@ -84,10 +79,15 @@
 			</div>
 		}
 	</div>
-
+	<div class="container">
+		<main role="main" class="pb-3">
+			@RenderBody()
+		</main>
+	</div>
+	
 	<footer class="border-top footer text-muted">		
 		<div class="container text-center">
-			&copy; 2021 - <a href= "https://www.mistyrobotics.com">Misty Robotics</a> - <a href= "https://www.mistyrobotics.com/legal">Legal</a> - <a href= "https://github.com/MistySampleSkills/Conversation-Builder">Code</a> - Version 0.9.0			
+			&copy; 2021 - <a href= "https://www.mistyrobotics.com">Misty Robotics</a> - <a href= "https://www.mistyrobotics.com/legal">Legal</a> - <a href= "https://github.com/MistySampleSkills/Conversation-Builder">Code</a> - Version 0.9.1			
 		</div>
 
 	</footer>

@@ -224,6 +224,7 @@ namespace ConversationBuilder.Controllers
 					loadedCharacterConfiguration.HeardSpeechToScreen = characterConfiguration.HeardSpeechToScreen;
 					loadedCharacterConfiguration.LargePrint = characterConfiguration.LargePrint;
 					loadedCharacterConfiguration.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
+					loadedCharacterConfiguration.ShowSpeakingIndicator = characterConfiguration.ShowSpeakingIndicator;
 					loadedCharacterConfiguration.DisplaySpoken = characterConfiguration.DisplaySpoken;					
 					loadedCharacterConfiguration.StartVolume = characterConfiguration.StartVolume;
 					loadedCharacterConfiguration.PreSpeechPhrases = characterConfiguration.PreSpeechPhrases;

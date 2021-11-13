@@ -40,6 +40,11 @@ namespace SpeechTools
 {
 	public class SkillSpeech
 	{
+		public SkillSpeech(string startingVoice)
+		{
+			SetVoice(startingVoice);
+		}
+
 		private VoiceInformation _voice = SpeechSynthesizer.DefaultVoice;
 		double _pitch = 1.0;
 		double _rate = 1.0;

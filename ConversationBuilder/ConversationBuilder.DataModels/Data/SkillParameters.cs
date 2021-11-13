@@ -57,6 +57,7 @@ namespace ConversationBuilder.DataModels
 		
 		public bool LargePrint { get; set; }
 		public bool ShowListeningIndicator { get; set; } = true;
+		public bool ShowSpeakingIndicator { get; set; } = true;
 
 		public string Payload { get; set; }
 		public string Skill { get; set; }

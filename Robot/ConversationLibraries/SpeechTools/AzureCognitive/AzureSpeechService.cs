@@ -155,17 +155,29 @@ namespace SpeechTools.AzureCognitive
 
 		public AzureSpeechService(AzureServiceAuthorization ttsAuthorization, AzureServiceAuthorization recognitionAuthorization, IRobotMessenger robot)
 		{
+			Authorized = false;
 			_robot = robot;
 			_ttsAuthorization = ttsAuthorization;
-			_recognitionAuthorization = recognitionAuthorization;
+			_recognitionAuthorization = recognitionAuthorization;			
+		}
 
-			_ttsSpeechConfig = SpeechConfig.FromSubscription(_ttsAuthorization.SubscriptionKey, _ttsAuthorization.Region);
-			_speechTranslationConfig = SpeechTranslationConfig.FromSubscription(_recognitionAuthorization.SubscriptionKey, _recognitionAuthorization.Region);
-			
-			if (_ttsSpeechConfig != null || _speechTranslationConfig != null)
+		public bool Initialize()
+		{
+			try
 			{
-				Authorized = true;
+				_ttsSpeechConfig = SpeechConfig.FromSubscription(_ttsAuthorization.SubscriptionKey, _ttsAuthorization.Region);
+				_speechTranslationConfig = SpeechTranslationConfig.FromSubscription(_recognitionAuthorization.SubscriptionKey, _recognitionAuthorization.Region);
+
+				if (_ttsSpeechConfig != null || _speechTranslationConfig != null)
+				{
+					Authorized = true;
+				}
 			}
+			catch (Exception ex)
+			{
+				Authorized = false;
+			}
+			return Authorized;
 		}
 
 		/// <summary>

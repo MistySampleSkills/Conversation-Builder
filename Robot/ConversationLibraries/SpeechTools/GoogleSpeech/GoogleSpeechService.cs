@@ -117,15 +117,28 @@ namespace SpeechTools.GoogleSpeech
  
 		public GoogleSpeechService(GoogleServiceAuthorization ttsServicesAuthorization, GoogleServiceAuthorization recognitionServicesAuthorization, IRobotMessenger robot)
 		{
+			Authorized = false;
 			_robot = robot;
 			_recognitionServicesAuthorization = recognitionServicesAuthorization;
 			_ttsServicesAuthorization = ttsServicesAuthorization;
+		}
 
-			if ((_recognitionServicesAuthorization != null && _recognitionServicesAuthorization.SubscriptionKey != null) ||
-				((_ttsServicesAuthorization != null && _ttsServicesAuthorization.SubscriptionKey != null)))
+		public bool Initialize()
+		{
+			try
 			{
-				Authorized = true;
+				if ((_recognitionServicesAuthorization != null && _recognitionServicesAuthorization.SubscriptionKey != null) ||
+				((_ttsServicesAuthorization != null && _ttsServicesAuthorization.SubscriptionKey != null)))
+				{
+					Authorized = true;
+				}
+				
 			}
+			catch (Exception ex)
+			{
+				Authorized = false;
+			}
+			return Authorized;
 		}
 
 		/// <summary>

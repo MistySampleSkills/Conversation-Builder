@@ -104,7 +104,7 @@ namespace SpeechTools
 		private string _sayAs = "";
 		private string _voice = "";
 		private string _pitch = "medium";
-		private SkillSpeech _skillSpeech = new SkillSpeech();
+		private SkillSpeech _skillSpeech;
 
 		private ListeningState _listeningState = ListeningState.Waiting;
 
@@ -301,7 +301,7 @@ namespace SpeechTools
 			_timeManager = new EnglishTimeManager(_misty, _parameters, _characterParameters);
 			_assetWrapper = new AssetWrapper(_misty);
 			await _assetWrapper.RefreshAssetLists();
-
+			
 			if (_azureSpeechRecognitionParameters?.SubscriptionKey != null || _azureTTSParameters?.SubscriptionKey != null)
 			{
 				AzureServiceAuthorization recAuth = new AzureServiceAuthorization
@@ -319,10 +319,13 @@ namespace SpeechTools
 				};
 
 				_azureCognitive = new AzureSpeechService(ttsAuth, recAuth, _misty);
-				_azureCognitive.SpeakingVoice = _azureSpeechRecognitionParameters?.SpeakingVoice;
-				_azureCognitive.SpokenLanguage = _azureSpeechRecognitionParameters?.SpokenLanguage;
-				_azureCognitive.TranslatedLanguage = _azureSpeechRecognitionParameters?.TranslatedLanguage;
-				_azureCognitive.ProfanitySetting = _azureSpeechRecognitionParameters?.ProfanitySetting;
+				if (_azureCognitive != null && _azureCognitive.Initialize())
+				{
+					_azureCognitive.SpeakingVoice = _azureSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-AriaNeural";
+					_azureCognitive.SpokenLanguage = _azureSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
+					_azureCognitive.TranslatedLanguage = _azureSpeechRecognitionParameters?.TranslatedLanguage ?? "en-US";
+					_azureCognitive.ProfanitySetting = _azureSpeechRecognitionParameters?.ProfanitySetting ?? "raw";
+				}			
 			}
 
 			if (_googleSpeechRecognitionParameters?.SubscriptionKey != null || _googleTTSParameters?.SubscriptionKey != null)
@@ -340,11 +343,16 @@ namespace SpeechTools
 				};
 
 				_googleService = new GoogleSpeechService(ttsAuth, speechRecAuth, _misty);
-				_googleService.SpeakingVoice = _googleSpeechRecognitionParameters?.SpeakingVoice;
-				_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender;
-				_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage;
+				if (_googleService != null && _googleService.Initialize())
+				{
+					_googleService.SpeakingVoice = _googleSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-Standard-C";
+					_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender ?? "Female";
+					_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
+				}
 			}
-			
+
+			_skillSpeech = new SkillSpeech(_azureSpeechRecognitionParameters?.SpeakingVoice ?? _googleSpeechRecognitionParameters?.SpeakingVoice ?? "Zira");
+
 			LogEventDetails(_misty.RegisterVoiceRecordEvent(VoiceRecordCallback, 0, true, "VoiceRecord", null));
 			LogEventDetails(_misty.RegisterKeyPhraseRecognizedEvent(KeyPhraseCallback, 0, true, "KeyPhrase", null));
 			LogEventDetails(_misty.RegisterAudioPlayCompleteEvent(AudioCallback, 0, true, "CharacterAudioComplete", null));
@@ -375,9 +383,8 @@ namespace SpeechTools
 					Height = 50
 				});
 			}
-
+			
 			_ = ManageListeningDisplay(ListeningState.Waiting);
-
 			return true;
 		}
 
