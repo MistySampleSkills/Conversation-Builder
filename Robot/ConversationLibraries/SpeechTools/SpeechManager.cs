@@ -173,16 +173,21 @@ namespace SpeechTools
 				}
 			}
 		}
-	
-		public bool HandleExternalSpeech(string text = null)
+
+		public bool CancelSpeechProcessing()
 		{
-			if(_externalOverridden)
+			if (_externalOverridden)
 			{
 				_externalOverridden = false;
 				return false;
 			}
 			_speechOverridden = true;
-			if(!string.IsNullOrWhiteSpace(text))
+			return true;
+		}
+
+		public bool HandleExternalSpeech(string text = null)
+		{
+			if (CancelSpeechProcessing() && !string.IsNullOrWhiteSpace(text))
 			{
 				return HandleSpeechResponse(text);
 			}

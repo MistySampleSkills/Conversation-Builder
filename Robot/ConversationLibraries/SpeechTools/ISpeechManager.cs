@@ -71,7 +71,8 @@ namespace SpeechTools
 		void SetPitch(string pitch);
 		//hacky
 		bool HandleExternalSpeech(string text = null);
-		
+		bool CancelSpeechProcessing();
+
 		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
 
 		void Dispose();

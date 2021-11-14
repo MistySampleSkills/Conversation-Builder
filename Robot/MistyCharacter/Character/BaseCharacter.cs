@@ -2486,6 +2486,10 @@ namespace MistyCharacter
 						return;
 					}
 				}
+				else
+				{
+					SpeechManager.CancelSpeechProcessing();
+				}
 
 				if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger)))
 				{
