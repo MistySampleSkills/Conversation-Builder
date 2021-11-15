@@ -227,7 +227,7 @@ namespace MistyCharacter
 
 			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
 			{
-				_ = _animationRecorder.SaveRecording($"--> Stopped speaking.");
+				_ = _animationRecorder.SaveRecording($"--> Stopped speaking.{Environment.NewLine}");
 			}
 		}
 		public void HandleStartedListeningReceived(object sender, DateTime datetime)
@@ -241,7 +241,7 @@ namespace MistyCharacter
 
 			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
 			{
-				_ = _animationRecorder.SaveRecording($"--> Started listening.");
+				_ = _animationRecorder.SaveRecording($"--> Started listening.{Environment.NewLine}");
 			}
 		}
 
@@ -256,7 +256,7 @@ namespace MistyCharacter
 
 			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
 			{
-				_ = _animationRecorder.SaveRecording($"--> Stopped listening.");
+				_ = _animationRecorder.SaveRecording($"--> Stopped listening.{Environment.NewLine}");
 			}
 		}
 		public void HandleKeyPhraseRecognizedReceived(object sender, IKeyPhraseRecognizedEvent kpRecEvent)
@@ -276,7 +276,7 @@ namespace MistyCharacter
 
 			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
 			{
-				_ = _animationRecorder.SaveRecording($"--> Processing voice.");
+				_ = _animationRecorder.SaveRecording($"--> Started processing voice.{Environment.NewLine}");
 			}
 		}
 
@@ -306,10 +306,14 @@ namespace MistyCharacter
 		private bool _serialMessageRegistered;
 		private bool _faceRecognitionRegistered;
 		private bool _objectDetectionRegistered;
-
+		private int _lastRightArmValue = 0;
+		private int _lastLeftArmValue = 0;
+		private int _lastHeadPitchValue = 0;
+		private int _lastHeadYawValue = 0;
+		private int _lastHeadRollValue = 0;
 		private AnimationRecorder _animationRecorder;
-
 		private SemaphoreSlim animationRecordingSlim = new SemaphoreSlim(1, 1);
+		private int _pauseCount = 0;
 
 		public MistyState(IRobotMessenger misty, IDictionary<string, object> parameters,  CharacterParameters characterParameters)
 		{
@@ -317,18 +321,14 @@ namespace MistyCharacter
 			_parameters = parameters;
 			_characterParameters = characterParameters;
 		}
-
-		int _lastRightArmValue = 0;
-		int _lastLeftArmValue = 0;
-		int _lastHeadPitchValue = 0;
-		int _lastHeadYawValue = 0;
-		int _lastHeadRollValue = 0;
-
+		
 		private async void SendRecordEvent(object timerData)
 		{
 			await animationRecordingSlim.WaitAsync();
 			try
 			{
+				bool armsChanged = false;
+				bool headChanged = false;
 				if (_animationRecorder != null)
 				{
 					int currentRightArmValue = _currentCharacterState?.RightArmActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.RightArmActuatorEvent.ActuatorValue) : _lastRightArmValue;
@@ -338,29 +338,35 @@ namespace MistyCharacter
 					int currentHeadYawValue = _currentCharacterState?.HeadYawActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.HeadYawActuatorEvent.ActuatorValue) : _lastHeadYawValue;
 
 					string action = "";
-					if (_characterParameters.SmoothRecording)
+					//TODO if (_characterParameters.SmoothRecording)
+					if (currentHeadPitchValue != _lastHeadPitchValue || currentHeadRollValue != _lastHeadRollValue || currentHeadYawValue != _lastHeadYawValue)
 					{
-						//TODO Only record if it changed by X?
-						if (currentHeadPitchValue != _lastHeadPitchValue || currentHeadRollValue != _lastHeadRollValue || currentHeadYawValue != _lastHeadYawValue)
+						headChanged = true;
+					}
+
+					if (currentRightArmValue != _lastRightArmValue || currentLeftArmValue != _lastLeftArmValue)
+					{
+						armsChanged = true;
+					}
+					
+					//don't write yet
+					++_pauseCount;
+
+					if (headChanged || armsChanged)
+					{
+						action += $"PAUSE:{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000 * _pauseCount))};" + Environment.NewLine;						
+						if (headChanged)
 						{
 							action += $"HEAD:{currentHeadPitchValue},{currentHeadRollValue},{currentHeadYawValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
 						}
-
-						if (currentRightArmValue != _lastRightArmValue || currentLeftArmValue != _lastLeftArmValue)
+						if (armsChanged)
 						{
 							action += $"ARMS:{currentLeftArmValue},{currentRightArmValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
 						}
+						_pauseCount = 0;
 					}
-					else
-					{
-						action += $"HEAD:{currentHeadPitchValue},{currentHeadRollValue},{currentHeadYawValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
-						action += $"ARMS:{currentLeftArmValue},{currentRightArmValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
-					}
-
-					action+= $"PAUSE:{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};" + Environment.NewLine;
 					
-					await _animationRecorder.SaveRecording(action);
-			
+					await _animationRecorder.SaveRecording(action);			
 					_lastRightArmValue = currentRightArmValue;
 					_lastLeftArmValue = currentLeftArmValue;
 					_lastHeadPitchValue = currentHeadPitchValue;
