@@ -11,6 +11,8 @@
 
 
 <h3>Create conversation</h3>
+<h5>After you have created an interaction to use for the 'startup' and 'no trigger' interactions, come back and add them.</h5>
+
 <hr />
 <h5 style="color:red">@ViewBag.Message</h5>
 
@@ -27,37 +29,7 @@
 				<label asp-for="Description" class="control-label"></label>
 				<textarea asp-for="Description" class="form-control"></textarea>
 				<span asp-validation-for="Description" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="StartupInteraction"></label>
-				<select asp-for="StartupInteraction" class="form-control">
-					<option value="" selected></option>
-					@foreach (KeyValuePair<string, string> item in @ViewBag.Interactions)
-					{
-						<option value="@item.Key">@item.Value</option>
-					}
-				</select>
-			</div>
-			<div class="form-group">
-				<label asp-for="StartingEmotion"></label>
-				<select asp-for="StartingEmotion" class="form-control">
-					<option value="" selected></option>
-					@foreach (KeyValuePair<string, string> item in @ViewBag.Emotions)
-					{
-						<option value="@item.Key">@item.Value</option>
-					}
-				</select>
-			</div>
-			<div class="form-group">
-				<label asp-for="NoTriggerInteraction"></label>
-				<select asp-for="NoTriggerInteraction" class="form-control">
-					<option value="" selected></option>
-					@foreach (KeyValuePair<string, string> item in @ViewBag.Interactions)
-					{
-						<option value="@item.Key">@item.Value</option>
-					}
-				</select>
-			</div>
+			</div>			
 			<div class="form-group">
 				<div class="checkbox">
 					<label>
@@ -67,7 +39,16 @@
 			</div>
 			@if(ViewBag.ShowBetaItems)
 			{
-			
+				<div class="form-group">
+					<label asp-for="StartingEmotion"></label>
+					<select asp-for="StartingEmotion" class="form-control">
+						<option value="" selected></option>
+						@foreach (KeyValuePair<string, string> item in @ViewBag.Emotions)
+						{
+							<option value="@item.Key">@item.Value</option>
+						}
+					</select>
+				</div>
 				<div class="form-group">
 					<label asp-for="ManagementAccess"></label>
 					<select asp-for="ManagementAccess" class="form-control">

@@ -65,8 +65,7 @@ namespace Conversation.Common
 		public const string Desire = "Desire";
 		public const string Sympathy = "Sympathy";
 		public const string Triumph = "Triumph";
-		
-        //Added to defaults
 		public const string Avoidance = "Avoidance";
+		public const string None = "None";
 	}
 }

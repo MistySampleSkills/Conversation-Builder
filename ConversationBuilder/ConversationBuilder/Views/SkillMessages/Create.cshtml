@@ -88,6 +88,13 @@
 					</label>
 				</div>
 			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IncludeInteractionInformation" /> @Html.DisplayNameFor(model => model.IncludeInteractionInformation)
+					</label>
+				</div>
+			</div>
 			@if(ViewBag.ShowBetaItems)
 			{
 				<div class="form-group">

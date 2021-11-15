@@ -149,6 +149,12 @@ namespace MistyManager
 						_assetWrapper.ShowSystemImage(SystemImage.Disoriented);
 						await Task.Delay(5000);
 					}
+
+					if(_characterParameters.IgnoreArmCommands)
+					{
+						await _misty.HaltAsync(new List<MotorMask> { MotorMask.AllMotors });
+					}
+
 					return initialized;
 				}
 				else if(_characterParameters == null)

@@ -217,9 +217,6 @@ namespace ConversationBuilder.Controllers
 					loadedSpeechConfiguration.SpeechRecognitionSubscriptionKey= speechConfiguration.SpeechRecognitionSubscriptionKey;
 					loadedSpeechConfiguration.TextToSpeechSubscriptionKey= speechConfiguration.TextToSpeechSubscriptionKey;
 					loadedSpeechConfiguration.TranslatedLanguage= speechConfiguration.TranslatedLanguage;
-					loadedSpeechConfiguration.SpeakingImage= speechConfiguration.SpeakingImage;
-					loadedSpeechConfiguration.ListeningImage= speechConfiguration.ListeningImage;
-					loadedSpeechConfiguration.ProcessingImage= speechConfiguration.ProcessingImage;
 					loadedSpeechConfiguration.TextToSpeechService = speechConfiguration.TextToSpeechService;
 					loadedSpeechConfiguration.SpeechRecognitionService = speechConfiguration.SpeechRecognitionService;
 					loadedSpeechConfiguration.ManagementAccess = speechConfiguration.ManagementAccess;

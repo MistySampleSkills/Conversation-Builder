@@ -27,7 +27,7 @@ namespace ConversationBuilder.ViewModels
 		
 		public string NoTriggerInteraction { get; set; }
 
-		public string StartingEmotion { get; set; } = DefaultEmotions.Joy;
+		public string StartingEmotion { get; set; } = DefaultEmotions.None;
 
 		//IList<Interaction>
 		public IList<string> Interactions { get; set; } = new List<string>();

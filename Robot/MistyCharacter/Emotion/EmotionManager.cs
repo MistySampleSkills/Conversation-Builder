@@ -117,6 +117,7 @@ namespace MistyCharacter
 
 			EmotionalMapping.TryAdd(Emotions.Calmness, new PID(PleasureLevel.Normal, IntensityLevel.Calm, DominanceLevel.Normal));
 			EmotionalMapping.TryAdd(Emotions.Avoidance, new PID(PleasureLevel.Dislike, IntensityLevel.Ignored, DominanceLevel.Normal));
+			EmotionalMapping.TryAdd(Emotions.None, new PID(PleasureLevel.Dislike, IntensityLevel.Ignored, DominanceLevel.Normal));
 
 			EmotionalMapping.TryAdd(Emotions.Boredom, new PID(PleasureLevel.Dislike, IntensityLevel.Boredom, DominanceLevel.Submissive));
 			EmotionalMapping.TryAdd(Emotions.EmpatheticPain, new PID(PleasureLevel.Dislike, IntensityLevel.AboveNormal, DominanceLevel.Normal));
@@ -280,6 +281,14 @@ namespace MistyCharacter
 				new AnimationRequest
 				{
 					Emotion = Emotions.Avoidance,
+					AudioFile = "",
+					ImageFile = ""
+				});
+
+			EmotionAnimations.TryAdd(Emotions.None,
+				new AnimationRequest
+				{
+					Emotion = Emotions.None,
 					AudioFile = "",
 					ImageFile = ""
 				});

@@ -91,7 +91,7 @@ namespace ConversationBuilder.DataModels
 		public double SpeechRate { get; set; } = 1.0;
 
 
-		[Display(Name = "Override Voice (Azure and Google only)")]
+		[Display(Name = "Override Voice")]
 		[JsonProperty(PropertyName = "OverrideVoice")]
 		/// <summary>
 		/// Pass in to speak in a different voice for this animation
@@ -124,7 +124,6 @@ namespace ConversationBuilder.DataModels
 		/// </summary>
 		public string SpeakingStyle { get; set; }
 
-		[Required]
 		[Display(Name = "Emotion of the animation")]
 		[JsonProperty(PropertyName = "Emotion")]
 		/// <summary>
@@ -132,7 +131,7 @@ namespace ConversationBuilder.DataModels
 		/// Emotional action drives default of all minor movements and changes and should provide a complete experience.
 		/// Most fields provided here are to allow overrides when necessary.
 		/// </summary>
-		public string Emotion { get; set; } = DefaultEmotions.Joy;
+		public string Emotion { get; set; } = DefaultEmotions.None;
 
 		[Display(Name = "Speak")]
 		[JsonProperty(PropertyName = "Speak")]

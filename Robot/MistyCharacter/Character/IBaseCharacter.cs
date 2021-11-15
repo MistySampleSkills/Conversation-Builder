@@ -83,12 +83,12 @@ namespace MistyCharacter
 		/// <summary>
 		/// Triggered when an interaction is started
 		/// </summary>
-		event EventHandler<DateTime> InteractionStarted;
+		event EventHandler<string> InteractionStarted;
 
 		/// <summary>
 		/// Triggered when an interaction is ended
 		/// </summary>
-		event EventHandler<DateTime> InteractionEnded;
+		event EventHandler<string> InteractionEnded;
 
 		/// <summary>
 		/// Triggered when an intent is handled

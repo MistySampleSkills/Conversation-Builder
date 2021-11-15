@@ -83,7 +83,7 @@ namespace ConversationBuilder.Controllers
 			_userManager = userManager;
 		}
 
-		public async Task<SkillParameters> GenerateSkillConfiguration(string id)
+		public async Task<SkillParameters> GenerateSkillConfiguration(string id, bool animationCreationMode = false, double animationCreationDebounceSeconds = 0.25, bool ignoreArmCommands = false, bool smoothRecording = false, bool retranslateTTS = false)
 		{
 			SkillParameters skillParameters = new SkillParameters();
 			SkillConversationGroup skillConversationGroup = new SkillConversationGroup();
@@ -103,6 +103,13 @@ namespace ConversationBuilder.Controllers
 				skillConversationGroup.CharacterConfiguration = conversationGroup.CharacterConfiguration;
 				skillConversationGroup.StartupConversation = conversationGroup.StartupConversation;
 				skillConversationGroup.ConversationMappings = conversationGroup.ConversationMappings;
+				skillConversationGroup.SkillAuthorizations = conversationGroup.SkillAuthorizations;
+
+				skillConversationGroup.AnimationCreationMode = animationCreationMode;
+				skillConversationGroup.AnimationCreationDebounceSeconds = animationCreationDebounceSeconds;
+				skillConversationGroup.IgnoreArmCommands = ignoreArmCommands;
+				skillConversationGroup.RetranslateTTS = retranslateTTS;
+				skillConversationGroup.SmoothRecording = smoothRecording;
 				
 				IList<SpeechHandler> allSpeechHandlers = null;
 				foreach (string conversationId in conversationGroup.Conversations)
@@ -310,6 +317,9 @@ namespace ConversationBuilder.Controllers
 						skillParameters.HeardSpeechToScreen = characterConfiguration.HeardSpeechToScreen;
 						skillParameters.LargePrint = characterConfiguration.LargePrint;
 						skillParameters.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
+						skillParameters.ProcessingImage = characterConfiguration.ProcessingImage;
+						skillParameters.ListeningImage	 = characterConfiguration.ListeningImage;
+						skillParameters.SpeakingImage = characterConfiguration.SpeakingImage;
 						skillParameters.ShowSpeakingIndicator = characterConfiguration.ShowSpeakingIndicator;
 						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;
 						skillParameters.StartVolume = characterConfiguration.StartVolume;
@@ -321,7 +331,6 @@ namespace ConversationBuilder.Controllers
 						skillParameters.PersonConfidence = characterConfiguration.PersonConfidence;
 						skillParameters.StreamInteraction = characterConfiguration.StreamInteraction;
 						skillParameters.Skill = characterConfiguration.Skill ?? "8be20a90-1150-44ac-a756-ebe4de30689e";
-						skillParameters.Character = characterConfiguration.Character ?? "basic";
 
 						if (!string.IsNullOrEmpty(characterConfiguration.SpeechConfiguration))
 						{
@@ -335,7 +344,6 @@ namespace ConversationBuilder.Controllers
 					else
 					{
 						skillParameters.Skill = "8be20a90-1150-44ac-a756-ebe4de30689e";
-						skillParameters.Character = "basic";
 					}
 				}
 
@@ -636,7 +644,7 @@ namespace ConversationBuilder.Controllers
 				}
 				return true;
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				return false;
 			}

@@ -120,12 +120,12 @@ namespace MistyConversation
 			//Do something
 		}
 
-		private void CuriousMisty_InteractionEnded(object sender, DateTime e)
+		private void CuriousMisty_InteractionEnded(object sender, string e)
 		{
 			//Do something
 		}
 
-		private void CuriousMisty_InteractionStarted(object sender, DateTime e)
+		private void CuriousMisty_InteractionStarted(object sender, string e)
 		{
 			//Do something
 		}

@@ -808,45 +808,94 @@ namespace MistyCharacter
 						{
 							case "ARMS":
 								//ARMS:leftDegrees,rightDegrees,timeMs;
-								string[] data = commandData[1].Split(",");
-								_ = Robot.MoveArmsAsync(Convert.ToDouble(data[0]), Convert.ToDouble(data[1]), null, null, Convert.ToDouble(data[2]) / 1000, AngularUnit.Degrees);
+								if(!CharacterParameters.IgnoreArmCommands)
+								{
+									string[] data = commandData[1].Split(",");
+									_ = Robot.MoveArmsAsync(Convert.ToDouble(data[0]), Convert.ToDouble(data[1]), null, null, Convert.ToDouble(data[2]) / 1000, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask>{ MotorMask.RightArm, MotorMask.LeftArm });
+								}
 								break;
 							case "ARMS-OFFSET":
 								//ARMS:leftDegrees,rightDegrees,timeMs;
-								string[] data1 = commandData[1].Split(",");
-								
-								_ = Robot.MoveArmsAsync(Convert.ToDouble(data1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(data1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, null, Convert.ToDouble(data1[2]) / 1000, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreArmCommands)
+								{
+									string[] data1 = commandData[1].Split(",");
+
+									_ = Robot.MoveArmsAsync(Convert.ToDouble(data1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(data1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, null, Convert.ToDouble(data1[2]) / 1000, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
+								}
 								break;
 							case "ARMS-OFFSET-V":
 								//ARMS:leftDegrees,rightDegrees,timeMs;
-								string[] datav1 = commandData[1].Split(",");
-								_ = Robot.MoveArmsAsync(Convert.ToDouble(datav1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(datav1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, Convert.ToDouble(datav1[2]), null, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreArmCommands)
+								{
+									string[] datav1 = commandData[1].Split(",");
+									_ = Robot.MoveArmsAsync(Convert.ToDouble(datav1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(datav1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, Convert.ToDouble(datav1[2]), null, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
+								}
 								break;
 							case "ARM-V":
 								//ARMS-V:leftDegrees,rightDegrees,velocity;
-								string[] armVData = commandData[1].Split(",");
-								RobotArm selectedVArm = armVData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-								_ = Robot.MoveArmAsync(Convert.ToDouble(armVData[1]), selectedVArm, Convert.ToDouble(armVData[2]), null, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreArmCommands)
+								{
+									string[] armVData = commandData[1].Split(",");
+									RobotArm selectedVArm = armVData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
+									_ = Robot.MoveArmAsync(Convert.ToDouble(armVData[1]), selectedVArm, Convert.ToDouble(armVData[2]), null, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
+								}
 								break;
 							case "ARM":
 								//ARM:left/right,degrees,timeMs;
-								string[] armData = commandData[1].Split(",");
-								RobotArm selectedArm = armData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-								_ = Robot.MoveArmAsync(Convert.ToDouble(armData[1]), selectedArm, null, Convert.ToDouble(armData[2]) / 1000, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreArmCommands)
+								{
+									string[] armData = commandData[1].Split(",");
+									RobotArm selectedArm = armData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
+									_ = Robot.MoveArmAsync(Convert.ToDouble(armData[1]), selectedArm, null, Convert.ToDouble(armData[2]) / 1000, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
+								}
 								break;
 							case "ARM-OFFSET":
 								//ARM:left/right,degrees,timeMs;
-								string[] armOData = commandData[1].Split(",");								
-								RobotArm selectedArm2 = armOData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-								double armDegrees = armOData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
-								_ = Robot.MoveArmAsync(Convert.ToDouble(armOData[1]) + armDegrees, selectedArm2, null, Convert.ToDouble(armOData[2]) / 1000, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreArmCommands)
+								{
+									string[] armOData = commandData[1].Split(",");
+									RobotArm selectedArm2 = armOData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
+									double armDegrees = armOData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
+									_ = Robot.MoveArmAsync(Convert.ToDouble(armOData[1]) + armDegrees, selectedArm2, null, Convert.ToDouble(armOData[2]) / 1000, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
+								}
 								break;
 							case "ARM-OFFSET-V":
 								//ARM:left/right,degrees,timeMs;
-								string[] armOvData = commandData[1].Split(",");
-								RobotArm selectedArm3 = armOvData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
-								double armDegrees2 = armOvData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
-								_ = Robot.MoveArmAsync(Convert.ToDouble(armOvData[1]) + armDegrees2, selectedArm3, Convert.ToDouble(armOvData[2]), null, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreArmCommands)
+								{
+									string[] armOvData = commandData[1].Split(",");
+									RobotArm selectedArm3 = armOvData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
+									double armDegrees2 = armOvData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
+									_ = Robot.MoveArmAsync(Convert.ToDouble(armOvData[1]) + armDegrees2, selectedArm3, Convert.ToDouble(armOvData[2]), null, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
+								}
 								break;
 							case "HEAD":
 								//HEAD:pitch,roll,yaw,timeMs;

@@ -56,6 +56,14 @@ namespace Conversation.Common
 		public IList<GenericDataStore> GenericDataStores { get; set; } = new List<GenericDataStore>();
 
         public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
-        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();	
+        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
+
+		//TODO In progress 
+		public bool AnimationCreationMode { get; set; } = false;
+		public double AnimationCreationDebounceSeconds { get; set; } = .25;
+		public bool IgnoreArmCommands { get; set; } = false;
+
+		public bool RetranslateTTS { get; set; }
+		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops
 	}
 }

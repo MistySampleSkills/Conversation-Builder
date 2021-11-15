@@ -54,9 +54,8 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "No Trigger Interaction - called if an interaction timeout happens.")]		
 		public string NoTriggerInteraction { get; set; }
 
-		[Required]
 		[Display(Name = "Starting emotion (beta)")]		
-		public string StartingEmotion { get; set; } = DefaultEmotions.Joy;
+		public string StartingEmotion { get; set; } = DefaultEmotions.None;
 
 		public IList<string> Interactions { get; set; } = new List<string>();
 

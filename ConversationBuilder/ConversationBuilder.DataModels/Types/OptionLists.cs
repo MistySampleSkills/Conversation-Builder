@@ -38,6 +38,7 @@ namespace ConversationBuilder.DataModels
 			AllItems.TryAdd(Sympathy, Sympathy);
 			AllItems.TryAdd(Triumph, Triumph);
 			AllItems.TryAdd(Avoidance, Avoidance);
+			AllItems.TryAdd(None, None);
 		}
 
 		public const string Admiration = "Admiration";
@@ -68,6 +69,7 @@ namespace ConversationBuilder.DataModels
 		public const string Sympathy = "Sympathy";
 		public const string Triumph = "Triumph";
 		public const string Avoidance = "Avoidance";
+		public const string None = "None";
 	}
 
 	public class Themes

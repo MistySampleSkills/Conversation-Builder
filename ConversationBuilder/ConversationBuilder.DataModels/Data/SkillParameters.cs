@@ -59,9 +59,12 @@ namespace ConversationBuilder.DataModels
 		public bool ShowListeningIndicator { get; set; } = true;
 		public bool ShowSpeakingIndicator { get; set; } = true;
 
+		public string ProcessingImage { get; set; }
+		public string SpeakingImage { get; set; }		
+		public string ListeningImage { get; set; }
+
 		public string Payload { get; set; }
 		public string Skill { get; set; }
-		public string Character { get; set; }
 		public IList<Robot> Robots { get; set; } = new List<Robot>();
 		public IList<Recipe> Recipes { get; set; } = new List<Recipe>();
 	}

@@ -50,6 +50,7 @@ namespace Conversation.Common
 
 		public bool IncludeCharacterState { get; set; }
 		public bool IncludeLatestTriggerMatch { get; set; } = true;
+		public bool IncludeInteractionInformation { get; set; } = true;		
 		public bool StreamTriggerCheck { get; set; }
 
 		public bool StartIfStopped { get; set; } = true;

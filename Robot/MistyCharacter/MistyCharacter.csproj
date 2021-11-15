@@ -120,6 +120,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Character\AnimationRecorder.cs" />
     <Compile Include="Character\TOFCounter.cs" />
     <Compile Include="Character\MistyState.cs" />
     <Compile Include="Data\TimerTriggerData.cs" />

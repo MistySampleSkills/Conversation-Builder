@@ -92,7 +92,7 @@ namespace SpeechTools
 		private bool _keyPhraseTriggered;
 		private bool _keyPhraseOn;
 		private Random _random = new Random();
-		private IList<string> _replacementValues = new List<string> { "face", "filter", "qrcode", "arcode", "text", "intent", "time", "robotname", "emotion", "audio", "charge", "image", "serial", "object" };
+		private IList<string> _replacementValues = new List<string> { "face", "filter", "qrcode", "arcode", "text", "day", "partofday", "intent", "time", "robotname", "emotion", "audio", "charge", "image", "serial", "object" };
 
 		private IList<GenericDataStore> _genericDataStores = new List<GenericDataStore>();
 		private string _robotName = "Misty";
@@ -369,30 +369,73 @@ namespace SpeechTools
 
 			if (_characterParameters.ShowSpeakingIndicator)
 			{
-				await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+				if(!string.IsNullOrWhiteSpace(_characterParameters.SpeakingImage))
 				{
-					VerticalAlignment = ImageVerticalAlignment.Bottom,
-					HorizontalAlignment = ImageHorizontalAlignment.Center,
-					PlaceOnTop = true,
-					Stretch = ImageStretch.None,
-					Visible = false,
-					Height = 50
-				});
+					await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+					{
+						VerticalAlignment = ImageVerticalAlignment.Bottom,
+						HorizontalAlignment = ImageHorizontalAlignment.Center,
+						PlaceOnTop = true,
+						Stretch = ImageStretch.None,
+						Visible = false,
+						Height = 50
+					});
+				}
+				else
+				{
+					await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+					{
+						Wrap = true,
+						Visible = true,
+						Weight = 15,
+						Size = 20,
+						HorizontalAlignment = ImageHorizontalAlignment.Center,
+						VerticalAlignment = ImageVerticalAlignment.Bottom,
+						Red = 255,
+						Green = 255,
+						Blue = 255,
+						PlaceOnTop = true,
+						FontFamily = "Courier New",
+						Height = 40
+					});
+				}
+				
 			}
 
 			if (_characterParameters.ShowListeningIndicator)
 			{
-				await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+				if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage) || !string.IsNullOrWhiteSpace(_characterParameters.ProcessingImage))
 				{
-					VerticalAlignment = ImageVerticalAlignment.Bottom,
-					HorizontalAlignment = ImageHorizontalAlignment.Right,
-					PlaceOnTop = true,
-					Stretch = ImageStretch.None,
-					Visible = false,
-					Height = 50
-				});
-			}
-			
+					await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+					{
+						VerticalAlignment = ImageVerticalAlignment.Bottom,
+						HorizontalAlignment = ImageHorizontalAlignment.Right,
+						PlaceOnTop = true,
+						Stretch = ImageStretch.None,
+						Visible = false,
+						Height = 50
+					});
+				}
+				else
+				{
+					await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+					{
+						Wrap = true,
+						Visible = true,
+						Weight = 15,
+						Size = 20,
+						HorizontalAlignment = ImageHorizontalAlignment.Center,
+						VerticalAlignment = ImageVerticalAlignment.Bottom,
+						Red = 255,
+						Green = 255,
+						Blue = 255,
+						PlaceOnTop = true,
+						FontFamily = "Courier New",
+						Height = 40
+					});
+				}
+			}			
+
 			_ = ManageListeningDisplay(ListeningState.Waiting);
 			return true;
 		}
@@ -450,7 +493,11 @@ namespace SpeechTools
 
 			_misty.StopRecordingAudio(null);
 		}
-		
+
+		private bool _speakingIndictorShowing = false;
+		private bool _listeningIndictorShowing = false;
+		private bool _textIndictorShowing = false;
+
 		private async Task ManageListeningDisplay(ListeningState listeningState)
 		{
 			try
@@ -466,71 +513,203 @@ namespace SpeechTools
 				switch (listeningState)
 				{
 					case ListeningState.Speaking:
-						if (!string.IsNullOrWhiteSpace(_characterParameters.SpeakingImage) && _characterParameters.ShowSpeakingIndicator)
+						if(_characterParameters.ShowSpeakingIndicator)
 						{
-							await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+							if (!string.IsNullOrWhiteSpace(_characterParameters.SpeakingImage))
 							{
-								Visible = false
-							});
+								if(!_speakingIndictorShowing)
+								{
+									_listeningIndictorShowing = false;
+									_speakingIndictorShowing = true;
+									_textIndictorShowing = false;
 
-							await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+									await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+									{
+										PlaceOnTop = true,
+										Visible = true,
+									});
+
+									await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+									{
+										Visible = false
+									});
+									
+									_misty.DisplayImage(_characterParameters.SpeakingImage, "Speaking", false, null);
+								}
+								
+							}
+							else
 							{
-								PlaceOnTop = true,
-								Visible = true,
-							});
+								if (!_textIndictorShowing)
+								{
+									_listeningIndictorShowing = false;
+									_speakingIndictorShowing = false;
+									_textIndictorShowing = true;
 
-							_misty.DisplayImage(_characterParameters.SpeakingImage, "Speaking", false, null);
+									await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+									{
+										Visible = true,
+										PlaceOnTop = true
+									});
+								}
+
+								_misty.DisplayText("Speaking...", "ListeningText", null);
+							}
 						}
 						break;
 					case ListeningState.ProcessingSpeech:
-						if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage) && _characterParameters.ShowListeningIndicator && !_characterParameters.UsePreSpeech)
+						if (_characterParameters.ShowListeningIndicator && !_characterParameters.UsePreSpeech)
 						{
-							if ((_listeningState != ListeningState.ProcessingSpeech && _listeningState != ListeningState.Recording))
+							if (!string.IsNullOrWhiteSpace(_characterParameters.ProcessingImage))
 							{
-								await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								if (!_listeningIndictorShowing)
 								{
-									Visible = false
-								});
+									_speakingIndictorShowing = false;
+									_listeningIndictorShowing = true;
+									_textIndictorShowing = false;
 
-								await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-								{
-									PlaceOnTop = true,
-									Visible = true,
-								});
+									await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+									{
+										PlaceOnTop = true,
+										Visible = true,
+									});
+
+									await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+									{
+										Visible = false
+									});
+								}
+
+								_misty.DisplayImage(_characterParameters.ProcessingImage, "Listening", false, null);
 							}
+							else
+							{
+								if (!_textIndictorShowing)
+								{
+									_listeningIndictorShowing = false;
+									_speakingIndictorShowing = false;
+									_textIndictorShowing = true;
 
-							_misty.DisplayImage(_characterParameters.ProcessingImage, "Listening", false, null);
+									await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+									{
+										Visible = true,
+										PlaceOnTop = true
+									});
+								}
+
+								_misty.DisplayText("Processing...", "ListeningText", null);
+							}
 						}
+						
 						break;
 					case ListeningState.Recording:
-						if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage) && _characterParameters.ShowListeningIndicator)
+						if (_characterParameters.ShowListeningIndicator && !_characterParameters.UsePreSpeech)
 						{
-							if ((_listeningState != ListeningState.ProcessingSpeech && _listeningState != ListeningState.Recording))
+							if (!string.IsNullOrWhiteSpace(_characterParameters.ListeningImage))
 							{
-								await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+								if (!_listeningIndictorShowing)
 								{
-									Visible = false
-								});
+									_speakingIndictorShowing = false;
+									_listeningIndictorShowing = true;
+									_textIndictorShowing = false;
 
-								await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
-								{
-									PlaceOnTop = true,
-									Visible = true,
-								});
+									await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+									{
+										PlaceOnTop = true,
+										Visible = true,
+									});
+
+
+									await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+									{
+										Visible = false
+									});
+								}
+								_misty.DisplayImage(_characterParameters.ListeningImage, "Listening", false, null);
 							}
+							else
+							{
+								if (!_textIndictorShowing)
+								{
+									_listeningIndictorShowing = false;
+									_speakingIndictorShowing = false;
+									_textIndictorShowing = true;
 
-							_misty.DisplayImage(_characterParameters.ListeningImage, "Listening", false, null);
+									await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
+									{
+										Visible = false
+									});
+
+									await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
+									{
+										Visible = true,
+										PlaceOnTop = true
+									});
+								}
+
+								_misty.DisplayText("Listening...", "ListeningText", null);
+							}
 						}
 						break;
 					case ListeningState.Waiting:
 					default:
 						if (_characterParameters.ShowSpeakingIndicator || _characterParameters.ShowListeningIndicator)
 						{
+							_speakingIndictorShowing = false;
+							_listeningIndictorShowing = false;
+							_textIndictorShowing = false;
+
 							await _misty.SetImageDisplaySettingsAsync("Speaking", new ImageSettings
 							{
 								Visible = false
 							});
+
 							await _misty.SetImageDisplaySettingsAsync("Listening", new ImageSettings
+							{
+								Visible = false
+							});
+
+							await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
 							{
 								Visible = false
 							});
@@ -569,7 +748,12 @@ namespace SpeechTools
 						currentAnimation.SpeakFileName = ConversationConstants.IgnoreCallback + currentAnimation.SpeakFileName;
 					}
 				}
-				
+
+				if(!string.IsNullOrWhiteSpace(currentAnimation.OverrideVoice))
+				{
+					SetVoice(currentAnimation.OverrideVoice);
+				}
+
 				_listenAborted = false;
 				_ = ManageListeningDisplay(ListeningState.Speaking);
 
@@ -1454,6 +1638,12 @@ namespace SpeechTools
 					break;
 				case "time":
 					newData = _timeManager.GetTimeObject().SpokenTime ?? MissingInlineData;
+					break;
+				case "partofday":
+					newData = _timeManager.GetTimeObject().Description.ToString() ?? MissingInlineData;
+					break;
+				case "day":
+					newData = _timeManager.GetTimeObject().SpokenDay.ToString() ?? MissingInlineData;
 					break;
 				case "emotion":
 					newData = _characterState.CurrentMood ?? MissingInlineData;

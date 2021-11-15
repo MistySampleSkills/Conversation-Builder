@@ -24,11 +24,6 @@
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 			<div class="form-group">
-				<label asp-for="Character" class="control-label"></label>
-				<input asp-for="Character" class="form-control" />
-				<span asp-validation-for="Character" class="text-danger"></span>
-			</div>
-			<div class="form-group">
 				<label asp-for="SpeechConfiguration"></label>
 				<select asp-for="SpeechConfiguration" class="form-control">
 					<option value="" selected></option>
@@ -133,6 +128,21 @@
 						<input asp-for="ShowSpeakingIndicator" /> @Html.DisplayNameFor(model => model.ShowSpeakingIndicator)
 					</label>
 				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="SpeakingImage" class="control-label"></label>
+				<input asp-for="SpeakingImage" class="form-control" />
+				<span asp-validation-for="SpeakingImage" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="ListeningImage" class="control-label"></label>
+				<input asp-for="ListeningImage" class="form-control" />
+				<span asp-validation-for="ListeningImage" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<label asp-for="ProcessingImage" class="control-label"></label>
+				<input asp-for="ProcessingImage" class="form-control" />
+				<span asp-validation-for="ProcessingImage" class="text-danger"></span>
 			</div>
 			@if(ViewBag.ShowBetaItems)
 			{

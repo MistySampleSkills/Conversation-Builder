@@ -158,6 +158,40 @@
 					<input asp-for="RobotIp" class="form-control" />
 					<span asp-validation-for="RobotIp" class="text-danger"></span>
 				</div>
+				
+				<div class="form-group">
+					<div class="checkbox">
+						<label>
+							<input asp-for="AnimationCreationMode" /> @Html.DisplayNameFor(model => model.AnimationCreationMode)
+						</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<label asp-for="AnimationCreationDebounceSeconds" class="control-label"></label>
+					<input asp-for="AnimationCreationDebounceSeconds" class="form-control" />
+					<span asp-validation-for="AnimationCreationDebounceSeconds" class="text-danger"></span>
+				</div>
+				<div class="form-group">
+					<div class="checkbox">
+						<label>
+							<input asp-for="IgnoreArmCommands" /> @Html.DisplayNameFor(model => model.IgnoreArmCommands)
+						</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="checkbox">
+						<label>
+							<input asp-for="SmoothRecording" /> @Html.DisplayNameFor(model => model.SmoothRecording)
+						</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="checkbox">
+						<label>
+							<input asp-for="RetranslateTTS" /> @Html.DisplayNameFor(model => model.RetranslateTTS)
+						</label>
+					</div>
+				</div>
 				<div class="form-group">
 					<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
 				</div>

@@ -32,11 +32,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Conversation.Common;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
+using SkillTools.DataStorage;
 
 namespace MistyCharacter
 {
@@ -84,17 +86,17 @@ namespace MistyCharacter
 		void HandleCompletedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
 		void HandleStartedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
 
-		event EventHandler<TriggerData> ValidTriggerReceived;
-		event EventHandler<DateTime> ConversationStarted;
-		event EventHandler<DateTime> ConversationEnded;
-		event EventHandler<DateTime> InteractionStarted;
-		event EventHandler<DateTime> InteractionEnded;
+		//event EventHandler<TriggerData> ValidTriggerReceived;
+		//event EventHandler<DateTime> ConversationStarted;
+		//event EventHandler<DateTime> ConversationEnded;
+		//event EventHandler<DateTime> InteractionStarted;
+		//event EventHandler<DateTime> InteractionEnded;
 
 		void HandleValidTriggerReceived(object sender, TriggerData triggerData);
 		void HandleConversationStarted(object sender, DateTime datetime);
 		void HandleConversationEnded(object sender, DateTime datetime);
-		void HandleInteractionStarted(object sender, DateTime datetime);
-		void HandleInteractionEnded(object sender, DateTime datetime);
+		void HandleInteractionStarted(object sender, string interactionName);
+		void HandleInteractionEnded(object sender, string interactionName);
 
 		Task<bool> Initialize();
 
@@ -109,6 +111,8 @@ namespace MistyCharacter
 		private IDictionary<string, object> _parameters = new Dictionary<string, object>();
 		private CharacterParameters _characterParameters = new CharacterParameters();
 		private CharacterState _currentCharacterState = new CharacterState();
+
+		private Timer _animationCreationTimer;
 		
 		//Allow others to register for these... pass on the event data
 
@@ -140,8 +144,8 @@ namespace MistyCharacter
 		public event EventHandler<TriggerData> ValidTriggerReceived;
 		public event EventHandler<DateTime> ConversationStarted;
 		public event EventHandler<DateTime> ConversationEnded;
-		public event EventHandler<DateTime> InteractionStarted;
-		public event EventHandler<DateTime> InteractionEnded;
+		public event EventHandler<string> InteractionStarted;
+		public event EventHandler<string> InteractionEnded;
 
 		//speech
 		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
@@ -164,6 +168,10 @@ namespace MistyCharacter
 		public void HandleConversationStarted(object sender, DateTime datetime)
 		{
 			ConversationStarted?.Invoke(this, datetime);
+			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
+			{
+				_ = _animationRecorder.SaveRecording($"--> Conversation Started at {DateTime.Now}.{Environment.NewLine}");
+			}
 		}
 
 		public void HandleConversationEnded(object sender, DateTime datetime)
@@ -171,14 +179,19 @@ namespace MistyCharacter
 			ConversationEnded?.Invoke(this, datetime);
 		}
 
-		public void HandleInteractionStarted(object sender, DateTime datetime)
+		public void HandleInteractionStarted(object sender, string interactionName)
 		{
-			InteractionStarted?.Invoke(this, datetime);
+			InteractionStarted?.Invoke(this, interactionName);
+
+			if(_characterParameters.AnimationCreationMode && _animationRecorder != null)
+			{
+				_ = _animationRecorder.SaveRecording($"--> Interaction change to '{interactionName}' at {DateTime.Now}.{Environment.NewLine}");
+			}
 		}
 
-		public void HandleInteractionEnded(object sender, DateTime datetime)
+		public void HandleInteractionEnded(object sender, string interactionName)
 		{
-			InteractionEnded?.Invoke(this, datetime);
+			InteractionEnded?.Invoke(this, interactionName);
 		}
 
 		public void HandleSpeechIntentReceived(object sender, TriggerData triggerData)
@@ -194,6 +207,11 @@ namespace MistyCharacter
 		public void HandleStartedSpeakingReceived(object sender, string text)
 		{
 			StartedSpeaking?.Invoke(this, text);
+
+			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
+			{
+				_ = _animationRecorder.SaveRecording($"--> Started Saying '{text}' at {DateTime.Now}.{Environment.NewLine}");
+			}
 		}
 
 		public void HandleStoppedSpeakingReceived(object sender, IAudioPlayCompleteEvent audioEvent)
@@ -206,6 +224,11 @@ namespace MistyCharacter
 			_currentCharacterState.Saying = "";
 			_currentCharacterState.Spoke = true;
 			StoppedSpeaking?.Invoke(this, audioEvent);
+
+			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
+			{
+				_ = _animationRecorder.SaveRecording($"--> Stopped speaking.");
+			}
 		}
 		public void HandleStartedListeningReceived(object sender, DateTime datetime)
 		{
@@ -215,7 +238,13 @@ namespace MistyCharacter
 			}
 			_currentCharacterState.Listening = true;
 			StartedListening?.Invoke(this, datetime);
+
+			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
+			{
+				_ = _animationRecorder.SaveRecording($"--> Started listening.");
+			}
 		}
+
 		public void HandleStoppedListeningReceived(object sender, IVoiceRecordEvent voiceEvent)
 		{
 			if (_currentCharacterState == null || voiceEvent == null)
@@ -224,6 +253,11 @@ namespace MistyCharacter
 			}
 			_currentCharacterState.Listening = false;
 			StoppedListening?.Invoke(this, voiceEvent);
+
+			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
+			{
+				_ = _animationRecorder.SaveRecording($"--> Stopped listening.");
+			}
 		}
 		public void HandleKeyPhraseRecognizedReceived(object sender, IKeyPhraseRecognizedEvent kpRecEvent)
 		{
@@ -239,6 +273,11 @@ namespace MistyCharacter
 		public void HandleStartedProcessingVoiceReceived(object sender, IVoiceRecordEvent voiceData)
 		{
 			StartedProcessingVoice?.Invoke(this, voiceData);
+
+			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
+			{
+				_ = _animationRecorder.SaveRecording($"--> Processing voice.");
+			}
 		}
 
 		public void HandleKeyPhraseRecognitionOn(object sender, bool e)
@@ -267,14 +306,82 @@ namespace MistyCharacter
 		private bool _serialMessageRegistered;
 		private bool _faceRecognitionRegistered;
 		private bool _objectDetectionRegistered;
-		
+
+		private AnimationRecorder _animationRecorder;
+
+		private SemaphoreSlim animationRecordingSlim = new SemaphoreSlim(1, 1);
+
 		public MistyState(IRobotMessenger misty, IDictionary<string, object> parameters,  CharacterParameters characterParameters)
 		{
 			_misty = misty;
 			_parameters = parameters;
 			_characterParameters = characterParameters;
 		}
-		
+
+		int _lastRightArmValue = 0;
+		int _lastLeftArmValue = 0;
+		int _lastHeadPitchValue = 0;
+		int _lastHeadYawValue = 0;
+		int _lastHeadRollValue = 0;
+
+		private async void SendRecordEvent(object timerData)
+		{
+			await animationRecordingSlim.WaitAsync();
+			try
+			{
+				if (_animationRecorder != null)
+				{
+					int currentRightArmValue = _currentCharacterState?.RightArmActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.RightArmActuatorEvent.ActuatorValue) : _lastRightArmValue;
+					int currentLeftArmValue = _currentCharacterState?.LeftArmActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.LeftArmActuatorEvent.ActuatorValue) : _lastLeftArmValue;
+					int currentHeadPitchValue = _currentCharacterState?.HeadPitchActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.HeadPitchActuatorEvent.ActuatorValue) : _lastHeadPitchValue;
+					int currentHeadRollValue = _currentCharacterState?.HeadRollActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.HeadRollActuatorEvent.ActuatorValue) : _lastHeadRollValue;
+					int currentHeadYawValue = _currentCharacterState?.HeadYawActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.HeadYawActuatorEvent.ActuatorValue) : _lastHeadYawValue;
+
+					string action = "";
+					if (_characterParameters.SmoothRecording)
+					{
+						//TODO Only record if it changed by X?
+						if (currentHeadPitchValue != _lastHeadPitchValue || currentHeadRollValue != _lastHeadRollValue || currentHeadYawValue != _lastHeadYawValue)
+						{
+							action += $"HEAD:{currentHeadPitchValue},{currentHeadRollValue},{currentHeadYawValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
+						}
+
+						if (currentRightArmValue != _lastRightArmValue || currentLeftArmValue != _lastLeftArmValue)
+						{
+							action += $"ARMS:{currentLeftArmValue},{currentRightArmValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
+						}
+					}
+					else
+					{
+						action += $"HEAD:{currentHeadPitchValue},{currentHeadRollValue},{currentHeadYawValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
+						action += $"ARMS:{currentLeftArmValue},{currentRightArmValue},{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};{Environment.NewLine}";
+					}
+
+					action+= $"PAUSE:{Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000))};" + Environment.NewLine;
+					
+					await _animationRecorder.SaveRecording(action);
+			
+					_lastRightArmValue = currentRightArmValue;
+					_lastLeftArmValue = currentLeftArmValue;
+					_lastHeadPitchValue = currentHeadPitchValue;
+					_lastHeadYawValue = currentHeadYawValue;
+					_lastHeadRollValue = currentHeadRollValue;
+				}
+			}
+			catch (Exception ex)
+			{
+				if (_animationRecorder != null)
+				{
+					await _animationRecorder.SaveRecording($"-- EXCEPTION : {ex}{Environment.NewLine}");
+				}
+				_misty.SkillLogger.LogError("Failed to record motion.", ex);
+			}
+			finally
+			{
+				animationRecordingSlim.Release();
+			}
+		}
+
 		public async Task<bool> Initialize()
 		{
 			try
@@ -282,10 +389,22 @@ namespace MistyCharacter
 				_misty.UnregisterAllEvents(null); //in case last run was stopped abnormally (via debugger)
 				await Task.Delay(2000); //time for unreg to happen before we rereg
 				RegisterStartingEvents();
+
+				if (_characterParameters.AnimationCreationMode)
+				{
+					_animationRecorder = new AnimationRecorder();
+					string name = $"recorded_{_characterParameters.ConversationGroup.Name}_{DateTime.Now.ToString()}";
+					if (await _animationRecorder.CreateDataStore(name))
+					{
+						_misty.SkillLogger.LogError("Failed to create animation recording file with name {name}.");
+						_animationCreationTimer = new Timer(SendRecordEvent, null, Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000)), Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000)));
+					}
+				}
 				return true;
 			}
 			catch
 			{
+				_misty.SkillLogger.LogError("Failed to initialize animation recording system.");
 				return false;
 			}
 		}
@@ -837,6 +956,7 @@ namespace MistyCharacter
 			{
 				if (disposing)
 				{
+					_animationCreationTimer?.Dispose();
 					_misty.UnregisterAllEvents(null);
 				}
 

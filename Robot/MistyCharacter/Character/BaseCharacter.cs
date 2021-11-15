@@ -86,8 +86,8 @@ namespace MistyCharacter
 		public event EventHandler<TriggerData> ValidTriggerReceived;		
 		public event EventHandler<DateTime> ConversationStarted;
 		public event EventHandler<DateTime> ConversationEnded;
-		public event EventHandler<DateTime> InteractionStarted;
-		public event EventHandler<DateTime> InteractionEnded;
+		public event EventHandler<string> InteractionStarted;
+		public event EventHandler<string> InteractionEnded;
 
 		public event EventHandler<IDriveEncoderEvent> DriveEncoder;//TODO
 
@@ -218,6 +218,12 @@ namespace MistyCharacter
 				SpeechManager.CompletedProcessingVoice += SpeechManager_CompletedProcessingVoice;
 				SpeechManager.StartedProcessingVoice += SpeechManager_StartedProcessingVoice;
 				SpeechManager.KeyPhraseRecognitionOn += SpeechManager_KeyPhraseRecognitionOn;
+
+				InteractionStarted += MistyState.HandleInteractionStarted;
+				InteractionEnded += MistyState.HandleInteractionEnded;
+				ConversationStarted += MistyState.HandleConversationStarted;
+				ConversationEnded += MistyState.HandleConversationEnded;
+				ValidTriggerReceived += MistyState.HandleValidTriggerReceived;
 
 				//TODO Cleanup of event vs commands since passing in anyway
 				AnimationManager.SyncEvent += AnimationManager_SyncEvent;
@@ -994,7 +1000,7 @@ namespace MistyCharacter
 				}
 
 				ConversationStarted?.Invoke(this, DateTime.Now);
-				QueueInteraction(CurrentInteraction);
+				QueueAndRunInteraction(CurrentInteraction);
 				return true;
 			}
 			return false;
@@ -1027,7 +1033,7 @@ namespace MistyCharacter
 					//TODO Go to No Interaction selection?
 					Robot.SkillLogger.Log($"Interaction: {CurrentInteraction?.Name} | Unmapped intent. Going to the start of the same conversation...");
 					Interaction interactionRequest = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == _currentConversationData.StartupInteraction);
-					QueueInteraction(interactionRequest);
+					QueueAndRunInteraction(interactionRequest);
 					return;
 				}
 
@@ -1175,7 +1181,7 @@ namespace MistyCharacter
 								{
 									interactionRequest.ListeningAnimation = listeningOverrideAnimation;
 								}
-								QueueInteraction(interactionRequest);
+								QueueAndRunInteraction(interactionRequest);
 							}
 						}
 						else if (!string.IsNullOrWhiteSpace(conversation) && string.IsNullOrWhiteSpace(interaction))
@@ -1204,7 +1210,7 @@ namespace MistyCharacter
 								{
 									interactionRequest.ListeningAnimation = listeningOverrideAnimation;
 								}
-								QueueInteraction(interactionRequest);
+								QueueAndRunInteraction(interactionRequest);
 							}
 						}
 						else if (!string.IsNullOrWhiteSpace(conversation) && !string.IsNullOrWhiteSpace(interaction))
@@ -1233,7 +1239,7 @@ namespace MistyCharacter
 								{
 									interactionRequest.ListeningAnimation = listeningOverrideAnimation;
 								}
-								QueueInteraction(interactionRequest);
+								QueueAndRunInteraction(interactionRequest);
 							}
 						}
 					}
@@ -1333,7 +1339,7 @@ namespace MistyCharacter
 
 
 				//	StateAtAnimationStart = new CharacterState(MistyState.GetCharacterState());
-				InteractionStarted?.Invoke(this, DateTime.Now);
+				InteractionStarted?.Invoke(this, CurrentInteraction?.Name);
 
 				string triggerActionOptionId = "";
 				string currentAnimationId = "";
@@ -1407,53 +1413,70 @@ namespace MistyCharacter
 			}
 		}
 
+		private string GetInteractionUIEvent()
+		{
+			try
+			{ 
+				IList<TriggerDetail> triggerList = new List<TriggerDetail>();
+				IList<TriggerDetail> utteranceList = new List<TriggerDetail>();
+
+				//Get trigger details from id
+				foreach (string triggerString in _allowedTriggers)
+				{
+					TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Id == triggerString);
+					if (trigger != null && !triggerList.Contains(trigger))
+					{
+						triggerList.Add(trigger);
+					}
+				}
+
+				foreach (string utteranceString in _allowedUtterances)
+				{
+					//get utterances
+					TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == utteranceString || x.Name == utteranceString));
+
+					if (trigger != null && !triggerList.Contains(trigger))
+					{
+						utteranceList.Add(trigger);
+					}
+				}
+
+				//Send this? Others?
+				if (triggerList.FirstOrDefault(x => x.Trigger == Triggers.Timeout) == null)
+				{
+					triggerList.Add(new TriggerDetail("-1", Triggers.Timeout));
+				}
+
+				IDictionary<string, object> data = new Dictionary<string, object>
+				{
+					{"CurrentInteraction", CurrentInteraction },
+					{"Utterances", utteranceList},
+					{"Triggers", triggerList},
+					{"State", MistyState.GetCharacterState()},
+				};
+
+				return JsonConvert.SerializeObject(data);
+			}
+			catch
+			{
+				return string.Empty;
+			}
+		}
+
 		private void SendInteractionUIEvent()
 		{
-			//TODO Test resending as items are added!
+			//TODO Test performance as items are added!
 
 			if (!CharacterParameters.SendInteractionUIEvents)
 			{
 				return;
 			}
-			IList<TriggerDetail> triggerList = new List<TriggerDetail>();
-			IList<TriggerDetail> utteranceList = new List<TriggerDetail>();
-			
-			//Get trigger details from id
-			foreach (string triggerString in _allowedTriggers)
-			{
-				TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Id == triggerString);
-				if (trigger != null && !triggerList.Contains(trigger))
-				{
-					triggerList.Add(trigger);
-				}
-			}
 
-			foreach (string utteranceString in _allowedUtterances)
+			string msg = GetInteractionUIEvent();
+			if (!string.IsNullOrWhiteSpace(msg))
 			{
-				//get utterances
-				TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == utteranceString || x.Name == utteranceString));
-				
-				if (trigger != null && !triggerList.Contains(trigger))
-				{
-					utteranceList.Add(trigger);
-				}
+				Robot.PublishMessage(msg, null);
 			}
-
-			//Send this? Others?
-			if (triggerList.FirstOrDefault(x => x.Trigger == Triggers.Timeout) == null)
-			{
-				triggerList.Add(new TriggerDetail("-1", Triggers.Timeout));
-			}
-			
-			IDictionary<string, object> data = new Dictionary<string, object>
-			{
-				{"CurrentInteraction", CurrentInteraction },
-				{"Utterances", utteranceList},
-				{"Triggers", triggerList},
-				{"State", MistyState.GetCharacterState()},
-			};
-
-			Robot.PublishMessage(JsonConvert.SerializeObject(data), null);
 		}
 
 
@@ -1735,6 +1758,14 @@ namespace MistyCharacter
 					{
 						payloadData.Add("LatestTriggerMatch", Newtonsoft.Json.JsonConvert.SerializeObject(_latestTriggerMatchData));
 					}
+					if(skillMessage.IncludeInteractionInformation)
+					{
+						string interactionMsg = GetInteractionUIEvent();
+						if (!string.IsNullOrWhiteSpace(interactionMsg))
+						{
+							payloadData.Add("Interaction", interactionMsg);
+						}
+					}
 
 					//Test
 					if (skillMessage.StartIfStopped)
@@ -1830,13 +1861,13 @@ namespace MistyCharacter
 					animationRequest.LEDTransitionAction = defaultAnimation.LEDTransitionAction;
 				}
 
-				if (animationRequest.Volume != null && animationRequest.Volume > 0)
+				if (animationRequest.Volume != null && animationRequest.Volume >= 0)
 				{
-					SpeechManager.Volume = (int)animationRequest.Volume;
+					SpeechManager.Volume = (int)animationRequest.Volume > 100 ? 100 : (int)animationRequest.Volume;
 				}
-				else if (defaultAnimation.Volume != null && defaultAnimation.Volume > 0)
+				else if (defaultAnimation.Volume != null && defaultAnimation.Volume >= 0)
 				{
-					SpeechManager.Volume = (int)defaultAnimation.Volume;
+					SpeechManager.Volume = (int)defaultAnimation.Volume > 100 ? 100 : (int)defaultAnimation.Volume;
 				}
 
 				if (interaction.Retrigger &&
@@ -1999,10 +2030,10 @@ namespace MistyCharacter
 
 		public void TriggerAnimationComplete(Interaction interaction)
 		{
-			InteractionEnded?.Invoke(this, DateTime.Now);
+			InteractionEnded?.Invoke(this, interaction?.Name);
 		}
 
-		private void QueueInteraction(Interaction interaction)
+		private void QueueAndRunInteraction(Interaction interaction)
 		{
 			try
 			{
@@ -2010,8 +2041,7 @@ namespace MistyCharacter
 				_interactionQueue.Enqueue(interaction);
 
 				RunNextAnimation();
-
-				//We'll wait for an intent for the next animation
+				
 				//Eventually the Timeout trigger will be sent if no other intents are handled...				
 			}
 			catch (Exception ex)
@@ -2508,43 +2538,12 @@ namespace MistyCharacter
 					}
 				}
 				
-
-				//if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger)))
-				//{
-				//	if (!await SendManagedResponseEvent(new TriggerData(text, triggerFilter, trigger), true))
-				//	{
-				//		if (!await SendManagedResponseEvent(new TriggerData(text, "", trigger)))
-				//		{						
-				//			if(!await SendManagedResponseEvent(new TriggerData(text, "", trigger), true))
-				//			{
-				//				//is this a user data response?
-				//				if (trigger == Triggers.SpeechHeard && triggerFilter == ConversationConstants.HeardUnknownTrigger)
-				//				{
-				//					SpeechManager.HandleExternalSpeech(text);
-				//					//SpeechManager_SpeechIntent(this, new TriggerData(text, triggerFilter, trigger));
-				//					return;
-				//				}
-
-				//			}
-				//		}
-				//	}
-				//}
 				ExternalEvent?.Invoke(this, userEvent);
 			}
 		}
 
 		public async void HandlePersonObjectEvent(object sender, IObjectDetectionEvent objectDetectionEvent)
 		{
-			//if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen)))
-			//{
-			//	if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen)))
-			//	{
-			//		if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))
-			//		{
-			//			await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), "", Triggers.ObjectSeen), true);
-			//		}
-			//	}
-			//}
 			if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen)))
 			{
 				if (!await SendManagedResponseEvent(new TriggerData(objectDetectionEvent.Confidence.ToString(), objectDetectionEvent.Description, Triggers.ObjectSeen), true))

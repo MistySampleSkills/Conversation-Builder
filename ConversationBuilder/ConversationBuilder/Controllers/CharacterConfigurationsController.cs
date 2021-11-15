@@ -233,8 +233,10 @@ namespace ConversationBuilder.Controllers
 					loadedCharacterConfiguration.ManagementAccess = characterConfiguration.ManagementAccess;
 					loadedCharacterConfiguration.StreamInteraction = characterConfiguration.StreamInteraction;
 					loadedCharacterConfiguration.SpeechConfiguration = characterConfiguration.SpeechConfiguration;
+					loadedCharacterConfiguration.SpeakingImage= characterConfiguration.SpeakingImage;
+					loadedCharacterConfiguration.ListeningImage= characterConfiguration.ListeningImage;
+					loadedCharacterConfiguration.ProcessingImage= characterConfiguration.ProcessingImage;
 					loadedCharacterConfiguration.Name = characterConfiguration.Name;
-					loadedCharacterConfiguration.Character = characterConfiguration.Character;
 					loadedCharacterConfiguration.Skill = characterConfiguration.Skill;
 					loadedCharacterConfiguration.Updated = DateTimeOffset.UtcNow;
 					

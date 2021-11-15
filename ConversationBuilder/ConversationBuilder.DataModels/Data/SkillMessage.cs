@@ -68,6 +68,9 @@ namespace ConversationBuilder.DataModels
 
 		[Display(Name = "Include Trigger Match Data in Event Payload")]
 		public bool IncludeLatestTriggerMatch { get; set; } = true;
+
+		[Display(Name = "Include Current Interaction Information")]
+		public bool IncludeInteractionInformation { get; set; } = true;
 		
 		[Display(Name = "Stream Trigger Check Data to Skill (beta)")]
 		public bool StreamTriggerCheck { get; set; } = false;

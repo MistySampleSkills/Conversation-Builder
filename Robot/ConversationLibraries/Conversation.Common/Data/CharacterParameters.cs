@@ -46,8 +46,6 @@ namespace Conversation.Common
 		public GoogleSpeechParameters GoogleTTSParameters { get; set; }
 		
 		public SpeechConfiguration SpeechConfiguration { get; set; }
-
-		public bool RetranslateTTS { get; set; }
 		
 		public string TextToSpeechService { get; set; } = "misty";
 		public string SpeechRecognitionService { get; set; } = "vosk";
@@ -66,10 +64,7 @@ namespace Conversation.Common
 
 		public bool LogInteraction { get; set; }
 		public bool StreamInteraction { get; set; }
-
-		public string Character { get; set; } = "basic";
-		public string RequestedCharacter { get; set; }
-
+		
 		public bool ShowListeningIndicator { get; set; } = true;
 
 		public bool ShowSpeakingIndicator { get; set; } = true;
@@ -98,7 +93,16 @@ namespace Conversation.Common
 
 		public IList<Robot> Robots { get; set; } = new List<Robot>();
 
+		//TODO
 		public IList<Recipe> Recipes { get; set; } = new List<Recipe>();
-		
+
+
+		//TODO In progress 
+		public bool AnimationCreationMode { get; set; } = false;
+		public double AnimationCreationDebounceSeconds { get; set; } = .25;
+		public bool IgnoreArmCommands { get; set; } = false;
+
+		public bool RetranslateTTS { get; set; }
+		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops
 	}
 }

@@ -91,14 +91,24 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "PreSpeech Phrases")]
 		public string PreSpeechPhrases { get; set; }
 
-		[Display(Name = "Only change if using a different, home-made Misty Conversation Skill")]
+		[Display(Name = "Skill Id - Only change if using a different conversation skill")]
 		public string Skill { get; set; }
 		
-		[Display(Name = "Character template to use (beta)")]
-		public string Character { get; set; }
 		
 		[Display(Name = "Optional Character Payload to send to trigger skills")]
 		public string Payload { get; set; }
+
+		
+		[Display(Name = "Speaking Image")]
+		public string SpeakingImage { get; set; }
+		
+		
+		[Display(Name = "Listening Image")]
+		public string ListeningImage { get; set; }
+
+
+		[Display(Name = "Processing Image")]
+		public string ProcessingImage { get; set; }
 		
 		public DateTimeOffset Created { get; set; }
 		

@@ -138,8 +138,6 @@ namespace MistyCharacter
 		{
 			try
 			{
-				CharacterParameters.RetranslateTTS = GetBoolField(_parameters, "RetranslateTTS") ?? false;
-
 				if (!_parameters.ContainsKey("ConversationGroup"))
 				{
 					string robotIp = GetStringField(_parameters, "RobotIp");
@@ -209,6 +207,7 @@ namespace MistyCharacter
 						CharacterParameters.InitializationErrorStatus = "Warning";
 					}
 				}
+
 
 				//Load the data from the data store only 1 time per start or else will overwrite in memory _storedData
 				_skillStorage = SkillStorage.GetDatabase("conversation-skill");
@@ -281,6 +280,12 @@ namespace MistyCharacter
 				}
 
 
+				CharacterParameters.AnimationCreationMode = conversationGroup.AnimationCreationMode;
+				CharacterParameters.AnimationCreationDebounceSeconds = conversationGroup.AnimationCreationDebounceSeconds;
+				CharacterParameters.IgnoreArmCommands = conversationGroup.IgnoreArmCommands;
+				CharacterParameters.RetranslateTTS = conversationGroup.RetranslateTTS;
+				CharacterParameters.SmoothRecording = conversationGroup.SmoothRecording;
+				
 				string extraPayload = GetStringField(_parameters, ConversationConstants.Payload) ?? null;
 				if(!string.IsNullOrWhiteSpace(extraPayload))
 				{
@@ -371,12 +376,11 @@ namespace MistyCharacter
 				}
 				CharacterParameters.ConversationGroup = conversationGroup;
 
-				CharacterParameters.Character = GetStringField(_parameters, ConversationConstants.Character) ?? "basic";
+				CharacterParameters.SpeakingImage = GetStringField(_parameters, ConversationConstants.SpeakingImage) ?? "";
+				CharacterParameters.ListeningImage = GetStringField(_parameters, ConversationConstants.ListeningImage) ?? "";
+				CharacterParameters.ProcessingImage = GetStringField(_parameters, ConversationConstants.ProcessingImage) ?? "";
 				CharacterParameters.UsePreSpeech = GetBoolField(_parameters, ConversationConstants.UsePreSpeech) ?? false;
 
-				//Deprecated
-				CharacterParameters.RequestedCharacter = GetStringField(_parameters, ConversationConstants.Character) ?? "basic";
-				
 				//Parse string into prespeech by semicolon
 				try
 				{
@@ -453,14 +457,7 @@ namespace MistyCharacter
 					CharacterParameters.InitializationErrorStatus = "Warning";
 					CharacterParameters.InitializationStatusMessage = $"Speech configuration not set, speech intent will not work.";
 				}
-				else
-				{
-					CharacterParameters.SpeakingImage = speechConfiguration.SpeakingImage?? "";
-					CharacterParameters.ListeningImage = speechConfiguration.ListeningImage ?? "";
-					CharacterParameters.ProcessingImage = speechConfiguration.ProcessingImage ?? "";
-
-				}
-
+				
 				CharacterParameters.AzureTTSParameters = new AzureSpeechParameters();
 				CharacterParameters.GoogleTTSParameters = new GoogleSpeechParameters();
 				CharacterParameters.AzureSpeechRecognitionParameters = new AzureSpeechParameters();

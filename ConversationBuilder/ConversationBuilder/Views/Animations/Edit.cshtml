@@ -49,6 +49,7 @@
 				<label asp-for="Emotion"></label>
 				<label title="Provides a default display image and sound appropriate for the emotion.">💡</label>
 				<select asp-for="Emotion" class="form-control">
+					<option value="" selected></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Emotions)
 					{
 						<option value="@item.Key">@item.Value</option>

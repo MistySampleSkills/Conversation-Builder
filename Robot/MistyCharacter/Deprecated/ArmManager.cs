@@ -132,14 +132,20 @@ namespace MistyCharacter
 					newRight = (int)maxRight;
 				}
 
-
-				if (_currentArmRequest.MovementDuration != null && _currentArmRequest.MovementDuration > 0)
+				if (!CharacterParameters.IgnoreArmCommands)
 				{
-					Robot.MoveArms(newLeft ?? 90, newRight ?? 90, null, null, (int)Math.Abs((double)_currentArmRequest.MovementDuration), AngularUnit.Degrees, null);
+					if (_currentArmRequest.MovementDuration != null && _currentArmRequest.MovementDuration > 0)
+					{
+						Robot.MoveArms(newLeft ?? 90, newRight ?? 90, null, null, (int)Math.Abs((double)_currentArmRequest.MovementDuration), AngularUnit.Degrees, null);
+					}
+					else if (_currentArmRequest.MovementVelocity != null && _currentArmRequest.MovementVelocity > 0)
+					{
+						Robot.MoveArms(newLeft ?? 90, newRight ?? 90, (int)Math.Abs((int)_currentArmRequest.MovementVelocity), (int)Math.Abs((int)_currentArmRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+					}
 				}
-				else if (_currentArmRequest.MovementVelocity != null && _currentArmRequest.MovementVelocity > 0)
+				else
 				{
-					Robot.MoveArms(newLeft ?? 90, newRight ?? 90, (int)Math.Abs((int)_currentArmRequest.MovementVelocity), (int)Math.Abs((int)_currentArmRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+					_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
 				}
 			}
 		}
@@ -186,19 +192,26 @@ namespace MistyCharacter
                         {
                             _moveArmsTimer?.Dispose();
                         }
-						
-						if (_currentArmRequest.MovementDuration != null && _currentArmRequest.MovementDuration > 0)
+
+						if (!CharacterParameters.IgnoreArmCommands)
 						{
-							Robot.MoveArms((double)_currentArmRequest.MaxLeftArm, (double)_currentArmRequest.MaxRightArm, null, null, (int)Math.Abs((double)_currentArmRequest.MovementDuration), AngularUnit.Degrees, null);
+							if (_currentArmRequest.MovementDuration != null && _currentArmRequest.MovementDuration > 0)
+							{
+								Robot.MoveArms((double)_currentArmRequest.MaxLeftArm, (double)_currentArmRequest.MaxRightArm, null, null, (int)Math.Abs((double)_currentArmRequest.MovementDuration), AngularUnit.Degrees, null);
+							}
+							else if (_currentArmRequest.MovementVelocity != null && _currentArmRequest.MovementVelocity > 0)
+							{
+								Robot.MoveArms((double)_currentArmRequest.MaxLeftArm, (double)_currentArmRequest.MaxRightArm, (int)Math.Abs((int)_currentArmRequest.MovementVelocity), (int)Math.Abs((int)_currentArmRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+							}
 						}
-						else if (_currentArmRequest.MovementVelocity != null && _currentArmRequest.MovementVelocity > 0)
+						else
 						{
-							Robot.MoveArms((double)_currentArmRequest.MaxLeftArm, (double)_currentArmRequest.MaxRightArm, (int)Math.Abs((int)_currentArmRequest.MovementVelocity), (int)Math.Abs((int)_currentArmRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+							_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });						
 						}
 					}
 					else
 					{
-						if(!_armsMovingContinuously)
+						if(!_armsMovingContinuously && !CharacterParameters.IgnoreArmCommands)
 						{
 							_armsMovingContinuously = true;
 							lock (_timerLock)
@@ -209,6 +222,11 @@ namespace MistyCharacter
 									_moveArmsTimer = new Timer(MoveArmsCallback, null, (int)Math.Abs(_currentArmRequest.DelayBetweenMovements * 1000), (int)Math.Abs(_currentArmRequest.DelayBetweenMovements * 1000));
 								}
 							}
+						}
+						
+						if(CharacterParameters.IgnoreArmCommands)
+						{
+							_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
 						}
 					}
 				}

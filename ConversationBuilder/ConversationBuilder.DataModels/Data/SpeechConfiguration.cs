@@ -118,16 +118,6 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Profanity Setting (Azure)")]
 		public string ProfanitySetting { get; set; }
 		
-		[Display(Name = "Speaking Image")]
-		public string SpeakingImage { get; set; }
-		
-		
-		[Display(Name = "Listening Image")]
-		public string ListeningImage { get; set; }
-
-
-		[Display(Name = "Processing Image")]
-		public string ProcessingImage { get; set; }
 
 		public DateTimeOffset Created { get; set; }
 		

@@ -45,7 +45,7 @@ namespace ConversationBuilder.DataModels
 
 		public string NoTriggerInteraction { get; set; }
 
-		public string StartingEmotion { get; set; } = DefaultEmotions.Joy;
+		public string StartingEmotion { get; set; } = DefaultEmotions.None;
 
 		public bool InitiateSkillsAtConversationStart {get; set;}
 
