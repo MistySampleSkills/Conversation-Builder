@@ -314,6 +314,7 @@ namespace MistyCharacter
 		private AnimationRecorder _animationRecorder;
 		private SemaphoreSlim animationRecordingSlim = new SemaphoreSlim(1, 1);
 		private int _pauseCount = 0;
+		private int MinDegreeChange = 1;
 
 		public MistyState(IRobotMessenger misty, IDictionary<string, object> parameters,  CharacterParameters characterParameters)
 		{
@@ -321,6 +322,7 @@ namespace MistyCharacter
 			_parameters = parameters;
 			_characterParameters = characterParameters;
 		}
+
 		
 		private async void SendRecordEvent(object timerData)
 		{
@@ -338,18 +340,36 @@ namespace MistyCharacter
 					int currentHeadYawValue = _currentCharacterState?.HeadYawActuatorEvent?.ActuatorValue != null ? Convert.ToInt32(_currentCharacterState.HeadYawActuatorEvent.ActuatorValue) : _lastHeadYawValue;
 
 					string action = "";
-					//TODO if (_characterParameters.SmoothRecording)
-					if (currentHeadPitchValue != _lastHeadPitchValue || currentHeadRollValue != _lastHeadRollValue || currentHeadYawValue != _lastHeadYawValue)
+
+					if(_characterParameters.SmoothRecording)
 					{
-						headChanged = true;
+						if ((Math.Abs(currentHeadPitchValue - _lastHeadPitchValue) > MinDegreeChange) ||
+							(Math.Abs(currentHeadRollValue - _lastHeadRollValue) > MinDegreeChange) ||
+							(Math.Abs(currentHeadYawValue - _lastHeadYawValue) > MinDegreeChange))
+						{
+							headChanged = true;
+						}
+
+						if ((Math.Abs(currentRightArmValue - _lastRightArmValue) > MinDegreeChange) ||
+							(Math.Abs(currentLeftArmValue - _lastLeftArmValue) > MinDegreeChange))							
+						{
+							armsChanged = true;
+						}
+					}
+					else
+					{
+						//TODO if (_characterParameters.SmoothRecording)
+						if (currentHeadPitchValue != _lastHeadPitchValue || currentHeadRollValue != _lastHeadRollValue || currentHeadYawValue != _lastHeadYawValue)
+						{
+							headChanged = true;
+						}
+
+						if (currentRightArmValue != _lastRightArmValue || currentLeftArmValue != _lastLeftArmValue)
+						{
+							armsChanged = true;
+						}
 					}
 
-					if (currentRightArmValue != _lastRightArmValue || currentLeftArmValue != _lastLeftArmValue)
-					{
-						armsChanged = true;
-					}
-					
-					//don't write yet
 					++_pauseCount;
 
 					if (headChanged || armsChanged)

@@ -87,19 +87,17 @@ namespace ConversationBuilder.DataModels
 		//Key is departure as there should only be one for these mappings
 		public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
 		
-
-		//TODOs
 		[Display(Name = "Animation creation mode - will record head and arm movements in script")]	
 		public bool AnimationCreationMode { get; set; } = false;
 
 		[Display(Name = "Animation creation debounce (seconds)")]	
 		public double AnimationCreationDebounceSeconds { get; set; } = .25;
 		
-		[Display(Name = "Ignore Arm Commands during Animation Creation")]	
+		[Display(Name = "Halt arms during Animation Creation")]	
 		public bool IgnoreArmCommands { get; set; } = false;
 
 
-		[Display(Name = "Retranslate - set to true to recreate audio finles during this run")]	
+		[Display(Name = "Retranslate - set to true to recreate speech audio files during this run")]	
 		public bool RetranslateTTS { get; set; }
 
 		[Display(Name = "Smooth Animation Recording")]	
