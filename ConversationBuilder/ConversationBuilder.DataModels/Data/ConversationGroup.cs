@@ -96,6 +96,8 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Halt arms during Animation Creation")]	
 		public bool IgnoreArmCommands { get; set; } = false;
 
+		[Display(Name = "Halt head during Animation Creation")]	
+		public bool IgnoreHeadCommands { get; set; } = false;
 
 		[Display(Name = "Retranslate - set to true to recreate speech audio files during this run")]	
 		public bool RetranslateTTS { get; set; }

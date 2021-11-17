@@ -283,6 +283,7 @@ namespace MistyCharacter
 				CharacterParameters.AnimationCreationMode = conversationGroup.AnimationCreationMode;
 				CharacterParameters.AnimationCreationDebounceSeconds = conversationGroup.AnimationCreationDebounceSeconds;
 				CharacterParameters.IgnoreArmCommands = conversationGroup.IgnoreArmCommands;
+				CharacterParameters.IgnoreHeadCommands = conversationGroup.IgnoreHeadCommands;
 				CharacterParameters.RetranslateTTS = conversationGroup.RetranslateTTS;
 				CharacterParameters.SmoothRecording = conversationGroup.SmoothRecording;
 				

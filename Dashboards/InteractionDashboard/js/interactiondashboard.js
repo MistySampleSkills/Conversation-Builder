@@ -53,7 +53,7 @@ $(document).ready(function () {
     }    
 
 	$('[data-toggle="tooltip"]').tooltip();
-
+	document.getElementById("led").style.borderColor = "#ff0000";
 	function ReEnableConnectionButton() {
 
 		$("#connect-button").html("Connect");
@@ -134,63 +134,129 @@ $(document).ready(function () {
         
         //Change by type
 
-        //console.log(JSON.stringify(data));
-
         var eventMsg;
         if (data.hasOwnProperty('message')) {
             eventMsg = data.message;
         }
 
         if (eventMsg.hasOwnProperty('message')) {
-        
-            var eventData = eventMsg.message;
-            var eventObject = JSON.parse(eventData);
 
+			//TODO data is wrapped a little wrong
+            var eventObject = JSON.parse(eventMsg.message);
 
-            //interaction details
-            $("#current-interaction").val(eventObject.CurrentInteraction.Name);
-            //TODO more
+            $("#data-type").val(eventObject.DataType);
+			if(eventObject.DataType === "ui") {
+				var action = eventObject.Action.trim().toLowerCase();
 
-            _triggers = [];
-            _utterances = [];
-            _triggers  = eventObject.Triggers;
-            _utterances = eventObject.Utterances;
-            $('#button-container').html("");
-            
-            for(let i = 0; i < _triggers.length; ++i)
-            {
-                    var button = document.createElement('button');
-                    button.type = 'button';
-                    button.innerHTML = _triggers[i].Name;
-                    button.className = 'btn-styled';
-                    button.value = _triggers[i].Id;
-                    
-                    button.onclick = function() {
-                        //or Id???
-                        SendTriggerEvent(_triggers[i].Trigger, _triggers[i].TriggerFilter, _triggers[i].Text)
-                    };
-                 
-                    var container = document.getElementById('button-container');
-                    container.appendChild(button);
+				if(action === "ui-text") {
+					$('#text-ui').html(eventObject.Data.trim());
+				}
+				else if(action === "ui-image") {	
+					$('#whiz-bang').html('<img style="max-width:100%;" src="' + eventObject.Data.trim() + '" alt="whiz-bang-image">');							
+				}
+				else if(action === "ui-audio") {
+					var audio = new Audio(eventObject.Data.trim());
+    				audio.play();
+				}
+				else if(action === "ui-speech") {
+					var message = new SpeechSynthesisUtterance(eventObject.Data.trim()); 
+					window.speechSynthesis.speak(message);
+				}
+				else if(action === "ui-led") {
+					
+  					document.getElementById("led").style.borderColor = "#" + eventObject.Data.trim();
+					//$('#led').style.border("10px solid " + eventObject.Data.trim() + ";";
+				}
+			}
+			else if(eventObject.DataType === "state") {
+				//update robot state info
+				
+				var robotState = eventObject.State;
 
-            }
+				$("#last-trigger").val(robotState.LastTrigger);
+				$("#right-arm").val(robotState.RightArmActuatorEvent.ActuatorValue);
+				$("#left-arm").val(robotState.LeftArmActuatorEvent.ActuatorValue);
+				
+				$("#head-pitch").val(robotState.HeadPitchActuatorEvent.ActuatorValue);
+				$("#head-roll").val(robotState.HeadRollActuatorEvent.ActuatorValue);
+				$("#head-yaw").val(robotState.HeadYawActuatorEvent.ActuatorValue);
+				
+				$("#scruff").val(robotState.Scruff.IsContacted);
+				$("#chin").val(robotState.Chin.IsContacted);
+				$("#front-cap").val(robotState.FrontCap.IsContacted);
+				$("#back-cap").val(robotState.BackCap.IsContacted);
+				$("#left-cap").val(robotState.LeftCap.IsContacted);
+				$("#right-cap").val(robotState.RightCap.IsContacted);
 
-            for(let i = 0; i < _utterances.length; ++i)
-            {
-                var button = document.createElement('button');
-                button.type = 'button';
-                button.innerHTML = "Speech: " + _utterances[i].Name;
-                button.className = 'btn-styled';
-                button.value = _utterances[i].Id;
-                
-                button.onclick = function() {
-                    //or Id???
-                    SendTriggerEvent(_utterances[i].Trigger, _utterances[i].TriggerFilter, _utterances[i].Text)
-                };
-            
-                var container = document.getElementById('button-container');
-                container.appendChild(button);
-            }
+				$("#front-right-bumper").val(robotState.LocomotionState.FrontRightBumpContacted);
+				$("#front-left-bumper").val(robotState.LocomotionState.FrontLeftBumpContacted);
+				$("#back-right-bumper").val(robotState.LocomotionState.BackRightBumpContacted);
+				$("#back-left-bumper").val(robotState.LocomotionState.BackLeftBumpContacted);
+
+				$("#robot-pitch").val(robotState.LocomotionState.RobotPitch);
+				$("#robot-roll").val(robotState.LocomotionState.RobotRoll);
+				$("#robot-yaw").val(robotState.LocomotionState.RobotYaw);
+				
+				$("#battery").val(robotState.BatteryChargeEvent.ChargePercent*100);
+				$("#face-seen").val(robotState.LastKnownFaceSeen);
+				$("#object-seen").val(robotState.ObjectEvent.RobotYaw);
+				$("#serial-message").val(robotState.SerialMessageEvent.Message);
+				$("#ar-tag").val(robotState.ArTagEvent.TagId);
+				$("#qr-tag").val(robotState.QrTagEvent.DecodedInfo);
+				
+				$("#saying").val(robotState.LastSaid);
+				$("#heard").val(robotState.LastHeard);
+				$("#screen-text").val(robotState.DisplayedScreenText);
+
+			}
+			else if(eventObject.DataType === "interaction") {
+
+				$("#robot-name").val(eventObject.RobotName);
+				$("#current-interaction").val(eventObject.CurrentInteraction.Name);
+				$("#current-conversation").val(eventObject.Conversation);
+				$("#current-conversation-group").val(eventObject.ConversationGroup);
+				
+				_triggers = [];
+				_utterances = [];
+				_triggers  = eventObject.Triggers;
+				_utterances = eventObject.Utterances;
+				$('#button-container').html("");
+				
+				for(let i = 0; i < _triggers.length; ++i)
+				{
+						var button = document.createElement('button');
+						button.type = 'button';
+						button.innerHTML = _triggers[i].Name;
+						button.className = 'btn-styled';
+						button.value = _triggers[i].Id;
+						
+						button.onclick = function() {
+							//or Id???
+							SendTriggerEvent(_triggers[i].Trigger, _triggers[i].TriggerFilter, _triggers[i].Text)
+						};
+					 
+						var container = document.getElementById('button-container');
+						container.appendChild(button);
+	
+				}
+	
+				for(let i = 0; i < _utterances.length; ++i)
+				{
+					var button = document.createElement('button');
+					button.type = 'button';
+					button.innerHTML = "Speech: " + _utterances[i].Name;
+					button.className = 'btn-styled';
+					button.value = _utterances[i].Id;
+					
+					button.onclick = function() {
+						//or Id???
+						SendTriggerEvent(_utterances[i].Trigger, _utterances[i].TriggerFilter, _utterances[i].Text)
+					};
+				
+					var container = document.getElementById('button-container');
+					container.appendChild(button);
+				}
+			}
         }
     }
 
@@ -289,14 +355,14 @@ $(document).ready(function () {
 
     });
     
-	$("#load-datadashboard").on("click", function (e) {
+	$("#load-interactiondashboard").on("click", function (e) {
 
 		if (!ip) {
 			need2ConnectMessage();
 			return;
 		}
        
-		ShowToastMessage("Loading data dashboard.");
+		ShowToastMessage("Loading interaction dashboard.");
     });
    
 

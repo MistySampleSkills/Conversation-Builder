@@ -66,7 +66,7 @@ namespace ConversationBuilder.DataModels
 		public bool AnimationCreationMode { get; set; }
 		public double AnimationCreationDebounceSeconds { get; set; } = .25;
 		public bool IgnoreArmCommands { get; set; }
-
+		public bool IgnoreHeadCommands { get; set; }
 		public bool RetranslateTTS { get; set; }
 		public bool SmoothRecording { get; set; }
 	}

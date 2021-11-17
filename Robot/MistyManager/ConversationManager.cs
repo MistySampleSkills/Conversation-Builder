@@ -102,7 +102,6 @@ namespace MistyManager
 					//Warned them, but try anyway in case they are just slow to come up
 				}
 				
-				
 				_parameterManager = new ParameterManager(_misty, _parameters);
 				if (_parameterManager == null)
 				{
@@ -150,11 +149,11 @@ namespace MistyManager
 						await Task.Delay(5000);
 					}
 
-					if(_characterParameters.IgnoreArmCommands)
+					if(_characterParameters.IgnoreArmCommands || _characterParameters.IgnoreHeadCommands)
 					{
 						await _misty.HaltAsync(new List<MotorMask> { MotorMask.AllMotors });
 					}
-
+					
 					return initialized;
 				}
 				else if(_characterParameters == null)

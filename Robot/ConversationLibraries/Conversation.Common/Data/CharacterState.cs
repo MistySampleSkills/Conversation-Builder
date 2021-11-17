@@ -47,8 +47,12 @@ namespace Conversation.Common
 			TimeOfFlightEvent = state.TimeOfFlightEvent;
 			Audio = state.Audio;
 			BatteryChargeEvent = state.BatteryChargeEvent;
-			BumpEvent = state.BumpEvent;
-			CapTouchEvent = state.CapTouchEvent;
+			Scruff = state.Scruff;
+			Chin = state.Chin;
+			FrontCap = state.FrontCap;
+			BackCap = state.BackCap;
+			LeftCap = state.LeftCap;
+			RightCap = state.RightCap;
 			ExternalEvent = state.ExternalEvent;
 			FaceRecognitionEvent = state.FaceRecognitionEvent;
 			FlashLightOn = state.FlashLightOn;
@@ -59,6 +63,10 @@ namespace Conversation.Common
 			KeyPhraseRecognitionOn = state.KeyPhraseRecognitionOn;
 			LatestTriggerMatched = state.LatestTriggerMatched;
 			LatestTriggerChecked = state.LatestTriggerChecked;
+			LastTrigger = state.LastTrigger;
+			LastSaid = state.LastSaid;
+			LastHeard = state.LastHeard;
+			DisplayedScreenText = state.DisplayedScreenText;
 			LeftArmActuatorEvent = state.LeftArmActuatorEvent;
 			Listening = state.Listening;
 			ObjectEvent = state.ObjectEvent;
@@ -75,7 +83,7 @@ namespace Conversation.Common
 		}
 
 		//Commanded State Info
-		//TODO Cleanup data
+		//TODO Pull out Locomotion state?
 		public LocomotionState LocomotionState { get; set; } = new LocomotionState();
 
 		public bool FlashLightOn { get; set; }
@@ -91,30 +99,56 @@ namespace Conversation.Common
 		public bool UnknownFaceSeen { get; set; }
 
 		public string LastKnownFaceSeen { get; set; }
+		public string LastTrigger { get; set; }
+		
+		public string LastSaid { get; set; }
+		public string LastHeard { get; set; }
+		public string DisplayedScreenText { get; set; }
+
 
 		public KeyValuePair<DateTime, TriggerData> LatestTriggerChecked { get; set; }
-		public KeyValuePair<DateTime, TriggerData> LatestTriggerMatched { get; set; }
+
+		private KeyValuePair<DateTime, TriggerData> _lastTriggerMatchKVP;
+		public KeyValuePair<DateTime, TriggerData> LatestTriggerMatched
+		{
+			get
+			{
+				return _lastTriggerMatchKVP;
+			}
+
+			set
+			{
+				_lastTriggerMatchKVP = value;
+				LastTrigger = $"{_lastTriggerMatchKVP.Value.Trigger}:{_lastTriggerMatchKVP.Value.TriggerFilter}";
+			}
+		}
 
 		//Last event of the type
-		public TriggerData SpeechResponseEvent { get; set; }
-		public KeyPhraseRecognizedEvent KeyPhraseRecognized { get; set; }
+		public TriggerData SpeechResponseEvent { get; set; } = new TriggerData("", "", "");
+		public KeyPhraseRecognizedEvent KeyPhraseRecognized { get; set; } = new KeyPhraseRecognizedEvent();
 
-		public QrTagDetectionEvent QrTagEvent { get; set; }
-		public FaceRecognitionEvent FaceRecognitionEvent { get; set; }
-		public BumpSensorEvent BumpEvent { get; set; }
-		public CapTouchEvent CapTouchEvent { get; set; }
-		public ArTagDetectionEvent ArTagEvent { get; set; }
-		public TimeOfFlightEvent TimeOfFlightEvent { get; set; }
-		public SerialMessageEvent SerialMessageEvent { get; set; }
-		public UserEvent ExternalEvent { get; set; }
-		public ObjectDetectionEvent ObjectEvent { get; set; }
-		public ObjectDetectionEvent NonPersonObjectEvent { get; set; }
-		public BatteryChargeEvent BatteryChargeEvent { get; set; }
-		public ActuatorEvent RightArmActuatorEvent { get; set; }
-		public ActuatorEvent LeftArmActuatorEvent { get; set; }
-		public ActuatorEvent HeadPitchActuatorEvent { get; set; }
-		public ActuatorEvent HeadYawActuatorEvent { get; set; }
-		public ActuatorEvent HeadRollActuatorEvent { get; set; }
+		public QrTagDetectionEvent QrTagEvent { get; set; } = new QrTagDetectionEvent();
+		public FaceRecognitionEvent FaceRecognitionEvent { get; set; } = new FaceRecognitionEvent();
+
+		public CapTouchEvent Scruff { get; set; } = new CapTouchEvent();
+		public CapTouchEvent Chin { get; set; } = new CapTouchEvent();
+		public CapTouchEvent FrontCap{ get; set; } = new CapTouchEvent();
+		public CapTouchEvent BackCap { get; set; } = new CapTouchEvent();
+		public CapTouchEvent LeftCap { get; set; } = new CapTouchEvent();
+		public CapTouchEvent RightCap { get; set; } = new CapTouchEvent();
+
+		public ArTagDetectionEvent ArTagEvent { get; set; } = new ArTagDetectionEvent();
+		public TimeOfFlightEvent TimeOfFlightEvent { get; set; } = new TimeOfFlightEvent();
+		public SerialMessageEvent SerialMessageEvent { get; set; } = new SerialMessageEvent();
+		public UserEvent ExternalEvent { get; set; } = new UserEvent();
+		public ObjectDetectionEvent ObjectEvent { get; set; } = new ObjectDetectionEvent();
+		public ObjectDetectionEvent NonPersonObjectEvent { get; set; } = new ObjectDetectionEvent();
+		public BatteryChargeEvent BatteryChargeEvent { get; set; } = new BatteryChargeEvent();
+		public ActuatorEvent RightArmActuatorEvent { get; set; } = new ActuatorEvent();
+		public ActuatorEvent LeftArmActuatorEvent { get; set; } = new ActuatorEvent();
+		public ActuatorEvent HeadPitchActuatorEvent { get; set; } = new ActuatorEvent();
+		public ActuatorEvent HeadYawActuatorEvent { get; set; } = new ActuatorEvent();
+		public ActuatorEvent HeadRollActuatorEvent { get; set; } = new ActuatorEvent();
 
 		public string AnimationEmotion { get; set; } = Emotions.Calmness;
 		public string CurrentMood { get; set; } = Emotions.Calmness;

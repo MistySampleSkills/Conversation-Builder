@@ -133,7 +133,17 @@ namespace SpeechTools
 				}
 			}
 		}
-		
+
+		public void HandleInteractionEnded(object sender, string interaction)
+		{
+			_ = _misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+			{
+				 Visible = false
+			});
+
+			_misty.DisplayText("", "UserDataText", null);
+		}
+
 		public string MakeTextBasedFileName(string text)
 		{
 			if (string.IsNullOrWhiteSpace(text))
@@ -1580,11 +1590,10 @@ namespace SpeechTools
 				return false;
 			}
 		}
-
-
+		
 		public void ProcessUserDataUpdates(GenericData genericData)
 		{
-			//get rid of this now that there is an animations script
+			//get rid of this now that there is an animations script?
 			if (!string.IsNullOrWhiteSpace(genericData.ScreenText))
 			{
 				_ = _misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
@@ -1603,6 +1612,7 @@ namespace SpeechTools
 					Height = 50
 				});
 
+				_characterState.DisplayedScreenText = genericData.ScreenText;
 				_misty.DisplayText(genericData.ScreenText, "UserDataText", null);
 			}
 

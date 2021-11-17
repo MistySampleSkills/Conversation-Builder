@@ -40,6 +40,7 @@ using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
+using Newtonsoft.Json;
 using SkillTools.Web;
 using SpeechTools;
 using TimeManager;
@@ -899,29 +900,58 @@ namespace MistyCharacter
 								break;
 							case "HEAD":
 								//HEAD:pitch,roll,yaw,timeMs;
-								string[] headData = commandData[1].Split(",");
-								_ = Robot.MoveHeadAsync(GetNullableObject(headData, 0), GetNullableObject(headData, 1), GetNullableObject(headData, 2), null, Convert.ToDouble(headData[3]) / 1000, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreHeadCommands)
+								{
+									string[] headData = commandData[1].Split(",");
+									_ = Robot.MoveHeadAsync(GetNullableObject(headData, 0), GetNullableObject(headData, 1), GetNullableObject(headData, 2), null, Convert.ToDouble(headData[3]) / 1000, AngularUnit.Degrees);
+									
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.HeadPitch, MotorMask.HeadRoll, MotorMask.HeadYaw });
+								}
 								break;
 							case "HEAD-OFFSET":
 								//HEAD:pitch,roll,yaw,velocity;
-								string[] headOData = commandData[1].Split(",");
-								_ = Robot.MoveHeadAsync(GetNullableObject(headOData, 0) == null ? null : GetNullableObject(headOData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
-										GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
-										GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
-										null, Convert.ToDouble(headOData[3]) / 1000, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreHeadCommands)
+								{
+									string[] headOData = commandData[1].Split(",");
+									_ = Robot.MoveHeadAsync(GetNullableObject(headOData, 0) == null ? null : GetNullableObject(headOData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
+											GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
+											GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
+											null, Convert.ToDouble(headOData[3]) / 1000, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.HeadPitch, MotorMask.HeadRoll, MotorMask.HeadYaw });
+								}
 								break;
 							case "HEAD-OFFSET-V":
 								//HEAD:pitch,roll,yaw,velocity;
-								string[] headOvData = commandData[1].Split(",");
-								_ = Robot.MoveHeadAsync(GetNullableObject(headOvData, 0) == null ? null : GetNullableObject(headOvData, 0)+ _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
-										GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
-										GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
-										Convert.ToDouble(headOvData[3]), null, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreHeadCommands)
+								{
+									string[] headOvData = commandData[1].Split(",");
+									_ = Robot.MoveHeadAsync(GetNullableObject(headOvData, 0) == null ? null : GetNullableObject(headOvData, 0)+ _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
+											GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
+											GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
+											Convert.ToDouble(headOvData[3]), null, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.HeadPitch, MotorMask.HeadRoll, MotorMask.HeadYaw });
+								}
 								break;
 							case "HEAD-V":
 								//HEAD:pitch,roll,yaw,velocity;
-								string[] headVData = commandData[1].Split(",");
-								_ = Robot.MoveHeadAsync(GetNullableObject(headVData, 0), GetNullableObject(headVData, 1), GetNullableObject(headVData, 2), Convert.ToDouble(headVData[3]), null, AngularUnit.Degrees);
+								if (!CharacterParameters.IgnoreHeadCommands)
+								{
+									string[] headVData = commandData[1].Split(",");
+									_ = Robot.MoveHeadAsync(GetNullableObject(headVData, 0), GetNullableObject(headVData, 1), GetNullableObject(headVData, 2), Convert.ToDouble(headVData[3]), null, AngularUnit.Degrees);
+								}
+								else
+								{
+									_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.HeadPitch, MotorMask.HeadRoll, MotorMask.HeadYaw });
+								}
 								break;
 							case "PAUSE":
 								//PAUSE:timeMs;
@@ -1144,6 +1174,7 @@ namespace MistyCharacter
 									_userTextLayerVisible = true;
 								}
 								_ = Robot.DisplayTextAsync(Convert.ToString(commandData[1]), "AnimationText");
+								_mistyState.GetCharacterState().DisplayedScreenText = Convert.ToString(commandData[1]);
 								break;
 							case "CLEAR-TEXT":
 								//CLEAR-TEXT;
@@ -1153,8 +1184,27 @@ namespace MistyCharacter
 								{
 									Deleted = true
 								});
+								_mistyState.GetCharacterState().DisplayedScreenText = "";
 								break;
-
+							case "UI-TEXT":
+								SendUIEvent("UI-TEXT", Convert.ToString(commandData[1]));
+								break;
+							case "UI-IMAGE":
+								SendUIEvent("UI-IMAGE", Convert.ToString(commandData[1]));
+								break;
+							case "UI-AUDIO":
+								SendUIEvent("UI-AUDIO", Convert.ToString(commandData[1]));
+								break;
+							case "UI-SPEECH":
+								SendUIEvent("UI-SPEECH", Convert.ToString(commandData[1]));
+								break;
+							case "UI-LED":
+								//UI-LED:red,green,blue;
+								string[] uiLedData = commandData[1].Split(",");
+								System.Drawing.Color systemColor = System.Drawing.Color.FromArgb(Convert.ToInt32(uiLedData[0]), Convert.ToInt32(uiLedData[1]), Convert.ToInt32(uiLedData[2]));
+								string hex = systemColor.R.ToString("X2") + systemColor.G.ToString("X2") + systemColor.B.ToString("X2");
+								SendUIEvent("UI-LED", hex);
+								break;
 							case "AUDIO":
 								//AUDIO:audio-file-name.wav;
 								_ = Robot.PlayAudioAsync(Convert.ToString(commandData[1]), null);
@@ -1808,6 +1858,30 @@ namespace MistyCharacter
 			}
 		}
 
+		private void SendUIEvent(string action, string data)
+		{
+			try
+			{
+				IDictionary<string, object> msgObject = new Dictionary<string, object>
+				{
+					{"DataType", "ui"},
+					{"Action", action},
+					{"Data", data}
+				};
+
+				string msg = JsonConvert.SerializeObject(msgObject);
+
+				if (!string.IsNullOrWhiteSpace(msg))
+				{
+					Robot.PublishMessage(msg, null);
+				}
+			}
+			catch (Exception ex)
+			{
+				Robot.SkillLogger.LogError($"Failed to send ui event.", ex);
+			}
+		}
+		
 
 		private void ClearAnimationDisplayLayers()
 		{

@@ -84,6 +84,13 @@ namespace MistyCharacter
 			if (headLocation != null)
 			{
 				_currentHeadRequest = headLocation;
+
+				if (CharacterParameters.IgnoreHeadCommands)
+				{
+					_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.HeadPitch, MotorMask.HeadRoll, MotorMask.HeadYaw });
+					return;
+				}
+
 				if (_currentHeadRequest.MaxPitch == null && _currentHeadRequest.MinPitch == null &&
 					_currentHeadRequest.MaxYaw == null && _currentHeadRequest.MinYaw == null &&
 					_currentHeadRequest.MinRoll == null && _currentHeadRequest.MaxRoll == null)
@@ -225,7 +232,12 @@ namespace MistyCharacter
 		{
 			try
 			{
-				if(_lastHandledFaceTime == _faceLastSeen)
+				if (CharacterParameters.IgnoreHeadCommands)
+				{
+					_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.HeadPitch, MotorMask.HeadRoll, MotorMask.HeadYaw });
+					return;
+				}
+				if (_lastHandledFaceTime == _faceLastSeen)
 				{
 					return;
 				}
@@ -472,6 +484,11 @@ namespace MistyCharacter
 		{
 			try
 			{
+				if (CharacterParameters.IgnoreHeadCommands)
+				{
+					_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.HeadPitch, MotorMask.HeadRoll, MotorMask.HeadYaw });
+					return;
+				}
 				if (_findingPersonObject)
 				{
 					return;

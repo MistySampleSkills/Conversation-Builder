@@ -38,10 +38,10 @@ using Conversation.Common;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
-using SkillTools.DataStorage;
 
 namespace MistyCharacter
 {
+	//TODO Move to common
 	public interface IMistyState
 	{
 		//TODO Complete!
@@ -86,11 +86,12 @@ namespace MistyCharacter
 		void HandleCompletedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
 		void HandleStartedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
 
-		//event EventHandler<TriggerData> ValidTriggerReceived;
-		//event EventHandler<DateTime> ConversationStarted;
-		//event EventHandler<DateTime> ConversationEnded;
-		//event EventHandler<DateTime> InteractionStarted;
-		//event EventHandler<DateTime> InteractionEnded;
+		//TODO Cleanup ownership of external events - BaseCharacter or MistyState
+		event EventHandler<TriggerData> ValidTriggerReceived;
+		event EventHandler<DateTime> ConversationStarted;
+		event EventHandler<DateTime> ConversationEnded;
+		event EventHandler<string> InteractionStarted;
+		event EventHandler<string> InteractionEnded;
 
 		void HandleValidTriggerReceived(object sender, TriggerData triggerData);
 		void HandleConversationStarted(object sender, DateTime datetime);
@@ -102,7 +103,9 @@ namespace MistyCharacter
 
 		CharacterState GetCharacterState();
 		void RegisterEvent(string trigger);
-		void UnregisterEvent(string trigger);
+
+		//TODO
+		//void UnregisterEvent(string trigger);
 	}
 
 	public class MistyState : IMistyState
@@ -135,7 +138,7 @@ namespace MistyCharacter
 		public event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
 		public event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
 		
-		//Last ext4ernal/user event
+		//Last external/user event
 		public event EventHandler<IUserEvent> ExternalEvent;
 		public event EventHandler<IUserEvent> SyncEvent;
 		public event EventHandler<IUserEvent> RobotCommand;
@@ -200,6 +203,7 @@ namespace MistyCharacter
 			{
 				return;
 			}
+			_currentCharacterState.LastHeard = triggerData.Text;
 			_currentCharacterState.SpeechResponseEvent = triggerData;
 			SpeechIntentEvent?.Invoke(this, triggerData);
 		}
@@ -207,6 +211,8 @@ namespace MistyCharacter
 		public void HandleStartedSpeakingReceived(object sender, string text)
 		{
 			StartedSpeaking?.Invoke(this, text);
+			_currentCharacterState.Saying = text;
+			_currentCharacterState.LastSaid = text;
 
 			if (_characterParameters.AnimationCreationMode && _animationRecorder != null)
 			{
@@ -461,11 +467,11 @@ namespace MistyCharacter
 			//Arm Actuators
 			IList<ActuatorPositionValidation> actuatorLeftArmValidations = new List<ActuatorPositionValidation>();
 			actuatorLeftArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.LeftArm));
-			LogEventDetails(_misty.RegisterActuatorEvent(LeftArmCallback, 250, true, actuatorLeftArmValidations, "LeftArm", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(LeftArmCallback, 100, true, actuatorLeftArmValidations, "LeftArm", null));
 
 			IList<ActuatorPositionValidation> actuatorRightArmValidations = new List<ActuatorPositionValidation>();
 			actuatorRightArmValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.RightArm));
-			LogEventDetails(_misty.RegisterActuatorEvent(RightArmCallback, 250, true, actuatorRightArmValidations, "RightArm", null));
+			LogEventDetails(_misty.RegisterActuatorEvent(RightArmCallback, 100, true, actuatorRightArmValidations, "RightArm", null));
 		}
 		
 		//TODO Only register as needed
@@ -476,19 +482,15 @@ namespace MistyCharacter
 			//Head Actuators for following actions.
 			IList<ActuatorPositionValidation> actuatorYawValidations = new List<ActuatorPositionValidation>();
 			actuatorYawValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadYaw));
-			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorYawValidations, "HeadYaw", null));
 			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 100, true, actuatorYawValidations, "HeadYaw", null));
 
 			IList<ActuatorPositionValidation> actuatorPitchValidations = new List<ActuatorPositionValidation>();
 			actuatorPitchValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadPitch));
-			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
 			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 100, true, actuatorPitchValidations, "HeadPitch", null));
 
 			IList<ActuatorPositionValidation> actuatorRollValidations = new List<ActuatorPositionValidation>();
 			actuatorRollValidations.Add(new ActuatorPositionValidation(ActuatorPositionFilter.SensorName, ComparisonOperator.Equal, ActuatorPosition.HeadRoll));
-			//LogEventDetails(Misty.RegisterActuatorEvent(ActuatorCallback, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce *1000), true, actuatorPitchValidations, "HeadPitch", null));
-			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 100, true, actuatorRollValidations, "HeadRoll", null));
-			
+			LogEventDetails(_misty.RegisterActuatorEvent(ActuatorCallback, 100, true, actuatorRollValidations, "HeadRoll", null));			
 		}
 
 		public void RegisterLocomotionEvents()
@@ -528,7 +530,6 @@ namespace MistyCharacter
 			LogEventDetails(_misty.RegisterDriveEncoderEvent(EncoderCallback, 250, true, driveValidations, "DriveEncoder", null));
 
 			LogEventDetails(_misty.RegisterIMUEvent(IMUCallback, 100, true, null, "IMU", null));
-
 		}
 		
 		public void UnregisterEvent(string trigger)
@@ -777,13 +778,34 @@ namespace MistyCharacter
 		
 		private void CapTouchCallback(ICapTouchEvent capTouchEvent)
 		{
-			if (_currentCharacterState == null ||
-				(_currentCharacterState.CapTouchEvent != null && capTouchEvent.Created == _currentCharacterState.CapTouchEvent.Created))
+			if (_currentCharacterState == null)
 			{
 				return;
 			}
 
-			_currentCharacterState.CapTouchEvent = (CapTouchEvent)capTouchEvent;
+			switch (capTouchEvent.SensorPosition)
+			{
+				case CapTouchPosition.Scruff:
+					_currentCharacterState.Scruff = (CapTouchEvent)capTouchEvent;
+					break;
+				case CapTouchPosition.Chin:
+					_currentCharacterState.Chin = (CapTouchEvent)capTouchEvent;
+					break;
+				case CapTouchPosition.Front:
+					_currentCharacterState.FrontCap = (CapTouchEvent)capTouchEvent;
+					break;
+				case CapTouchPosition.Back:
+					_currentCharacterState.BackCap = (CapTouchEvent)capTouchEvent;
+					break;
+				case CapTouchPosition.Left:
+					_currentCharacterState.LeftCap = (CapTouchEvent)capTouchEvent;
+					break;
+				case CapTouchPosition.Right:
+					_currentCharacterState.RightCap = (CapTouchEvent)capTouchEvent;
+					break;
+
+			}
+
 			CapTouchEvent?.Invoke(this, capTouchEvent);
 		}
 		
@@ -862,16 +884,16 @@ namespace MistyCharacter
 		
 		private void BumpCallback(IBumpSensorEvent bumpEvent)
 		{
-			if (_currentCharacterState == null ||
-				(_currentCharacterState.BumpEvent != null && bumpEvent.Created == _currentCharacterState.BumpEvent.Created))
+			if (_currentCharacterState == null)
 			{
 				return;
 			}
 
+			//TODO return full event
 			switch (bumpEvent.SensorPosition)
 			{
 				case BumpSensorPosition.FrontRight:
-					_currentCharacterState.LocomotionState.FrontRightBumpContacted = bumpEvent.IsContacted;
+					_currentCharacterState.LocomotionState.FrontRightBumpContacted = bumpEvent.IsContacted;					
 					break;
 				case BumpSensorPosition.FrontLeft:
 					_currentCharacterState.LocomotionState.FrontLeftBumpContacted = bumpEvent.IsContacted;
@@ -883,8 +905,7 @@ namespace MistyCharacter
 					_currentCharacterState.LocomotionState.BackLeftBumpContacted = bumpEvent.IsContacted;
 					break;
 			}
-
-			_currentCharacterState.BumpEvent = (BumpSensorEvent)bumpEvent;
+			
 			BumperEvent?.Invoke(this, bumpEvent);
 
 		}
@@ -949,10 +970,8 @@ namespace MistyCharacter
 			// From Testing, using this pattern for return data
 			//   0 = valid range data
 			// 101 = sigma fail - lower confidence but most likely good
-			// 104 = Out of bounds - Distance returned is greater than distance we are confident about, but most likely good - error codes can be returned in distance field at this time :(  so ignore error code range
-			if (tofEvent.Status == 0 ||
-				(tofEvent.Status == 101 && tofEvent.DistanceInMeters >= 1) ||
-				tofEvent.Status == 104)
+			// 104 = Out of bounds - Distance returned is greater than distance we are confident about, but most likely good
+			if (tofEvent.Status == 0 || tofEvent.Status == 101  || tofEvent.Status == 104)
 			{
 				distance = tofEvent.DistanceInMeters;
 			}

@@ -110,6 +110,7 @@ namespace MistyCharacter
 		private Timer _triggerActionTimeoutTimer;
 		private Timer _timerTriggerTimer;
 		private Timer _pollRunningSkillsTimer;
+		private Timer _stateEventTimer;
 		private AssetWrapper AssetWrapper;
 		private ISpeechManager SpeechManager;
 		private IArmManager ArmManager;
@@ -208,6 +209,16 @@ namespace MistyCharacter
 				MistyState.HeadYawActuatorEvent += HeadManager.HandleActuatorEvent;
 				
 				SpeechManager.SpeechIntent += MistyState.HandleSpeechIntentReceived;
+
+
+				SpeechManager.StartedSpeaking += MistyState.HandleStartedSpeakingReceived;
+				SpeechManager.StoppedSpeaking += MistyState.HandleStoppedSpeakingReceived;
+				SpeechManager.StartedListening += MistyState.HandleStartedListeningReceived;
+				SpeechManager.StoppedListening += MistyState.HandleStoppedListeningReceived;
+				SpeechManager.KeyPhraseRecognized += MistyState.HandleKeyPhraseRecognizedReceived;
+				SpeechManager.CompletedProcessingVoice += MistyState.HandleCompletedProcessingVoiceReceived;
+				SpeechManager.StartedProcessingVoice += MistyState.HandleStartedProcessingVoiceReceived;
+				
 				SpeechManager.SpeechIntent += SpeechManager_SpeechIntent;
 				SpeechManager.PreSpeechCompleted += SpeechManager_PreSpeechCompleted;
 				SpeechManager.StartedSpeaking += SpeechManager_StartedSpeaking;
@@ -221,6 +232,7 @@ namespace MistyCharacter
 
 				InteractionStarted += MistyState.HandleInteractionStarted;
 				InteractionEnded += MistyState.HandleInteractionEnded;
+				InteractionEnded += SpeechManager.HandleInteractionEnded;
 				ConversationStarted += MistyState.HandleConversationStarted;
 				ConversationEnded += MistyState.HandleConversationEnded;
 				ValidTriggerReceived += MistyState.HandleValidTriggerReceived;
@@ -260,7 +272,10 @@ namespace MistyCharacter
 
 				//hacky check for running skills, so there may be a 15 second delay if skill shuts down automatically to where we notice and try to restart				
 				_pollRunningSkillsTimer = new Timer(UpdateRunningSkillsCallback, null, 15000, Timeout.Infinite);
-				
+
+				//TODO make configurable
+				_stateEventTimer = new Timer(SendStateEvent, null, 500, 500);
+
 				_ = Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
 				{
 					PlaceOnTop = false
@@ -272,7 +287,7 @@ namespace MistyCharacter
 					_ = Robot.SetTextDisplaySettingsAsync("SpokeText", new TextSettings
 					{
 						Wrap = true,
-						Visible = true,
+						Visible = false,
 						Weight = CharacterParameters.LargePrint ? 20 : 15,
 						Size = CharacterParameters.LargePrint ? 40 : 20,
 						HorizontalAlignment = ImageHorizontalAlignment.Center,
@@ -288,10 +303,10 @@ namespace MistyCharacter
 
 				if (CharacterParameters.HeardSpeechToScreen)
 				{
-					_ = Robot.SetTextDisplaySettingsAsync("SpeechText", new TextSettings
+					_ = Robot.SetTextDisplaySettingsAsync("HeardSpeech", new TextSettings
 					{
 						Wrap = true,
-						Visible = true,
+						Visible = false,
 						Weight = 15,
 						Size = 20,
 						HorizontalAlignment = ImageHorizontalAlignment.Center,
@@ -1331,14 +1346,16 @@ namespace MistyCharacter
 					}
 					_skillsToStop.Clear();
 				}
-
-				_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+				
+				_ = Robot.SetTextDisplaySettingsAsync("HeardSpeech", new TextSettings
 				{
-					Deleted = true
+					Visible = false
 				});
-
-
-				//	StateAtAnimationStart = new CharacterState(MistyState.GetCharacterState());
+				_ = Robot.SetTextDisplaySettingsAsync("SpokeText", new TextSettings
+				{
+					Visible = false
+				});
+				
 				InteractionStarted?.Invoke(this, CurrentInteraction?.Name);
 
 				string triggerActionOptionId = "";
@@ -1449,10 +1466,13 @@ namespace MistyCharacter
 
 				IDictionary<string, object> data = new Dictionary<string, object>
 				{
+					{"DataType", "interaction"},
+					{"ConversationGroup", _conversationGroup?.Name},
+					{"RobotName", _conversationGroup?.RobotName ?? "Misty"},
+					{"Conversation", _currentConversationData?.Name },
 					{"CurrentInteraction", CurrentInteraction },
 					{"Utterances", utteranceList},
-					{"Triggers", triggerList},
-					{"State", MistyState.GetCharacterState()},
+					{"Triggers", triggerList}
 				};
 
 				return JsonConvert.SerializeObject(data);
@@ -1463,6 +1483,24 @@ namespace MistyCharacter
 			}
 		}
 
+		private string GetStateEvent()
+		{
+			try
+			{
+				IDictionary<string, object> data = new Dictionary<string, object>
+				{
+					{"DataType", "state"},
+					{"State", MistyState.GetCharacterState()},
+				};
+
+				return JsonConvert.SerializeObject(data);
+			}
+			catch
+			{
+				return string.Empty;
+			}
+		}
+		
 		private void SendInteractionUIEvent()
 		{
 			//TODO Test performance as items are added!
@@ -1479,6 +1517,15 @@ namespace MistyCharacter
 			}
 		}
 
+		private void SendStateEvent(object timerData)
+		{
+			//TODO Test performance and allow config of how oftent			
+			string msg = GetStateEvent();
+			if (!string.IsNullOrWhiteSpace(msg))
+			{
+				Robot.PublishMessage(msg, null);
+			}
+		}
 
 		public void HandleAnimationScriptRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action)
 		{
@@ -2243,6 +2290,10 @@ namespace MistyCharacter
 			if (!string.IsNullOrWhiteSpace(e) && CharacterParameters.DisplaySpoken)
 			{
 				Robot.DisplayText(e, "SpokeText", null);
+				_ = Robot.SetTextDisplaySettingsAsync("SpokeText", new TextSettings
+				{
+					Visible = true
+				});
 			}
 			StartedSpeaking?.Invoke(this, e);
 
@@ -2257,7 +2308,11 @@ namespace MistyCharacter
 			_processingVoice = false;
 			if (CharacterParameters.HeardSpeechToScreen && !string.IsNullOrWhiteSpace(speechIntent.Text))
 			{
-				Robot.DisplayText(speechIntent.Text, "SpeechText", null);
+				Robot.DisplayText(speechIntent.Text, "HeardSpeech", null);
+				_ = Robot.SetTextDisplaySettingsAsync("HeardSpeech", new TextSettings
+				{
+					Visible = true
+				});
 			}
 
 			//New data formats
@@ -2846,6 +2901,7 @@ namespace MistyCharacter
 				{
 					Robot.UpdateHazardSettings(new HazardSettings { RevertToDefault = true }, null);
 					IgnoreEvents();
+					_stateEventTimer?.Dispose();
 					_noInteractionTimer?.Dispose();
 					_triggerActionTimeoutTimer?.Dispose();
 					_timerTriggerTimer?.Dispose();

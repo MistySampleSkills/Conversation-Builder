@@ -75,6 +75,8 @@ namespace SpeechTools
 
 		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
 
+		void HandleInteractionEnded(object sender, string interaction);
+
 		void Dispose();
 		
 		//TODO Move prespeech into speech manager

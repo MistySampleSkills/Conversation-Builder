@@ -83,7 +83,7 @@ namespace ConversationBuilder.Controllers
 			_userManager = userManager;
 		}
 
-		public async Task<SkillParameters> GenerateSkillConfiguration(string id, bool animationCreationMode = false, double animationCreationDebounceSeconds = 0.25, bool ignoreArmCommands = false, bool smoothRecording = false, bool retranslateTTS = false)
+		public async Task<SkillParameters> GenerateSkillConfiguration(string id, bool animationCreationMode = false, double animationCreationDebounceSeconds = 0.25, bool ignoreArmCommands = false, bool ignoreHeadCommands = false, bool smoothRecording = false, bool retranslateTTS = false)
 		{
 			SkillParameters skillParameters = new SkillParameters();
 			SkillConversationGroup skillConversationGroup = new SkillConversationGroup();
@@ -108,6 +108,7 @@ namespace ConversationBuilder.Controllers
 				skillConversationGroup.AnimationCreationMode = animationCreationMode;
 				skillConversationGroup.AnimationCreationDebounceSeconds = animationCreationDebounceSeconds;
 				skillConversationGroup.IgnoreArmCommands = ignoreArmCommands;
+				skillConversationGroup.IgnoreHeadCommands = ignoreHeadCommands;
 				skillConversationGroup.RetranslateTTS = retranslateTTS;
 				skillConversationGroup.SmoothRecording = smoothRecording;
 				
