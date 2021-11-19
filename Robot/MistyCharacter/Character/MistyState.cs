@@ -418,8 +418,8 @@ namespace MistyCharacter
 		{
 			try
 			{
-				_misty.UnregisterAllEvents(null); //in case last run was stopped abnormally (via debugger)
-				await Task.Delay(2000); //time for unreg to happen before we rereg
+				//_misty.UnregisterAllEvents(null); //in case last run was stopped abnormally (via debugger)
+				//await Task.Delay(2000); //time for unreg to happen before we rereg
 				RegisterStartingEvents();
 
 				if (_characterParameters.AnimationCreationMode)
@@ -1002,7 +1002,7 @@ namespace MistyCharacter
 				if (disposing)
 				{
 					_animationCreationTimer?.Dispose();
-					_misty.UnregisterAllEvents(null);
+					//_misty.UnregisterAllEvents(null);
 				}
 
 				_isDisposed = true;

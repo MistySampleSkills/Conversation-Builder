@@ -39,9 +39,22 @@ $(document).ready(function () {
     var _robotDemoEventName = "";
     var _triggers;
     var _utterances;
+	var _conversations;
 	
     var ipInStorage = sessionStorage.getItem("ip");
     var ip = ipInStorage ? ipInStorage : "";
+    
+	document.getElementById('inputfile')
+            .addEventListener('change', function() {
+              
+            var fr=new FileReader();
+            fr.onload=function(){
+                document.getElementById('output')
+                        .textContent=fr.result;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
 
 	const sleep = (milliseconds) => {
 		return new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -154,6 +167,9 @@ $(document).ready(function () {
 				else if(action === "ui-image") {	
 					$('#whiz-bang').html('<img style="max-width:100%;" src="' + eventObject.Data.trim() + '" alt="whiz-bang-image">');							
 				}
+				else if(action === "ui-web") {	
+					$('#whiz-bang').html('<iframe style="max-width:100%;" src="' + eventObject.Data.trim() + '" title="whiz-bang-url"></iframe>');							
+				}
 				else if(action === "ui-audio") {
 					var audio = new Audio(eventObject.Data.trim());
     				audio.play();
@@ -165,7 +181,46 @@ $(document).ready(function () {
 				else if(action === "ui-led") {
 					
   					document.getElementById("led").style.borderColor = "#" + eventObject.Data.trim();
-					//$('#led').style.border("10px solid " + eventObject.Data.trim() + ";";
+				}
+			}
+			else if(eventObject.DataType === "conversations") {
+
+				if(_conversations == eventObject.Conversations)
+				{
+					return;
+				}
+
+				_conversations = eventObject.Conversations;
+
+				//refresh list
+				$('#conversation-options').html("");
+
+				var container = document.getElementById('conversation-options');
+				for(let i = 0; i < _conversations.length; ++i)
+				{
+					var button = document.createElement('button');
+					button.type = 'button';
+					button.innerHTML = _conversations[i].Name;
+					button.className = 'btn-styled';
+					button.value = _conversations[i].Id;
+					
+					button.onclick = function() {
+						StartConversation(_conversations[i].Id, _conversations[i].Name);
+					};
+					
+					container.appendChild(button);
+
+					var button2 = document.createElement('button');
+					button2.type = 'button';
+					button2.innerHTML = "🗑️";
+					button2.className = 'btn-styled';
+					button2.value = _conversations[i].Id;
+					
+					button2.onclick = function() {
+						RemoveConversation(_conversations[i].Id, _conversations[i].Name);
+					};
+					
+					container.appendChild(button2);
 				}
 			}
 			else if(eventObject.DataType === "state") {
@@ -281,6 +336,90 @@ $(document).ready(function () {
 		console.log("Error connecting to websocket: ", data);
 	}
 
+	function StartConversation(id, name)
+    {
+        //send event back up to skill
+        if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+
+        var payload = {
+			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e",
+			"EventName": "StartConversation",
+			"Payload": { "ConversationGroupId": id }
+		};
+
+		ShowToastMessage("Starting '" + name + "' conversation.");
+
+		_fetchClient.PostCommand("skills/event", JSON.stringify(payload), function (data) {
+			console.log("User event response for event :", data);
+		});
+    }
+	
+	$("#start-skill-button").on("click", function (e) {    
+        //send event back up to skill
+        if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+		
+		var payload = {
+			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e"
+		};
+
+		_fetchClient.PostCommand("skills/start", JSON.stringify(payload), function (data) {
+
+			if (data.status === "Success") {
+				showToastMessage("Running conversation skill. Wait for the conversations to load and then start one.");
+			}
+			else {
+				showToastMessage("Failed to run conversation skill.");
+			}
+		});
+    });
+
+	$("#stop-conversation-button").on("click", function (e) {    
+        //send event back up to skill
+        if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+
+        var payload = {
+			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e",
+			"EventName": "StopConversation",
+			"Payload": { }
+		};
+
+		ShowToastMessage("Stopping running conversation.");
+
+		_fetchClient.PostCommand("skills/event", JSON.stringify(payload), function (data) {
+			console.log("User event response for event :", data);
+		});
+    });
+	
+	function RemoveConversation(id, name)
+    {
+        //send event back up to skill
+        if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+        
+		var payload = {
+			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e",
+			"EventName": "RemoveConversation",
+			"Payload": { "ConversationGroupId": id }
+		};
+
+		ShowToastMessage("Removing '" + name + "' conversation.");
+
+		_fetchClient.PostCommand("skills/event", JSON.stringify(payload), function (data) {
+			console.log("User event response for event :", data);
+		});
+    }
+
     function SendTriggerEvent(trigger, filter, text)
     {
         //send event back up to skill
@@ -289,8 +428,6 @@ $(document).ready(function () {
             return;
         }
         
-       // var command = $('#trigger-button').value;
-
         var payload = {
 			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e",
 			"EventName": "ExternalEvent",
@@ -326,6 +463,31 @@ $(document).ready(function () {
 			DisconnectFromRobot();
 		}
 	});
+
+	$("#import-action-button").on("click", function (e) {
+
+        if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+        
+		var conversationConfigString = $("#output")[0].innerHTML;
+
+		 var payload = {
+			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e",
+			"EventName": "LoadConversation",
+			"Payload": {
+				"ConversationGroup" : conversationConfigString
+			}
+		};
+
+        ShowToastMessage("Sending conversation to robot...");
+
+		_fetchClient.PostCommand("skills/event", JSON.stringify(payload), function (data) {
+			console.log("User event response for event " + eventName + " :", data);
+		});
+    });
+
 
     $("#send-speech").submit(async function (e) {
 

@@ -436,13 +436,13 @@ h3.section-header {
 	color: red;
 }
 
-/* Wifi Modal */
+/* Conversation Modal */
 
-#wifi-modal .modal-body, #wifi-modal .modal-header {
+#conversation-modal .modal-body, #conversation-modal .modal-header {
 	background-color: #241c35;
 }
 
-#wifi-modal {
+#conversation-modal {
 	width: 800px;
 	left: auto;
 	top: 5%;
@@ -450,11 +450,34 @@ h3.section-header {
 	outline: none;
 }
 
-#wifi-modal p {
+#conversation-modal p {
 	font-size: 14px;
 }
 
-#wifi-modal h3 {
+#conversation-modal h3 {
+	font-size: 16px;
+	font-weight: 600;
+}
+
+/* Import Modal */
+
+#import-modal .modal-body, #import-modal .modal-header {
+	background-color: #241c35;
+}
+
+#import-modal {
+	width: 800px;
+	left: auto;
+	top: 5%;
+	right: 5%;
+	outline: none;
+}
+
+#import-modal p {
+	font-size: 14px;
+}
+
+#import-modal h3 {
 	font-size: 16px;
 	font-weight: 600;
 }

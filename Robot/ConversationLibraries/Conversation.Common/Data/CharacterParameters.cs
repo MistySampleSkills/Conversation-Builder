@@ -35,6 +35,15 @@ using System.Collections.Generic;
 
 namespace Conversation.Common
 {
+	public enum InitializationStatus
+	{
+		Unknown,
+		Warning,
+		Error,
+		Waiting,
+		Success
+	}
+
 	public sealed class CharacterParameters
 	{
 		public AzureSpeechParameters AzureSpeechRecognitionParameters { get; set; }
@@ -79,7 +88,7 @@ namespace Conversation.Common
 
 		public string InitializationStatusMessage { get; set; }
 
-		public string InitializationErrorStatus { get; set; }
+		public InitializationStatus InitializationErrorStatus { get; set; }
 
 		public string RobotIp { get; set; }
 
@@ -89,8 +98,23 @@ namespace Conversation.Common
 
 		public bool UsePreSpeech { get; set; }
 
-		public IList<string> PreSpeechPhrases { get; set; } = new List<string>();
 
+		public IList<string> PreSpeechList { get; set; }
+
+		private string _phrases;
+		public string PreSpeechPhrases
+		{
+			get
+			{
+				return _phrases;
+			}
+			set
+			{
+				_phrases = value;
+				PreSpeechList = _phrases.Split(";");
+			}
+		}
+		
 		public IList<Robot> Robots { get; set; } = new List<Robot>();
 
 		//TODO

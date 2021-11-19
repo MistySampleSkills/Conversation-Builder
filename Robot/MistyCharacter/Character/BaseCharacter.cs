@@ -98,7 +98,7 @@ namespace MistyCharacter
 		private int _currentProcessingVoiceWaits = 0;
 		private KeyValuePair<DateTime, TriggerData> _latestTriggerMatchData = new KeyValuePair<DateTime, TriggerData>();
 		private IList<string> _skillsToStop = new List<string>();
-		protected IDictionary<string, object> OriginalParameters = new Dictionary<string, object>();
+		public IDictionary<string, object> OriginalParameters { get; set; } = new Dictionary<string, object>();
 		protected IRobotMessenger Robot;
 		protected IMistyState MistyState;
 		protected ISDKLogger Logger;
@@ -1022,8 +1022,7 @@ namespace MistyCharacter
 		}
 
 		public async Task StopConversation(string speak = null)
-		{
-			
+		{	
 			_interactionQueue.Clear();
 			IgnoreEvents();
 			await AnimationManager.StopRunningAnimationScripts();
@@ -1519,7 +1518,7 @@ namespace MistyCharacter
 
 		private void SendStateEvent(object timerData)
 		{
-			//TODO Test performance and allow config of how oftent			
+			//TODO Test performance and allow config of how often		
 			string msg = GetStateEvent();
 			if (!string.IsNullOrWhiteSpace(msg))
 			{
@@ -2141,9 +2140,9 @@ namespace MistyCharacter
 				}
 
 				if ((preSpeechOverrides == null || preSpeechOverrides.Length == 0) &&
-					(CharacterParameters.PreSpeechPhrases != null && CharacterParameters.PreSpeechPhrases.Count > 0))
+					(CharacterParameters.PreSpeechList != null && CharacterParameters.PreSpeechList.Count > 0))
 				{
-					preSpeechOverrides = CharacterParameters.PreSpeechPhrases.ToArray();
+					preSpeechOverrides = CharacterParameters.PreSpeechList.ToArray();
 				}
 
 				if (preSpeechOverrides != null && preSpeechOverrides.Length > 0)
@@ -2913,7 +2912,6 @@ namespace MistyCharacter
 					HeadManager.Dispose();
 					TimeManager.Dispose();
 					
-					Robot.UnregisterAllEvents(null);
 					Robot.Stop(null);
 					Robot.Halt(new List<MotorMask> { MotorMask.LeftArm, MotorMask.RightArm }, null);
 					

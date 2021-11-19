@@ -84,10 +84,6 @@ namespace MistyConversation
 					return;
 				}
 
-				//Reset screen if successfully started
-				await _misty.SetDisplaySettingsAsync(true);
-				await _conversationManager.StartConversation();
-
 			}
 			catch (OperationCanceledException)
 			{
@@ -140,7 +136,7 @@ namespace MistyConversation
 				if (disposing)
 				{
 					_conversationManager?.Dispose();
-					_misty.UnregisterAllEvents(null);
+					//_misty.UnregisterAllEvents(null);
 					_misty.SkillCompleted();
 					SkillRunState?.Invoke(this, false);
 				}

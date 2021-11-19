@@ -78,7 +78,7 @@ namespace ExampleHandlerSkill
             _parameters = parameters;
 
             //In case this wasn't shut down properly last time, make sure it's events are all newly registered
-			_misty.UnregisterAllEvents(null);
+		//	_misty.UnregisterAllEvents(null);
 			
             //Process the startup parameters
             //TODO Handle more of this in the libraries
@@ -175,7 +175,7 @@ namespace ExampleHandlerSkill
 
 		public void OnCancel(object sender, IDictionary<string, object> parameters)
 		{
-			_misty.UnregisterAllEvents(null);
+		//	_misty.UnregisterAllEvents(null);
 			Dispose();
 		}
 		

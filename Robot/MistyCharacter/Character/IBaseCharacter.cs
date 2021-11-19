@@ -40,6 +40,7 @@ namespace MistyCharacter
 {
 	public interface IBaseCharacter
 	{
+		IDictionary<string, object> OriginalParameters { get; set; }
 		void HandleFaceRecognitionEvent(object sender, IFaceRecognitionEvent theEvent);
 		void HandleCapTouchEvent(object sender, ICapTouchEvent theEvent);
 		void HandleBumperEvent(object sender, IBumpSensorEvent theEvent);
@@ -255,7 +256,7 @@ namespace MistyCharacter
 		/// <param name="interactionId"></param>
 		/// <returns></returns>
 		Task<bool> StartConversation(string conversationId = null, string interactionId = null);
-
+		
 		/// <summary>
 		/// Stop the conversation
 		/// </summary>

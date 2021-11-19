@@ -1192,6 +1192,9 @@ namespace MistyCharacter
 							case "UI-IMAGE":
 								SendUIEvent("UI-IMAGE", Convert.ToString(commandData[1]));
 								break;
+							case "UI-WEB":
+								SendUIEvent("UI-WEB", Convert.ToString(commandData[1]));
+								break;
 							case "UI-AUDIO":
 								SendUIEvent("UI-AUDIO", Convert.ToString(commandData[1]));
 								break;

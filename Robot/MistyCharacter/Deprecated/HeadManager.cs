@@ -536,7 +536,7 @@ namespace MistyCharacter
 				    if (disposing)
 				    {
 						_moveHeadTimer?.Dispose();
-						Robot.UnregisterAllEvents(null);
+						//Robot.UnregisterAllEvents(null);
 					    _headMovingContinuously = false;                    	
              	    }
 

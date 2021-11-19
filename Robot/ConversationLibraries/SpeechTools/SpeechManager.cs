@@ -1687,7 +1687,7 @@ namespace SpeechTools
 			{
 				if (disposing)
 				{
-					_misty.UnregisterAllEvents(null);
+			//		_misty.UnregisterAllEvents(null);
 				}
 
 				_isDisposed = true;
