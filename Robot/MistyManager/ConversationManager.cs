@@ -122,7 +122,7 @@ namespace MistyManager
 								await _character?.StopConversation();
 								_character?.Dispose();
 							}
-							await Task.Delay(10000);//TODO
+							await Task.Delay(5000);//TODO
 							_runningConversation = null;
 						}
 

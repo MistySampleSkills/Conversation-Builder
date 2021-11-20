@@ -56,58 +56,68 @@ information and full details:
     <title>Interaction Dashboard</title>
 </head>
 <body>
-    <div class="modal m-0" id="import-modal" tabindex="-1" role="dialog">
-		<div class="modal-dialog py-0" role="document">
-			<div class="modal-content">
-				<div class="modal-header py-0">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+    <div class="modal right py-0" style="max-width: 450px;" id="import-modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog  py-0" role="document">
+			<div class="modal-content" >
+				<div class="modal-header">
+                    Import conversation
+					<button type="button" class="close mr-10" data-dismiss="modal" aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
 				</div>
 				<div class="modal-body">
-					<p>Select a conversation configuration file and upload it to your robot.
-					<div class="row">
-						<div class="col-sm-6">
-							<h3>Browse for file </h3>
-									<input type="file" name="inputfile" id="inputfile"> <br>
-                                    <button id="import-action-button" class="btn  my-md-2 my-sm-0 ml-1 ml-md-0" type="button" style="background-color:#3c06b9;border:1px solid #bdc4e9;">Save To Robot</button>
-                                    <pre id="output" hidden="true"></pre>
-								
-							
-						</div>
-					</div>
+					<div class="row ml-2">
+                    Browse for and select a conversation file.
+                    </div>
+                    <div class="row ml-2">
+                    Then save it to your robot.</div>
+					<div class="row ml-2 mt-2">
+                    <h3>Browse for file </h3>
+                </div>            
+                <div class="row ml-2 mt-2">
+                    <input type="file" name="inputfile" id="inputfile"> <br>
+                    </div>            
+				<div class="row ml-2 mt-2">
+                                <button id="import-action-button" class="btn  my-md-2 my-sm-0 ml-1 ml-md-0" type="button" style="background-color:#3c06b9;border:1px solid #bdc4e9;">Save To Robot</button>
+                                <pre id="output" hidden="true"></pre>
+                    </div>
                 </div>
 			</div>
 		</div>
 	</div>
-    <div class="modal m-0" id="conversation-modal" tabindex="-1" role="dialog">
-		<div class="modal-dialog py-0" role="document">
-			<div class="modal-content">
-				<div class="modal-header py-0">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+    <div class="modal right py-0" style="max-width: 450px;" id="conversation-modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog  py-0" role="document">
+			<div class="modal-content" >
+				<div class="modal-header">
+                    Conversation Management
+					<button type="button" class="close mr-10" data-dismiss="modal" aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
 				</div>
 				<div class="modal-body">
-					<p>Start and stop the skill. </p>
-					<div class="row">
-						<div class="col-sm-6">
+					<div class="row ml-2">
+                        Start and stop the skill.
+                    </div>
+                    <div class="row ml-2">
+                        <div class="col-sm-6">
                             <button id="start-skill-button" class="btn start-skill my-md-2 my-sm-0 ml-1 ml-md-0" type="button"style="background-color:#3c06b9;border:1px solid #3451f7;">Start Skill</button>
                             <button id="stop-skill-button" class="btn stop-skill my-md-2 my-sm-0 ml-1 ml-md-0" type="button"style="background-color:#3c06b9;border:1px solid #3451f7;">Stop Skill</button>
                             <br /><br />                            
                     	</div>
+                    </div>       
+                    <div class="row ml-2">
+                        Start, stop and remove conversations.
                     </div>
-                    <p>Run, remove and stop conversations. Start the skill to see the available conversations.</p>
-                        <div class="row">
-                            <div class="col-sm-6">                    				
+                    <div class="row ml-2">
+                        <div class="col-sm-6">                    				
                             <br />
                             <!-- Dynamic code to populate the options -->
                             <div id="conversation-options">
                             </div>
                             <button id="stop-conversation-button" class="btn stop-conversation my-md-2 my-sm-0 ml-1 ml-md-0" type="button"style="background-color:#3c06b9;border:1px solid #3451f7;">Stop Running</button>
-                            <br /><br />
-						</div>
-					</div>
+                            <br /><br />                        
+                        </div>
+                    </div>
                 </div>
 			</div>
 		</div>

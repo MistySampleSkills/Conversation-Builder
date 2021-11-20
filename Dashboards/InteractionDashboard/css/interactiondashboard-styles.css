@@ -235,3 +235,8 @@ label.inline {
 	padding: 10px;
 	background-color: rgb(30, 30, 30);
 }
+
+.modal.fade:not(.in).right .modal-dialog {
+    -webkit-transform: translate3d(25%, 0, 0);
+    transform: translate3d(25%, 0, 0);
+}

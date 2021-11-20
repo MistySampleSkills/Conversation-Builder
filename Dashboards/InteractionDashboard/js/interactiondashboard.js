@@ -168,7 +168,7 @@ $(document).ready(function () {
 					$('#whiz-bang').html('<img style="max-width:100%;" src="' + eventObject.Data.trim() + '" alt="whiz-bang-image">');							
 				}
 				else if(action === "ui-web") {	
-					$('#whiz-bang').html('<iframe style="max-width:100%;" src="' + eventObject.Data.trim() + '" title="whiz-bang-url"></iframe>');							
+					$('#whiz-bang').html('<iframe src="' + eventObject.Data.trim() + '" title="whiz-bang-url"></iframe>');							
 				}
 				else if(action === "ui-audio") {
 					var audio = new Audio(eventObject.Data.trim());
@@ -198,6 +198,10 @@ $(document).ready(function () {
 				var container = document.getElementById('conversation-options');
 				for(let i = 0; i < _conversations.length; ++i)
 				{
+					var divItem = document.createElement("div");
+					divItem.className = 'row ml-2';
+					
+
 					var button = document.createElement('button');
 					button.type = 'button';
 					button.innerHTML = _conversations[i].Name;
@@ -208,7 +212,7 @@ $(document).ready(function () {
 						StartConversation(_conversations[i].Id, _conversations[i].Name);
 					};
 					
-					container.appendChild(button);
+					divItem.appendChild(button);
 
 					var button2 = document.createElement('button');
 					button2.type = 'button';
@@ -217,10 +221,14 @@ $(document).ready(function () {
 					button2.value = _conversations[i].Id;
 					
 					button2.onclick = function() {
-						RemoveConversation(_conversations[i].Id, _conversations[i].Name);
+						if (confirm('Remove conversation '+ _conversations[i].Name + '. Are you sure?'))
+						{
+							RemoveConversation(_conversations[i].Id, _conversations[i].Name);
+						}
 					};
 					
-					container.appendChild(button2);
+					divItem.appendChild(button2);
+					container.appendChild(divItem);
 				}
 			}
 			else if(eventObject.DataType === "state") {
@@ -375,6 +383,28 @@ $(document).ready(function () {
 			}
 			else {
 				showToastMessage("Failed to run conversation skill.");
+			}
+		});
+    });
+
+	$("#stop-skill-button").on("click", function (e) {    
+        //send event back up to skill
+        if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+		
+		var payload = {
+			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e"
+		};
+
+		_fetchClient.PostCommand("skills/stop", JSON.stringify(payload), function (data) {
+
+			if (data.status === "Success") {
+				showToastMessage("Stopping conversation skill.");
+			}
+			else {
+				showToastMessage("Failed to stop conversation skill.");
 			}
 		});
     });
