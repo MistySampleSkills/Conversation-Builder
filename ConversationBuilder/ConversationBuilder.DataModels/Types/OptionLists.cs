@@ -183,7 +183,7 @@ namespace ConversationBuilder.DataModels
 			AllItems.TryAdd(SyncEvent, SyncEvent);
 			AllItems.TryAdd(TimeOfFlightRange, TimeOfFlightRange);
 			AllItems.TryAdd(AudioCompleted, AudioCompleted);
-			AllItems.TryAdd(Manual, Manual);
+			AllItems.TryAdd(Manual, Manual);			
 		}
 
 		public const string None = "None"; //only used for end trigger

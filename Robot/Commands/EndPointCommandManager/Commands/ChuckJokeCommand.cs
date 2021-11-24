@@ -30,20 +30,40 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Conversation.Common;
-using MistyRobotics.SDK.Events;
+using FunnyBone;
 
-namespace MistyCharacter
+namespace CommandManager
 {
-	public interface IArmManager
+	public class ChuckJokeCommand : IBaseCommand
 	{
-		Task<bool> Initialize();
-		void StopMovement();
-		void HandleArmAction(AnimationRequest animationRequest, ConversationData conversation);
+		private IDictionary<string, object> _parameters = new Dictionary<string, object>();
+		public string Name { get; } = "CHUCK-JOKE";
+		public string Description { get; } = "Returns a chuck norris joke.";
 
-		void Dispose();
+		private FunnyBoneAPI funnyBoneAPI = new FunnyBoneAPI();
+		public string ResponseString { get; private set; }
+		
+		
+		public async Task<string> ExecuteAsync(string[] parameters)
+		{
+			try
+			{
+				ChuckNorrisJokeFormat cnj = await funnyBoneAPI.GetChuckNorrisJoke();
+				ResponseString = cnj?.Value?.Joke;
+				ResponseAction = $"SPEAK-AND-WAIT:'{ResponseString}', 60000;";
+				return ResponseString;
+			}
+			catch
+			{
+				return ResponseString = "Failed to tell chuck joke.";
+			}
+		}
+		
+		public string ResponseAction { get; private set; }
+		
+		public TriggerData CompletionTrigger { get; private set; } = new TriggerData("", "", "");
 	}
 }
- 

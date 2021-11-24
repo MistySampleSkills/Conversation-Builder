@@ -136,6 +136,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Commands\EndPointCommandManager\CommandManager.csproj">
+      <Project>{8b645000-9cf5-497e-9718-b97dbeff7c85}</Project>
+      <Name>CommandManager</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\ConversationLibraries\Conversation.Common\Conversation.Common.csproj">
       <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>

@@ -45,11 +45,12 @@ using MistyRobotics.SDK.Events;
 using MistyRobotics.SDK.Messengers;
 using MistyRobotics.SDK.Responses;
 using SkillTools.AssetTools;
+using SpeechTools;
 using SpeechTools.AzureCognitive;
 using SpeechTools.GoogleSpeech;
 using TimeManager;
 
-namespace SpeechTools
+namespace MistyCharacter
 {
 	public class SpeechManager : ISpeechManager
 	{
@@ -65,7 +66,7 @@ namespace SpeechTools
 		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
 		public event EventHandler<string> UserDataAnimationScript;
 
-		private const string MissingInlineData = "Missing";
+		private const string MissingInlineData = "unknown";
 		private const string TTSNamePreface = "misty-en-";
 		private const string SkillNamePreface = "skill-";
 
@@ -116,6 +117,7 @@ namespace SpeechTools
 		private CharacterParameters _characterParameters { get; set; }
 		private bool _speechOverridden = false;
 		private bool _externalOverridden = false;
+		private ICommandManager _commandManager;
 
 		private int _volume = 20;
 		public int Volume
@@ -312,6 +314,18 @@ namespace SpeechTools
 
 		public async Task<bool> Initialize()
 		{
+			if(_commandManager != null && _commandManager.TryGetReplacements(out IList<string> userReplacements))
+			{
+				foreach(string replaceString in userReplacements)
+				{
+					if(!_replacementValues.Contains(replaceString.Trim().ToLower()))
+					{
+						_replacementValues.Add(replaceString.Trim().ToLower());
+					}
+				}
+			}
+
+			//Passed in speech parameters
 			_azureSpeechRecognitionParameters = _characterParameters.AzureSpeechRecognitionParameters;
 			_googleSpeechRecognitionParameters = _characterParameters.GoogleSpeechRecognitionParameters;
 			_azureTTSParameters = _characterParameters.AzureTTSParameters;
@@ -320,55 +334,332 @@ namespace SpeechTools
 			_timeManager = new EnglishTimeManager(_misty, _parameters, _characterParameters);
 			_assetWrapper = new AssetWrapper(_misty);
 			await _assetWrapper.RefreshAssetLists();
+
+			AzureServiceAuthorization azureRecAuth = null;
+			AzureServiceAuthorization azureTtsAuth = null;
+			GoogleServiceAuthorization googleRecAuth = null;
+			GoogleServiceAuthorization googleTtsAuth = null;
+
+			//File based auth parameters
+			bool userAsrAuth =_commandManager.TryGetAuth("speech-recognition", out ICommandAuthorization robotSpeechRecognitionAuth) && robotSpeechRecognitionAuth?.AuthFields != null && robotSpeechRecognitionAuth.AuthFields.Count() > 1;
+			bool userTtsAuth = _commandManager.TryGetAuth("text-to-speech", out ICommandAuthorization robotTTSAuth) && robotTTSAuth?.AuthFields != null && robotTTSAuth.AuthFields.Count() > 1;
 			
-			if (_azureSpeechRecognitionParameters?.SubscriptionKey != null || _azureTTSParameters?.SubscriptionKey != null)
+			//speech rec auth check
+			try
 			{
-				AzureServiceAuthorization recAuth = new AzureServiceAuthorization
+				if (userAsrAuth &&
+				robotSpeechRecognitionAuth.AuthFields.TryGetValue("Service", out string service))
 				{
-					Region = _azureSpeechRecognitionParameters.Region ?? "",
-					Endpoint = _azureSpeechRecognitionParameters.Endpoint ?? "",
-					SubscriptionKey = _azureSpeechRecognitionParameters.SubscriptionKey ?? ""
-				};
+					if (service.Trim().ToLower() == "azure")
+					{
 
-				AzureServiceAuthorization ttsAuth = new AzureServiceAuthorization
-				{
-					Region = _azureTTSParameters.Region ?? "",
-					Endpoint = _azureTTSParameters.Endpoint ?? "",
-					SubscriptionKey = _azureTTSParameters.SubscriptionKey ?? ""
-				};
+						bool servAcct = false;
+						if(robotSpeechRecognitionAuth.AuthFields.TryGetValue("IsServiceAccount", out string isServiceAccount))
+						{
+							servAcct = Convert.ToBoolean(isServiceAccount);
+						}
+						
+						if(servAcct)
+						{
+							_characterParameters.SpeechRecognitionService = "azureonboard";
+						}
+						else
+						{
+							_characterParameters.SpeechRecognitionService = "azure";
+						}
 
-				_azureCognitive = new AzureSpeechService(ttsAuth, recAuth, _misty);
-				if (_azureCognitive != null && _azureCognitive.Initialize())
-				{
-					_azureCognitive.SpeakingVoice = _azureSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-AriaNeural";
-					_azureCognitive.SpokenLanguage = _azureSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
-					_azureCognitive.TranslatedLanguage = _azureSpeechRecognitionParameters?.TranslatedLanguage ?? "en-US";
-					_azureCognitive.ProfanitySetting = _azureSpeechRecognitionParameters?.ProfanitySetting ?? "raw";
-				}			
-			}
+						if (robotSpeechRecognitionAuth.AuthFields.TryGetValue("Region", out string region) &&
+							   robotSpeechRecognitionAuth.AuthFields.TryGetValue("Endpoint", out string endpoint) &&
+							   robotSpeechRecognitionAuth.AuthFields.TryGetValue("SubscriptionKey", out string key))
+						{
+							azureRecAuth = new AzureServiceAuthorization
+							{
+								Region = region ?? "",
+								Endpoint = endpoint ?? "",
+								SubscriptionKey = key ?? ""
+							};
+						}
+					}
+					else if (service.Trim().ToLower() == "google")
+					{
+						bool servAcct = false;
+						if (robotSpeechRecognitionAuth.AuthFields.TryGetValue("IsServiceAccount", out string isServiceAccount))
+						{
+							servAcct = Convert.ToBoolean(isServiceAccount);
+						}
 
-			if (_googleSpeechRecognitionParameters?.SubscriptionKey != null || _googleTTSParameters?.SubscriptionKey != null)
-			{
-				GoogleServiceAuthorization speechRecAuth = new GoogleServiceAuthorization
+						if (servAcct)
+						{
+							_characterParameters.SpeechRecognitionService = "googleonboard";
+						}
+						else
+						{
+							_characterParameters.SpeechRecognitionService = "google";
+						}
+						if (robotSpeechRecognitionAuth.AuthFields.TryGetValue("Endpoint", out string endpoint) &&
+								robotSpeechRecognitionAuth.AuthFields.TryGetValue("SubscriptionKey", out string key))
+						{
+							googleRecAuth = new GoogleServiceAuthorization
+							{
+								Endpoint = endpoint ?? "",
+								SubscriptionKey = key ?? ""
+							};
+						}
+					}
+					else
+					{
+						_characterParameters.SpeechRecognitionService = service.Trim().ToLower();
+					}
+				}
+				else if (!string.IsNullOrWhiteSpace(_characterParameters?.SpeechRecognitionService))
 				{
-					Endpoint = _googleSpeechRecognitionParameters?.Endpoint ?? "",
-					SubscriptionKey = _googleSpeechRecognitionParameters?.SubscriptionKey ?? ""
-				};
-
-				GoogleServiceAuthorization ttsAuth = new GoogleServiceAuthorization
-				{
-					Endpoint = _googleTTSParameters?.Endpoint ?? "",
-					SubscriptionKey = _googleTTSParameters?.SubscriptionKey ?? ""
-				};
-
-				_googleService = new GoogleSpeechService(ttsAuth, speechRecAuth, _misty);
-				if (_googleService != null && _googleService.Initialize())
-				{
-					_googleService.SpeakingVoice = _googleSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-Standard-C";
-					_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender ?? "Female";
-					_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
+					if (_characterParameters?.SpeechRecognitionService.Trim().ToLower() == "azure")
+					{
+						azureRecAuth = new AzureServiceAuthorization
+						{
+							Region = _azureSpeechRecognitionParameters.Region ?? "",
+							Endpoint = _azureSpeechRecognitionParameters.Endpoint ?? "",
+							SubscriptionKey = _azureSpeechRecognitionParameters.SubscriptionKey ?? ""
+						};
+					}
+					else if (_characterParameters?.SpeechRecognitionService.Trim().ToLower() == "google")
+					{
+						googleRecAuth = new GoogleServiceAuthorization
+						{
+							Endpoint = _googleSpeechRecognitionParameters.Endpoint ?? "",
+							SubscriptionKey = _googleSpeechRecognitionParameters.SubscriptionKey ?? ""
+						};
+					}
 				}
 			}
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogError("Failed processing speech recognition parameters.", ex);
+			}
+
+			//TTS check
+			try
+			{
+				if (userTtsAuth &&
+				robotTTSAuth.AuthFields.TryGetValue("Service", out string service))
+				{
+					if (service.Trim().ToLower() == "azure")
+					{
+						bool servAcct = false;
+						if (robotTTSAuth.AuthFields.TryGetValue("IsServiceAccount", out string isServiceAccount))
+						{
+							servAcct = Convert.ToBoolean(isServiceAccount);
+						}
+
+						if (servAcct)
+						{
+							_characterParameters.TextToSpeechService = "azureonboard";
+						}
+						else
+						{
+							_characterParameters.TextToSpeechService = "azure";
+						}
+
+						if (robotTTSAuth.AuthFields.TryGetValue("Region", out string region) &&
+							   robotTTSAuth.AuthFields.TryGetValue("Endpoint", out string endpoint) &&
+							   robotTTSAuth.AuthFields.TryGetValue("SubscriptionKey", out string key))
+						{
+							azureTtsAuth = new AzureServiceAuthorization
+							{
+								Region = region ?? "",
+								Endpoint = endpoint ?? "",
+								SubscriptionKey = key ?? ""
+							};
+						}
+					}
+					else if (service.Trim().ToLower() == "google")
+					{
+						bool servAcct = false;
+						if (robotTTSAuth.AuthFields.TryGetValue("IsServiceAccount", out string isServiceAccount))
+						{
+							servAcct = Convert.ToBoolean(isServiceAccount);
+						}
+
+						if (servAcct)
+						{
+							_characterParameters.TextToSpeechService = "googleonboard";
+						}
+						else
+						{
+							_characterParameters.TextToSpeechService = "google";
+						}
+
+						if (robotTTSAuth.AuthFields.TryGetValue("Endpoint", out string endpoint) &&
+								robotTTSAuth.AuthFields.TryGetValue("SubscriptionKey", out string key))
+						{
+							googleTtsAuth = new GoogleServiceAuthorization
+							{
+								Endpoint = endpoint ?? "",
+								SubscriptionKey = key ?? ""
+							};
+						}
+					}
+					else
+					{
+						_characterParameters.TextToSpeechService = service.Trim().ToLower();
+					}
+				}
+				else if (!string.IsNullOrWhiteSpace(_characterParameters?.TextToSpeechService))
+				{
+					if (_characterParameters?.TextToSpeechService.Trim().ToLower() == "azure")
+					{
+						azureRecAuth = new AzureServiceAuthorization
+						{
+							Region = _azureTTSParameters.Region ?? "",
+							Endpoint = _azureTTSParameters.Endpoint ?? "",
+							SubscriptionKey = _azureTTSParameters.SubscriptionKey ?? ""
+						};
+					}
+					else if (_characterParameters?.TextToSpeechService.Trim().ToLower() == "google")
+					{
+						googleRecAuth = new GoogleServiceAuthorization
+						{
+							Endpoint = _googleTTSParameters.Endpoint ?? "",
+							SubscriptionKey = _googleTTSParameters.SubscriptionKey ?? ""
+						};
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogError("Failed processing text to speech parameters.", ex);
+			}
+			
+
+			if(azureTtsAuth != null || azureRecAuth != null)
+			{
+				azureTtsAuth = azureTtsAuth ?? azureRecAuth;
+				azureRecAuth = azureRecAuth ?? azureTtsAuth;
+
+				_azureCognitive = new AzureSpeechService(azureTtsAuth, azureRecAuth, _misty);
+				if (_azureCognitive != null && _azureCognitive.Initialize())
+				{
+					if (userTtsAuth)
+					{
+						if(robotTTSAuth.AuthFields.TryGetValue("SpeakingVoice", out string speakingVoice))
+						{
+							_azureCognitive.SpeakingVoice = speakingVoice ?? "en-US-AriaNeural";
+						}
+
+						if (robotTTSAuth.AuthFields.TryGetValue("SpokenLanguage", out string spokenLanguage))
+						{
+							_azureCognitive.SpokenLanguage = spokenLanguage ?? "en-US";
+						}
+
+						if (robotTTSAuth.AuthFields.TryGetValue("TranslatedLanguage", out string translatedLanguage))
+						{
+							_azureCognitive.TranslatedLanguage = translatedLanguage ?? "en-US";
+						}
+
+						if (robotTTSAuth.AuthFields.TryGetValue("ProfanitySetting", out string profanitySetting))
+						{
+							_azureCognitive.ProfanitySetting = profanitySetting ?? "raw";
+						}
+					}
+					else
+					{
+						_azureCognitive.SpeakingVoice = _azureTTSParameters?.SpeakingVoice ?? "en-US-AriaNeural";
+						_azureCognitive.SpokenLanguage = _azureTTSParameters?.SpokenLanguage ?? "en-US";
+						_azureCognitive.TranslatedLanguage = _azureSpeechRecognitionParameters?.TranslatedLanguage ?? "en-US";
+						_azureCognitive.ProfanitySetting = _azureSpeechRecognitionParameters?.ProfanitySetting ?? "raw";
+					}
+				}
+				
+			}
+
+			if (googleTtsAuth != null || googleRecAuth != null)
+			{
+				googleTtsAuth = googleTtsAuth ?? googleRecAuth;
+				googleRecAuth = googleRecAuth ?? googleTtsAuth;
+
+				_googleService = new GoogleSpeechService(googleTtsAuth, googleRecAuth, _misty);
+				if (_googleService != null && _googleService.Initialize())
+				{
+					if (userTtsAuth)
+					{
+						if (robotTTSAuth.AuthFields.TryGetValue("SpeakingVoice", out string speakingVoice))
+						{
+							_googleService.SpeakingVoice = speakingVoice ?? "en-US-Standard-C";
+						}
+
+						if (robotTTSAuth.AuthFields.TryGetValue("SpokenLanguage", out string spokenLanguage))
+						{
+							_googleService.SpokenLanguage = spokenLanguage ?? "en-US";
+						}
+
+						if (robotTTSAuth.AuthFields.TryGetValue("SpeakingGender", out string speakingGender))
+						{
+							_googleService.SpeakingGender = speakingGender ?? "Female";
+						}
+					}
+					else
+					{
+						_googleService.SpeakingVoice = _googleSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-Standard-C";
+						_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender ?? "Female";
+						_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
+					}
+				}
+
+			}
+
+
+
+			//else if (_azureSpeechRecognitionParameters?.SubscriptionKey != null || 
+			//	_azureTTSParameters?.SubscriptionKey != null)
+			//{
+			//	AzureServiceAuthorization recAuth = new AzureServiceAuthorization
+			//	{
+			//		Region = _azureSpeechRecognitionParameters.Region ?? "",
+			//		Endpoint = _azureSpeechRecognitionParameters.Endpoint ?? "",
+			//		SubscriptionKey = _azureSpeechRecognitionParameters.SubscriptionKey ?? ""
+			//	};
+
+			//	AzureServiceAuthorization ttsAuth = new AzureServiceAuthorization
+			//	{
+			//		Region = _azureTTSParameters.Region ?? "",
+			//		Endpoint = _azureTTSParameters.Endpoint ?? "",
+			//		SubscriptionKey = _azureTTSParameters.SubscriptionKey ?? ""
+			//	};
+
+			//	_azureCognitive = new AzureSpeechService(ttsAuth, recAuth, _misty);
+			//	if (_azureCognitive != null && _azureCognitive.Initialize())
+			//	{
+			//		_azureCognitive.SpeakingVoice = _azureSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-AriaNeural";
+			//		_azureCognitive.SpokenLanguage = _azureSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
+			//		_azureCognitive.TranslatedLanguage = _azureSpeechRecognitionParameters?.TranslatedLanguage ?? "en-US";
+			//		_azureCognitive.ProfanitySetting = _azureSpeechRecognitionParameters?.ProfanitySetting ?? "raw";
+			//	}			
+			//}
+
+			//if (_googleSpeechRecognitionParameters?.SubscriptionKey != null || _googleTTSParameters?.SubscriptionKey != null)
+			//{
+			//	GoogleServiceAuthorization speechRecAuth = new GoogleServiceAuthorization
+			//	{
+			//		Endpoint = _googleSpeechRecognitionParameters?.Endpoint ?? "",
+			//		SubscriptionKey = _googleSpeechRecognitionParameters?.SubscriptionKey ?? ""
+			//	};
+
+			//	GoogleServiceAuthorization ttsAuth = new GoogleServiceAuthorization
+			//	{
+			//		Endpoint = _googleTTSParameters?.Endpoint ?? "",
+			//		SubscriptionKey = _googleTTSParameters?.SubscriptionKey ?? ""
+			//	};
+
+			//	_googleService = new GoogleSpeechService(ttsAuth, speechRecAuth, _misty);
+			//	if (_googleService != null && _googleService.Initialize())
+			//	{
+			//		_googleService.SpeakingVoice = _googleSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-Standard-C";
+			//		_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender ?? "Female";
+			//		_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
+			//	}
+			//}
+
+			
 
 			_skillSpeech = new SkillSpeech(_azureSpeechRecognitionParameters?.SpeakingVoice ?? _googleSpeechRecognitionParameters?.SpeakingVoice ?? "Zira");
 
@@ -484,7 +775,7 @@ namespace SpeechTools
 			return _keyPhraseOn;
 		}
 
-		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null)			
+		public SpeechManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, CharacterState characterState, IList<GenericDataStore> genericDataStores, ISpeechIntentManager speechIntentManager = null, ICommandManager commandManager = null)
 		{
 			_parameters = parameters;
 			_misty = misty;
@@ -493,6 +784,7 @@ namespace SpeechTools
 			_genericDataStores = genericDataStores;
 			_speechIntentManager = speechIntentManager;
 			_characterState = characterState;
+			_commandManager = commandManager;
 		}
 
 		public void AbortListening(string audioName)
@@ -1673,7 +1965,13 @@ namespace SpeechTools
 				case "object":
 					newData = _characterState.ObjectEvent?.Description ?? MissingInlineData;
 					break;
-			
+				default:
+					//look for user replacement
+					if(_commandManager != null && _commandManager.TryGetLastResponse(option, out string lastResponse))
+					{
+						newData = lastResponse ?? MissingInlineData;
+					}
+					break;
 			}
 			return newData;
 

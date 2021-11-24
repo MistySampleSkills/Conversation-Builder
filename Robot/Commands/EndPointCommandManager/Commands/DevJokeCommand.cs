@@ -1,4 +1,4 @@
-/**********************************************************************
+﻿/**********************************************************************
 	Copyright 2021 Misty Robotics
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -31,41 +31,39 @@
 **********************************************************************/
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Conversation.Common;
+using FunnyBone;
 
-namespace Conversation.Common
-{
-    /// <summary>
-    /// TODO Mapping between different conversations to change for better reuse, many to many
-    /// </summary>
-	public class ConversationGroup
+namespace CommandManager
+{	
+	public class DevJokeCommand : IBaseCommand
 	{
-		public string Id { get; set; }
+		private IDictionary<string, object> _parameters = new Dictionary<string, object>();
+		public string Name { get; } = "DEV-JOKE";
+		public string Description { get; } = "Returns a developer joke.";
 
-		public string Name { get; set; }
+		private FunnyBoneAPI funnyBoneAPI = new FunnyBoneAPI();
 
-		public string Description { get; set; }
-
-		public string RobotName { get; set; }
-
-		public string StartupConversation { get; set; }
-
-		public string KeyPhraseRecognizedAudio { get; set; }
+		public string ResponseString { get; private set; }
 		
-		public IList<ConversationData> Conversations { get; set; } = new List<ConversationData>();
+		public async Task<string> ExecuteAsync(string[] parameters)
+		{
+			try
+			{
+				SingleJokeFormat sjf = await funnyBoneAPI.GetDeveloperJoke();
+				ResponseString = sjf?.Joke;
+				ResponseAction = $"SPEAK-AND-WAIT:'{ResponseString}', 60000;";
+				return ResponseString;
+			}
 
-		public IList<GenericDataStore> GenericDataStores { get; set; } = new List<GenericDataStore>();
+			catch
+			{
+				return ResponseString = "Failed to tell dev joke.";
+			}
+		}
 
-        public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
-        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
-
-		//TODO In progress 
-		public bool AnimationCreationMode { get; set; } = false;
-		public double AnimationCreationDebounceSeconds { get; set; } = .25;
-		public bool IgnoreArmCommands { get; set; } = false;
-		public bool IgnoreHeadCommands { get; set; } = false;
-
-		public bool RetranslateTTS { get; set; }
-		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops
-		public string PuppetingList { get; set; }
-	}
+		public string ResponseAction { get; private set; }
+		public TriggerData CompletionTrigger { get; private set; } = new TriggerData("", "", "");
+	}	
 }

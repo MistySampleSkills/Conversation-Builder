@@ -1,4 +1,4 @@
-/**********************************************************************
+﻿/**********************************************************************
 	Copyright 2021 Misty Robotics
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -30,42 +30,53 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Conversation.Common;
+using MistyRobotics.SDK.Messengers;
 
-namespace Conversation.Common
+namespace CommandManager
 {
-    /// <summary>
-    /// TODO Mapping between different conversations to change for better reuse, many to many
-    /// </summary>
-	public class ConversationGroup
+
+	//public class SceneCommandAuthorization : CommandAuthorization
+	//{
+	//	public SceneCommandAuthorization(string subscriptionKey, string region, string endpoint)
+	//	{
+	//		SubscriptionKey = subscriptionKey;
+	//		Region = region;
+	//		Endpoint = endpoint;
+	//	}
+
+	//	public string Name { get; set; } = "SceneCommand";
+	//	public string SubscriptionKey { get; set; }
+	//	public string Region { get; set; }
+	//	public string Endpoint { get; set; }
+	//}
+
+	public class UserCommandManager : BaseCommandManager
 	{
-		public string Id { get; set; }
 
-		public string Name { get; set; }
+		public UserCommandManager(IRobotMessenger misty, IDictionary<string, object> parameters) 
+			: base(misty, parameters) {}
 
-		public string Description { get; set; }
+		public override async Task<bool> Initialize(CharacterParameters characterParameters, IMistyState mistyState, IList<ICommandAuthorization> listOfAuthorizations)
+		{
+			CharacterParameters = characterParameters;
+			MistyState = mistyState;
+			Authorizations = listOfAuthorizations;
 
-		public string RobotName { get; set; }
+			Commands.Add(new DevJokeCommand());
+			Commands.Add(new ChuckJokeCommand());
+			
+			Commands.Add(new DescribeSceneCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "DESCRIBE-SCENE")));
+			Commands.Add(new SendEmailCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "SEND-EMAIL")));
+			Commands.Add(new WolframCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "WOLFRAM")));
+			//Commands.Add(new SendTwilioCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "SEND-TWILIO")));			
+			return true;
+		}
 
-		public string StartupConversation { get; set; }
-
-		public string KeyPhraseRecognizedAudio { get; set; }
-		
-		public IList<ConversationData> Conversations { get; set; } = new List<ConversationData>();
-
-		public IList<GenericDataStore> GenericDataStores { get; set; } = new List<GenericDataStore>();
-
-        public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
-        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
-
-		//TODO In progress 
-		public bool AnimationCreationMode { get; set; } = false;
-		public double AnimationCreationDebounceSeconds { get; set; } = .25;
-		public bool IgnoreArmCommands { get; set; } = false;
-		public bool IgnoreHeadCommands { get; set; } = false;
-
-		public bool RetranslateTTS { get; set; }
-		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops
-		public string PuppetingList { get; set; }
 	}
+	
+
 }

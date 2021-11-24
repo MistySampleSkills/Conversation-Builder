@@ -30,47 +30,57 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Conversation.Common;
-using MistyCharacter;
-using MistyRobotics.SDK.Messengers;
+using MistyRobotics.SDK.Events;
 
-namespace MistyManager
+namespace Conversation.Common
 {
-	/// <summary>
-	/// Simple template character using defaults
-    /// Used if no, or invalid, character passed in
-    /// Overriding a character also allows for manager overriding
-    /// Characters can be used to supplement different actions without skills by subscribing to events
-    /// </summary>
-	public class BasicMisty : BaseCharacter
+	public interface ISpeechManager
 	{
-		public BasicMisty(IRobotMessenger misty,IDictionary<string, object> originalParameters, ManagerConfiguration managerConfiguration = null)
-			: base(misty, originalParameters, managerConfiguration)
-		{}
+		event EventHandler<string> StartedSpeaking;
+		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
+		event EventHandler<DateTime> StartedListening;
+		event EventHandler<IVoiceRecordEvent> StoppedListening;
+		event EventHandler<TriggerData> SpeechIntent;
+		event EventHandler<bool> KeyPhraseRecognitionOn;
+		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
+		event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
+		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
+		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
+		event EventHandler<string> UserDataAnimationScript;
+
+		Task<bool> Initialize();
+		int Volume { get; set; }
+		Task Speak(AnimationRequest currentAnimation, Interaction currentInteraction, bool backgroundSpeech);
+		void SetAllowedUtterances(IList<string> allowedUtterances);
+		Task<bool> UpdateKeyPhraseRecognition(Interaction _currentInteraction, bool hasAudio);
+		void AbortListening(string audioName);		
+		bool TryToPersonalizeData(string text, AnimationRequest animationRequest, Interaction interaction, out string newText);
+
+		string MakeTextBasedFileName(string text);
+		void SetAudioTrim(int trimMs);
+		void SetMaxSilence(int silenceTimeout);
+		void SetMaxListen(int listenTimeout);
+		void SetSpeechRate(double rate);
+		void SetSpeakingStyle(string speakingStyle);
+		void SetLanguage(string language);
+		void SetVoice(string voice);
+		void SetPitch(string pitch);
+		//hacky
+		bool HandleExternalSpeech(string text = null);
+		bool CancelSpeechProcessing();
+
+		void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData);
+
+		void HandleInteractionEnded(object sender, string interaction);
+
+		void Dispose();
 		
-		#region IDisposable Support
-
-		private bool _isDisposed = false;
-
-		private void Dispose(bool disposing)
-		{
-			if (!_isDisposed)
-			{
-				if (disposing)
-				{
-					base.Dispose();
-				}
-
-				_isDisposed = true;
-			}
-		}
-
-		public new void Dispose()
-		{
-			Dispose(true);
-		}
-
-		#endregion
+		//TODO Move prespeech into speech manager
+		//void UpdatePrespeech(string prespeech);
 	}
 }
+ 

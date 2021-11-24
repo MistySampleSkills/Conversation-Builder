@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8A67AA55-D289-41D3-8AFE-54960B21A5B4}</ProjectGuid>
+    <ProjectGuid>{8B645000-9CF5-497E-9718-B97DBEFF7C85}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SpeechTools</RootNamespace>
-    <AssemblyName>SpeechTools</AssemblyName>
+    <RootNamespace>EndPointCommandManager</RootNamespace>
+    <AssemblyName>EndPointCommandManager</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17763.0</TargetPlatformVersion>
@@ -120,31 +120,19 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="GoogleSpeech\GoogleServiceAuthorization.cs" />
-    <Compile Include="GoogleSpeech\GoogleSpeechService.cs" />
-    <Compile Include="ISpeechIntentManager.cs" />
-    <Compile Include="ISpeechService.cs" />
-    <Compile Include="AzureCognitive\AzureSpeechService.cs" />
-    <Compile Include="AzureCognitive\AzureServiceAuthorization.cs" />
+    <Compile Include="Commands\SendTwilioCommand.cs" />
+    <Compile Include="Commands\SendEmailCommand.cs" />
+    <Compile Include="Commands\DescribeSceneCommand.cs" />
+    <Compile Include="Commands\UserCommandManager.cs" />
+    <Compile Include="Commands\ChuckJokeCommand.cs" />
+    <Compile Include="Commands\WolframCommand.cs" />
+    <Compile Include="Commands\DevJokeCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SpeechIntentInterpreter.cs" />
-    <Compile Include="SpeechIntentManager.cs" />
-    <Compile Include="SkillSpeech.cs" />
-    <Compile Include="TextComparisonObject.cs" />
-    <EmbeddedResource Include="Properties\SpeechTools.rd.xml" />
+    <EmbeddedResource Include="Properties\CommandManager.rd.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Google.Cloud.Speech.V1">
-      <Version>2.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="Google.Cloud.TextToSpeech.V1">
-      <Version>2.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.CognitiveServices.Speech">
-      <Version>1.13.0</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.11</Version>
+      <Version>6.2.8</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
       <Version>0.9.242-beta</Version>
@@ -152,38 +140,43 @@
     <PackageReference Include="MistyRobotics.SDK">
       <Version>0.9.242-beta</Version>
     </PackageReference>
-    <PackageReference Include="NAudio">
-      <Version>1.10.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.IO">
-      <Version>4.3.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Runtime.Handles">
-      <Version>4.3.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Threading.Tasks">
-      <Version>4.3.0</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Conversation.Common\Conversation.Common.csproj">
+    <ProjectReference Include="..\..\ConversationLibraries\Conversation.Common\Conversation.Common.csproj">
       <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SkillTools\SkillTools.csproj">
-      <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
+    <ProjectReference Include="..\..\ConversationLibraries\EmailManager\EmailManager.csproj">
+      <Project>{2e937842-93f7-45c8-b4c1-3d004c7126f0}</Project>
+      <Name>EmailManager</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ConversationLibraries\FunnyBone\FunnyBone.csproj">
+      <Project>{ea58b95a-fcc1-478f-8dec-de0a03aee523}</Project>
+      <Name>FunnyBone</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ConversationLibraries\Misty.Weather.OpenWeather\Conversation.Weather.OpenWeather.csproj">
+      <Project>{88cbf86e-a6eb-4e4d-8834-6b64ce686ebd}</Project>
+      <Name>Conversation.Weather.OpenWeather</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ConversationLibraries\SkillTools\SkillTools.csproj">
+      <Project>{C081F243-3735-4C72-B071-29B751E460B1}</Project>
       <Name>SkillTools</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TimeManager\TimeManager.csproj">
+    <ProjectReference Include="..\..\ConversationLibraries\TimeManager\TimeManager.csproj">
       <Project>{a1b74b3e-050d-423e-b00d-51a6be475150}</Project>
       <Name>TimeManager</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ConversationLibraries\TwilioManager\TwilioManager.csproj">
+      <Project>{c916fc1b-b152-454f-8f22-90e27e6aab35}</Project>
+      <Name>TwilioManager</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ConversationLibraries\VisionTools\VisionTools.csproj">
+      <Project>{96a4fb98-48fe-4347-8370-dea453955f84}</Project>
+      <Name>VisionTools</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

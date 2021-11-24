@@ -1,4 +1,4 @@
-/**********************************************************************
+﻿/**********************************************************************
 	Copyright 2021 Misty Robotics
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -30,42 +30,20 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
-using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
+using Conversation.Common;
+using MistyRobotics.SDK.Events;
 
 namespace Conversation.Common
 {
-    /// <summary>
-    /// TODO Mapping between different conversations to change for better reuse, many to many
-    /// </summary>
-	public class ConversationGroup
+	public interface IArmManager
 	{
-		public string Id { get; set; }
+		Task<bool> Initialize();
+		void StopMovement();
+		void HandleArmAction(AnimationRequest animationRequest, ConversationData conversation);
 
-		public string Name { get; set; }
-
-		public string Description { get; set; }
-
-		public string RobotName { get; set; }
-
-		public string StartupConversation { get; set; }
-
-		public string KeyPhraseRecognizedAudio { get; set; }
-		
-		public IList<ConversationData> Conversations { get; set; } = new List<ConversationData>();
-
-		public IList<GenericDataStore> GenericDataStores { get; set; } = new List<GenericDataStore>();
-
-        public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
-        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
-
-		//TODO In progress 
-		public bool AnimationCreationMode { get; set; } = false;
-		public double AnimationCreationDebounceSeconds { get; set; } = .25;
-		public bool IgnoreArmCommands { get; set; } = false;
-		public bool IgnoreHeadCommands { get; set; } = false;
-
-		public bool RetranslateTTS { get; set; }
-		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops
-		public string PuppetingList { get; set; }
+		void Dispose();
 	}
 }
+ 

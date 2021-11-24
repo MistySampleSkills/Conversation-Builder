@@ -200,34 +200,51 @@ $(document).ready(function () {
 				{
 					var divItem = document.createElement("div");
 					divItem.className = 'row ml-2';
-					
 
 					var button = document.createElement('button');
 					button.type = 'button';
-					button.innerHTML = _conversations[i].Name;
 					button.className = 'btn-styled';
 					button.value = _conversations[i].Id;
-					
-					button.onclick = function() {
-						StartConversation(_conversations[i].Id, _conversations[i].Name);
-					};
-					
+
+					if(_conversations[i].Running)
+					{
+						button.style.borderColor = "#FFFF00";
+						button.style.backgroundColor = "#ca1515";
+						button.innerHTML = "Stop " + _conversations[i].Name;
+						button.onclick = function() {
+							StopConversation();
+						};
+					}
+					else
+					{
+						button.style.borderColor = "#0000FF";
+						button.style.backgroundColor = "#195f08";
+						button.innerHTML = _conversations[i].Name;
+						button.onclick = function() {
+							StartConversation(_conversations[i].Id, _conversations[i].Name);							
+						};
+					}
+
 					divItem.appendChild(button);
 
-					var button2 = document.createElement('button');
-					button2.type = 'button';
-					button2.innerHTML = "🗑️";
-					button2.className = 'btn-styled';
-					button2.value = _conversations[i].Id;
-					
-					button2.onclick = function() {
-						if (confirm('Remove conversation '+ _conversations[i].Name + '. Are you sure?'))
-						{
-							RemoveConversation(_conversations[i].Id, _conversations[i].Name);
-						}
-					};
-					
-					divItem.appendChild(button2);
+					if(!_conversations[i].Running)
+					{
+
+						var button2 = document.createElement('button');
+						button2.type = 'button';
+						button2.innerHTML = "🗑️";
+						button2.className = 'btn-styled';
+						button2.value = _conversations[i].Id;
+						
+						button2.onclick = function() {
+							if (confirm('Remove conversation '+ _conversations[i].Name + '. Are you sure?'))
+							{
+								RemoveConversation(_conversations[i].Id, _conversations[i].Name);
+							}
+						};
+						
+						divItem.appendChild(button2);
+					}
 					container.appendChild(divItem);
 				}
 			}
@@ -325,7 +342,7 @@ $(document).ready(function () {
 
 	async function SocketOpenCallback() {
 
-        ShowToastMessage("Connected to robot, subscribing to robot demo event.", 5000);
+        ShowToastMessage("Connected to robot, subscribing to conversation events.", 5000);
         _robotDemoEventName = "RobotDemoEvent" + Math.floor(Math.random() * 1000);
         
 		//eventName, msgType, debounceMs, property, inequality, value, returnProperty, eventCallback
@@ -398,7 +415,7 @@ $(document).ready(function () {
 			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e"
 		};
 
-		_fetchClient.PostCommand("skills/stop", JSON.stringify(payload), function (data) {
+		_fetchClient.PostCommand("skills/cancel", JSON.stringify(payload), function (data) {
 
 			if (data.status === "Success") {
 				showToastMessage("Stopping conversation skill.");
@@ -409,9 +426,9 @@ $(document).ready(function () {
 		});
     });
 
-	$("#stop-conversation-button").on("click", function (e) {    
-        //send event back up to skill
-        if (!ip) {
+	function StopConversation()
+	{
+		if (!ip) {
             need2ConnectMessage();
             return;
         }
@@ -427,6 +444,33 @@ $(document).ready(function () {
 		_fetchClient.PostCommand("skills/event", JSON.stringify(payload), function (data) {
 			console.log("User event response for event :", data);
 		});
+	}
+
+	$("#stop-conversation-button").on("click", function (e) {    
+        //send event back up to skill
+		StopConversation();
+    });
+
+	$("#clear-auth-button").on("click", function (e) {    
+		if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+
+		var result = confirm("Are you sure you want to delete the conversation builder auth file on this robot?");
+		if (result) {
+			var payload = {
+				"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e",
+				"EventName": "ClearAuthorization",
+				"Payload": { }
+			};
+	
+			ShowToastMessage("Clearing authorization!");
+	
+			_fetchClient.PostCommand("skills/event", JSON.stringify(payload), function (data) {
+				console.log("User event response for event :", data);
+			});
+		}
     });
 	
 	function RemoveConversation(id, name)
@@ -493,6 +537,30 @@ $(document).ready(function () {
 			DisconnectFromRobot();
 		}
 	});
+
+	$("#import-auth-button").on("click", function (e) {
+
+        if (!ip) {
+            need2ConnectMessage();
+            return;
+        }
+        
+		var authConfigString = $("#output")[0].innerHTML;
+
+		 var payload = {
+			"Skill": "8be20a90-1150-44ac-a756-ebe4de30689e",
+			"EventName": "SaveAuthorization",
+			"Payload": {
+				"AuthData" : authConfigString
+			}
+		};
+
+        ShowToastMessage("Sending auth file to robot...");
+
+		_fetchClient.PostCommand("skills/event", JSON.stringify(payload), function (data) {
+			console.log("User event response for event " + eventName + " :", data);
+		});
+    });
 
 	$("#import-action-button").on("click", function (e) {
 

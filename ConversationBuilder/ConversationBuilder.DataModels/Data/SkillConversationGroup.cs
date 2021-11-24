@@ -69,6 +69,7 @@ namespace ConversationBuilder.DataModels
 		public bool IgnoreHeadCommands { get; set; }
 		public bool RetranslateTTS { get; set; }
 		public bool SmoothRecording { get; set; }
+		public string PuppetingList { get; set; }
 	}
 
 }

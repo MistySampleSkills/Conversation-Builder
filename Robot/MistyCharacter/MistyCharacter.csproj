@@ -120,19 +120,16 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Character\AnimationRecorder.cs" />
+    <Compile Include="Character\DefaultCommandManager.cs" />
+    <Compile Include="Character\SpeechManager.cs" />
     <Compile Include="Character\TOFCounter.cs" />
     <Compile Include="Character\MistyState.cs" />
     <Compile Include="Data\TimerTriggerData.cs" />
     <Compile Include="Character\AnimationManager.cs" />
     <Compile Include="Data\ManagerConfiguration.cs" />
-    <Compile Include="Character\IBaseCharacter.cs" />
     <Compile Include="Character\BaseManager.cs" />
-    <Compile Include="Character\IAnimationManager.cs" />
-    <Compile Include="Deprecated\IArmManager.cs" />
-    <Compile Include="Deprecated\IHeadManager.cs" />
-    <Compile Include="Deprecated\ArmManager.cs" />
-    <Compile Include="Deprecated\HeadManager.cs" />
+    <Compile Include="Character\ArmManager.cs" />
+    <Compile Include="Character\HeadManager.cs" />
     <Compile Include="Character\BaseCharacter.cs" />
     <Compile Include="Character\ParameterManager.cs" />
     <Compile Include="Emotion\EmotionManager.cs" />
@@ -165,6 +162,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Commands\EndPointCommandManager\CommandManager.csproj">
+      <Project>{8b645000-9cf5-497e-9718-b97dbeff7c85}</Project>
+      <Name>CommandManager</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ConversationLibraries\Conversation.Common\Conversation.Common.csproj">
       <Project>{F6DB04A8-FA28-4096-AB01-94A5F1BADFF4}</Project>
       <Name>Conversation.Common</Name>

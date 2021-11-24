@@ -261,11 +261,12 @@ namespace MistyCharacter
 				_overwriteLocalConfig = false;
 				if (onBoardConversationGroup.Value != null)
 				{
-					await ParseCharacterParameters(conversationGroupId, (IDictionary<string, object>)onBoardConversationGroup.Value);
+					await ParseCharacterParameters(conversationGroupId, JsonConvert.DeserializeObject<IDictionary<string, object>>((string)onBoardConversationGroup.Value));
 				}
 				else
 				{
-					await ParseCharacterParameters(conversationGroupId, (IDictionary<string, object>)_conversationGroupList.First().Value);
+					await ParseCharacterParameters(conversationGroupId, JsonConvert.DeserializeObject<IDictionary<string, object>>((string)_conversationGroupList.First().Value));
+					//await ParseCharacterParameters(conversationGroupId, (IDictionary<string, object>)_conversationGroupList.First().Value);
 				}
 				
 				return true;
@@ -276,16 +277,30 @@ namespace MistyCharacter
 			}
 		}
 
+
 		
+		public async Task<bool> StopConversation()
+		{
+			try
+			{
+				_runningConversationGroup = null;
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
+			finally
+			{
+				PublishConversationList();
+			}
+		}
+
+
 		public async Task<bool> StartConversation(string conversationGroupId, IDictionary<string, object> parameters)
 		{
 			try
 			{
-				//CharacterParameters = await Initialize();
-				//if(CharacterParameters.InitializationErrorStatus != InitializationStatus.Error)
-				//{
-
-				//}
 				return true;
 			}
 			catch
@@ -360,15 +375,14 @@ namespace MistyCharacter
 			CharacterParameters characterParameters = new CharacterParameters();
 			try
 			{
+				_parameters = data;
 				_conversationGroupList = await _database.LoadDataAsync() ?? new Dictionary<string, object>();
-				
-				CharacterParameters storedParameters = new CharacterParameters();
 				
 				//TODO Refactor for new startup procedure!!
 				if (string.IsNullOrWhiteSpace(_runningConversationGroup) && string.IsNullOrWhiteSpace(conversationGroupId))
 				{
 					characterParameters.InitializationStatusMessage = "Waiting for conversation.";
-					CharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+					characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 					_misty.SkillLogger.Log("Waiting for conversation.");
 					return characterParameters;
 				}
@@ -390,7 +404,7 @@ namespace MistyCharacter
 					}
 				}
 				
-				if (CharacterParameters.InitializationErrorStatus == InitializationStatus.Error)
+				if (characterParameters.InitializationErrorStatus == InitializationStatus.Error)
 				{
 					return characterParameters;
 				}
@@ -449,7 +463,7 @@ namespace MistyCharacter
 						else
 						{
 							characterParameters.InitializationStatusMessage = "Couldn't parse conversation. Waiting for conversation.";
-							CharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+							characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 							_misty.SkillLogger.Log("Couldn't parse conversation. Waiting for conversation.", ex);
 
 						}
@@ -463,13 +477,13 @@ namespace MistyCharacter
 				else
 				{
 					characterParameters.InitializationStatusMessage = "No conversation data. Waiting for conversation.";
-					CharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+					characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 					_misty.SkillLogger.Log("No conversation data. Waiting for conversation.");
 				}
 
 				if (conversationGroup == null)
 				{
-					CharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+					characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 					characterParameters.InitializationStatusMessage = "No conversation data. Waiting for conversation";
 					_misty.SkillLogger.Log("No conversation data. Waiting for conversation.");
 					return characterParameters;
@@ -482,7 +496,8 @@ namespace MistyCharacter
 				characterParameters.IgnoreHeadCommands = conversationGroup.IgnoreHeadCommands;
 				characterParameters.RetranslateTTS = conversationGroup.RetranslateTTS;
 				characterParameters.SmoothRecording = conversationGroup.SmoothRecording;
-
+				characterParameters.PuppetingList = conversationGroup.PuppetingList;
+				
 				string extraPayload = GetStringField(_parameters, ConversationConstants.Payload) ?? null;
 				if (!string.IsNullOrWhiteSpace(extraPayload))
 				{
@@ -502,7 +517,7 @@ namespace MistyCharacter
 						//user has invalid payload
 						_misty.SkillLogger.Log($"Failed parsing user defined payload data, skill may not work as expected.");
 						characterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
-						CharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+						characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 					}
 				}
 
@@ -538,7 +553,7 @@ namespace MistyCharacter
 							//user has invalid payload
 							_misty.SkillLogger.Log($"Failed parsing user defined skill {skillMessage.Skill} payload, skill may not work as expected.");
 							characterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
-							CharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+							characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 						}
 					}
 				}
@@ -559,7 +574,7 @@ namespace MistyCharacter
 				{
 					_misty.SkillLogger.Log($"Failed parsing robot information, skill may not work as expected.");
 					characterParameters.InitializationStatusMessage = "Warning. Could not parse robot information.";
-					CharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+					characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 				}
 				try
 				{
@@ -569,7 +584,7 @@ namespace MistyCharacter
 				{
 					_misty.SkillLogger.Log($"Failed parsing recipe information, skill may not work as expected.");
 					characterParameters.InitializationStatusMessage = "Warning. Could not parse recipe information.";
-					CharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+					characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 				}
 				characterParameters.ConversationGroup = conversationGroup;
 
@@ -635,7 +650,7 @@ namespace MistyCharacter
 				catch (Exception ex)
 				{
 					_misty.SkillLogger.Log("Failed parsing the speech configuration data, speech intent may not work.", ex);
-					CharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+					characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 					characterParameters.InitializationStatusMessage = $"Speech configuration failed, speech intent may not work.";
 				}
 			
@@ -655,7 +670,7 @@ namespace MistyCharacter
 			{
 				_misty.SkillLogger.Log("Exception processing parameters.", ex);
 				characterParameters.InitializationStatusMessage = "Exception processing parameters. Cannot continue.";
-				CharacterParameters.InitializationErrorStatus = InitializationStatus.Error;
+				characterParameters.InitializationErrorStatus = InitializationStatus.Error;
 				return characterParameters;
 			}
 
@@ -686,7 +701,8 @@ namespace MistyCharacter
 		{
 			try
 			{
-				_database = SkillStorage.GetDatabase("conversation-skill");
+				//_database = SkillStorage.GetDatabase("conversation-skill");
+				_database = await EncryptedStorage.GetDatabase("conversation-skill", "p@ssw0rd"); //TODO
 
 				if (!await LoadConversationGroup())
 				{
@@ -772,7 +788,8 @@ namespace MistyCharacter
 			{
 				characterParameters.TextToSpeechService = characterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
 			}
-			
+
+			//TODO If there is an onboard speech auth setting, use that instead!			
 		}
 
 		#region Available public methods to get character payload data

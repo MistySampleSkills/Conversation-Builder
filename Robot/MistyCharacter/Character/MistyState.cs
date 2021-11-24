@@ -41,74 +41,7 @@ using MistyRobotics.SDK.Messengers;
 
 namespace MistyCharacter
 {
-	//TODO Move to common
-	public interface IMistyState
-	{
-		//TODO Complete!
-		event EventHandler<IFaceRecognitionEvent> FaceRecognitionEvent;
-		event EventHandler<ICapTouchEvent> CapTouchEvent;
-		event EventHandler<IBumpSensorEvent> BumperEvent;
-		event EventHandler<IBatteryChargeEvent> BatteryChargeEvent;
-		event EventHandler<IQrTagDetectionEvent> QrTagEvent;
-		event EventHandler<IArTagDetectionEvent> ArTagEvent;
-		event EventHandler<ITimeOfFlightEvent> TimeOfFlightEvent;
-		event EventHandler<ISerialMessageEvent> SerialMessageEvent;
-		event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
-		event EventHandler<IActuatorEvent> RightArmActuatorEvent;
-		event EventHandler<IActuatorEvent> HeadPitchActuatorEvent;
-		event EventHandler<IActuatorEvent> HeadYawActuatorEvent;
-		event EventHandler<IActuatorEvent> HeadRollActuatorEvent;
-		event EventHandler<IObjectDetectionEvent> ObjectEvent;
-		event EventHandler<bool> KeyPhraseRecognitionOn;
-		event EventHandler<IObjectDetectionEvent> PersonObjectEvent;
-		event EventHandler<IObjectDetectionEvent> NonPersonObjectEvent;
-		event EventHandler<IDriveEncoderEvent> DriveEncoder;
-
-		event EventHandler<IUserEvent> ExternalEvent;
-		event EventHandler<IUserEvent> SyncEvent;
-		event EventHandler<IUserEvent> RobotCommand;
-
-		event EventHandler<TriggerData> SpeechIntentEvent;
-		event EventHandler<string> StartedSpeaking;
-		event EventHandler<IAudioPlayCompleteEvent> StoppedSpeaking;
-		event EventHandler<DateTime> StartedListening;
-		event EventHandler<IVoiceRecordEvent> StoppedListening;		
-		event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
-		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
-		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-		
-		void HandleSpeechIntentReceived(object sender, TriggerData triggerData);
-		void HandleStartedSpeakingReceived(object sender, string triggerData);
-		void HandleStoppedSpeakingReceived(object sender, IAudioPlayCompleteEvent triggerData);
-		void HandleStartedListeningReceived(object sender, DateTime triggerData);
-		void HandleStoppedListeningReceived(object sender, IVoiceRecordEvent triggerData);
-		void HandleKeyPhraseRecognizedReceived(object sender, IKeyPhraseRecognizedEvent triggerData);
-		void HandleCompletedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
-		void HandleStartedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
-
-		//TODO Cleanup ownership of external events - BaseCharacter or MistyState
-		event EventHandler<TriggerData> ValidTriggerReceived;
-		event EventHandler<DateTime> ConversationStarted;
-		event EventHandler<DateTime> ConversationEnded;
-		event EventHandler<string> InteractionStarted;
-		event EventHandler<string> InteractionEnded;
-
-		void HandleValidTriggerReceived(object sender, TriggerData triggerData);
-		void HandleConversationStarted(object sender, DateTime datetime);
-		void HandleConversationEnded(object sender, DateTime datetime);
-		void HandleInteractionStarted(object sender, string interactionName);
-		void HandleInteractionEnded(object sender, string interactionName);
-
-		Task<bool> Initialize();
-
-		CharacterState GetCharacterState();
-		void RegisterEvent(string trigger);
-
-		//TODO
-		//void UnregisterEvent(string trigger);
-	}
-
-	public class MistyState : IMistyState
+	public class MistyState : IMistyState, IDisposable
 	{
 		private IRobotMessenger _misty;
 		private IDictionary<string, object> _parameters = new Dictionary<string, object>();
@@ -418,13 +351,11 @@ namespace MistyCharacter
 		{
 			try
 			{
-				//_misty.UnregisterAllEvents(null); //in case last run was stopped abnormally (via debugger)
-				//await Task.Delay(2000); //time for unreg to happen before we rereg
-				RegisterStartingEvents();
+				await RegisterStartingEvents();
 
 				if (_characterParameters.AnimationCreationMode)
 				{
-					_animationRecorder = new AnimationRecorder();
+					_animationRecorder = new AnimationRecorder(_misty, _characterParameters.PuppetingList);
 					string name = $"recorded_{_characterParameters.ConversationGroup.Name}_{DateTime.Now.ToString()}";
 					if (await _animationRecorder.CreateDataStore(name))
 					{
@@ -448,13 +379,13 @@ namespace MistyCharacter
 
 		#region Event Management
 
-		private void RegisterStartingEvents()
+		private async Task RegisterStartingEvents()
 		{
 			//TODO Only register as needed
 			RegisterArmEvents();
 			RegisterHeadEvents();
 			RegisterLocomotionEvents();
-
+			
 			LogEventDetails(_misty.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
 			LogEventDetails(_misty.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
 			LogEventDetails(_misty.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));

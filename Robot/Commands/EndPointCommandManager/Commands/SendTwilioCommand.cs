@@ -32,37 +32,56 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Conversation.Common;
-using MistyRobotics.SDK.Events;
+using MistyRobotics.SDK.Messengers;
+using MistyRobotics.SDK.Responses;
+using VisionTools;
+using VisionTools.AzureCognitive;
 
-namespace MistyCharacter
+namespace CommandManager
 {
-	public interface IAnimationManager
+	public class SendTwilioCommand : IBaseCommand
 	{
-		event EventHandler<TriggerData> SyncEvent;
-
-		Task<bool> Initialize();
-
-		Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, ConversationData currentConversationData, bool stopOnFailedCommand = false);
-
-		Task StopRunningAnimationScripts();
-
-		bool HandleSyncEvent(IUserEvent userEvent);
-
-		Task HandleExternalCommand(IUserEvent userEvent);
+		private IVisionService _visionService;
+		private IDictionary<string, object> _parameters = new Dictionary<string, object>();
 		
-		void Dispose();
+		private IRobotMessenger _misty;
+		public string Name { get; } = "SEND-TWILIO";
+		public string Description { get; } = "Not implemented.";
+		
+		public string ResponseString { get; private set; }
+		
+		public SendTwilioCommand(IRobotMessenger misty, ICommandAuthorization commandAuth)//string subscriptionKey, string region, string endpoint)
+		{
+			try
+			{
+				_misty = misty;
+				_misty.SkillLogger.LogError("SEND-TWILIO not implemented.");
 
-		event EventHandler<KeyValuePair<string, TriggerData>> AddTrigger;
-		event EventHandler<string> RemoveTrigger;
-		void SpeechResponseHandler(object sender, TriggerData data);
-		void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent);
-		void HandleStartedListening(object sender, DateTime time);
+			}
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogError("Exception while trying to create Twilio Service.", ex);
+			}
+		}
+		public async Task<string> ExecuteAsync(string[] parameters)
+		{
+			try
+			{
+				return ResponseAction = "Not implemented.";
+			}
 
-		event EventHandler<TriggerData> ManualTrigger;
-
-		event EventHandler<KeyValuePair<AnimationRequest, Interaction>> TriggerAnimation;
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogError("Failed to process send twilio request.", ex);
+				return ResponseAction = "Failed to process send twilio request.";
+			}
+		}
+		
+		public string ResponseAction { get; private set; }
+		
+		public TriggerData CompletionTrigger { get; private set; } = new TriggerData("", "", "");
 	}
 }
- 

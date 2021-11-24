@@ -36,7 +36,7 @@ using System.Threading.Tasks;
 using Conversation.Common;
 using MistyRobotics.SDK.Events;
 
-namespace MistyCharacter
+namespace Conversation.Common
 {
 	public interface IBaseCharacter
 	{
@@ -65,6 +65,8 @@ namespace MistyCharacter
 		void HandleNonPersonObjectEvent(object sender, IObjectDetectionEvent theEvent);
 		void HandleDriveEncoder(object sender, IDriveEncoderEvent theEvent);
 		void HandleExternalEvent(object sender, IUserEvent theEvent);
+
+		event EventHandler<DateTime> TriggerConversationCleanup;
 
 		event EventHandler<IActuatorEvent> LeftArmActuatorEvent;
 		event EventHandler<IActuatorEvent> RightArmActuatorEvent;
@@ -267,9 +269,9 @@ namespace MistyCharacter
 		/// Must be called after character creation, before use.
 		/// </summary>
 		/// <returns></returns>
-		Task<bool> Initialize(CharacterParameters characterParameters);
+		Task<bool> Initialize(CharacterParameters characterParameters, IList<ICommandAuthorization> listOfAuthorizations);
 
-		void HandleAnimationScriptRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action);
+		void HandleAnimationRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action);
 
 		/// <summary>
 		/// Dispose of the character to prevent background tasks from continuing after cancellation

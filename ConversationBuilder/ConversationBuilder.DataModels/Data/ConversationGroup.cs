@@ -104,6 +104,9 @@ namespace ConversationBuilder.DataModels
 
 		[Display(Name = "Smooth Animation Recording")]	
 		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops
+
+		[Display(Name = "Puppeting Ip List")]	
+		public string PuppetingList { get; set; }
 	}
 
 }

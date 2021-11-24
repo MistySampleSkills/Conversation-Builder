@@ -49,7 +49,7 @@
 				<label asp-for="Emotion"></label>
 				<label title="Provides a default display image and sound appropriate for the emotion.">💡</label>
 				<select asp-for="Emotion" class="form-control">
-					<option value="" selected></option>
+					<option value=""></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Emotions)
 					{
 						<option value="@item.Key">@item.Value</option>
@@ -61,7 +61,7 @@
 				<label asp-for="HeadLocation"></label>
 				<label title="Pick one from the list of head actions you have already created.">💡</label>
 				<select asp-for="HeadLocation" class="form-control">
-					<option value="" selected></option>
+					<option value=""></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.HeadLocations)
 					{
 						<option value="@item.Key">@item.Value</option>
@@ -80,7 +80,7 @@
 				<label asp-for="ArmLocation"></label>
 				<label title="Pick one from the list of arm actions you have already created.">💡</label>
 				<select asp-for="ArmLocation" class="form-control">
-					<option value="" selected></option>
+					<option value=""></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.ArmLocations)
 					{
 						<option value="@item.Key">@item.Value</option>
@@ -119,7 +119,7 @@
 				<label asp-for="LEDTransitionAction"></label>
 				<label title="Pick one from the list of led transition actions you have already created.">💡</label>
 				<select asp-for="LEDTransitionAction" class="form-control">
-					<option value="" selected></option>
+					<option value=""></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.LEDTransitionActions)
 					{
 						<option value="@item.Key">@item.Value</option>

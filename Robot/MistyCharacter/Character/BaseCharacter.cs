@@ -48,6 +48,7 @@ using Newtonsoft.Json;
 using SkillTools.AssetTools;
 using TimeManager;
 using SpeechTools;
+using CommandManager;
 
 namespace MistyCharacter
 {
@@ -86,6 +87,7 @@ namespace MistyCharacter
 		public event EventHandler<TriggerData> ValidTriggerReceived;		
 		public event EventHandler<DateTime> ConversationStarted;
 		public event EventHandler<DateTime> ConversationEnded;
+		public event EventHandler<DateTime> TriggerConversationCleanup;
 		public event EventHandler<string> InteractionStarted;
 		public event EventHandler<string> InteractionEnded;
 
@@ -115,6 +117,7 @@ namespace MistyCharacter
 		private ISpeechManager SpeechManager;
 		private IArmManager ArmManager;
 		private IHeadManager HeadManager;
+		private ICommandManager CommandManager;
 		private IAnimationManager AnimationManager;
 		private ITimeManager TimeManager;
 		private IEmotionManager EmotionManager;
@@ -156,7 +159,8 @@ namespace MistyCharacter
 		private IList<string> _allowedUtterances = new List<string>();
 		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
 		private IList<string> _allowedTriggers;
-		
+		private IList<ICommandAuthorization> _listOfAuthorizations;
+
 		public BaseCharacter(IRobotMessenger misty, 
 			IDictionary<string, object> originalParameters,
 			ManagerConfiguration managerConfiguration = null)
@@ -167,7 +171,7 @@ namespace MistyCharacter
 		}
 		
 
-		public async Task<bool> Initialize(CharacterParameters characterParameters)
+		public async Task<bool> Initialize(CharacterParameters characterParameters, IList<ICommandAuthorization> listOfAuthorizations)
 		{
 			try
 			{
@@ -176,6 +180,7 @@ namespace MistyCharacter
 
 				_conversationGroup = CharacterParameters.ConversationGroup;
 				_genericDataStores = CharacterParameters.ConversationGroup.GenericDataStores;
+				_listOfAuthorizations = listOfAuthorizations;
 
 				AssetWrapper = new AssetWrapper(Robot);
 				_ = RefreshAssetLists();
@@ -192,14 +197,20 @@ namespace MistyCharacter
 				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters);
 				await HeadManager.Initialize();
 
+				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters);
+				await HeadManager.Initialize();
+
+				CommandManager = _managerConfiguration?.CommandManager ?? new DefaultCommandManager(Robot, OriginalParameters);
+				await CommandManager.Initialize(CharacterParameters, MistyState, _listOfAuthorizations);
+				
 				SpeechIntentManager = _managerConfiguration?.SpeechIntentManager ?? new SpeechIntentManager(Robot, CharacterParameters.ConversationGroup.IntentUtterances, CharacterParameters.ConversationGroup.GenericDataStores);
 				
-				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Robot, OriginalParameters, CharacterParameters, MistyState.GetCharacterState(), /*StateAtAnimationStart, PreviousState,*/ _genericDataStores, SpeechIntentManager);
+				SpeechManager = _managerConfiguration?.SpeechManager ?? new SpeechManager(Robot, OriginalParameters, CharacterParameters, MistyState.GetCharacterState(),_genericDataStores, SpeechIntentManager, CommandManager);
 				await SpeechManager.Initialize();
 
 				Robot.GetVolume(GetVolumeCallback);
 				
-				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager,HeadManager);
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager, HeadManager, CommandManager);
 				await AnimationManager.Initialize();
 
 				IgnoreEvents();
@@ -209,8 +220,7 @@ namespace MistyCharacter
 				MistyState.HeadYawActuatorEvent += HeadManager.HandleActuatorEvent;
 				
 				SpeechManager.SpeechIntent += MistyState.HandleSpeechIntentReceived;
-
-
+				
 				SpeechManager.StartedSpeaking += MistyState.HandleStartedSpeakingReceived;
 				SpeechManager.StoppedSpeaking += MistyState.HandleStoppedSpeakingReceived;
 				SpeechManager.StartedListening += MistyState.HandleStartedListeningReceived;
@@ -243,7 +253,7 @@ namespace MistyCharacter
 				AnimationManager.AddTrigger += SpeechManager.AddValidIntent;
 				AnimationManager.RemoveTrigger += RemoveTrigger;
 				AnimationManager.ManualTrigger += ManualTrigger;
-				AnimationManager.TriggerAnimation += HandleAnimationScriptRequest;
+				AnimationManager.TriggerAnimation += HandleAnimationRequest;
 
 				MistyState.ArTagEvent += HandleArTagEvent;
 				MistyState.BatteryChargeEvent += HandleBatteryChargeEvent;
@@ -328,7 +338,7 @@ namespace MistyCharacter
 				return false;
 			}
 		}
-
+		
 		private void GetVolumeCallback(IGetVolumeResponse volumeResponse)
 		{
 			SpeechManager.Volume = volumeResponse != null && volumeResponse.Status == ResponseStatus.Success ? volumeResponse.Data : 20;
@@ -496,6 +506,7 @@ namespace MistyCharacter
 				triggerData.Trigger == Triggers.Timeout ||
 				triggerData.Trigger == Triggers.Timer ||
 				triggerData.Trigger == Triggers.Manual ||
+				triggerData.Trigger == Triggers.ExternalEvent ||
 				triggerData.Trigger == Triggers.AudioCompleted ||
 				triggerData.Trigger == Triggers.KeyPhraseRecognized
 			)
@@ -1024,13 +1035,12 @@ namespace MistyCharacter
 		public async Task StopConversation(string speak = null)
 		{	
 			_interactionQueue.Clear();
-			IgnoreEvents();
+			//IgnoreEvents();
+			
+			HeadManager.StopMovement();
+			ArmManager.StopMovement();
 			await AnimationManager.StopRunningAnimationScripts();
-
-			Robot.StopFaceRecognition(null);
-			Robot.StopArTagDetector(null);
-			Robot.StopQrTagDetector(null);
-
+			
 			if(!string.IsNullOrWhiteSpace(speak))
 			{
 				Robot.Speak(speak, true, "InteractionTimeout", null);
@@ -1105,8 +1115,9 @@ namespace MistyCharacter
 						else
 						{
 							//Exit and stop app
-							StopConversation();
-							Robot.SkillCompleted();
+							await StopConversation();
+							TriggerConversationCleanup?.Invoke(this, DateTime.UtcNow);							
+							//Robot.SkillCompleted();
 						}
 					}
 
@@ -1526,7 +1537,7 @@ namespace MistyCharacter
 			}
 		}
 
-		public void HandleAnimationScriptRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action)
+		public void HandleAnimationRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action)
 		{
 			try
 			{
@@ -2868,7 +2879,8 @@ namespace MistyCharacter
 					TriggerAnimationComplete(CurrentInteraction);
 					await StopConversation();
 					await Task.Delay(5000);
-					Robot.SkillCompleted();
+					TriggerConversationCleanup?.Invoke(this, DateTime.UtcNow);
+					//Robot.SkillCompleted();
 				}
 				else
 				{
@@ -2899,7 +2911,7 @@ namespace MistyCharacter
 				if (disposing)
 				{
 					Robot.UpdateHazardSettings(new HazardSettings { RevertToDefault = true }, null);
-					IgnoreEvents();
+					//IgnoreEvents();
 					_stateEventTimer?.Dispose();
 					_noInteractionTimer?.Dispose();
 					_triggerActionTimeoutTimer?.Dispose();
@@ -2911,16 +2923,9 @@ namespace MistyCharacter
 					ArmManager.Dispose();
 					HeadManager.Dispose();
 					TimeManager.Dispose();
-					
+					MistyState?.Dispose();
 					Robot.Stop(null);
-					Robot.Halt(new List<MotorMask> { MotorMask.LeftArm, MotorMask.RightArm }, null);
-					
-					Robot.StopFaceDetection(null);
-					Robot.StopObjectDetector(null);
-					Robot.StopFaceRecognition(null);
-					Robot.StopArTagDetector(null);
-					Robot.StopQrTagDetector(null);
-					Robot.StopKeyPhraseRecognition(null);
+					Robot.Halt(new List<MotorMask> { MotorMask.LeftArm, MotorMask.RightArm }, null);					
 				}
 
 				_isDisposed = true;

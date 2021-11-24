@@ -31,11 +31,7 @@
 				<select asp-for="Trigger" class="form-control">
 					@foreach (KeyValuePair<string, string> item in @ViewBag.Triggers)
 					{
-						if(item.Key == "SpeechHeard")
-						{
-							<option value="@item.Key" selected>@item.Key</option>	
-						}
-						else if(item.Key != "None")
+						if(item.Key != "None")
 						{
 							<option value="@item.Key">@item.Key</option>
 						}

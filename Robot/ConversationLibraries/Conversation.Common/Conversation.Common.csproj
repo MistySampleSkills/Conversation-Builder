@@ -121,12 +121,23 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConversationConstants.cs" />
+    <Compile Include="Data\AnimationRecorder.cs" />
+    <Compile Include="Data\ICommandAuthorization.cs" />
+    <Compile Include="Data\BaseCommandManager.cs" />
     <Compile Include="Data\ConversationMappingDetail.cs" />
     <Compile Include="Data\DepartureMap.cs" />
     <Compile Include="Data\EntryMap.cs" />
     <Compile Include="Data\GenericDataStore.cs" />
+    <Compile Include="Data\IAnimationManager.cs" />
+    <Compile Include="Data\IArmManager.cs" />
+    <Compile Include="Data\IBaseCharacter.cs" />
+    <Compile Include="Data\IBaseCommand.cs" />
+    <Compile Include="Data\ICommandManager.cs" />
+    <Compile Include="Data\IHeadManager.cs" />
+    <Compile Include="Data\IMistyState.cs" />
     <Compile Include="Data\Interaction.cs" />
     <Compile Include="Data\ConversationData.cs" />
+    <Compile Include="Data\ISpeechManager.cs" />
     <Compile Include="Data\Recipe.cs" />
     <Compile Include="Data\Robot.cs" />
     <Compile Include="Data\TriggerActionOption.cs" />

@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CommandManager;
 using Conversation.Common;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK;
@@ -47,6 +48,35 @@ using TimeManager;
 
 namespace MistyCharacter
 {
+	public static class StringCommandExtensions
+	{
+		public static string[] SmartSplit(this string str, string separator)
+		{
+			//First item can sometimes be a string, look for quotes
+			int firstComma = str.IndexOf(",");
+			if (firstComma == -1 || (str.IndexOf("\"") != -1 && str.IndexOf("\"") < firstComma))
+			{
+				//take the quotes text as first item
+				List<string> builtSplit = new List<string>();
+				string[] newSplit = str.Split("\"", StringSplitOptions.RemoveEmptyEntries);
+				if (newSplit.Count() >= 1)
+				{
+					builtSplit.Add(newSplit[0]);
+				}
+				if (newSplit.Count() >= 2)
+				{
+					builtSplit.AddRange(newSplit[1].Split(separator, StringSplitOptions.RemoveEmptyEntries));
+				}
+				if(builtSplit.Count() >= 1)
+				{
+					return builtSplit.ToArray();
+				}
+			}
+
+			return str.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+		}
+	}
+
 	public class CommandResult
 	{
 		public bool Success { get; set; }
@@ -131,6 +161,7 @@ namespace MistyCharacter
 		private bool _responsiveState = true; //by default, let other bots call this bot if it knows the IP
 
 		private IMistyState _mistyState;
+		private ICommandManager _commandManager;
 
 		//TODO Cleanup of event vs commands since passing in anyway
 
@@ -140,12 +171,14 @@ namespace MistyCharacter
 		public event EventHandler<TriggerData> ManualTrigger;
 		public ConversationData _currentConversationData;
 
-		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState, ITimeManager timeManager = null, IHeadManager headManager = null)
+		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState, ITimeManager timeManager = null, IHeadManager headManager = null, ICommandManager commandManager = null)
 		: base(misty, parameters, characterParameters)
 		{
 			_speechManager = speechManager;
 			_headManager = headManager ?? new HeadManager(Robot, Parameters, CharacterParameters);
 			_timeManager = timeManager ?? new EnglishTimeManager(Robot, Parameters, CharacterParameters);
+			_commandManager = commandManager;
+		
 			_webMessenger = new WebMessenger();
 			CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Unknown;
 
@@ -217,7 +250,6 @@ namespace MistyCharacter
 				Height = 50
 			});
 			_userTextLayerVisible = true;
-
 			
 			return Task.FromResult(true);
 		}
@@ -513,6 +545,7 @@ namespace MistyCharacter
 						}
 						else if (loopCount > 1 && !_repeatScript)
 						{
+							_interactionCancellationEvent?.TrySetResult(true);
 							return false;
 						}
 						else if (loopCount > 1 && _repeatScript)
@@ -526,12 +559,10 @@ namespace MistyCharacter
 							{
 								if (_animationsCanceled)
 								{
-									//_semaphoreSlim.Wait();
 									try
 									{
 										_interactionCancellationEvent?.TrySetResult(true);
 										return false;
-										//_animationsCanceled = false;
 									}
 									catch (Exception ex)
 									{
@@ -539,7 +570,6 @@ namespace MistyCharacter
 									}
 									finally
 									{
-									//	_semaphoreSlim.Release();
 									}
 									return false;
 								}
@@ -666,6 +696,8 @@ namespace MistyCharacter
 			}
 			return Convert.ToDouble(array[index]);
 		}
+
+
 
 		private async Task<CommandResult> ProcessCommand(string command, bool guaranteedCommand, int loop)
 		{
@@ -801,7 +833,7 @@ namespace MistyCharacter
 					
 					if(includeSelf)
 					{
-						//TODO Replace with command classes
+						//TODO Replace with CommandManager classes
 
 						//split the rest based on action, hacky wacky for now
 						//deal with inconsistencies for arms and head, so all scripting is ms
@@ -902,6 +934,7 @@ namespace MistyCharacter
 								//HEAD:pitch,roll,yaw,timeMs;
 								if (!CharacterParameters.IgnoreHeadCommands)
 								{
+									_headManager.StopMovement();
 									string[] headData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headData, 0), GetNullableObject(headData, 1), GetNullableObject(headData, 2), null, Convert.ToDouble(headData[3]) / 1000, AngularUnit.Degrees);
 									
@@ -915,6 +948,7 @@ namespace MistyCharacter
 								//HEAD:pitch,roll,yaw,velocity;
 								if (!CharacterParameters.IgnoreHeadCommands)
 								{
+									_headManager.StopMovement();
 									string[] headOData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headOData, 0) == null ? null : GetNullableObject(headOData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
 											GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
@@ -930,6 +964,7 @@ namespace MistyCharacter
 								//HEAD:pitch,roll,yaw,velocity;
 								if (!CharacterParameters.IgnoreHeadCommands)
 								{
+									_headManager.StopMovement();
 									string[] headOvData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headOvData, 0) == null ? null : GetNullableObject(headOvData, 0)+ _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue,
 											GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
@@ -945,6 +980,7 @@ namespace MistyCharacter
 								//HEAD:pitch,roll,yaw,velocity;
 								if (!CharacterParameters.IgnoreHeadCommands)
 								{
+									_headManager.StopMovement();
 									string[] headVData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headVData, 0), GetNullableObject(headVData, 1), GetNullableObject(headVData, 2), Convert.ToDouble(headVData[3]), null, AngularUnit.Degrees);
 								}
@@ -956,6 +992,9 @@ namespace MistyCharacter
 							case "PAUSE":
 								//PAUSE:timeMs;
 								await Task.Delay(Convert.ToInt32(commandData[1]));
+
+								//await WaitOnCompletionEvent(Convert.ToInt32(commandData[1]));
+
 								break;
 							case "VOLUME":
 								//VOLUME:newVolume;
@@ -990,7 +1029,7 @@ namespace MistyCharacter
 								//PICTURE:image-name,true/false(display on screen),width,height;
 
 								//TODO Fit on screen!!
-								string[] pictureData = commandData[1].Split(",");
+								string[] pictureData = commandData[1].SmartSplit(",");
 								double? width = null;
 								double? height = null;
 								if (pictureData.Length >= 3)
@@ -1074,8 +1113,21 @@ namespace MistyCharacter
 								_currentHeadRequest.FollowFace = true;
 								_currentHeadRequest.FollowObject = "";
 
-								_mistyState.RegisterEvent(Triggers.ObjectSeen);
+								//_mistyState.RegisterEvent(Triggers.ObjectSeen);
+								_mistyState.RegisterEvent(Triggers.FaceRecognized);
 								_headManager.HandleHeadAction(_currentHeadRequest);
+								break;
+							case "FOLLOW-VOICE":
+								_headManager.StopMovement();
+								FollowVoice();
+								break;
+							case "FOLLOW-NOISE":
+								_headManager.StopMovement();
+								FollowNoise();
+								break;
+							case "STOP-AUDIO-FOLLOW":
+								_headManager.StopMovement();
+								StopFollowAudio();
 								break;
 							case "STOP-FOLLOW":
 								//STOP-FOLLOW;
@@ -1110,7 +1162,7 @@ namespace MistyCharacter
 								//TEXT:text to display;
 								//or
 								//TEXT:text to display,size,weight,height,r,g,b,wrap,font;
-								string[] textData = commandData[1].Split(",");
+								string[] textData = commandData[1].SmartSplit(",");
 								int? size = null;
 								int? weight = null;
 								int? textHeight = null;
@@ -1320,7 +1372,7 @@ namespace MistyCharacter
 
 							case "SPEAK-AND-WAIT":
 								//SPEAK-AND-WAIT:What to say, timeoutMs;
-								string[] sawData = commandData[1].Split(",");
+								string[] sawData = commandData[1].SmartSplit(",");
 								if (_speechManager.TryToPersonalizeData(sawData[0], _currentAnimation, _currentInteraction, out string newspeakText))
 								{
 									_currentAnimation.Speak = newspeakText;
@@ -1340,7 +1392,7 @@ namespace MistyCharacter
 								//SPEAK-AND-SYNC:What to say - without commas for now,SyncName;
 								//TODO Timeout??
 
-								string[] sasData = commandData[1].Split(",");
+								string[] sasData = commandData[1].SmartSplit(",");
 								if (_speechManager.TryToPersonalizeData(sasData[0], _currentAnimation, _currentInteraction, out string newText2))
 								{
 									_currentAnimation.Speak = newText2;
@@ -1365,7 +1417,7 @@ namespace MistyCharacter
 								break;
 							case "SPEAK-AND-EVENT":
 								//SPEAK-AND-EVENT:What to say,trigger,triggerFilter,text;
-								string[] saeData = commandData[1].Split(",");
+								string[] saeData = commandData[1].SmartSplit(",");
 								if (_speechManager.TryToPersonalizeData(saeData[0], _currentAnimation, _currentInteraction, out string newText3))
 								{
 									_currentAnimation.Speak = newText3;
@@ -1702,7 +1754,11 @@ namespace MistyCharacter
 								_speechManager.SetSpeechRate(Convert.ToDouble(commandData[1]));
 								break;
 							case "ANIMATE":
-								TriggerAnimation?.Invoke(this, new KeyValuePair<AnimationRequest, Interaction>());
+								AnimationRequest animationRequest = _currentConversationData.Animations.FirstOrDefault(x => x.Name.ToLower().Trim() == commandData[1].ToLower().Trim() || x.Id.ToLower().Trim() == commandData[1].ToLower().Trim());
+								if(animationRequest != null)
+								{
+									TriggerAnimation?.Invoke(this, new KeyValuePair<AnimationRequest, Interaction>(animationRequest, new Interaction(_currentInteraction)));
+								}								
 								break;
 							case "TIMED-TRIGGER":
 								//TIMED-TRIGGER:timeMs,trigger,triggerFilter,text;
@@ -1756,11 +1812,42 @@ namespace MistyCharacter
 								break;
 
 							default:
-								Robot.SkillLogger.Log($"Unknown command in animation script. {action?.ToUpper()}");
-								return new CommandResult { Success = false };
+
+								if(_commandManager.TryGetCommand(action, out IBaseCommand userCommand))
+								{
+									Robot.SkillLogger.Log($"Running user command. {action?.ToUpper()}");
+									string[] userParams;
+									if(commandData.Length > 1)
+									{
+										userParams = commandData[1].SmartSplit(",");
+									}
+									else
+									{
+										userParams = new string[0];
+									}
+									
+									await userCommand.ExecuteAsync(userParams);
+									if(!string.IsNullOrWhiteSpace(userCommand.ResponseAction))
+									{
+										_headManager.StopMovement();
+										await StopRunningAnimationScripts();
+										await RunAnimationScript(userCommand.ResponseAction, false, new AnimationRequest(_currentAnimation), new Interaction(_currentInteraction), _currentConversationData);
+									}
+									if (!string.IsNullOrWhiteSpace(userCommand.CompletionTrigger.Trigger))
+									{
+										ManualTrigger?.Invoke(this, userCommand.CompletionTrigger);
+									}
+								}
+								else
+								{
+									Robot.SkillLogger.Log($"Unknown command in animation script. {action?.ToUpper()}");
+									return new CommandResult { Success = false };
+								}
+								break;
 						}
 					}
 
+					//You should end up here if sending external commands only //TODO cleanup
 					if(action == "SYNC")
 					{
 						string[] syncData = commandData[1].Split(",");
@@ -1884,7 +1971,105 @@ namespace MistyCharacter
 				Robot.SkillLogger.LogError($"Failed to send ui event.", ex);
 			}
 		}
+
+		private async void StopFollowAudio()
+		{
+			await Robot.StopRecordingAudioAsync();
+			Robot.UnregisterEvent("SourceFocus", null);
+			Robot.UnregisterEvent("SourceTrack", null);
+		}
+
+		private void SourceFocusCallback(ISourceFocusConfigMessageEvent sourceEvent)
+		{
+			_sourceFocusConfigMessageEvent = sourceEvent;
+		}
+
+		private void SourceTrackCallback(ISourceTrackDataMessageEvent trackEvent)
+		{
+			_sourceTrackDataMessageEvent = trackEvent;
+		}
 		
+		private ISourceFocusConfigMessageEvent _sourceFocusConfigMessageEvent;
+		private ISourceTrackDataMessageEvent _sourceTrackDataMessageEvent;
+
+		private void FollowVoiceCallback(object _timerData)
+		{
+			if (_sourceTrackDataMessageEvent == null)
+			{
+				return;
+			}
+
+			int? doa = null;
+
+			if (_followNoise)
+			{
+				if(_sourceTrackDataMessageEvent.DegreeOfArrivalNoise.Count() > 0)//TODO
+				{
+					doa = _sourceTrackDataMessageEvent.DegreeOfArrivalNoise.First();
+				}
+			}
+			else
+			{
+				doa = _sourceTrackDataMessageEvent.DegreeOfArrivalSpeech;
+			}
+			
+			//This is head based, so if head is turned, the degrees have changed as well
+			if (doa == null || doa >= 358 || doa <= 2) //good enough...
+			{
+				return;
+			}
+
+			int? speechDegree = _sourceTrackDataMessageEvent.DegreeOfArrivalSpeech;
+			if (speechDegree == null || speechDegree < 0 || speechDegree > 360)
+			{
+				return;
+			}
+
+			int anotherSpeechDegree = (int)speechDegree;
+			
+			if (anotherSpeechDegree < RobotConstants.MinimumYawDegreesInclusive)
+			{
+				anotherSpeechDegree = RobotConstants.MinimumYawDegreesInclusive;
+			}
+			if (anotherSpeechDegree >= RobotConstants.MaximumYawDegreesExclusive)
+			{
+				anotherSpeechDegree = RobotConstants.MaximumYawDegreesExclusive - 1;
+			}
+
+			if (anotherSpeechDegree >= 0 && anotherSpeechDegree <= 180)
+			{
+				Robot.MoveHead(-20, 0, anotherSpeechDegree, 80, AngularUnit.Degrees, null);
+			}
+			else
+			{
+				Robot.MoveHead(-20, 0, -anotherSpeechDegree, 80, AngularUnit.Degrees, null);
+			}
+
+			//TODO now body
+
+		}
+
+		private bool _followNoise = false;
+
+		private async void FollowVoice()
+		{
+			_followNoise = false;
+			await FollowAudio();
+		}
+
+
+		private async void FollowNoise()
+		{
+			_followNoise = true;
+			await FollowAudio();
+		}
+
+		private async Task FollowAudio()
+		{
+			Robot.RegisterSourceFocusConfigEvent(SourceFocusCallback, 0, true, "SourceFocus", null);
+			Robot.RegisterSourceTrackDataEvent(SourceTrackCallback, 250, true, "SourceTrack", null);
+			await Robot.StartRecordingAudioAsync("follow-my-voice");
+		}
 
 		private void ClearAnimationDisplayLayers()
 		{

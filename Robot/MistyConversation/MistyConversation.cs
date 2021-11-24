@@ -73,7 +73,8 @@ namespace MistyConversation
 			try
 			{
 				SkillRunState?.Invoke(this, true);
-				_conversationManager = new ConversationManager(_misty, parameters, new ManagerConfiguration());
+				_conversationManager = new ConversationManager(_misty, parameters, 
+					new ManagerConfiguration(null, null, null, null, null, new CommandManager.UserCommandManager(_misty, parameters)));
 
 				//Can also use BaseCharacter templates if desired...
 				//eg: if (!await _conversationManager.Initialize(new EventTemplateMisty(_misty, parameters, new ManagerConfiguration())))

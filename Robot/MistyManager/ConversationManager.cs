@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CommandManager;
 using Conversation.Common;
 using MistyCharacter;
 using MistyRobotics.Common.Types;
@@ -13,11 +14,12 @@ using MistyRobotics.SDK.Messengers;
 using MistyRobotics.SDK.Responses;
 using Newtonsoft.Json;
 using SkillTools.AssetTools;
+using SkillTools.DataStorage;
 
 namespace MistyManager
 {
     public class ConversationManager : IDisposable
-    {
+	{
 		private IRobotMessenger _misty;		
 		private IBaseCharacter _character;
 		private IAssetWrapper _assetWrapper;
@@ -33,6 +35,28 @@ namespace MistyManager
 			_misty = misty;
 			_managerConfiguration = managerConfiguration;
 			_parameters = parameters;
+
+			_assetWrapper = new AssetWrapper(_misty);
+		}
+
+		private async void HandleConversationCleanup(object sender, DateTime when)
+		{
+			if (_character != null)
+			{
+				_character?.Dispose();  //make awaitable?
+				await Task.Delay(5000);//let it clean before resetting
+				_character = null;
+			}
+			_runningConversation = null;
+			await _parameterManager.StopConversation();
+			_characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+
+			_misty.RegisterUserEvent("LoadConversation", LoadConversationCallback, 0, true, null);
+			_misty.RegisterUserEvent("StartConversation", StartConversationCallback, 0, true, null);
+			_misty.RegisterUserEvent("RemoveConversation", RemoveConversationCallback, 0, true, null);
+			_misty.RegisterUserEvent("StopConversation", StopConversationCallback, 0, true, null);
+			_misty.RegisterUserEvent("ClearAuthorization", ClearAuthorizationCallback, 0, true, null);
+			_misty.RegisterUserEvent("SaveAuthorization", SaveAuthorizationCallback, 0, true, null);
 		}
 
 		public async Task<bool> CheckAudio()
@@ -74,7 +98,7 @@ namespace MistyManager
 			{
 				//Revert display to defaults before starting init process...
 				await _misty.SetDisplaySettingsAsync(true);
-				_misty.SetBlinkSettings(true, null, null, null, null, null, null);
+				await _misty.SetBlinkSettingsAsync(true, null, null, null, null, null);
 
 				_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
 			
@@ -106,6 +130,12 @@ namespace MistyManager
 		{
 			try
 			{
+				if (!string.IsNullOrWhiteSpace(_runningConversation))
+				{
+					_misty.SkillLogger.LogError("Stop running conversation first.");
+					return;
+				}
+
 				if (userEvent.TryGetPayload(out IDictionary<string, object> eventPayload))
 				{
 					if (eventPayload.TryGetValue("ConversationGroupId", out object conversationId))
@@ -115,27 +145,9 @@ namespace MistyManager
 						IDictionary<string, object> newData = data == null ? new Dictionary<string, object>() : (IDictionary<string, object>)data;
 						newData.Remove("ConversationGroupId");
 						newData.Add("ConversationGroupId", conversationId);
-						if (!string.IsNullOrWhiteSpace(_runningConversation))
-						{
-							if (_character != null)
-							{
-								await _character?.StopConversation();
-								_character?.Dispose();
-							}
-							await Task.Delay(5000);//TODO
-							_runningConversation = null;
-						}
 
-						_misty.RegisterUserEvent("LoadConversation", LoadConversationCallback, 0, true, null);
-						_misty.RegisterUserEvent("StartConversation", StartConversationCallback, 0, true, null);
-						_misty.RegisterUserEvent("RemoveConversation", RemoveConversationCallback, 0, true, null);
-						_misty.RegisterUserEvent("StopConversation", StopConversationCallback, 0, true, null);
-
-
-
-						_ = Initialize(new BasicMisty(_misty, newData, new ManagerConfiguration()));
-
-						//await _parameterManager.StartConversation(Convert.ToString(conversationId), data == null ? new Dictionary<string, object>() : (IDictionary<string, object>)data);
+						_runningConversation = Convert.ToString(conversationId);
+						_ = Initialize(new BasicMisty(_misty, newData, new ManagerConfiguration(null, null, null, null, null, new CommandManager.UserCommandManager(_misty, eventPayload))));
 						return;
 					}
 					_misty.SkillLogger.LogError("Missing parameters or improper json format.");
@@ -147,33 +159,176 @@ namespace MistyManager
 			}
 			catch (Exception ex)
 			{
-				_misty.SkillLogger.LogError("Exception getting Load Conversation payload.", ex);
+				_misty.SkillLogger.LogError("Exception getting Load Conversation payload.", ex);				
+			}
+			finally
+			{
+				if (_parameterManager != null)
+				{
+					_parameterManager.PublishConversationList();
+				}
+
+				_misty.RegisterUserEvent("LoadConversation", LoadConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("StartConversation", StartConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("RemoveConversation", RemoveConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("StopConversation", StopConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("ClearAuthorization", ClearAuthorizationCallback, 0, true, null);
+				_misty.RegisterUserEvent("SaveAuthorization", SaveAuthorizationCallback, 0, true, null);
 			}
 		}
-		
+
+		IList<ICommandAuthorization> _listOfAuthorizations = new List<ICommandAuthorization>();
+
+		private SemaphoreSlim _loadAuthSlim = new SemaphoreSlim(1, 1);
+
+		public async void ClearAuthorizationCallback(IUserEvent userEvent)
+		{
+			await _loadAuthSlim.WaitAsync();
+			try
+			{
+				_misty.SkillLogger.Log("Clear authorization requested.");
+				ISkillStorage database = await EncryptedStorage.GetDatabase("cb-auth-data", "p@ssw0rd"); //TODO
+				await database.DeleteSkillDatabaseAsync();
+			}
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogError("Exception clearing auth.", ex);
+			}
+			finally
+			{
+				_loadAuthSlim.Release();
+			}
+			
+		}
+
+
+
+		public async Task LoadAuthorizations()
+		{
+			await _loadAuthSlim.WaitAsync();
+			try
+			{
+				ISkillStorage database = await EncryptedStorage.GetDatabase("cb-auth-data", "p@ssw0rd"); //TODO
+
+				//TODO Update to read token name so they can be uploaded separately
+				IDictionary<string, object> currentTokens = await database.LoadDataAsync();		
+
+				foreach (KeyValuePair<string, object> tokenItem in currentTokens)
+				{
+					ICommandAuthorization commandAuth = _listOfAuthorizations.FirstOrDefault(x => x.Name.ToLower().Trim() == tokenItem.Key.ToLower().Trim());
+					if (commandAuth != null)
+					{
+						_listOfAuthorizations.Remove(commandAuth);
+					}
+					
+					try
+					{
+						_listOfAuthorizations.Add(JsonConvert.DeserializeObject<CommandAuthorization>(tokenItem.Value.ToString()));
+					}
+					catch (Exception ex)
+					{
+						_misty.SkillLogger.LogError("Ignoring poorly formatted auth.", ex);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogError("Exception saving auth.", ex);
+			}
+			finally
+			{
+				_loadAuthSlim.Release();
+			}
+		}
+
+
+		public async void SaveAuthorizationCallback(IUserEvent userEvent)
+		{
+			await _loadAuthSlim.WaitAsync();
+			try
+			{
+
+				if (userEvent.TryGetPayload(out IDictionary<string, object> eventPayload))
+				{
+					ISkillStorage database = await EncryptedStorage.GetDatabase("cb-auth-data", "p@ssw0rd"); //TODO
+
+					//TODO Update to read token name so they can be uploaded separately
+					IDictionary<string, object> currentTokens = await database.LoadDataAsync();
+
+					if (eventPayload.TryGetValue("AuthData", out object authInfo))
+					{
+
+						if (authInfo == null)
+						{
+							return;
+						}
+
+						ICommandAuthorization newData = JsonConvert.DeserializeObject<CommandAuthorization>(Convert.ToString(authInfo));		
+						currentTokens.Remove(newData.Name.ToLower().Trim());
+						currentTokens.Add(newData.Name.ToLower().Trim(), newData);
+
+						ICommandAuthorization commandAuth = _listOfAuthorizations.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.Name.ToLower().Trim());
+						if (commandAuth != null)
+						{
+							_listOfAuthorizations.Remove(commandAuth);
+						}
+
+						_listOfAuthorizations.Add(newData);
+						await database.SaveDataAsync(currentTokens);
+					}
+					
+				}
+			}
+			catch (Exception ex)
+			{
+				_misty.SkillLogger.LogError("Exception saving auth.", ex);
+			}
+			finally
+			{
+				_loadAuthSlim.Release();
+			}
+
+		}
+
 		public async void  StopConversationCallback(IUserEvent userEvent)
 		{
 			try
 			{
+				if(string.IsNullOrWhiteSpace(_runningConversation))
+				{
+					_misty.SkillLogger.LogError("Trying to stop conversation when no conversation is running.");
+				}
+
 				//Stop conversation
-				if(_character != null)
+				if (_character != null)
 				{
 					await _character?.StopConversation();
-					_character?.Dispose();  //make awaitable?
-					await Task.Delay(5000);//let it clean all dee shite before resetting
-
-					_misty.RegisterUserEvent("LoadConversation", LoadConversationCallback, 0, true, null);
-					_misty.RegisterUserEvent("StartConversation", StartConversationCallback, 0, true, null);
-					_misty.RegisterUserEvent("RemoveConversation", RemoveConversationCallback, 0, true, null);
-					_misty.RegisterUserEvent("StopConversation", StopConversationCallback, 0, true, null);
+					_character?.Dispose();  //make awaitable?					
+					await Task.Delay(5000);//let it clean before resetting
+					_character = null;
 				}
 				_runningConversation = null;
+				await _parameterManager.StopConversation();
 				_characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 
 			}
 			catch (Exception ex)
 			{
-				_misty.SkillLogger.LogError("Exception getting Load Conversation payload.", ex);
+				_misty.SkillLogger.LogError("Exception processing stop conversation callback.", ex);
+			}
+			finally
+			{
+				if (_parameterManager != null)
+				{
+					_parameterManager.PublishConversationList();
+				}
+
+				_misty.RegisterUserEvent("LoadConversation", LoadConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("StartConversation", StartConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("RemoveConversation", RemoveConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("StopConversation", StopConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("ClearAuthorization", ClearAuthorizationCallback, 0, true, null);
+				_misty.RegisterUserEvent("SaveAuthorization", SaveAuthorizationCallback, 0, true, null);
 			}
 		}
 
@@ -223,12 +378,12 @@ namespace MistyManager
 				}
 				else
 				{
-					_misty.SkillLogger.LogError("Failed to get Load Conversation payload.");
+					_misty.SkillLogger.LogError("Failed to get Remove Conversation payload.");
 				}
 			}
 			catch (Exception ex)
 			{
-				_misty.SkillLogger.LogError("Exception getting Load Conversation payload.", ex);
+				_misty.SkillLogger.LogError("Exception getting Remove Conversation payload.", ex);
 			}		
 		}
 
@@ -236,18 +391,10 @@ namespace MistyManager
 		{
 			try
 			{
-				_assetWrapper = new AssetWrapper(_misty);
 				await _assetWrapper.LoadAssets(true);
 
 				await ResetRobot();
-				//await Task.Delay(2500)//waiti for things to unregister and reset
-
-				_parameters = character.OriginalParameters;
-
-				_misty.RegisterUserEvent("LoadConversation", LoadConversationCallback, 0, true, null);
-				_misty.RegisterUserEvent("StartConversation", StartConversationCallback, 0, true, null);
-				_misty.RegisterUserEvent("RemoveConversation", RemoveConversationCallback, 0, true, null);
-				_misty.RegisterUserEvent("StopConversation", StopConversationCallback, 0, true, null);
+				await Task.Delay(1000);//Pause to allow UI cleanup
 
 				await _misty.SetTextDisplaySettingsAsync("Text", new TextSettings
 				{
@@ -264,11 +411,20 @@ namespace MistyManager
 					FontFamily = "Courier New",
 					Height = 40
 				});
+				
+				_parameters = character.OriginalParameters;
 
+				_misty.RegisterUserEvent("LoadConversation", LoadConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("StartConversation", StartConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("RemoveConversation", RemoveConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("StopConversation", StopConversationCallback, 0, true, null);
+				_misty.RegisterUserEvent("ClearAuthorization", ClearAuthorizationCallback, 0, true, null);
+				_misty.RegisterUserEvent("SaveAuthorization", SaveAuthorizationCallback, 0, true, null);
+				
 				_misty.DisplayText("Waking robot...", "Text", null);
-				await Task.Delay(2000);
+				await Task.Delay(2000); //Pause so they can see message
 
-				_publishConversationTimer = new Timer(PublishTimerCallback, null, 0, 15000);
+				_publishConversationTimer = new Timer(PublishTimerCallback, null, 0, 10000);
 
 				if (!await CheckAudio())
 				{
@@ -324,8 +480,13 @@ namespace MistyManager
 					}
 
 					_character = character == null ? new BasicMisty(_misty, _parameters) : character;
+					
+					await LoadAuthorizations();
 
-					bool initialized = await _character.Initialize(_characterParameters);
+					bool initialized = await _character.Initialize(_characterParameters, _listOfAuthorizations);
+
+					_character.TriggerConversationCleanup += HandleConversationCleanup;
+					
 					if (initialized)
 					{
 						await _misty.DisplayTextAsync("Hello!", "Text");
@@ -407,6 +568,13 @@ namespace MistyManager
 				{
 					_character?.Dispose();
 					_publishConversationTimer?.Dispose();
+					_misty.UnregisterAllEvents(null);
+					_misty.StopFaceDetection(null);
+					_misty.StopObjectDetector(null);
+					_misty.StopFaceRecognition(null);
+					_misty.StopArTagDetector(null);
+					_misty.StopQrTagDetector(null);
+					_misty.StopKeyPhraseRecognition(null);
 				}
 
 				_isDisposed = true;

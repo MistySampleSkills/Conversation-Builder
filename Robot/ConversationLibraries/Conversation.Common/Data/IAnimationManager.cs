@@ -1,4 +1,4 @@
-/**********************************************************************
+﻿/**********************************************************************
 	Copyright 2021 Misty Robotics
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -30,42 +30,39 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Conversation.Common;
+using MistyRobotics.SDK.Events;
 
 namespace Conversation.Common
 {
-    /// <summary>
-    /// TODO Mapping between different conversations to change for better reuse, many to many
-    /// </summary>
-	public class ConversationGroup
+	public interface IAnimationManager
 	{
-		public string Id { get; set; }
+		event EventHandler<TriggerData> SyncEvent;
 
-		public string Name { get; set; }
+		Task<bool> Initialize();
 
-		public string Description { get; set; }
+		Task<bool> RunAnimationScript(string animationScript, bool repeatScript, AnimationRequest currentAnimation, Interaction currentInteraction, ConversationData currentConversationData, bool stopOnFailedCommand = false);
 
-		public string RobotName { get; set; }
+		Task StopRunningAnimationScripts();
 
-		public string StartupConversation { get; set; }
+		bool HandleSyncEvent(IUserEvent userEvent);
 
-		public string KeyPhraseRecognizedAudio { get; set; }
+		Task HandleExternalCommand(IUserEvent userEvent);
 		
-		public IList<ConversationData> Conversations { get; set; } = new List<ConversationData>();
+		void Dispose();
 
-		public IList<GenericDataStore> GenericDataStores { get; set; } = new List<GenericDataStore>();
+		event EventHandler<KeyValuePair<string, TriggerData>> AddTrigger;
+		event EventHandler<string> RemoveTrigger;
+		void SpeechResponseHandler(object sender, TriggerData data);
+		void HandleStartedProcessingVoice(object sender, IVoiceRecordEvent voiceEvent);
+		void HandleStartedListening(object sender, DateTime time);
 
-        public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
-        public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
+		event EventHandler<TriggerData> ManualTrigger;
 
-		//TODO In progress 
-		public bool AnimationCreationMode { get; set; } = false;
-		public double AnimationCreationDebounceSeconds { get; set; } = .25;
-		public bool IgnoreArmCommands { get; set; } = false;
-		public bool IgnoreHeadCommands { get; set; } = false;
-
-		public bool RetranslateTTS { get; set; }
-		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops
-		public string PuppetingList { get; set; }
+		event EventHandler<KeyValuePair<AnimationRequest, Interaction>> TriggerAnimation;
 	}
 }
+ 

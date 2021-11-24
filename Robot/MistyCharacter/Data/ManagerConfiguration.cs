@@ -31,6 +31,8 @@
 **********************************************************************/
 
 using System;
+using CommandManager;
+using Conversation.Common;
 using SpeechTools;
 using TimeManager;
 
@@ -43,13 +45,14 @@ namespace MistyCharacter
 	{
 		public ManagerConfiguration() { }
 
-		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null)
+		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null, UserCommandManager commandManager = null)
 		{
 			SpeechManager = speechmanager;		
 			TimeManager = timeManager;
 			EmotionManager = emotionManager;
 			SpeechIntentManager = speechIntentManager;
 			AnimationManager = animationManager;
+			CommandManager = commandManager;
 		}
 
 		/// <summary>
@@ -63,7 +66,7 @@ namespace MistyCharacter
 		/// <param name="speechIntentManager"></param>
 		/// <param name="animationManager"></param>
 		[Obsolete("Arm Manager, Head Manager, and Locomotion Manager are deprecated, please use Animation Manager instead.")]
-		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null)
+		public ManagerConfiguration(ISpeechManager speechmanager = null, ITimeManager timeManager = null, IArmManager armManager = null, IHeadManager headManager = null, IEmotionManager emotionManager = null, ISpeechIntentManager speechIntentManager = null, IAnimationManager animationManager = null, UserCommandManager commandManager = null)
 		{
 			SpeechManager = speechmanager;
 			ArmManager = armManager;
@@ -72,6 +75,7 @@ namespace MistyCharacter
 			EmotionManager = emotionManager;
 			SpeechIntentManager = speechIntentManager;
 			AnimationManager = animationManager;
+			CommandManager = commandManager;
 			//LocomotionManager = locomotionManager;
 		}
 
@@ -83,6 +87,7 @@ namespace MistyCharacter
 		public IEmotionManager EmotionManager { get; set; }
 		public ISpeechIntentManager SpeechIntentManager { get; set; }
 		public IAnimationManager AnimationManager { get; set; }
-//		public ILocomotionManager LocomotionManager { get; set; }
+
+		public ICommandManager CommandManager { get; set; }		
 	}
 }
