@@ -141,6 +141,27 @@ namespace MistyCharacter
 			SpeechIntentEvent?.Invoke(this, triggerData);
 		}
 
+
+		public void HandleSyncEvent(object sender, IUserEvent userEvent)
+		{
+			SyncEvent?.Invoke(this, userEvent);
+		}
+
+		public void HandleRobotCommand(object sender, IUserEvent userEvent)
+		{
+			RobotCommand?.Invoke(this, userEvent);
+		}
+
+		public void HandleExternalEvent(object sender, IUserEvent userEvent)
+		{
+			ExternalEvent?.Invoke(this, userEvent);
+		}
+
+		public void HandleBatteryChargeEvent(object sender, IBatteryChargeEvent chargeEvent)
+		{
+			BatteryChargeEvent?.Invoke(this, chargeEvent);
+		}
+
 		public void HandleStartedSpeakingReceived(object sender, string text)
 		{
 			StartedSpeaking?.Invoke(this, text);
@@ -385,11 +406,6 @@ namespace MistyCharacter
 			RegisterArmEvents();
 			RegisterHeadEvents();
 			RegisterLocomotionEvents();
-			
-			LogEventDetails(_misty.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null));
-			LogEventDetails(_misty.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null));
-			LogEventDetails(_misty.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null));
-			LogEventDetails(_misty.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null));
 		}
 
 		private void RegisterArmEvents()
@@ -740,15 +756,6 @@ namespace MistyCharacter
 			CapTouchEvent?.Invoke(this, capTouchEvent);
 		}
 		
-		private void BatteryChargeCallback(IBatteryChargeEvent batteryEvent)
-		{
-			if (_currentCharacterState == null)
-			{
-				return;
-			}
-			_currentCharacterState.BatteryChargeEvent = (BatteryChargeEvent)batteryEvent;
-			BatteryChargeEvent?.Invoke(this, batteryEvent);
-		}
 		
 		private void EncoderCallback(IDriveEncoderEvent encoderEvent)
 		{
@@ -856,38 +863,6 @@ namespace MistyCharacter
 
 		#endregion Robot Event Callbacks
 
-		#region Cross robot and other event callbacks
-
-		private void SyncEventCallback(IUserEvent userEvent)
-		{
-			SyncEvent?.Invoke(this, userEvent);
-		}
-
-		private void RobotCommandCallback(IUserEvent userEvent)
-		{
-			RobotCommand?.Invoke(this, userEvent);
-		}
-
-		private void ExternalEventCallback(IUserEvent userEvent)
-		{
-			//TODO Deny cross robot communication per robot
-
-			if (_currentCharacterState == null)
-			{
-				return;
-			}
-			_currentCharacterState.ExternalEvent = (UserEvent)userEvent;
-
-			//Pull out the intent and text, required
-			if (userEvent.TryGetPayload(out IDictionary<string, object> payload))
-			{
-				//Can override other triggers				
-				ExternalEvent?.Invoke(this, userEvent);
-			}
-		}
-
-		#endregion Cross robot and other event callbacks
-		
 		#region Helpers
 
 		private void LogEventDetails(IEventDetails eventDetails)

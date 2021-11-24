@@ -160,8 +160,8 @@ namespace MistyCharacter
 		private HeadLocation _currentHeadRequest = new HeadLocation(null, null, null);
 		private IList<string> _allowedTriggers;
 		private IList<ICommandAuthorization> _listOfAuthorizations;
-
-		public BaseCharacter(IRobotMessenger misty, 
+		
+		protected BaseCharacter(IRobotMessenger misty, 
 			IDictionary<string, object> originalParameters,
 			ManagerConfiguration managerConfiguration = null)
 		{
@@ -169,12 +169,88 @@ namespace MistyCharacter
 			OriginalParameters = originalParameters;
 			_managerConfiguration = managerConfiguration;
 		}
-		
+
+		public void ClearRegistrations()
+		{
+			try
+			{ 
+				MistyState.HeadPitchActuatorEvent -= HeadManager.HandleActuatorEvent;
+				MistyState.HeadYawActuatorEvent -= HeadManager.HandleActuatorEvent;
+
+				SpeechManager.SpeechIntent -= MistyState.HandleSpeechIntentReceived;
+
+				SpeechManager.StartedSpeaking -= MistyState.HandleStartedSpeakingReceived;
+				SpeechManager.StoppedSpeaking -= MistyState.HandleStoppedSpeakingReceived;
+				SpeechManager.StartedListening -= MistyState.HandleStartedListeningReceived;
+				SpeechManager.StoppedListening -= MistyState.HandleStoppedListeningReceived;
+				SpeechManager.KeyPhraseRecognized -= MistyState.HandleKeyPhraseRecognizedReceived;
+				SpeechManager.CompletedProcessingVoice -= MistyState.HandleCompletedProcessingVoiceReceived;
+				SpeechManager.StartedProcessingVoice -= MistyState.HandleStartedProcessingVoiceReceived;
+
+				SpeechManager.SpeechIntent -= SpeechManager_SpeechIntent;
+				SpeechManager.PreSpeechCompleted -= SpeechManager_PreSpeechCompleted;
+				SpeechManager.StartedSpeaking -= SpeechManager_StartedSpeaking;
+				SpeechManager.StoppedSpeaking -= SpeechManager_StoppedSpeaking;
+				SpeechManager.StartedListening -= SpeechManager_StartedListening;
+				SpeechManager.StoppedListening -= SpeechManager_StoppedListening;
+				SpeechManager.KeyPhraseRecognized -= SpeechManager_KeyPhraseRecognized;
+				SpeechManager.CompletedProcessingVoice -= SpeechManager_CompletedProcessingVoice;
+				SpeechManager.StartedProcessingVoice -= SpeechManager_StartedProcessingVoice;
+				SpeechManager.KeyPhraseRecognitionOn -= SpeechManager_KeyPhraseRecognitionOn;
+
+				InteractionStarted -= MistyState.HandleInteractionStarted;
+				InteractionEnded -= MistyState.HandleInteractionEnded;
+				InteractionEnded -= SpeechManager.HandleInteractionEnded;
+				ConversationStarted -= MistyState.HandleConversationStarted;
+				ConversationEnded -= MistyState.HandleConversationEnded;
+				ValidTriggerReceived -= MistyState.HandleValidTriggerReceived;
+
+				//TODO Cleanup of event vs commands since passing in anyway
+				AnimationManager.SyncEvent -= AnimationManager_SyncEvent;
+				AnimationManager.AddTrigger -= AddTrigger;
+				AnimationManager.AddTrigger -= SpeechManager.AddValidIntent;
+				AnimationManager.RemoveTrigger -= RemoveTrigger;
+				AnimationManager.ManualTrigger -= ManualTrigger;
+				AnimationManager.TriggerAnimation -= HandleAnimationRequest;
+
+				MistyState.ArTagEvent -= HandleArTagEvent;
+				MistyState.BumperEvent -= HandleBumperEvent;
+				MistyState.CapTouchEvent -= HandleCapTouchEvent;
+				MistyState.DriveEncoder -= HandleDriveEncoder;
+				MistyState.FaceRecognitionEvent -= HandleFaceRecognitionEvent;
+				MistyState.NonPersonObjectEvent -= HandleNonPersonObjectEvent;
+				MistyState.PersonObjectEvent -= HandlePersonObjectEvent;
+				MistyState.PersonObjectEvent -= HeadManager.HandleObjectDetectionEvent;
+				MistyState.FaceRecognitionEvent -= HeadManager.HandleFaceRecognitionEvent;
+				MistyState.HeadPitchActuatorEvent -= HandleHeadPitchEvent;
+				MistyState.HeadRollActuatorEvent -= HandleHeadRollEvent;
+				MistyState.HeadYawActuatorEvent -= HandleHeadYawEvent;
+				MistyState.LeftArmActuatorEvent -= HandleLeftArmEvent;
+				MistyState.RightArmActuatorEvent -= HandleRightArmEvent;
+				MistyState.TimeOfFlightEvent -= HandleTimeOfFlightEvent;
+				SyncEvent -= MistyState.HandleSyncEvent;
+				RobotCommand -= MistyState.HandleRobotCommand;
+				BatteryChargeEvent -= MistyState.HandleBatteryChargeEvent;
+				ExternalEvent -= MistyState.HandleExternalEvent;
+
+			}
+			catch
+			{
+			}
+		}
 
 		public async Task<bool> Initialize(CharacterParameters characterParameters, IList<ICommandAuthorization> listOfAuthorizations)
 		{
 			try
 			{
+				IgnoreEvents();
+
+				Robot.UnregisterEvent("Battery", null);
+				Robot.UnregisterEvent("ExternalEvent", null);
+				Robot.UnregisterEvent("SyncEvent", null);
+				Robot.UnregisterEvent("CrossRobotCommand", null);
+				await Task.Delay(1500);
+
 				CharacterParameters = characterParameters;
 				Logger = Robot.SkillLogger;
 
@@ -213,7 +289,13 @@ namespace MistyCharacter
 				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager, HeadManager, CommandManager);
 				await AnimationManager.Initialize();
 
-				IgnoreEvents();
+				//ClearRegistrations();
+
+
+				var eventDetails = Robot.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null);
+				eventDetails = Robot.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null);
+				eventDetails = Robot.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null);
+				eventDetails = Robot.RegisterUserEvent("CrossRobotCommand", RobotCommandCallback, 0, true, null);
 
 				//subscribe to head events for deprecated head mgr				
 				MistyState.HeadPitchActuatorEvent += HeadManager.HandleActuatorEvent;
@@ -256,11 +338,9 @@ namespace MistyCharacter
 				AnimationManager.TriggerAnimation += HandleAnimationRequest;
 
 				MistyState.ArTagEvent += HandleArTagEvent;
-				MistyState.BatteryChargeEvent += HandleBatteryChargeEvent;
 				MistyState.BumperEvent += HandleBumperEvent;
 				MistyState.CapTouchEvent += HandleCapTouchEvent;
 				MistyState.DriveEncoder += HandleDriveEncoder;
-				MistyState.ExternalEvent += HandleExternalEvent;
 				MistyState.FaceRecognitionEvent += HandleFaceRecognitionEvent;
 				MistyState.NonPersonObjectEvent += HandleNonPersonObjectEvent;
 				MistyState.PersonObjectEvent += HandlePersonObjectEvent;
@@ -271,10 +351,11 @@ namespace MistyCharacter
 				MistyState.HeadYawActuatorEvent += HandleHeadYawEvent;
 				MistyState.LeftArmActuatorEvent += HandleLeftArmEvent;
 				MistyState.RightArmActuatorEvent += HandleRightArmEvent;
-				MistyState.TimeOfFlightEvent += HandleTimeOfFlightEvent;				
-				MistyState.SyncEvent += HandleSyncEvent;
-				MistyState.RobotCommand += HandleRobotCommand;
-				MistyState.BatteryChargeEvent += HandleBatteryChargeEvent;
+				MistyState.TimeOfFlightEvent += HandleTimeOfFlightEvent;
+				SyncEvent += MistyState.HandleSyncEvent;
+				RobotCommand += MistyState.HandleRobotCommand;
+				BatteryChargeEvent += MistyState.HandleBatteryChargeEvent;
+				ExternalEvent += MistyState.HandleExternalEvent;
 				
 				StreamAndLogInteraction($"Starting Base Character animation processing...");
 
@@ -353,7 +434,39 @@ namespace MistyCharacter
 		{
 			await AssetWrapper.RefreshAssetLists();
 		}
-		
+
+		#region Cross robot and other event callbacks
+
+		private void SyncEventCallback(IUserEvent userEvent)
+		{
+			AnimationManager.HandleSyncEvent(userEvent);
+			SyncEvent?.Invoke(this, userEvent);
+		}
+
+		private void RobotCommandCallback(IUserEvent userEvent)
+		{
+			RobotCommand?.Invoke(this, userEvent);
+			_ = AnimationManager.HandleExternalCommand(userEvent);
+		}
+
+		private void BatteryChargeCallback(IBatteryChargeEvent batteryEvent)
+		{
+			MistyState.GetCharacterState().BatteryChargeEvent = (BatteryChargeEvent)batteryEvent;
+			BatteryChargeEvent?.Invoke(this, batteryEvent);
+		}
+
+		private void ExternalEventCallback(IUserEvent userEvent)
+		{
+			//TODO Deny cross robot communication per robot
+			
+			MistyState.GetCharacterState().ExternalEvent = (UserEvent)userEvent;
+
+			HandleExternalEvent(userEvent);
+		}
+
+		#endregion Cross robot and other event callbacks
+
+
 		#region Trigger Checking and management
 
 		public void RestartTriggerHandling()
@@ -419,6 +532,7 @@ namespace MistyCharacter
 							LiveTriggers.Add(detail.Trigger);
 						}
 						StreamAndLogInteraction($"Listening to event type {detail.Trigger}");
+						SendInteractionUIEvent();
 					}
 				}
 				catch
@@ -442,7 +556,6 @@ namespace MistyCharacter
 
 			ListenToEvent(triggerDetail, 0);
 
-			SendInteractionUIEvent();
 		}
 
 		public void RemoveTrigger(object sender, string trigger)
@@ -452,8 +565,7 @@ namespace MistyCharacter
 			_allowedTriggers.Remove(trigger);
 
 			IgnoreEvent(triggerDetail, 0);
-
-			SendInteractionUIEvent();
+			
 		}
 
 		private void IgnoreEvent(TriggerDetail detail, int delayMs)
@@ -480,6 +592,7 @@ namespace MistyCharacter
 								LiveTriggers.Remove(detail.Trigger);
 								//MistyState.UnregisterEvent(detail.Trigger); //? TODO only if all users of the event are off, currently, once events are on, we keep them on, but just ignore them
 								StreamAndLogInteraction($"Ignoring event type {detail.Trigger}");
+								SendInteractionUIEvent();
 								return;
 							}
 						}
@@ -1035,13 +1148,14 @@ namespace MistyCharacter
 		public async Task StopConversation(string speak = null)
 		{	
 			_interactionQueue.Clear();
-			//IgnoreEvents();
 			
 			HeadManager.StopMovement();
 			ArmManager.StopMovement();
 			await AnimationManager.StopRunningAnimationScripts();
-			
-			if(!string.IsNullOrWhiteSpace(speak))
+			IgnoreEvents();
+			await Task.Delay(500);
+
+			if (!string.IsNullOrWhiteSpace(speak))
 			{
 				Robot.Speak(speak, true, "InteractionTimeout", null);
 			}
@@ -1510,38 +1624,65 @@ namespace MistyCharacter
 				return string.Empty;
 			}
 		}
-		
+
+		private bool _sendInteractionThrottle = false;
+
 		private void SendInteractionUIEvent()
 		{
-			//TODO Test performance as items are added!
-
-			if (!CharacterParameters.SendInteractionUIEvents)
+			try
 			{
-				return;
+				if (_sendInteractionThrottle)
+				{
+					return;
+				}
+				_sendInteractionThrottle = true;
+				if (!CharacterParameters.SendInteractionUIEvents)
+				{
+					return;
+				}
+
+				string msg = GetInteractionUIEvent();
+				if (!string.IsNullOrWhiteSpace(msg))
+				{
+					Robot.PublishMessage(msg, null);
+				}
 			}
-
-			string msg = GetInteractionUIEvent();
-			if (!string.IsNullOrWhiteSpace(msg))
+			catch { }
+			finally
 			{
-				Robot.PublishMessage(msg, null);
+				_sendInteractionThrottle = false;
 			}
 		}
 
+		private bool _sendStateThrottle = false;
+
 		private void SendStateEvent(object timerData)
 		{
-			//TODO Test performance and allow config of how often		
-			string msg = GetStateEvent();
-			if (!string.IsNullOrWhiteSpace(msg))
+			try
 			{
-				Robot.PublishMessage(msg, null);
+				if (_sendStateThrottle)
+				{
+					return;
+				}
+				_sendStateThrottle = true;
+				//TODO Test performance and allow config of how often		
+				string msg = GetStateEvent();
+				if (!string.IsNullOrWhiteSpace(msg))
+				{
+					Robot.PublishMessage(msg, null);
+				}
 			}
+			catch { }
+			finally
+			{
+				_sendStateThrottle = false;
+			}			
 		}
 
 		public void HandleAnimationRequest(object sender, KeyValuePair<AnimationRequest, Interaction> action)
 		{
 			try
 			{
-
 				HeadManager.StopMovement();
 				ArmManager.StopMovement();
 				_ = AnimationManager.StopRunningAnimationScripts();//or overlap?
@@ -2373,11 +2514,6 @@ namespace MistyCharacter
 
 		#region Empty and external trigger only event handlers
 		
-		public void HandleBatteryChargeEvent(object sender, IBatteryChargeEvent batteryEvent)
-		{
-			BatteryChargeEvent?.Invoke(this, batteryEvent);
-		}
-
 		//Non-trigger events from other classes
 		public void HandleHeadRollEvent(object sender, IActuatorEvent e)
 		{
@@ -2540,23 +2676,8 @@ namespace MistyCharacter
 			FaceRecognitionEvent?.Invoke(this, faceRecognitionEvent);
 		}
 		
-		public void HandleSyncEvent(object sender, IUserEvent userEvent)
-		{
-			//this is an external call to the animation manager of another bot (and self if set)			
-			AnimationManager.HandleSyncEvent(userEvent);
-			SyncEvent?.Invoke(this, userEvent);
-		}
-
-		public void HandleRobotCommand(object sender, IUserEvent userEvent)
-		{
-			//this is an external call to the animation manager of another bot (and self if set)		
-			_ = AnimationManager.HandleExternalCommand(userEvent);
-			RobotCommand?.Invoke(this, userEvent);
-		}
-
-
 		//Callback from external skills or scripts 
-		public async void HandleExternalEvent(object sender, IUserEvent userEvent)
+		private async void HandleExternalEvent(IUserEvent userEvent)
 		{
 			//TODO Deny cross robot communication per robot
 
@@ -2911,17 +3032,19 @@ namespace MistyCharacter
 				if (disposing)
 				{
 					Robot.UpdateHazardSettings(new HazardSettings { RevertToDefault = true }, null);
-					//IgnoreEvents();
+					IgnoreEvents();
 					_stateEventTimer?.Dispose();
 					_noInteractionTimer?.Dispose();
 					_triggerActionTimeoutTimer?.Dispose();
 					_timerTriggerTimer?.Dispose();
 					_pollRunningSkillsTimer?.Dispose();
-					
-					SpeechManager.Dispose();
-					AnimationManager.Dispose();
+					ClearRegistrations();
+					ArmManager.StopMovement();
+					HeadManager.StopMovement();
 					ArmManager.Dispose();
 					HeadManager.Dispose();
+					SpeechManager.Dispose();
+					AnimationManager.Dispose();
 					TimeManager.Dispose();
 					MistyState?.Dispose();
 					Robot.Stop(null);

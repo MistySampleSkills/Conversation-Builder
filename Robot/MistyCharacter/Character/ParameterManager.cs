@@ -266,7 +266,6 @@ namespace MistyCharacter
 				else
 				{
 					await ParseCharacterParameters(conversationGroupId, JsonConvert.DeserializeObject<IDictionary<string, object>>((string)_conversationGroupList.First().Value));
-					//await ParseCharacterParameters(conversationGroupId, (IDictionary<string, object>)_conversationGroupList.First().Value);
 				}
 				
 				return true;
@@ -372,7 +371,7 @@ namespace MistyCharacter
 
 		public async Task<CharacterParameters> ParseCharacterParameters(string conversationGroupId, IDictionary<string, object> data)
 		{
-			CharacterParameters characterParameters = new CharacterParameters();
+			CharacterParameters updatedCharacterParameters = new CharacterParameters();
 			try
 			{
 				_parameters = data;
@@ -381,10 +380,10 @@ namespace MistyCharacter
 				//TODO Refactor for new startup procedure!!
 				if (string.IsNullOrWhiteSpace(_runningConversationGroup) && string.IsNullOrWhiteSpace(conversationGroupId))
 				{
-					characterParameters.InitializationStatusMessage = "Waiting for conversation.";
-					characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+					updatedCharacterParameters.InitializationStatusMessage = "Waiting for conversation.";
+					updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 					_misty.SkillLogger.Log("Waiting for conversation.");
-					return characterParameters;
+					return updatedCharacterParameters;
 				}
 				else if (!string.IsNullOrWhiteSpace(_runningConversationGroup))
 				{
@@ -400,36 +399,36 @@ namespace MistyCharacter
 					var onBoardConversationGroup = _conversationGroupList.FirstOrDefault(x => x.Key == conversationGroupId);
 					if (onBoardConversationGroup.Value != null)
 					{
-						characterParameters = JsonConvert.DeserializeObject<CharacterParameters>(Convert.ToString(onBoardConversationGroup.Value));
+						updatedCharacterParameters = JsonConvert.DeserializeObject<CharacterParameters>(Convert.ToString(onBoardConversationGroup.Value));
 					}
 				}
 				
-				if (characterParameters.InitializationErrorStatus == InitializationStatus.Error)
+				if (updatedCharacterParameters.InitializationErrorStatus == InitializationStatus.Error)
 				{
-					return characterParameters;
+					return updatedCharacterParameters;
 				}
 				
 				string logLevelString = GetStringField(_parameters, ConversationConstants.LogLevel) ?? CharacterParameters?.LogLevel.ToString() ?? null;
 				if (string.IsNullOrWhiteSpace(logLevelString))
 				{
-					characterParameters.LogLevel = _misty.SkillLogger.LogLevel;
+					updatedCharacterParameters.LogLevel = _misty.SkillLogger.LogLevel;
 				}
 				else
 				{
 					SkillLogLevel logResult = _misty.SkillLogger.LogLevel;
 					if (!string.IsNullOrWhiteSpace(logLevelString) && Enum.TryParse(logLevelString, true, out logResult))
 					{
-						characterParameters.LogLevel = logResult;
+						updatedCharacterParameters.LogLevel = logResult;
 					}
 					else
 					{
-						characterParameters.LogLevel = _misty.SkillLogger.LogLevel;
+						updatedCharacterParameters.LogLevel = _misty.SkillLogger.LogLevel;
 					}
 				}
 
 				RobotLogLevel robotLogLevel = RobotLogLevel.Info;
 
-				switch (characterParameters.LogLevel)
+				switch (updatedCharacterParameters.LogLevel)
 				{
 					case SkillLogLevel.Verbose:
 						robotLogLevel = RobotLogLevel.Debug;
@@ -455,48 +454,48 @@ namespace MistyCharacter
 					}
 					catch (Exception ex)
 					{						
-						if (characterParameters.ConversationGroup != null)
+						if (updatedCharacterParameters.ConversationGroup != null)
 						{
 							_misty.SkillLogger.Log("Using stored conversation.");
-							conversationGroup = characterParameters.ConversationGroup;
+							conversationGroup = updatedCharacterParameters.ConversationGroup;
 						}
 						else
 						{
-							characterParameters.InitializationStatusMessage = "Couldn't parse conversation. Waiting for conversation.";
-							characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+							updatedCharacterParameters.InitializationStatusMessage = "Couldn't parse conversation. Waiting for conversation.";
+							updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 							_misty.SkillLogger.Log("Couldn't parse conversation. Waiting for conversation.", ex);
 
 						}
 					}
 				}
-				else if (characterParameters.ConversationGroup != null)
+				else if (updatedCharacterParameters.ConversationGroup != null)
 				{
 					_misty.SkillLogger.Log("Using stored conversation.");
-					conversationGroup = characterParameters.ConversationGroup;
+					conversationGroup = updatedCharacterParameters.ConversationGroup;
 				}
 				else
 				{
-					characterParameters.InitializationStatusMessage = "No conversation data. Waiting for conversation.";
-					characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+					updatedCharacterParameters.InitializationStatusMessage = "No conversation data. Waiting for conversation.";
+					updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
 					_misty.SkillLogger.Log("No conversation data. Waiting for conversation.");
 				}
 
 				if (conversationGroup == null)
 				{
-					characterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
-					characterParameters.InitializationStatusMessage = "No conversation data. Waiting for conversation";
+					updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Waiting;
+					updatedCharacterParameters.InitializationStatusMessage = "No conversation data. Waiting for conversation";
 					_misty.SkillLogger.Log("No conversation data. Waiting for conversation.");
-					return characterParameters;
+					return updatedCharacterParameters;
 				}
 
 
-				characterParameters.AnimationCreationMode = conversationGroup.AnimationCreationMode;
-				characterParameters.AnimationCreationDebounceSeconds = conversationGroup.AnimationCreationDebounceSeconds;
-				characterParameters.IgnoreArmCommands = conversationGroup.IgnoreArmCommands;
-				characterParameters.IgnoreHeadCommands = conversationGroup.IgnoreHeadCommands;
-				characterParameters.RetranslateTTS = conversationGroup.RetranslateTTS;
-				characterParameters.SmoothRecording = conversationGroup.SmoothRecording;
-				characterParameters.PuppetingList = conversationGroup.PuppetingList;
+				updatedCharacterParameters.AnimationCreationMode = conversationGroup.AnimationCreationMode;
+				updatedCharacterParameters.AnimationCreationDebounceSeconds = conversationGroup.AnimationCreationDebounceSeconds;
+				updatedCharacterParameters.IgnoreArmCommands = conversationGroup.IgnoreArmCommands;
+				updatedCharacterParameters.IgnoreHeadCommands = conversationGroup.IgnoreHeadCommands;
+				updatedCharacterParameters.RetranslateTTS = conversationGroup.RetranslateTTS;
+				updatedCharacterParameters.SmoothRecording = conversationGroup.SmoothRecording;
+				updatedCharacterParameters.PuppetingList = conversationGroup.PuppetingList;
 				
 				string extraPayload = GetStringField(_parameters, ConversationConstants.Payload) ?? null;
 				if (!string.IsNullOrWhiteSpace(extraPayload))
@@ -516,8 +515,8 @@ namespace MistyCharacter
 					{
 						//user has invalid payload
 						_misty.SkillLogger.Log($"Failed parsing user defined payload data, skill may not work as expected.");
-						characterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
-						characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+						updatedCharacterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
+						updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 					}
 				}
 
@@ -552,46 +551,46 @@ namespace MistyCharacter
 						{
 							//user has invalid payload
 							_misty.SkillLogger.Log($"Failed parsing user defined skill {skillMessage.Skill} payload, skill may not work as expected.");
-							characterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
-							characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+							updatedCharacterParameters.InitializationStatusMessage = "Warning. Could not parse user defined payload.";
+							updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 						}
 					}
 				}
 
-				characterParameters.DisplaySpoken = GetBoolField(_parameters, ConversationConstants.DisplaySpoken) ?? CharacterParameters?.DisplaySpoken ?? false;
-				characterParameters.LargePrint = GetBoolField(_parameters, ConversationConstants.LargePrint) ?? CharacterParameters?.LargePrint ?? false;
-				characterParameters.ShowListeningIndicator = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? CharacterParameters?.ShowListeningIndicator ?? false;
-				characterParameters.ShowSpeakingIndicator = GetBoolField(_parameters, ConversationConstants.ShowSpeakingIndicator) ?? CharacterParameters?.ShowSpeakingIndicator ?? false;
-				characterParameters.SendInteractionUIEvents = GetBoolField(_parameters, ConversationConstants.SendInteractionUIEvents) ?? CharacterParameters?.SendInteractionUIEvents ?? true;
-				characterParameters.HeardSpeechToScreen = GetBoolField(_parameters, ConversationConstants.HeardSpeechToScreen) ?? CharacterParameters?.HeardSpeechToScreen ?? false;
-				characterParameters.StartVolume = GetIntField(_parameters, ConversationConstants.StartVolume) ?? CharacterParameters?.StartVolume ?? null;
+				updatedCharacterParameters.DisplaySpoken = GetBoolField(_parameters, ConversationConstants.DisplaySpoken) ?? CharacterParameters?.DisplaySpoken ?? false;
+				updatedCharacterParameters.LargePrint = GetBoolField(_parameters, ConversationConstants.LargePrint) ?? CharacterParameters?.LargePrint ?? false;
+				updatedCharacterParameters.ShowListeningIndicator = GetBoolField(_parameters, ConversationConstants.ShowListeningIndicator) ?? CharacterParameters?.ShowListeningIndicator ?? false;
+				updatedCharacterParameters.ShowSpeakingIndicator = GetBoolField(_parameters, ConversationConstants.ShowSpeakingIndicator) ?? CharacterParameters?.ShowSpeakingIndicator ?? false;
+				updatedCharacterParameters.SendInteractionUIEvents = GetBoolField(_parameters, ConversationConstants.SendInteractionUIEvents) ?? CharacterParameters?.SendInteractionUIEvents ?? true;
+				updatedCharacterParameters.HeardSpeechToScreen = GetBoolField(_parameters, ConversationConstants.HeardSpeechToScreen) ?? CharacterParameters?.HeardSpeechToScreen ?? false;
+				updatedCharacterParameters.StartVolume = GetIntField(_parameters, ConversationConstants.StartVolume) ?? CharacterParameters?.StartVolume ?? null;
 
 				try
 				{
-					characterParameters.Robots = JsonConvert.DeserializeObject<IList<Robot>>(GetStringField(_parameters, "Robots")) ?? CharacterParameters?.Robots ?? new List<Robot>();
+					updatedCharacterParameters.Robots = JsonConvert.DeserializeObject<IList<Robot>>(GetStringField(_parameters, "Robots")) ?? CharacterParameters?.Robots ?? new List<Robot>();
 				}
 				catch
 				{
 					_misty.SkillLogger.Log($"Failed parsing robot information, skill may not work as expected.");
-					characterParameters.InitializationStatusMessage = "Warning. Could not parse robot information.";
-					characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+					updatedCharacterParameters.InitializationStatusMessage = "Warning. Could not parse robot information.";
+					updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 				}
 				try
 				{
-					characterParameters.Recipes = JsonConvert.DeserializeObject<IList<Recipe>>(GetStringField(_parameters, "Recipes")) ?? CharacterParameters?.Recipes ?? new List<Recipe>();
+					updatedCharacterParameters.Recipes = JsonConvert.DeserializeObject<IList<Recipe>>(GetStringField(_parameters, "Recipes")) ?? CharacterParameters?.Recipes ?? new List<Recipe>();
 				}
 				catch
 				{
 					_misty.SkillLogger.Log($"Failed parsing recipe information, skill may not work as expected.");
-					characterParameters.InitializationStatusMessage = "Warning. Could not parse recipe information.";
-					characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+					updatedCharacterParameters.InitializationStatusMessage = "Warning. Could not parse recipe information.";
+					updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 				}
-				characterParameters.ConversationGroup = conversationGroup;
+				updatedCharacterParameters.ConversationGroup = conversationGroup;
 
-				characterParameters.SpeakingImage = GetStringField(_parameters, ConversationConstants.SpeakingImage) ?? CharacterParameters?.SpeakingImage ?? "";
-				characterParameters.ListeningImage = GetStringField(_parameters, ConversationConstants.ListeningImage) ?? CharacterParameters?.ListeningImage ?? "";
-				characterParameters.ProcessingImage = GetStringField(_parameters, ConversationConstants.ProcessingImage) ?? CharacterParameters?.ProcessingImage ?? "";
-				characterParameters.UsePreSpeech = GetBoolField(_parameters, ConversationConstants.UsePreSpeech) ?? CharacterParameters?.UsePreSpeech ?? false;
+				updatedCharacterParameters.SpeakingImage = GetStringField(_parameters, ConversationConstants.SpeakingImage) ?? CharacterParameters?.SpeakingImage ?? "";
+				updatedCharacterParameters.ListeningImage = GetStringField(_parameters, ConversationConstants.ListeningImage) ?? CharacterParameters?.ListeningImage ?? "";
+				updatedCharacterParameters.ProcessingImage = GetStringField(_parameters, ConversationConstants.ProcessingImage) ?? CharacterParameters?.ProcessingImage ?? "";
+				updatedCharacterParameters.UsePreSpeech = GetBoolField(_parameters, ConversationConstants.UsePreSpeech) ?? CharacterParameters?.UsePreSpeech ?? false;
 
 				//Parse string into prespeech by semicolon
 				try
@@ -601,15 +600,15 @@ namespace MistyCharacter
 					string preSpeechString = GetStringField(_parameters, ConversationConstants.PreSpeechPhrases) ?? "";
 					if(string.IsNullOrWhiteSpace(preSpeechString) && CharacterParameters.PreSpeechPhrases != null & CharacterParameters.PreSpeechPhrases.Count() > 0)
 					{
-						characterParameters.PreSpeechPhrases = CharacterParameters.PreSpeechPhrases;
+						updatedCharacterParameters.PreSpeechPhrases = CharacterParameters.PreSpeechPhrases;
 					}
 					else if (!string.IsNullOrWhiteSpace(preSpeechString))
 					{
-						characterParameters.PreSpeechPhrases = preSpeechString;					
+						updatedCharacterParameters.PreSpeechPhrases = preSpeechString;					
 					}
-					else if (characterParameters.UsePreSpeech)
+					else if (updatedCharacterParameters.UsePreSpeech)
 					{
-						characterParameters.PreSpeechList = new List<string>
+						updatedCharacterParameters.PreSpeechList = new List<string>
 						{
 							"One second please.",
 							"Hold on one moment.",
@@ -622,14 +621,14 @@ namespace MistyCharacter
 				catch
 				{
 					_misty.SkillLogger.Log($"Failed parsing pre-speech phrases, using defaults.");
-					characterParameters.InitializationStatusMessage = "Failed parsing pre-speech, using defaults.";
-					characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+					updatedCharacterParameters.InitializationStatusMessage = "Failed parsing pre-speech, using defaults.";
+					updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 				}
 				finally
 				{
 					if (CharacterParameters.UsePreSpeech && (CharacterParameters.PreSpeechPhrases == null))
 					{
-						characterParameters.PreSpeechList = new List<string>
+						updatedCharacterParameters.PreSpeechList = new List<string>
 						{
 							"One second please.",
 							"Hold on one moment.",
@@ -644,57 +643,57 @@ namespace MistyCharacter
 				//Get speech configuration from string
 				try
 				{
-					characterParameters.SpeechConfiguration = JsonConvert.DeserializeObject<SpeechConfiguration>(GetStringField(_parameters, ConversationConstants.SpeechConfiguration)) ?? CharacterParameters?.SpeechConfiguration ?? new SpeechConfiguration();
-					SetSpeechParameters(characterParameters);
+					updatedCharacterParameters.SpeechConfiguration = JsonConvert.DeserializeObject<SpeechConfiguration>(GetStringField(_parameters, ConversationConstants.SpeechConfiguration)) ?? CharacterParameters?.SpeechConfiguration ?? new SpeechConfiguration();
+					SetSpeechParameters(updatedCharacterParameters);
 				}
 				catch (Exception ex)
 				{
 					_misty.SkillLogger.Log("Failed parsing the speech configuration data, speech intent may not work.", ex);
-					characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
-					characterParameters.InitializationStatusMessage = $"Speech configuration failed, speech intent may not work.";
+					updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+					updatedCharacterParameters.InitializationStatusMessage = $"Speech configuration failed, speech intent may not work.";
 				}
 			
-				characterParameters.AzureTTSParameters = new AzureSpeechParameters();
-				characterParameters.GoogleTTSParameters = new GoogleSpeechParameters();
-				characterParameters.AzureSpeechRecognitionParameters = new AzureSpeechParameters();
-				characterParameters.GoogleSpeechRecognitionParameters = new GoogleSpeechParameters();
+				updatedCharacterParameters.AzureTTSParameters = new AzureSpeechParameters();
+				updatedCharacterParameters.GoogleTTSParameters = new GoogleSpeechParameters();
+				updatedCharacterParameters.AzureSpeechRecognitionParameters = new AzureSpeechParameters();
+				updatedCharacterParameters.GoogleSpeechRecognitionParameters = new GoogleSpeechParameters();
 
-				characterParameters.TrackHistory = GetIntField(_parameters, ConversationConstants.TrackHistory) ?? CharacterParameters?.TrackHistory ?? 3;
-				characterParameters.PersonConfidence = GetDoubleField(_parameters, ConversationConstants.PersonConfidence) ?? CharacterParameters?.PersonConfidence ?? 0.6;
-				characterParameters.LogInteraction = GetBoolField(_parameters, ConversationConstants.LogInteraction) ?? CharacterParameters?.LogInteraction ?? true;
-				characterParameters.StreamInteraction = GetBoolField(_parameters, ConversationConstants.StreamInteraction) ?? CharacterParameters?.StreamInteraction ?? false;
-				characterParameters.FacePitchOffset = GetIntField(_parameters, ConversationConstants.FacePitchOffset) ?? CharacterParameters?.FacePitchOffset ?? 0;
-				characterParameters.ObjectDetectionDebounce = GetIntField(_parameters, ConversationConstants.ObjectDetectionDebounce) ?? CharacterParameters?.ObjectDetectionDebounce ?? 0.333; //FollowFaceDebounce?
+				updatedCharacterParameters.TrackHistory = GetIntField(_parameters, ConversationConstants.TrackHistory) ?? CharacterParameters?.TrackHistory ?? 3;
+				updatedCharacterParameters.PersonConfidence = GetDoubleField(_parameters, ConversationConstants.PersonConfidence) ?? CharacterParameters?.PersonConfidence ?? 0.6;
+				updatedCharacterParameters.LogInteraction = GetBoolField(_parameters, ConversationConstants.LogInteraction) ?? CharacterParameters?.LogInteraction ?? true;
+				updatedCharacterParameters.StreamInteraction = GetBoolField(_parameters, ConversationConstants.StreamInteraction) ?? CharacterParameters?.StreamInteraction ?? false;
+				updatedCharacterParameters.FacePitchOffset = GetIntField(_parameters, ConversationConstants.FacePitchOffset) ?? CharacterParameters?.FacePitchOffset ?? 0;
+				updatedCharacterParameters.ObjectDetectionDebounce = GetIntField(_parameters, ConversationConstants.ObjectDetectionDebounce) ?? CharacterParameters?.ObjectDetectionDebounce ?? 0.333; //FollowFaceDebounce?
 			}
 			catch (Exception ex)
 			{
 				_misty.SkillLogger.Log("Exception processing parameters.", ex);
-				characterParameters.InitializationStatusMessage = "Exception processing parameters. Cannot continue.";
-				characterParameters.InitializationErrorStatus = InitializationStatus.Error;
-				return characterParameters;
+				updatedCharacterParameters.InitializationStatusMessage = "Exception processing parameters. Cannot continue.";
+				updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Error;
+				return updatedCharacterParameters;
 			}
 
 			try
 			{
-				if (!string.IsNullOrWhiteSpace(characterParameters.ConversationGroup.Id) && _overwriteLocalConfig && 
-					characterParameters.InitializationErrorStatus != InitializationStatus.Warning && 
-					characterParameters.InitializationErrorStatus != InitializationStatus.Error)
+				if (!string.IsNullOrWhiteSpace(updatedCharacterParameters.ConversationGroup.Id) && _overwriteLocalConfig && 
+					updatedCharacterParameters.InitializationErrorStatus != InitializationStatus.Warning && 
+					updatedCharacterParameters.InitializationErrorStatus != InitializationStatus.Error)
 				{
-					_conversationGroupList.Remove(characterParameters.ConversationGroup.Id);					
-					_conversationGroupList.Add(characterParameters.ConversationGroup.Id, JsonConvert.SerializeObject(characterParameters));					
+					_conversationGroupList.Remove(updatedCharacterParameters.ConversationGroup.Id);					
+					_conversationGroupList.Add(updatedCharacterParameters.ConversationGroup.Id, JsonConvert.SerializeObject(updatedCharacterParameters));					
 					await _database.SaveDataAsync(_conversationGroupList);
 				}
 			}
 			catch (Exception ex)
 			{
 				_misty.SkillLogger.Log("Exception saving parameters.", ex);
-				characterParameters.InitializationStatusMessage = "Exception saving parameters. Attempting to continue.";
-				characterParameters.InitializationErrorStatus = InitializationStatus.Warning;
+				updatedCharacterParameters.InitializationStatusMessage = "Exception saving parameters. Attempting to continue.";
+				updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 			}
 
 			//Return what we have...
-			characterParameters.InitializationErrorStatus = InitializationStatus.Success;
-			return characterParameters;
+			updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Success;
+			return updatedCharacterParameters;
 		}
 
 		public async Task<CharacterParameters> Initialize()
@@ -730,66 +729,69 @@ namespace MistyCharacter
 		}
 
 
-		private void SetSpeechParameters(CharacterParameters characterParameters)
+		private void SetSpeechParameters(CharacterParameters updatedCharacterParameters)
 		{
-			//Speech Rec Parameters
-			if (!string.IsNullOrWhiteSpace(characterParameters.SpeechConfiguration?.SpeechRecognitionSubscriptionKey))
-			{
-				string recService = characterParameters.SpeechConfiguration.SpeechRecognitionService.ToLower().Trim();
-
-				if (recService == "azure" || recService == "azureonboard")
+			try
+			{ 
+				//Speech Rec Parameters
+				if (!string.IsNullOrWhiteSpace(updatedCharacterParameters.SpeechConfiguration?.SpeechRecognitionSubscriptionKey))
 				{
-					characterParameters.AzureSpeechRecognitionParameters.SubscriptionKey = characterParameters.SpeechConfiguration.SpeechRecognitionSubscriptionKey;
-					characterParameters.AzureSpeechRecognitionParameters.Region = characterParameters.SpeechConfiguration.SpeechRecognitionRegion ?? "";
-					characterParameters.AzureSpeechRecognitionParameters.Endpoint = characterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "";
-					characterParameters.AzureSpeechRecognitionParameters.TranslatedLanguage = characterParameters.SpeechConfiguration.TranslatedLanguage ?? "en";
-					characterParameters.AzureSpeechRecognitionParameters.SpokenLanguage = characterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
-					characterParameters.AzureSpeechRecognitionParameters.ProfanitySetting = characterParameters.SpeechConfiguration.ProfanitySetting ?? "Raw";
-				}
-				else if (recService == "google" || recService == "googleonboard")
-				{
-					characterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey = characterParameters.SpeechConfiguration.SpeechRecognitionSubscriptionKey ?? "";
-					characterParameters.GoogleSpeechRecognitionParameters.Endpoint = characterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "https://speech.googleapis.com/v1p1beta1/speech:recognize?key=";
-					characterParameters.GoogleSpeechRecognitionParameters.SpeakingVoice = characterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
-					characterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage = characterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
-				}
+					string recService = updatedCharacterParameters.SpeechConfiguration.SpeechRecognitionService.ToLower().Trim();
+
+					if (recService == "azure" || recService == "azureonboard")
+					{
+						updatedCharacterParameters.AzureSpeechRecognitionParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.SpeechRecognitionSubscriptionKey;
+						updatedCharacterParameters.AzureSpeechRecognitionParameters.Region = CharacterParameters.SpeechConfiguration.SpeechRecognitionRegion ?? "";
+						updatedCharacterParameters.AzureSpeechRecognitionParameters.Endpoint = CharacterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "";
+						updatedCharacterParameters.AzureSpeechRecognitionParameters.TranslatedLanguage = CharacterParameters.SpeechConfiguration.TranslatedLanguage ?? "en";
+						updatedCharacterParameters.AzureSpeechRecognitionParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+						updatedCharacterParameters.AzureSpeechRecognitionParameters.ProfanitySetting = CharacterParameters.SpeechConfiguration.ProfanitySetting ?? "Raw";
+					}
+					else if (recService == "google" || recService == "googleonboard")
+					{
+						updatedCharacterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.SpeechRecognitionSubscriptionKey ?? "";
+						updatedCharacterParameters.GoogleSpeechRecognitionParameters.Endpoint = CharacterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "https://speech.googleapis.com/v1p1beta1/speech:recognize?key=";
+						updatedCharacterParameters.GoogleSpeechRecognitionParameters.SpeakingVoice = CharacterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
+						updatedCharacterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+					}
 
 
-				characterParameters.SpeechRecognitionService = recService?.ToLower().Trim() ?? "vosk";
-			}
+					updatedCharacterParameters.SpeechRecognitionService = recService?.ToLower().Trim() ?? "vosk";
+				}
 			
-			//TTS Parameters
-			if (!string.IsNullOrWhiteSpace(characterParameters.SpeechConfiguration?.TextToSpeechSubscriptionKey))
-			{
-				string ttsService = characterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
-
-				if (ttsService == "azure" || ttsService == "azureonboard")
+				//TTS Parameters
+				if (!string.IsNullOrWhiteSpace(updatedCharacterParameters.SpeechConfiguration?.TextToSpeechSubscriptionKey))
 				{
-					characterParameters.AzureTTSParameters.SubscriptionKey = characterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
-					characterParameters.AzureTTSParameters.Region = characterParameters.SpeechConfiguration.SpeechRecognitionRegion ?? "";
-					characterParameters.AzureTTSParameters.Endpoint = characterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "";
-					characterParameters.AzureTTSParameters.SpeakingVoice = characterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-AriaNeural";
-					characterParameters.AzureTTSParameters.TranslatedLanguage = characterParameters.SpeechConfiguration.TranslatedLanguage ?? "en";
-					characterParameters.AzureTTSParameters.SpokenLanguage = characterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
-					characterParameters.AzureTTSParameters.ProfanitySetting = characterParameters.SpeechConfiguration.ProfanitySetting ?? "Raw";
-				}
-				else if (ttsService == "google" || ttsService == "googleonboard")
-				{
-					characterParameters.GoogleTTSParameters.SubscriptionKey = characterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
-					characterParameters.GoogleTTSParameters.Endpoint = characterParameters.SpeechConfiguration.TextToSpeechEndpoint ?? "https://texttospeech.googleapis.com/v1/text:synthesize?key=";
-					characterParameters.GoogleTTSParameters.SpeakingVoice = characterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
-					characterParameters.GoogleTTSParameters.SpeakingGender = characterParameters.SpeechConfiguration.SpeakingGender ?? "FEMALE";
-					characterParameters.GoogleTTSParameters.SpokenLanguage = characterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
-				}
+					string ttsService = updatedCharacterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
 
-				characterParameters.TextToSpeechService = ttsService ?? "misty";
+					if (ttsService == "azure" || ttsService == "azureonboard")
+					{
+						updatedCharacterParameters.AzureTTSParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
+						updatedCharacterParameters.AzureTTSParameters.Region = CharacterParameters.SpeechConfiguration.SpeechRecognitionRegion ?? "";
+						updatedCharacterParameters.AzureTTSParameters.Endpoint = CharacterParameters.SpeechConfiguration.SpeechRecognitionEndpoint ?? "";
+						updatedCharacterParameters.AzureTTSParameters.SpeakingVoice = CharacterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-AriaNeural";
+						updatedCharacterParameters.AzureTTSParameters.TranslatedLanguage = CharacterParameters.SpeechConfiguration.TranslatedLanguage ?? "en";
+						updatedCharacterParameters.AzureTTSParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+						updatedCharacterParameters.AzureTTSParameters.ProfanitySetting = CharacterParameters.SpeechConfiguration.ProfanitySetting ?? "Raw";
+					}
+					else if (ttsService == "google" || ttsService == "googleonboard")
+					{
+						updatedCharacterParameters.GoogleTTSParameters.SubscriptionKey = CharacterParameters.SpeechConfiguration.TextToSpeechSubscriptionKey;
+						updatedCharacterParameters.GoogleTTSParameters.Endpoint = CharacterParameters.SpeechConfiguration.TextToSpeechEndpoint ?? "https://texttospeech.googleapis.com/v1/text:synthesize?key=";
+						updatedCharacterParameters.GoogleTTSParameters.SpeakingVoice = CharacterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
+						updatedCharacterParameters.GoogleTTSParameters.SpeakingGender = CharacterParameters.SpeechConfiguration.SpeakingGender ?? "FEMALE";
+						updatedCharacterParameters.GoogleTTSParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
+					}
+
+					updatedCharacterParameters.TextToSpeechService = ttsService?.ToLower().Trim() ?? "misty";
+				}
 			}
-			else
+			catch (Exception ex)
 			{
-				characterParameters.TextToSpeechService = characterParameters.SpeechConfiguration.TextToSpeechService.ToLower().Trim();
+				_misty.SkillLogger.Log("Exception processing azure or google speech parameters.", ex);
+				updatedCharacterParameters.InitializationStatusMessage = "Exception processing azure or google speech parameters. Speech may not work.";
+				updatedCharacterParameters.InitializationErrorStatus = InitializationStatus.Warning;
 			}
-
-			//TODO If there is an onboard speech auth setting, use that instead!			
 		}
 
 		#region Available public methods to get character payload data

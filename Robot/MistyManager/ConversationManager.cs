@@ -39,6 +39,7 @@ namespace MistyManager
 			_assetWrapper = new AssetWrapper(_misty);
 		}
 
+		//TODO untested!!
 		private async void HandleConversationCleanup(object sender, DateTime when)
 		{
 			if (_character != null)
@@ -99,9 +100,7 @@ namespace MistyManager
 				//Revert display to defaults before starting init process...
 				await _misty.SetDisplaySettingsAsync(true);
 				await _misty.SetBlinkSettingsAsync(true, null, null, null, null, null);
-
-				_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);
-			
+				_assetWrapper.ShowSystemImage(SystemImage.DefaultContent);			
 				_misty.ChangeLED(0, 255, 255, null);
 				_misty.MoveArms(65.0, 65.0, 50, 50, null, AngularUnit.Degrees, null);
 				_misty.MoveHead(0, 0, 0, 75, AngularUnit.Degrees, null);
@@ -114,13 +113,6 @@ namespace MistyManager
 				_misty.DisplayText($"Failed manager initialization", "Text", null);
 				_misty.SkillLogger.Log("Exception thrown in conversation manager.", ex);
 				await Task.Delay(4000);
-			}
-			finally
-			{
-				_misty.SetTextDisplaySettings("Text", new TextSettings
-				{
-					Deleted = true
-				}, null);
 			}
 			return false;
 		}
@@ -147,7 +139,7 @@ namespace MistyManager
 						newData.Add("ConversationGroupId", conversationId);
 
 						_runningConversation = Convert.ToString(conversationId);
-						_ = Initialize(new BasicMisty(_misty, newData, new ManagerConfiguration(null, null, null, null, null, new CommandManager.UserCommandManager(_misty, eventPayload))));
+						_ = Initialize(new BasicMisty(_misty, newData, _managerConfiguration ?? new ManagerConfiguration(null, null, null, null, null, new CommandManager.UserCommandManager(_misty, eventPayload))));
 						return;
 					}
 					_misty.SkillLogger.LogError("Missing parameters or improper json format.");
@@ -392,9 +384,8 @@ namespace MistyManager
 			try
 			{
 				await _assetWrapper.LoadAssets(true);
-
 				await ResetRobot();
-				await Task.Delay(1000);//Pause to allow UI cleanup
+				await Task.Delay(1000);//Pause to allow UI cleanup before resetting screen
 
 				await _misty.SetTextDisplaySettingsAsync("Text", new TextSettings
 				{
@@ -422,9 +413,9 @@ namespace MistyManager
 				_misty.RegisterUserEvent("SaveAuthorization", SaveAuthorizationCallback, 0, true, null);
 				
 				_misty.DisplayText("Waking robot...", "Text", null);
-				await Task.Delay(2000); //Pause so they can see message
+				await Task.Delay(2000); //Pause so they can see message on screen
 
-				_publishConversationTimer = new Timer(PublishTimerCallback, null, 0, 10000);
+				_publishConversationTimer = new Timer(PublishTimerCallback, null, 0, 5000);
 
 				if (!await CheckAudio())
 				{

@@ -92,13 +92,13 @@ namespace CommandManager
 					if (takePictureResponse?.Data?.Image != null)
 					{
 						_emailService.SendEmail(parameters[0], _senderEmail, parameters[1], body, (byte[])takePictureResponse?.Data?.Image);
-						ResponseAction = $"SPEAK-AND-WAIT:'I send an email with a picture!', 60000;";
+						ResponseAction = $"SPEAK-AND-WAIT:\"I sent an email with a picture!\", 60000;";
 						return ResponseString = "Sent email with picture.";
 					}
 				}
 
 				_emailService.SendEmail(parameters[0], _senderEmail, parameters[1], body, null);
-				ResponseAction = $"SPEAK-AND-WAIT:'I send an email!', 60000;";
+				ResponseAction = $"SPEAK-AND-WAIT:\"I sent an email!\", 60000;";
 				return ResponseString = "Sent email.";
 			}
 

@@ -1985,7 +1985,12 @@ namespace MistyCharacter
 			{
 				if (disposing)
 				{
-			//		_misty.UnregisterAllEvents(null);
+					_speechOverridden = true;
+					_allowedTriggers.Clear();
+					_listeningCallbacks.Clear();
+					_misty.StopAudio(null);
+					_misty.StopSpeaking(null);
+					_misty.StopRecordingAudio(null);
 				}
 
 				_isDisposed = true;

@@ -84,10 +84,10 @@ namespace CommandManager
 				{
 					MemoryStream stream = new MemoryStream((byte[])takePictureResponse.Data.Image);
 					ResponseString = await _visionService.AnalyzeImageStream(stream);
-					ResponseAction = $"SPEAK-AND-WAIT:'I see {ResponseString}', 60000;";
+					ResponseAction = $"SPEAK-AND-WAIT:\"I see {ResponseString}\", 60000;";
 					return ResponseString;
 				}
-				ResponseAction = $"SPEAK-AND-WAIT:'I am having trouble describing the scene.', 60000;";
+				ResponseAction = $"SPEAK-AND-WAIT:\"I am having trouble describing the scene.\", 60000;";
 				return ResponseString = "";
 			}
 			catch (Exception ex)

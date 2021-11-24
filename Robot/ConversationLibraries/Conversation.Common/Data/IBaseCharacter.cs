@@ -44,7 +44,7 @@ namespace Conversation.Common
 		void HandleFaceRecognitionEvent(object sender, IFaceRecognitionEvent theEvent);
 		void HandleCapTouchEvent(object sender, ICapTouchEvent theEvent);
 		void HandleBumperEvent(object sender, IBumpSensorEvent theEvent);
-		void HandleBatteryChargeEvent(object sender, IBatteryChargeEvent theEvent);
+		//void HandleBatteryChargeEvent(object sender, IBatteryChargeEvent theEvent);
 		void HandleQrTagEvent(object sender, IQrTagDetectionEvent theEvent);
 		void HandleArTagEvent(object sender, IArTagDetectionEvent theEvent);
 		void HandleTimeOfFlightEvent(object sender, ITimeOfFlightEvent theEvent);
@@ -57,14 +57,14 @@ namespace Conversation.Common
 
 		//void HandleKeyPhraseRecognitionOn(object sender, bool theEvent);
 
-		void HandleSyncEvent(object sender, IUserEvent userEvent);
+		//void HandleSyncEvent(object sender, IUserEvent userEvent);
 
-		void HandleRobotCommand(object sender, IUserEvent userEvent);
+		//void HandleRobotCommand(object sender, IUserEvent userEvent);
 
 		void HandlePersonObjectEvent(object sender, IObjectDetectionEvent theEvent);
 		void HandleNonPersonObjectEvent(object sender, IObjectDetectionEvent theEvent);
 		void HandleDriveEncoder(object sender, IDriveEncoderEvent theEvent);
-		void HandleExternalEvent(object sender, IUserEvent theEvent);
+		//void HandleExternalEvent(object sender, IUserEvent theEvent);
 
 		event EventHandler<DateTime> TriggerConversationCleanup;
 

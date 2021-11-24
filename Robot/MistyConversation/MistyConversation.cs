@@ -50,6 +50,7 @@ namespace MistyConversation
 		public INativeRobotSkill Skill { get; set; }
 		private IRobotMessenger _misty;
 		private ConversationManager _conversationManager;
+		public event EventHandler<bool> SkillRunState;
 
 		public MistyConversationSkill()
 		{
@@ -61,8 +62,6 @@ namespace MistyConversation
 			};
 		}
 		
-		public event EventHandler<bool> SkillRunState;
-
 		public void LoadRobotConnection(IRobotMessenger robotInterface)
 		{
 			_misty = robotInterface;

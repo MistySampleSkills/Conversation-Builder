@@ -53,7 +53,7 @@ namespace CommandManager
 			{
 				ChuckNorrisJokeFormat cnj = await funnyBoneAPI.GetChuckNorrisJoke();
 				ResponseString = cnj?.Value?.Joke;
-				ResponseAction = $"SPEAK-AND-WAIT:'{ResponseString}', 60000;";
+				ResponseAction = $"SPEAK-AND-WAIT:\"{ResponseString}\", 60000;";
 				return ResponseString;
 			}
 			catch

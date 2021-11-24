@@ -86,6 +86,13 @@ namespace Conversation.Common
 		void HandleCompletedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
 		void HandleStartedProcessingVoiceReceived(object sender, IVoiceRecordEvent triggerData);
 
+		void HandleSyncEvent(object sender, IUserEvent userEvent);
+
+		void HandleRobotCommand(object sender, IUserEvent userEvent);
+
+		void HandleExternalEvent(object sender, IUserEvent userEvent);
+		void HandleBatteryChargeEvent(object sender, IBatteryChargeEvent chargeEvent);
+
 		//TODO Cleanup ownership of external events - BaseCharacter or MistyState
 		event EventHandler<TriggerData> ValidTriggerReceived;
 		event EventHandler<DateTime> ConversationStarted;

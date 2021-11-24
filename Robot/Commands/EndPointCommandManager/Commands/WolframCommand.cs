@@ -85,10 +85,10 @@ namespace CommandManager
 				}
 				else
 				{
-					wolframResponse = "Hmm. I am having trouble figuring out a short answer for that.";
+					wolframResponse = "Hmmm. I am having trouble figuring that one out.";
 				}
 
-				ResponseAction = $"SPEAK-AND-WAIT:'{wolframResponse}', 60000;";
+				ResponseAction = $"SPEAK-AND-WAIT:\"{wolframResponse}\", 60000;";
 				return ResponseString;
 			}
 			catch (Exception ex)
