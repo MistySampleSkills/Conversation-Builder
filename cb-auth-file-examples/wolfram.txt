@@ -1,0 +1,8 @@
+{ 
+	"Name" : "wolfram", 
+	"AuthFields":
+	{
+		"Endpoint":"https://api.wolframalpha.com/v1/result?i=",
+		"AppId":"abc123"
+	}
+}

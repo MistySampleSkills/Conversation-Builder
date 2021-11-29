@@ -1,0 +1,10 @@
+{ 
+	"Name" : "send-email",
+	"AuthFields":
+	{
+		"Host":"smtp.gmail.com",
+		"Port":"587",
+		"SenderEmail":"example@example.com",
+		"AppPassword":"xyz"
+	}
+}
