@@ -69,10 +69,10 @@ namespace CommandManager
 			Commands.Add(new DevJokeCommand());
 			Commands.Add(new ChuckJokeCommand());
 			
-			Commands.Add(new DescribeSceneCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "DESCRIBE-SCENE")));
-			Commands.Add(new SendEmailCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "SEND-EMAIL")));
-			Commands.Add(new WolframCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "WOLFRAM")));
-			//Commands.Add(new SendTwilioCommand(Misty, Authorizations.FirstOrDefault(x => x.Name.ToUpper().Trim() == "SEND-TWILIO")));			
+			Commands.Add(new DescribeSceneCommand(Misty, Authorizations.FirstOrDefault(x => string.Compare(x.Name, "describe-scene", true) == 0)));
+			Commands.Add(new SendEmailCommand(Misty, Authorizations.FirstOrDefault(x => string.Compare(x.Name, "send-email", true) == 0)));
+			Commands.Add(new WolframCommand(Misty, Authorizations.FirstOrDefault(x => string.Compare(x.Name, "wolfram", true) == 0)));
+			//Commands.Add(new SendTwilioCommand(Misty, Authorizations.FirstOrDefault(x => xstring.Compare(x.Name, "send-twilio", true) == 0)));			
 			return true;
 		}
 

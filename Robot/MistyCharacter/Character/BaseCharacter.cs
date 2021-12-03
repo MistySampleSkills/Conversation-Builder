@@ -523,13 +523,13 @@ namespace MistyCharacter
 
 						lock (_eventsClearedLock)
 						{
-							if (LiveTriggers.Contains(detail.Trigger))
+							if (LiveTriggers.Contains(detail.Trigger, StringComparer.OrdinalIgnoreCase))
 							{
 								return;
 							}
 
 							MistyState.RegisterEvent(detail.Trigger);
-							LiveTriggers.Add(detail.Trigger);
+							LiveTriggers.Add(detail.Trigger.ToLower().Trim());
 						}
 						StreamAndLogInteraction($"Listening to event type {detail.Trigger}");
 						SendInteractionUIEvent();
@@ -587,9 +587,9 @@ namespace MistyCharacter
 					{
 						lock (_eventsClearedLock)
 						{
-							if (LiveTriggers.Contains(detail.Trigger))
+							if (LiveTriggers.Contains(detail.Trigger, StringComparer.OrdinalIgnoreCase))
 							{
-								LiveTriggers.Remove(detail.Trigger);
+								LiveTriggers.Remove(detail.Trigger.ToLower().Trim());
 								//MistyState.UnregisterEvent(detail.Trigger); //? TODO only if all users of the event are off, currently, once events are on, we keep them on, but just ignore them
 								StreamAndLogInteraction($"Ignoring event type {detail.Trigger}");
 								SendInteractionUIEvent();
@@ -615,13 +615,13 @@ namespace MistyCharacter
 		private async Task<bool> SendManagedResponseEvent(TriggerData triggerData, bool conversationTriggerCheck = false)
 		{
 			if (triggerData.OverrideIntent ||
-				LiveTriggers.Contains(triggerData.Trigger) ||
-				triggerData.Trigger == Triggers.Timeout ||
-				triggerData.Trigger == Triggers.Timer ||
-				triggerData.Trigger == Triggers.Manual ||
-				triggerData.Trigger == Triggers.ExternalEvent ||
-				triggerData.Trigger == Triggers.AudioCompleted ||
-				triggerData.Trigger == Triggers.KeyPhraseRecognized
+				LiveTriggers.Contains(triggerData.Trigger, StringComparer.OrdinalIgnoreCase) ||
+				string.Compare(triggerData.Trigger, Triggers.Timeout, true) == 0 ||
+				string.Compare(triggerData.Trigger, Triggers.Timer, true) == 0 ||
+				string.Compare(triggerData.Trigger, Triggers.Manual, true) == 0 ||
+				string.Compare(triggerData.Trigger, Triggers.ExternalEvent, true) == 0 ||
+				string.Compare(triggerData.Trigger, Triggers.AudioCompleted, true) == 0 ||
+				string.Compare(triggerData.Trigger, Triggers.KeyPhraseRecognized, true) == 0
 			)
 			{
 				if (await ProcessAndVerifyTrigger(triggerData, conversationTriggerCheck))
@@ -674,16 +674,17 @@ namespace MistyCharacter
 							if (triggerDetail == null)
 							{
 								//old functionality
-								triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Name == triggerDetailString);
+								triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => string.Compare(x.Name, triggerDetailString, true) == 0);
 							}
 							if (triggerDetail != null && (string.Compare(triggerData.Trigger?.Trim(), triggerDetail.Trigger?.Trim(), true) == 0))
 							{
 								//Not all intents need a matching text
-								if (triggerData.Trigger == Triggers.Timeout ||
-									triggerData.Trigger == Triggers.AudioCompleted ||
-									triggerData.Trigger == Triggers.KeyPhraseRecognized ||
-									triggerData.Trigger == Triggers.Manual ||
-									triggerData.Trigger == Triggers.Timer)
+								if (
+									string.Compare(triggerData.Trigger, Triggers.Timeout, true) == 0 ||
+									string.Compare(triggerData.Trigger, Triggers.Timer, true) == 0 ||
+									string.Compare(triggerData.Trigger, Triggers.Manual, true) == 0 ||
+									string.Compare(triggerData.Trigger, Triggers.AudioCompleted, true) == 0 ||
+									string.Compare(triggerData.Trigger, Triggers.KeyPhraseRecognized, true) == 0)
 								{
 									match = true;
 									break;
@@ -895,8 +896,8 @@ namespace MistyCharacter
 							Guid guid;
 							if (!Guid.TryParse(triggerData.OverrideInteraction, out guid))
 							{
-								//it's the name, map it to id...
-								Interaction interaction = _currentConversationData.Interactions.FirstOrDefault(x => x.Name.Trim().ToLower() == triggerData.OverrideInteraction.Trim().ToLower());
+								//it's the name, map it to id...								
+								Interaction interaction = _currentConversationData.Interactions.FirstOrDefault(x => string.Compare(x.Name, triggerData.OverrideInteraction, true) == 0);
 								guid = Guid.Parse(interaction.Id);
 							}
 							
@@ -1533,7 +1534,7 @@ namespace MistyCharacter
 				foreach (string trigger in _allowedTriggers)
 				{
 					//get utterances
-					TriggerDetail triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == trigger || x.Name == trigger));
+					TriggerDetail triggerDetail = _currentConversationData.Triggers.FirstOrDefault(x => string.Compare(x.Trigger, Triggers.SpeechHeard, true) == 0 && (string.Compare(x.Id, trigger, true) == 0 || string.Compare(x.Name, trigger, true) == 0));
 					if (triggerDetail != null && !_allowedUtterances.Contains(triggerDetail.TriggerFilter))
 					{
 						_allowedUtterances.Add(triggerDetail.TriggerFilter);
@@ -1564,7 +1565,7 @@ namespace MistyCharacter
 				//Get trigger details from id
 				foreach (string triggerString in _allowedTriggers)
 				{
-					TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Id == triggerString);
+					TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => string.Compare(x.Id, triggerString, true) == 0);
 					if (trigger != null && !triggerList.Contains(trigger))
 					{
 						triggerList.Add(trigger);
@@ -1574,7 +1575,7 @@ namespace MistyCharacter
 				foreach (string utteranceString in _allowedUtterances)
 				{
 					//get utterances
-					TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => x.Trigger == Triggers.SpeechHeard && (x.Id == utteranceString || x.Name == utteranceString));
+					TriggerDetail trigger = _currentConversationData.Triggers.FirstOrDefault(x => string.Compare(x.Trigger, Triggers.SpeechHeard, true) == 0 && (string.Compare(x.Id, utteranceString, true) == 0 || string.Compare(x.Name, utteranceString, true) == 0));
 
 					if (trigger != null && !triggerList.Contains(trigger))
 					{
@@ -1582,8 +1583,8 @@ namespace MistyCharacter
 					}
 				}
 
-				//Send this? Others?
-				if (triggerList.FirstOrDefault(x => x.Trigger == Triggers.Timeout) == null)
+				//Send this? Others?				
+				if (triggerList.FirstOrDefault(x => string.Compare(x.Trigger, Triggers.Timeout, true) == 0) == null)
 				{
 					triggerList.Add(new TriggerDetail("-1", Triggers.Timeout));
 				}

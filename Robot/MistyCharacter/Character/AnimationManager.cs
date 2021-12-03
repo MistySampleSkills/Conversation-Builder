@@ -75,6 +75,7 @@ namespace MistyCharacter
 
 			return str.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 		}
+
 	}
 
 	public class CommandResult
@@ -818,7 +819,7 @@ namespace MistyCharacter
 							//Look it up and add to the list
 							if(!externalRobots.Any(x => x.RobotName.Trim().ToLower() == robotName.Trim().ToLower()))
 							{
-								Robot selectedBot = allRobots.FirstOrDefault(x => x.RobotName.Trim().ToLower() == robotName.Trim().ToLower());
+								Robot selectedBot = allRobots.FirstOrDefault(x => string.Compare(x.RobotName, robotName, true) == 0);
 								externalRobots.Add(selectedBot);
 							}
 						}
@@ -1654,7 +1655,8 @@ namespace MistyCharacter
 								if(!Guid.TryParse(gotoData[0], out guid))
 								{
 									//it's the name, map it to id...
-									Interaction interaction = _currentConversationData.Interactions.FirstOrDefault(x => x.Name.Trim().ToLower() == gotoData[0].Trim().ToLower());
+									
+									Interaction interaction = _currentConversationData.Interactions.FirstOrDefault(x => string.Compare(x.Name, gotoData[0], true) == 0);
 									guid = Guid.Parse(interaction.Id);
 								}
 
@@ -1753,8 +1755,8 @@ namespace MistyCharacter
 							case "SET-SPEECH-RATE":
 								_speechManager.SetSpeechRate(Convert.ToDouble(commandData[1]));
 								break;
-							case "ANIMATE":
-								AnimationRequest animationRequest = _currentConversationData.Animations.FirstOrDefault(x => x.Name.ToLower().Trim() == commandData[1].ToLower().Trim() || x.Id.ToLower().Trim() == commandData[1].ToLower().Trim());
+							case "ANIMATE":								
+								AnimationRequest animationRequest = _currentConversationData.Animations.FirstOrDefault(x => string.Compare(x.Name, commandData[1], true) == 0 || string.Compare(x.Id, commandData[1], true) == 0);
 								if(animationRequest != null)
 								{
 									TriggerAnimation?.Invoke(this, new KeyValuePair<AnimationRequest, Interaction>(animationRequest, new Interaction(_currentInteraction)));

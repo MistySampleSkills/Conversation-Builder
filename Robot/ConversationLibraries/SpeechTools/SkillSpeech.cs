@@ -64,7 +64,7 @@ namespace SpeechTools
 			var voices = SpeechSynthesizer.AllVoices;
 			foreach (VoiceInformation voiceInfo in voices)
 			{
-				if (voiceInfo.DisplayName.Contains(voice))
+				if (voiceInfo.DisplayName.ToLower().Contains(voice.ToLower().Trim()))
 				{
 					_voice = voiceInfo;
 					return true;

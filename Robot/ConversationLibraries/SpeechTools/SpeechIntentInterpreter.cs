@@ -112,8 +112,8 @@ namespace SpeechTools
 					return genericData;
 				}
 
-				IList<KeyValuePair<string, UtteranceData>> filteredUtteranceLists = new List<KeyValuePair<string, UtteranceData>>();
-				GenericDataStore genericDataStore = _userData.FirstOrDefault(x => x.Name == name);
+				IList<KeyValuePair<string, UtteranceData>> filteredUtteranceLists = new List<KeyValuePair<string, UtteranceData>>();				
+				GenericDataStore genericDataStore = _userData.FirstOrDefault(x => string.Compare(x.Name, name, true) == 0);
 				if (genericDataStore?.Name != null)
 				{
 					foreach (KeyValuePair<string, GenericData> data in genericDataStore.Data)
@@ -132,8 +132,8 @@ namespace SpeechTools
 					}
 				}
 				
-				SpeechMatchData userDataKey = GetIntentExperimentFive(text, filteredUtteranceLists.ToList());
-				KeyValuePair<string, GenericData> returnData = genericDataStore.Data.FirstOrDefault(x => x.Value.Key == userDataKey.Name);
+				SpeechMatchData userDataKey = GetIntentExperimentFive(text, filteredUtteranceLists.ToList());				
+				KeyValuePair<string, GenericData> returnData = genericDataStore.Data.FirstOrDefault(x => string.Compare(x.Value.Key, userDataKey.Name, true) == 0);
 				if (returnData.Value != null)
 				{
 					genericData = returnData.Value;
@@ -175,7 +175,7 @@ namespace SpeechTools
 				}
 				else
 				{
-					filteredUtteranceLists = _utteranceLists.Where(x => intentOptions.Contains(x.Key) || intentOptions.Contains(x.Value.Name) /*legacy*/);
+					filteredUtteranceLists = _utteranceLists.Where(x => intentOptions.Contains(x.Key) || intentOptions.Contains(x.Value.Name, StringComparer.OrdinalIgnoreCase) /*legacy*/);
 				}
 				
 				return GetIntentExperimentFive(text, filteredUtteranceLists.ToList());
@@ -298,7 +298,7 @@ namespace SpeechTools
 
 						foreach (string matchWord in matchWords)
 						{
-							if (spokenWords.Contains(matchWord))
+							if (spokenWords.Contains(matchWord, StringComparer.OrdinalIgnoreCase))
 							{
 								//if (spokenWords.IndexOf(matchWord) == matchWords.IndexOf(matchWord))
 								//{
@@ -336,7 +336,7 @@ namespace SpeechTools
 									case "contains":
 										foreach (string spokenWord in spokenWords)
 										{
-											if (matchWords.Contains(spokenWord))
+											if (matchWords.Contains(spokenWord, StringComparer.OrdinalIgnoreCase))
 											{
 												currentHitCount = currentHitCount + 2;
 											}
@@ -355,7 +355,7 @@ namespace SpeechTools
 
 										foreach (string utteranceWord in matchWords)
 										{
-											if (spokenWords.Contains(matchWord))
+											if (spokenWords.Contains(matchWord, StringComparer.OrdinalIgnoreCase))
 											{
 												currentHitCount += WordPluralPoints;
 											}
@@ -535,7 +535,7 @@ namespace SpeechTools
 
 						foreach (string matchWord in matchWords)
 						{
-							if (spokenWords.Contains(matchWord))
+							if (spokenWords.Contains(matchWord, StringComparer.OrdinalIgnoreCase))
 							{
 								if (spokenWords.IndexOf(matchWord) == matchWords.IndexOf(matchWord))
 								{

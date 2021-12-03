@@ -176,9 +176,9 @@ namespace MistyCharacter
 
 		public void AddValidIntent(object sender, KeyValuePair<string, TriggerData> triggerData)
 		{
-			if (triggerData.Value.Trigger.Trim().ToLower() == Triggers.SpeechHeard.ToLower())
+			if (string.Compare(triggerData.Value.Trigger, Triggers.SpeechHeard, true) == 0)
 			{
-				KeyValuePair<string, UtteranceData> utteranceData = _intentUtterances.FirstOrDefault(x => x.Value.Name.Trim().ToLower() == triggerData.Value.TriggerFilter.Trim().ToLower());
+				KeyValuePair<string, UtteranceData> utteranceData = _intentUtterances.FirstOrDefault(x => string.Compare(x.Value.Name, triggerData.Value.TriggerFilter, true) == 0);
 				if (utteranceData.Value != null && !_allowedTriggers.Contains(utteranceData.Value.Id))
 				{
 					_allowedTriggers.Add(utteranceData.Value.Id);
@@ -1732,8 +1732,8 @@ namespace MistyCharacter
 											newData = userDataName;
 										}
 
-										//try looking up the user data by name now
-										GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.ToLower().Trim());
+										//try looking up the user data by name now										
+										GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => string.Compare(x.Name, newData, true) == 0);
 										if (dataStore != null)
 										{
 											//found a match for the name, now look up the key 2nd position
@@ -1741,7 +1741,7 @@ namespace MistyCharacter
 											string dataKey = dataArray[1].Trim().ToLower();
 											string newKey = dataKey;
 
-											if (_replacementValues.Contains(dataKey))
+											if (_replacementValues.Contains(dataKey, StringComparer.OrdinalIgnoreCase))
 											{
 												newKey = GetBuiltInReplacement(dataKey);
 											}
@@ -1750,11 +1750,11 @@ namespace MistyCharacter
 												newKey = dataKey;
 											}
 
-											if (dataKey == "random")
+											if (string.Compare(dataKey, "random", true) == 0)
 											{
 												//grab a random user data item from this group
 												//{{Greetings:random}}
-												GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+												GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => string.Compare(x.Name, dataStore.Name, true) == 0);
 												if (genericDataStore != null)
 												{
 													int dataCount = genericDataStore.Data.Count();
@@ -1780,7 +1780,7 @@ namespace MistyCharacter
 											}
 											else
 											{
-												KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key.ToLower().Trim() == newKey.ToLower().Trim());
+												KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => string.Compare(x.Value.Key, newKey, true) == 0);
 												if (genericData.Value != null)
 												{
 													textChanged = true;
@@ -1792,13 +1792,13 @@ namespace MistyCharacter
 									}
 									else
 									{
-										GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => x.Name.ToLower().Trim() == userDataName);
+										GenericDataStore dataStore = _genericDataStores.FirstOrDefault(x => string.Compare(x.Name, userDataName, true) == 0);
 										if (dataStore != null)
 										{
 											//found a match for the name, now look up the key 2nd position
 											string dataKey = dataArray[1].Trim().ToLower();
 											string newKey = dataKey;
-											if (_replacementValues.Contains(dataKey))
+											if (_replacementValues.Contains(dataKey, StringComparer.OrdinalIgnoreCase))
 											{
 												newKey = GetBuiltInReplacement(dataKey);
 											}
@@ -1811,7 +1811,7 @@ namespace MistyCharacter
 											{
 												//grab a random user data item from this group
 												//{{Greetings:random}}
-												GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => x.Name == dataStore.Name);
+												GenericDataStore genericDataStore = _genericDataStores.FirstOrDefault(x => string.Compare(x.Name, dataStore.Name, true) == 0);
 												if (genericDataStore != null)
 												{
 													int dataCount = genericDataStore.Data.Count();
@@ -1837,7 +1837,13 @@ namespace MistyCharacter
 											}
 											else
 											{
-												KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => x.Value.Key == newKey);
+												KeyValuePair<string, GenericData> genericData = dataStore.Data.FirstOrDefault(x => string.Compare(x.Value.Key, newKey, true) == 0);
+												if (genericData.Value == null)
+												{
+													//TODO Make this a different speech intent like HeardDynamicSpeech
+													genericData = dataStore.Data.FirstOrDefault(x => string.Compare(x.Value.Key, "no-match", true) == 0);
+												}
+													
 												if (genericData.Value != null)
 												{
 													textChanged = true;
@@ -1854,7 +1860,7 @@ namespace MistyCharacter
 								//no, then check for a replacement value
 								if (_replacementValues != null &&
 								_replacementValues.Count() > 0 &&
-								_replacementValues.Contains(replacementNameKey))
+								_replacementValues.Contains(replacementNameKey, StringComparer.OrdinalIgnoreCase))
 								{
 									string newData = GetBuiltInReplacement(replacementNameKey);
 									if (newData != MissingInlineData)

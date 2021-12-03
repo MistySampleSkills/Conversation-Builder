@@ -71,35 +71,35 @@ namespace Conversation.Common
 			return true;
 		}
 
-		public bool TryGetAuth(string commandName, out ICommandAuthorization command)
+		public bool TryGetAuth(string authName, out ICommandAuthorization command)
 		{
-			command = Authorizations.FirstOrDefault(x => x.Name.Trim().ToLower() == commandName.Trim().ToLower());
+			command = Authorizations.FirstOrDefault(x => string.Compare(x.Name, authName, true) == 0);
 			return command != null;
 		}
 
 		public bool TryGetCommand(string commandName, out IBaseCommand command)
 		{
-			command = Commands.FirstOrDefault(x => x.Name.Trim().ToLower() == commandName.Trim().ToLower());
+			command = Commands.FirstOrDefault(x => string.Compare(x.Name, commandName, true) == 0);
 			return command != null;
 		}
 
 		public bool TryGetDescription(string commandName, out string lastResponse)
 		{
-			IBaseCommand command = Commands.FirstOrDefault(x => x.Name.Trim().ToLower() == commandName.Trim().ToLower());
+			IBaseCommand command = Commands.FirstOrDefault(x => string.Compare(x.Name, commandName, true) == 0);
 			lastResponse = command.Description;
 			return command != null;
 		}
 
 		public bool TryGetLastResponse(string commandName, out string lastResponse)
 		{
-			IBaseCommand command = Commands.FirstOrDefault(x => x.Name.Trim().ToLower() == commandName.Trim().ToLower());
+			IBaseCommand command = Commands.FirstOrDefault(x => string.Compare(x.Name, commandName, true) == 0);
 			lastResponse = command.ResponseString;
 			return command != null;
 		}
 
 		public bool TryGetLastAction(string commandName, out string lastAction)
 		{
-			IBaseCommand command = Commands.FirstOrDefault(x => x.Name.Trim().ToLower() == commandName.Trim().ToLower());
+			IBaseCommand command = Commands.FirstOrDefault(x => string.Compare(x.Name, commandName, true) == 0);
 			lastAction = command.ResponseAction;
 			return command != null;
 		}

@@ -192,9 +192,7 @@ namespace MistyManager
 			}
 			
 		}
-
-
-
+		
 		public async Task LoadAuthorizations()
 		{
 			await _loadAuthSlim.WaitAsync();
@@ -207,7 +205,7 @@ namespace MistyManager
 
 				foreach (KeyValuePair<string, object> tokenItem in currentTokens)
 				{
-					ICommandAuthorization commandAuth = _listOfAuthorizations.FirstOrDefault(x => x.Name.ToLower().Trim() == tokenItem.Key.ToLower().Trim());
+					ICommandAuthorization commandAuth = _listOfAuthorizations.FirstOrDefault(x => string.Compare(x.Name, tokenItem.Key, true) == 0);
 					if (commandAuth != null)
 					{
 						_listOfAuthorizations.Remove(commandAuth);
@@ -258,8 +256,8 @@ namespace MistyManager
 						ICommandAuthorization newData = JsonConvert.DeserializeObject<CommandAuthorization>(Convert.ToString(authInfo));		
 						currentTokens.Remove(newData.Name.ToLower().Trim());
 						currentTokens.Add(newData.Name.ToLower().Trim(), newData);
-
-						ICommandAuthorization commandAuth = _listOfAuthorizations.FirstOrDefault(x => x.Name.ToLower().Trim() == newData.Name.ToLower().Trim());
+						
+						ICommandAuthorization commandAuth = _listOfAuthorizations.FirstOrDefault(x => string.Compare(x.Name, newData.Name, true) == 0);
 						if (commandAuth != null)
 						{
 							_listOfAuthorizations.Remove(commandAuth);

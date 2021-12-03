@@ -869,7 +869,7 @@ namespace MistyCharacter
 			try
 			{
 				string newValue = null;
-				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => x.Key.ToLower().Trim() == dataKey.ToLower());
+				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => string.Compare(x.Key, dataKey, true) == 0);
 				if (dataKVP.Value != null)
 				{
 					//getting passed in param and saving to local db
@@ -899,7 +899,7 @@ namespace MistyCharacter
 			try
 			{
 				bool? newValue = null;
-				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => x.Key.ToLower().Trim() == dataKey.ToLower());
+				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => string.Compare(x.Key, dataKey, true) == 0);
 				if (dataKVP.Value != null)
 				{
 					newValue = Convert.ToBoolean(dataKVP.Value);
@@ -924,7 +924,7 @@ namespace MistyCharacter
 			try
 			{
 				DateTime? newValue = null;
-				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => x.Key.ToLower().Trim() == dataKey.ToLower());
+				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => string.Compare(x.Key, dataKey, true) == 0);
 				if (dataKVP.Value != null)
 				{
 					newValue = Convert.ToDateTime(dataKVP.Value);
@@ -952,7 +952,7 @@ namespace MistyCharacter
 			try
 			{
 				int? newValue = null;
-				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => x.Key.ToLower().Trim() == dataKey.ToLower());
+				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => string.Compare(x.Key, dataKey, true) == 0);
 				if (dataKVP.Value != null)
 				{
 					newValue = Convert.ToInt32(dataKVP.Value);
@@ -977,7 +977,7 @@ namespace MistyCharacter
 			try
 			{
 				double? newValue = null;
-				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => x.Key.ToLower().Trim() == dataKey.ToLower());
+				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => string.Compare(x.Key, dataKey, true) == 0);
 				if (dataKVP.Value != null)
 				{
 					newValue = Convert.ToDouble(dataKVP.Value);
@@ -1002,7 +1002,7 @@ namespace MistyCharacter
 			try
 			{
 				float? newValue = null;
-				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => x.Key.ToLower().Trim() == dataKey.ToLower());
+				KeyValuePair<string, object> dataKVP = parameters.FirstOrDefault(x => string.Compare(x.Key, dataKey, true) == 0);
 				if (dataKVP.Value != null)
 				{
 					newValue = Convert.ToSingle(dataKVP.Value);
