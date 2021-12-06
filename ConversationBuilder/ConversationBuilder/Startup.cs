@@ -329,13 +329,13 @@ namespace ConversationBuilder
 
 				//Add Onboard Speech Config
 				IList<SpeechConfiguration> speechConfigurations = await dbService.ContainerManager.SpeechConfigurationData.GetListAsync();
-				if(!speechConfigurations.Any(x => x.Name == "Onboard Speech"))
+				if(!speechConfigurations.Any(x => x.Name == "Misty TTS - Vosk ASR"))
 				{
 					string speechConfigGuid = Guid.NewGuid().ToString();
 					SpeechConfiguration onboardSpeech = new SpeechConfiguration
 					{
 						Id = speechConfigGuid,
-						Name = "Onboard Speech",
+						Name = "Misty TTS - Vosk ASR",
 						CreatedBy = "System",
 						Created = now,
 						Updated = now,
@@ -351,6 +351,7 @@ namespace ConversationBuilder
 						{
 							CharacterConfiguration characterConfiguration = new CharacterConfiguration
 							{
+								Id = Guid.NewGuid().ToString(),
 								Name = "Misty",
 								SpeechConfiguration = speechConfigGuid,
 								CreatedBy = "System",
@@ -359,7 +360,44 @@ namespace ConversationBuilder
 								
 							};
 							
-							await dbService.ContainerManager.SpeechConfigurationData.AddAsync(onboardSpeech);
+							await dbService.ContainerManager.CharacterConfigurationData.AddAsync(characterConfiguration);
+						}
+				}
+
+				if(!speechConfigurations.Any(x => x.Name == "Zira TTS - Vosk ASR"))
+				{
+					string speechConfigGuid = Guid.NewGuid().ToString();
+					SpeechConfiguration onboardSpeech = new SpeechConfiguration
+					{
+						Id = speechConfigGuid,
+						Name = "Zira TTS - Vosk ASR",
+						SpeakingVoice = "Zira",
+
+						CreatedBy = "System",
+						Created = now,
+						Updated = now,
+						SpeechRecognitionService = "Vosk",
+						TextToSpeechService = "Skill"
+					};
+					
+						await dbService.ContainerManager.SpeechConfigurationData.AddAsync(onboardSpeech);
+
+						//Add Initial Character Config
+						IList<CharacterConfiguration> characterConfigurations = await dbService.ContainerManager.CharacterConfigurationData.GetListAsync();
+						if(!characterConfigurations.Any(x => x.Name.ToLower().Trim() == "zira"))
+						{
+							CharacterConfiguration characterConfiguration = new CharacterConfiguration
+							{
+								Id = Guid.NewGuid().ToString(),
+								Name = "Zira",
+								SpeechConfiguration = speechConfigGuid,
+								CreatedBy = "System",
+								Created = now,
+								Updated = now,
+								
+							};
+							
+							await dbService.ContainerManager.CharacterConfigurationData.AddAsync(characterConfiguration);
 						}
 				}
 
@@ -649,7 +687,8 @@ namespace ConversationBuilder
 						CreatedBy = "System",
 						Created = now,
 						Updated = now,
-						Trigger = Triggers.FaceRecognized
+						Trigger = Triggers.FaceRecognized,
+						TriggerFilter = ""
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);

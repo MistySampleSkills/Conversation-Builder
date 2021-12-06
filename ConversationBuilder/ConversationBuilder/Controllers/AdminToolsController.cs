@@ -665,8 +665,12 @@ namespace ConversationBuilder.Controllers
 					}
 				}
 			}
-			knownFilters.TryGetValue(triggerFilter, out string foundValue);
-			return foundValue ?? triggerFilter;
+			string foundValue = "";
+			if(!string.IsNullOrWhiteSpace(triggerFilter) && knownFilters.TryGetValue(triggerFilter, out foundValue))
+			{
+				return foundValue;
+			}
+			return triggerFilter;
 		}
 
 		protected async Task<UserConfiguration> SetViewBagData(string message = null)
@@ -694,7 +698,7 @@ namespace ConversationBuilder.Controllers
 				_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
 			}
 
-			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? false;
+			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? true;
 			if (!string.IsNullOrWhiteSpace(_userConfiguration?.OverrideCssFile))
 			{
 				ViewBag.CssFile = _userConfiguration.OverrideCssFile + (_userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");

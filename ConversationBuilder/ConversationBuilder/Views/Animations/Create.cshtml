@@ -131,22 +131,22 @@
 				<input asp-for="LEDActionDelay" class="form-control" />
 				<span asp-validation-for="LEDActionDelay" class="text-danger"></span>
 			</div>
+			<div class="form-group">
+				<label asp-for="AnimationScript" class="control-label"></label>
+				<label title="Optional animation script.">💡</label>
+				<textarea rows=5 asp-for="AnimationScript" class="form-control"></textarea>
+				<span asp-validation-for="AnimationScript" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="RepeatScript" /> @Html.DisplayNameFor(model => model.RepeatScript)
+						<label title="Will repeat the script upon completion of the actions.">💡</label>
+					</label>
+				</div>
+			</div>
 			@if(ViewBag.ShowBetaItems)
 			{
-				<div class="form-group">
-					<label asp-for="AnimationScript" class="control-label"></label>
-					<label title="Optional animation script.">💡</label>
-					<textarea rows=5 asp-for="AnimationScript" class="form-control"></textarea>
-					<span asp-validation-for="AnimationScript" class="text-danger"></span>
-				</div>
-				<div class="form-group">
-					<div class="checkbox">
-						<label>
-							<input asp-for="RepeatScript" /> @Html.DisplayNameFor(model => model.RepeatScript)
-							<label title="Will repeat the script upon completion of the actions.">💡</label>
-						</label>
-					</div>
-				</div>
 				<div class="form-group">
 					<label asp-for="ManagementAccess"></label>
 					<select asp-for="ManagementAccess" class="form-control">

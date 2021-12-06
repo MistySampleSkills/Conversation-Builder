@@ -66,7 +66,7 @@ namespace ConversationBuilder.Controllers
 					userConfiguration.OverrideCssFile = "lite";
 					DateTimeOffset dt = DateTimeOffset.UtcNow;
 					userConfiguration.ShowAllConversations = true;
-					userConfiguration.ShowBetaItems = false;
+					userConfiguration.ShowBetaItems = true;
 					userConfiguration.CreatedBy = userInfo.AccessId;
 					userConfiguration.Created = dt;
 					userConfiguration.Updated = dt;
