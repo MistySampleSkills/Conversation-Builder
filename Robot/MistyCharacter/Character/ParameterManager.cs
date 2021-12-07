@@ -598,7 +598,7 @@ namespace MistyCharacter
 					//TODO 
 
 					string preSpeechString = GetStringField(_parameters, ConversationConstants.PreSpeechPhrases) ?? "";
-					if(string.IsNullOrWhiteSpace(preSpeechString) && CharacterParameters.PreSpeechPhrases != null & CharacterParameters.PreSpeechPhrases.Count() > 0)
+					if(string.IsNullOrWhiteSpace(preSpeechString) && CharacterParameters.PreSpeechPhrases != null && CharacterParameters.PreSpeechPhrases.Count() > 0)
 					{
 						updatedCharacterParameters.PreSpeechPhrases = CharacterParameters.PreSpeechPhrases;
 					}

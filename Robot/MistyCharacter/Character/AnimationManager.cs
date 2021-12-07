@@ -184,7 +184,7 @@ namespace MistyCharacter
 			CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Unknown;
 
 			_speechManager.StoppedSpeaking += _speechManager_StoppedSpeaking;
-			_speechManager.UserDataAnimationScript += _speechManager_UserDataAnimationScript;
+			//_speechManager.UserDataAnimationScript += _speechManager_UserDataAnimationScript;
 			_mistyState = mistyState;
 		}
 
@@ -203,12 +203,12 @@ namespace MistyCharacter
 			//TODO?
 		}
 
-		private async void _speechManager_UserDataAnimationScript(object sender, string script)
-		{
-			_headManager.StopMovement();
-			_ = StopRunningAnimationScripts();
-			_ = RunAnimationScript(script, false, _currentAnimation, _currentInteraction, _currentConversationData);
-		}
+		//private async void _speechManager_UserDataAnimationScript(object sender, string script)
+		//{
+		//	_headManager.StopMovement();
+		//	await StopRunningAnimationScripts();
+		//	await RunAnimationScript(script, false, _currentAnimation, _currentInteraction, _currentConversationData);
+		//}
 
 		private async void _speechManager_StoppedSpeaking(object sender, IAudioPlayCompleteEvent e)
 		{
@@ -1237,6 +1237,12 @@ namespace MistyCharacter
 								{
 									Deleted = true
 								});
+
+								//Clear user data too, but don't delete
+								_ = Robot.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+								{
+									Visible = false
+								});
 								_mistyState.GetCharacterState().DisplayedScreenText = "";
 								break;
 							case "UI-TEXT":
@@ -1735,10 +1741,12 @@ namespace MistyCharacter
 								_speechManager.SetAudioTrim(Convert.ToInt32(commandData[1]));
 								break;
 							case "SET-MAX-SILENCE":
-								_speechManager.SetMaxSilence(Convert.ToInt32(commandData[1]));
+								//Seconds
+								_speechManager.SetMaxSilence(Convert.ToDouble(commandData[1]));
 								break;
 							case "SET-MAX-LISTEN":
-								_speechManager.SetMaxListen(Convert.ToInt32(commandData[1]));
+								//Seconds
+								_speechManager.SetMaxListen(Convert.ToDouble(commandData[1]));
 								break;
 							case "SET-SPEECH-PITCH":
 								_speechManager.SetPitch(commandData[1]);

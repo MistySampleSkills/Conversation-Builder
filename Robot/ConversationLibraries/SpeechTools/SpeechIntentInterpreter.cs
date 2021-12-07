@@ -107,9 +107,10 @@ namespace SpeechTools
 				GenericData genericData = new GenericData();
 				if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(text) || _userData == null || !_userData.Any())
 				{
-					genericData.Key = text;
-					genericData.Value = "";
-					return genericData;
+					//	genericData.Key = text;
+					//	genericData.Value = "";
+					//	return genericData;
+					return null;
 				}
 
 				IList<KeyValuePair<string, UtteranceData>> filteredUtteranceLists = new List<KeyValuePair<string, UtteranceData>>();				
@@ -136,16 +137,17 @@ namespace SpeechTools
 				KeyValuePair<string, GenericData> returnData = genericDataStore.Data.FirstOrDefault(x => string.Compare(x.Value.Key, userDataKey.Name, true) == 0);
 				if (returnData.Value != null)
 				{
-					genericData = returnData.Value;
+					return returnData.Value;
 				}
-				return genericData;
+				return null;
 			}
 			catch
 			{
-				GenericData genericData = new GenericData();
-				genericData.Key = text;
-				genericData.Value = "";
-				return genericData;
+				//GenericData genericData = new GenericData();
+				//genericData.Key = text;
+				//genericData.Value = "";
+				//return genericData;
+				return null;
 			}
 		}
 

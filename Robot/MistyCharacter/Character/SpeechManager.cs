@@ -64,7 +64,6 @@ namespace MistyCharacter
 		public event EventHandler<IKeyPhraseRecognizedEvent> KeyPhraseRecognized;
 		public event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		public event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-		public event EventHandler<string> UserDataAnimationScript;
 
 		private const string MissingInlineData = "unknown";
 		private const string TTSNamePreface = "misty-en-";
@@ -87,8 +86,8 @@ namespace MistyCharacter
 		private object _lockListenerData = new object();
 		private bool _listenAborted;
 		private int _audioTrim = 0;
-		private int _silenceTimeout = 10000;
-		private int _listenTimeout = 10000;
+		private int _silenceTimeoutMs = 10000;
+		private int _listenTimeoutMs = 10000;
 		private IList<string> _allowedTriggers = new List<string>();
 		private bool _keyPhraseTriggered;
 		private bool _keyPhraseOn;
@@ -138,12 +137,7 @@ namespace MistyCharacter
 
 		public void HandleInteractionEnded(object sender, string interaction)
 		{
-			_ = _misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
-			{
-				 Visible = false
-			});
-
-			_misty.DisplayText("", "UserDataText", null);
+			//Do something?
 		}
 
 		public string MakeTextBasedFileName(string text)
@@ -302,14 +296,14 @@ namespace MistyCharacter
 			_audioTrim = trimMs;
 		}
 
-		public void SetMaxSilence(int silenceTimeout)
+		public void SetMaxSilence(double silenceTimeoutSeconds)
 		{
-			_silenceTimeout = silenceTimeout >= 1000 ? silenceTimeout : 1000;
+			_silenceTimeoutMs = silenceTimeoutSeconds >= 0.5 && silenceTimeoutSeconds <= 10 ? Convert.ToInt32(silenceTimeoutSeconds *1000) : 500;
 		}
 
-		public void SetMaxListen(int listenTimeout)
+		public void SetMaxListen(double listenTimeoutSeconds)
 		{
-			_listenTimeout = listenTimeout >= 1000 ? listenTimeout : 1000;
+			_listenTimeoutMs = listenTimeoutSeconds >= 0.5 && listenTimeoutSeconds <= 10 ? Convert.ToInt32(listenTimeoutSeconds * 1000) : 500;			
 		}
 
 		public async Task<bool> Initialize()
@@ -607,60 +601,6 @@ namespace MistyCharacter
 
 			}
 
-
-
-			//else if (_azureSpeechRecognitionParameters?.SubscriptionKey != null || 
-			//	_azureTTSParameters?.SubscriptionKey != null)
-			//{
-			//	AzureServiceAuthorization recAuth = new AzureServiceAuthorization
-			//	{
-			//		Region = _azureSpeechRecognitionParameters.Region ?? "",
-			//		Endpoint = _azureSpeechRecognitionParameters.Endpoint ?? "",
-			//		SubscriptionKey = _azureSpeechRecognitionParameters.SubscriptionKey ?? ""
-			//	};
-
-			//	AzureServiceAuthorization ttsAuth = new AzureServiceAuthorization
-			//	{
-			//		Region = _azureTTSParameters.Region ?? "",
-			//		Endpoint = _azureTTSParameters.Endpoint ?? "",
-			//		SubscriptionKey = _azureTTSParameters.SubscriptionKey ?? ""
-			//	};
-
-			//	_azureCognitive = new AzureSpeechService(ttsAuth, recAuth, _misty);
-			//	if (_azureCognitive != null && _azureCognitive.Initialize())
-			//	{
-			//		_azureCognitive.SpeakingVoice = _azureSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-AriaNeural";
-			//		_azureCognitive.SpokenLanguage = _azureSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
-			//		_azureCognitive.TranslatedLanguage = _azureSpeechRecognitionParameters?.TranslatedLanguage ?? "en-US";
-			//		_azureCognitive.ProfanitySetting = _azureSpeechRecognitionParameters?.ProfanitySetting ?? "raw";
-			//	}			
-			//}
-
-			//if (_googleSpeechRecognitionParameters?.SubscriptionKey != null || _googleTTSParameters?.SubscriptionKey != null)
-			//{
-			//	GoogleServiceAuthorization speechRecAuth = new GoogleServiceAuthorization
-			//	{
-			//		Endpoint = _googleSpeechRecognitionParameters?.Endpoint ?? "",
-			//		SubscriptionKey = _googleSpeechRecognitionParameters?.SubscriptionKey ?? ""
-			//	};
-
-			//	GoogleServiceAuthorization ttsAuth = new GoogleServiceAuthorization
-			//	{
-			//		Endpoint = _googleTTSParameters?.Endpoint ?? "",
-			//		SubscriptionKey = _googleTTSParameters?.SubscriptionKey ?? ""
-			//	};
-
-			//	_googleService = new GoogleSpeechService(ttsAuth, speechRecAuth, _misty);
-			//	if (_googleService != null && _googleService.Initialize())
-			//	{
-			//		_googleService.SpeakingVoice = _googleSpeechRecognitionParameters?.SpeakingVoice ?? "en-US-Standard-C";
-			//		_googleService.SpeakingGender = _googleSpeechRecognitionParameters?.SpeakingGender ?? "Female";
-			//		_googleService.SpokenLanguage = _googleSpeechRecognitionParameters?.SpokenLanguage ?? "en-US";
-			//	}
-			//}
-
-			
-
 			_skillSpeech = new SkillSpeech(_azureSpeechRecognitionParameters?.SpeakingVoice ?? _googleSpeechRecognitionParameters?.SpeakingVoice ?? "Zira");
 
 			LogEventDetails(_misty.RegisterVoiceRecordEvent(VoiceRecordCallback, 0, true, "VoiceRecord", null));
@@ -863,14 +803,14 @@ namespace MistyCharacter
 										Visible = false
 									});
 
+									_misty.DisplayText("Speaking...", "ListeningText", null);
+
 									await _misty.SetTextDisplaySettingsAsync("ListeningText", new TextSettings
 									{
 										Visible = true,
 										PlaceOnTop = true
 									});
 								}
-
-								_misty.DisplayText("Speaking...", "ListeningText", null);
 							}
 						}
 						break;
@@ -1430,19 +1370,19 @@ namespace MistyCharacter
 						switch (_characterParameters.SpeechRecognitionService.Trim().ToLower())
 						{
 							case "googleonboard":
-								_ = _misty.CaptureSpeechGoogleAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey, _characterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage);
+								_ = _misty.CaptureSpeechGoogleAsync(false, _listenTimeoutMs, _silenceTimeoutMs, _characterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey, _characterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage);
 								break;
 							case "azureonboard":
-								_ = _misty.CaptureSpeechAzureAsync(false, _listenTimeout, _silenceTimeout, _characterParameters.AzureSpeechRecognitionParameters.SubscriptionKey, _characterParameters.AzureSpeechRecognitionParameters.Region, _characterParameters.AzureSpeechRecognitionParameters.SpokenLanguage);
+								_ = _misty.CaptureSpeechAzureAsync(false, _listenTimeoutMs, _silenceTimeoutMs, _characterParameters.AzureSpeechRecognitionParameters.SubscriptionKey, _characterParameters.AzureSpeechRecognitionParameters.Region, _characterParameters.AzureSpeechRecognitionParameters.SpokenLanguage);
 								break;
 							case "vosk":
-								_ = _misty.CaptureSpeechVoskAsync(false, _listenTimeout, _silenceTimeout);
+								_ = _misty.CaptureSpeechVoskAsync(false, _listenTimeoutMs, _silenceTimeoutMs);
 								break;
 							case "deepspeech":
-								_ = _misty.CaptureSpeechDeepSpeechAsync(false, _listenTimeout, _silenceTimeout);
+								_ = _misty.CaptureSpeechDeepSpeechAsync(false, _listenTimeoutMs, _silenceTimeoutMs);
 								break;
 							default:
-								_ = _misty.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
+								_ = _misty.CaptureSpeechAsync(false, true, _listenTimeoutMs, _silenceTimeoutMs, null);
 								break;
 						}
 
@@ -1481,7 +1421,25 @@ namespace MistyCharacter
 				KeyPhraseRecognized?.Invoke(this, keyPhraseEvent);
 				_keyPhraseTriggered = true;
 				_recording = true;
-				_ = _misty.CaptureSpeechAsync(false, true, _listenTimeout, _silenceTimeout, null);
+
+				switch (_characterParameters.SpeechRecognitionService.Trim().ToLower())
+				{
+					case "googleonboard":
+						_ = _misty.CaptureSpeechGoogleAsync(false, _listenTimeoutMs, _silenceTimeoutMs, _characterParameters.GoogleSpeechRecognitionParameters.SubscriptionKey, _characterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage);
+						break;
+					case "azureonboard":
+						_ = _misty.CaptureSpeechAzureAsync(false, _listenTimeoutMs, _silenceTimeoutMs, _characterParameters.AzureSpeechRecognitionParameters.SubscriptionKey, _characterParameters.AzureSpeechRecognitionParameters.Region, _characterParameters.AzureSpeechRecognitionParameters.SpokenLanguage);
+						break;
+					case "vosk":
+						_ = _misty.CaptureSpeechVoskAsync(false, _listenTimeoutMs, _silenceTimeoutMs);
+						break;
+					case "deepspeech":
+						_ = _misty.CaptureSpeechDeepSpeechAsync(false, _listenTimeoutMs, _silenceTimeoutMs);
+						break;
+					default:
+						_ = _misty.CaptureSpeechAsync(false, true, _listenTimeoutMs, _silenceTimeoutMs, null);
+						break;
+				}
 
 				StartedListening?.Invoke(this, DateTime.Now);
 
@@ -1494,19 +1452,16 @@ namespace MistyCharacter
 				SpeechIntent?.Invoke(this, new TriggerData("", ConversationConstants.HeardUnknownTrigger, Triggers.SpeechHeard));
 			}
 		}
-
-
+		
 		private async void VoiceRecordCallback(IVoiceRecordEvent voiceRecordEvent)
 		{
-			bool succesfulRetrieval = false;
 			try
 			{
-				if (_speechOverridden)
+				if (_speechOverridden )
 				{
 					_speechOverridden = false;
 					return;
 				}
-
 				_recording = false;
 				StoppedListening?.Invoke(this, voiceRecordEvent);
 				_externalOverridden = true;
@@ -1515,6 +1470,7 @@ namespace MistyCharacter
 					_misty.SkillLogger.LogInfo("Listening stopped early.");
 					return;
 				}
+
 				StartedProcessingVoice?.Invoke(this, voiceRecordEvent);
 				_ = ManageListeningDisplay(ListeningState.ProcessingSpeech);
 				_misty.SkillLogger.LogVerbose("Voice Record Callback - processing");
@@ -1529,9 +1485,7 @@ namespace MistyCharacter
 				string service = _characterParameters.SpeechRecognitionService.Trim().ToLower();
 				if (service == "googleonboard" || service == "azureonboard" || service == "deepspeech" || service == "vosk")
 				{
-					succesfulRetrieval = true;
 					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-					_ = ManageListeningDisplay(ListeningState.Waiting);
 					HandleSpeechResponse(voiceRecordEvent?.SpeechRecognitionResult);
 					return;
 				}
@@ -1569,10 +1523,8 @@ namespace MistyCharacter
 						description = await _azureCognitive.TranslateAudioStream((byte[])audioResponse.Data.Audio);
 						break;
 				}
-
-				succesfulRetrieval = true;
+				
 				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-				_ = ManageListeningDisplay(ListeningState.Waiting);
 				HandleSpeechResponse(description.Text);
 			}
 			catch (Exception ex)
@@ -1582,11 +1534,8 @@ namespace MistyCharacter
 			}
 			finally
 			{
-				if(!succesfulRetrieval)
-				{
-					CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
-					_ = ManageListeningDisplay(ListeningState.Waiting);
-				}
+				CompletedProcessingVoice?.Invoke(this, voiceRecordEvent);
+				_ = ManageListeningDisplay(ListeningState.Waiting);
 			}
 		}
 
@@ -1597,8 +1546,7 @@ namespace MistyCharacter
 				if (!string.IsNullOrWhiteSpace(text))
 				{
 					SpeechMatchData intent = _speechIntentManager.GetIntent(text, _allowedTriggers);
-
-
+					
 					//Old conversations trigger on name, new ones on id
 					SpeechIntent?.Invoke(this, new TriggerData(text, intent.Id, Triggers.SpeechHeard));
 					
@@ -1760,22 +1708,43 @@ namespace MistyCharacter
 													int dataCount = genericDataStore.Data.Count();
 													int randomItem = _random.Next(optionCount, dataCount);
 													GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
-													if (genericData?.Value != null)
+													if (genericData != null)
 													{
 														textChanged = true;
 														ProcessUserDataUpdates(genericData);
-														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+
+														if (genericData?.Value != null)
+														{
+															newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+														}
 													}
 												}
 											}
 											else if (dataStore.TreatKeyAsUtterance)
 											{
 												GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-												if (genericData.Value != null)
+												if (genericData != null)
 												{
 													textChanged = true;
 													ProcessUserDataUpdates(genericData);
-													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+													if (genericData.Value != null)
+													{
+														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+													}
+												}
+												else
+												{
+													//TODO Make this a different speech intent like HeardDynamicSpeech
+													genericData = dataStore.Data.FirstOrDefault(x => string.Compare(x.Value.Key, "no-match", true) == 0).Value;
+													if (genericData != null)
+													{
+														textChanged = true;
+														ProcessUserDataUpdates(genericData);
+														if (genericData.Value != null)
+														{
+															newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+														}
+													}
 												}
 											}
 											else
@@ -1785,7 +1754,10 @@ namespace MistyCharacter
 												{
 													textChanged = true;
 													ProcessUserDataUpdates(genericData.Value);
-													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+													if (genericData.Value.Value != null)
+													{
+														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+													}
 												}
 											}
 										}
@@ -1817,22 +1789,42 @@ namespace MistyCharacter
 													int dataCount = genericDataStore.Data.Count();
 													int randomItem = _random.Next(optionCount, dataCount);
 													GenericData genericData = genericDataStore.Data.ElementAt(randomItem).Value;
-													if (genericData?.Value != null)
+													if (genericData != null)
 													{
 														textChanged = true;
 														ProcessUserDataUpdates(genericData);
-														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+														if (genericData.Value != null)
+														{
+															newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+														}
 													}
 												}
 											}
 											else if (dataStore.TreatKeyAsUtterance)
 											{
 												GenericData genericData = _speechIntentManager.FindUserDataFromText(dataStore.Name, newKey);
-												if (genericData.Value != null)
+												if (genericData != null)
 												{
 													textChanged = true;
 													ProcessUserDataUpdates(genericData);
-													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+													if (genericData.Value != null)
+													{
+														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+													}
+												}
+												else
+												{
+													//TODO Make this a different speech intent like HeardDynamicSpeech
+													genericData = dataStore.Data.FirstOrDefault(x => string.Compare(x.Value.Key, "no-match", true) == 0).Value;
+													if (genericData != null)
+													{
+														textChanged = true;
+														ProcessUserDataUpdates(genericData);
+														if (genericData.Value != null)
+														{
+															newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value);
+														}
+													}
 												}
 											}
 											else
@@ -1848,7 +1840,10 @@ namespace MistyCharacter
 												{
 													textChanged = true;
 													ProcessUserDataUpdates(genericData.Value);
-													newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+													if (genericData.Value.Value != null)
+													{
+														newText = newText.Replace("{{" + replacementTextList + "}}", genericData.Value.Value);
+													}
 												}
 											}
 										}
@@ -1891,14 +1886,15 @@ namespace MistyCharacter
 		
 		public void ProcessUserDataUpdates(GenericData genericData)
 		{
-			//get rid of this now that there is an animations script?
 			if (!string.IsNullOrWhiteSpace(genericData.ScreenText))
 			{
+				_characterState.DisplayedScreenText = genericData.ScreenText;
+				_misty.DisplayText(genericData.ScreenText, "UserDataText", null);
 				_ = _misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
 				{
 					Wrap = true,
 					Visible = true,
-					Weight = 40,
+					Weight = 50,
 					Size = 25,
 					HorizontalAlignment = ImageHorizontalAlignment.Center,
 					VerticalAlignment = ImageVerticalAlignment.Bottom,
@@ -1907,16 +1903,15 @@ namespace MistyCharacter
 					Blue = 255,
 					PlaceOnTop = true,
 					FontFamily = "Courier New",
-					Height = 50
+					Height = 70
 				});
-
-				_characterState.DisplayedScreenText = genericData.ScreenText;
-				_misty.DisplayText(genericData.ScreenText, "UserDataText", null);
 			}
-
-			if(!string.IsNullOrWhiteSpace(genericData.DataAnimationScript))
+			else
 			{
-				UserDataAnimationScript?.Invoke(this, genericData.DataAnimationScript);
+				_ = _misty.SetTextDisplaySettingsAsync("UserDataText", new TextSettings
+				{
+					Visible = false
+				});
 			}
 		}
 

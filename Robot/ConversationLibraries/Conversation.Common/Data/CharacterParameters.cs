@@ -111,7 +111,11 @@ namespace Conversation.Common
 			set
 			{
 				_phrases = value;
-				PreSpeechList = _phrases.Split(";");
+				if(!string.IsNullOrWhiteSpace(_phrases))
+				{
+					PreSpeechList = _phrases.Split(";");
+				}
+				
 			}
 		}
 		

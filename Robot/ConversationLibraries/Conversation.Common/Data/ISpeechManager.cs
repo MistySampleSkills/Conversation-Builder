@@ -50,7 +50,7 @@ namespace Conversation.Common
 		event EventHandler<IAudioPlayCompleteEvent> PreSpeechCompleted;
 		event EventHandler<IVoiceRecordEvent> CompletedProcessingVoice;
 		event EventHandler<IVoiceRecordEvent> StartedProcessingVoice;
-		event EventHandler<string> UserDataAnimationScript;
+		//event EventHandler<string> UserDataAnimationScript;
 
 		Task<bool> Initialize();
 		int Volume { get; set; }
@@ -62,8 +62,8 @@ namespace Conversation.Common
 
 		string MakeTextBasedFileName(string text);
 		void SetAudioTrim(int trimMs);
-		void SetMaxSilence(int silenceTimeout);
-		void SetMaxListen(int listenTimeout);
+		void SetMaxSilence(double silenceTimeoutSeconds);
+		void SetMaxListen(double listenTimeoutSeconds);
 		void SetSpeechRate(double rate);
 		void SetSpeakingStyle(string speakingStyle);
 		void SetLanguage(string language);

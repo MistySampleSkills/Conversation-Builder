@@ -317,19 +317,24 @@ namespace ConversationBuilder
 			{
 				//Add Animations
 				IList<Animation> animations = await dbService.ContainerManager.AnimationData.GetListAsync();
-				foreach(Animation seedAnimation in GetAnimationSeeds())
+				if(!animations.Any())
 				{
-					if(!animations.Any(x => x.Name == seedAnimation.Name))
+					foreach(Animation seedAnimation in GetAnimationSeeds())
 					{
-						await dbService.ContainerManager.AnimationData.AddAsync(seedAnimation);
+						if(!animations.Any(x => x.Name == seedAnimation.Name))
+						{
+							await dbService.ContainerManager.AnimationData.AddAsync(seedAnimation);
+						}
 					}
 				}
+				
 				
 				DateTime now = DateTime.UtcNow;
 
 				//Add Onboard Speech Config
 				IList<SpeechConfiguration> speechConfigurations = await dbService.ContainerManager.SpeechConfigurationData.GetListAsync();
-				if(!speechConfigurations.Any(x => x.Name == "Misty TTS - Vosk ASR"))
+				IList<CharacterConfiguration> characterConfigurations = await dbService.ContainerManager.CharacterConfigurationData.GetListAsync();
+				if(!speechConfigurations.Any() && !characterConfigurations.Any())
 				{
 					string speechConfigGuid = Guid.NewGuid().ToString();
 					SpeechConfiguration onboardSpeech = new SpeechConfiguration
@@ -343,31 +348,23 @@ namespace ConversationBuilder
 						TextToSpeechService = "Misty"
 					};
 					
-						await dbService.ContainerManager.SpeechConfigurationData.AddAsync(onboardSpeech);
+					await dbService.ContainerManager.SpeechConfigurationData.AddAsync(onboardSpeech);
 
-						//Add Initial Character Config
-						IList<CharacterConfiguration> characterConfigurations = await dbService.ContainerManager.CharacterConfigurationData.GetListAsync();
-						if(!characterConfigurations.Any(x => x.Name.ToLower().Trim() == "misty"))
-						{
-							CharacterConfiguration characterConfiguration = new CharacterConfiguration
-							{
-								Id = Guid.NewGuid().ToString(),
-								Name = "Misty",
-								SpeechConfiguration = speechConfigGuid,
-								CreatedBy = "System",
-								Created = now,
-								Updated = now,
-								
-							};
-							
-							await dbService.ContainerManager.CharacterConfigurationData.AddAsync(characterConfiguration);
-						}
-				}
-
-				if(!speechConfigurations.Any(x => x.Name == "Zira TTS - Vosk ASR"))
-				{
-					string speechConfigGuid = Guid.NewGuid().ToString();
-					SpeechConfiguration onboardSpeech = new SpeechConfiguration
+					CharacterConfiguration characterConfiguration = new CharacterConfiguration
+					{
+						Id = Guid.NewGuid().ToString(),
+						Name = "Misty",
+						SpeechConfiguration = speechConfigGuid,
+						CreatedBy = "System",
+						Created = now,
+						Updated = now,
+						
+					};
+					
+					await dbService.ContainerManager.CharacterConfigurationData.AddAsync(characterConfiguration);
+				
+					speechConfigGuid = Guid.NewGuid().ToString();
+					onboardSpeech = new SpeechConfiguration
 					{
 						Id = speechConfigGuid,
 						Name = "Zira TTS - Vosk ASR",
@@ -380,32 +377,28 @@ namespace ConversationBuilder
 						TextToSpeechService = "Skill"
 					};
 					
-						await dbService.ContainerManager.SpeechConfigurationData.AddAsync(onboardSpeech);
+					await dbService.ContainerManager.SpeechConfigurationData.AddAsync(onboardSpeech);
 
-						//Add Initial Character Config
-						IList<CharacterConfiguration> characterConfigurations = await dbService.ContainerManager.CharacterConfigurationData.GetListAsync();
-						if(!characterConfigurations.Any(x => x.Name.ToLower().Trim() == "zira"))
-						{
-							CharacterConfiguration characterConfiguration = new CharacterConfiguration
-							{
-								Id = Guid.NewGuid().ToString(),
-								Name = "Zira",
-								SpeechConfiguration = speechConfigGuid,
-								CreatedBy = "System",
-								Created = now,
-								Updated = now,
-								
-							};
-							
-							await dbService.ContainerManager.CharacterConfigurationData.AddAsync(characterConfiguration);
-						}
+					characterConfiguration = new CharacterConfiguration
+					{
+						Id = Guid.NewGuid().ToString(),
+						Name = "Zira",
+						SpeechConfiguration = speechConfigGuid,
+						CreatedBy = "System",
+						Created = now,
+						Updated = now,
+						
+					};
+					
+					await dbService.ContainerManager.CharacterConfigurationData.AddAsync(characterConfiguration);
 				}
+
 
 				//Add Basic Speech Intents and  Speech Triggers
 				IList<SpeechHandler> speechHandlers = await dbService.ContainerManager.SpeechHandlerData.GetListAsync();
 				IList<TriggerDetail> triggers = await dbService.ContainerManager.TriggerDetailData.GetListAsync();
 
-				if(!speechHandlers.Any(x => x.Name.ToLower().Trim() == "no"))
+				if(!speechHandlers.Any() && !triggers.Any())
 				{
 					string speechConfigGuid = Guid.NewGuid().ToString();
 					SpeechHandler speechHandler = new SpeechHandler
@@ -422,27 +415,21 @@ namespace ConversationBuilder
 
 					await dbService.ContainerManager.SpeechHandlerData.AddAsync(speechHandler);
 
-					if(!triggers.Any(x => x.Name.ToLower().Trim() == "heard no"))
+					string triggerGuid = Guid.NewGuid().ToString();
+					TriggerDetail trigger = new TriggerDetail
 					{
-						string triggerGuid = Guid.NewGuid().ToString();
-						TriggerDetail trigger = new TriggerDetail
-						{
-							Id = triggerGuid,
-							Name = "Heard No",
-							CreatedBy = "System",
-							Created = now,
-							Updated = now,
-							TriggerFilter = speechConfigGuid
-						};
+						Id = triggerGuid,
+						Name = "Heard No",
+						CreatedBy = "System",
+						Created = now,
+						Updated = now,
+						TriggerFilter = speechConfigGuid
+					};
 
-						await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-					}
-				}
-
-				if(!speechHandlers.Any(x => x.Name.ToLower().Trim() == "yes"))
-				{
-					string speechConfigGuid = Guid.NewGuid().ToString();
-					SpeechHandler speechHandler = new SpeechHandler
+					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
+				
+					speechConfigGuid = Guid.NewGuid().ToString();
+					speechHandler = new SpeechHandler
 					{
 						Id = speechConfigGuid,
 						Name = "Yes",
@@ -456,24 +443,22 @@ namespace ConversationBuilder
 
 					await dbService.ContainerManager.SpeechHandlerData.AddAsync(speechHandler);
 
-					if(!triggers.Any(x => x.Name.ToLower().Trim() == "heard yes"))
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
-						string triggerGuid = Guid.NewGuid().ToString();
-						TriggerDetail trigger = new TriggerDetail
-						{
-							Id = triggerGuid,
-							Name = "Heard Yes",
-							CreatedBy = "System",
-							Created = now,
-							Updated = now,
-							TriggerFilter = speechConfigGuid
-						};
+						Id = triggerGuid,
+						Name = "Heard Yes",
+						CreatedBy = "System",
+						Created = now,
+						Updated = now,
+						TriggerFilter = speechConfigGuid
+					};
 
-						await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-					}
+					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
 				}
 
-				//Bumpers
+
+				//More common triggers
 				if(!triggers.Any(x => x.Name.ToLower().Trim() == "front left bumper pressed"))
 				{
 					string triggerGuid = Guid.NewGuid().ToString();
@@ -489,12 +474,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "front right bumper pressed"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Front Right Bumper Pressed",
@@ -506,12 +488,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "back left bumper pressed"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Back Left Bumper Pressed",
@@ -523,12 +502,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "back right bumper pressed"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Back Right Bumper Pressed",
@@ -540,13 +516,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				//Cap touch
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "scruff touched"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Scruff Touched",
@@ -558,12 +530,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "chin touched"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Chin Touched",
@@ -575,12 +544,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "front cap touched"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Front Cap Touched",
@@ -592,12 +558,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "back cap touched"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Back Cap Touched",
@@ -609,12 +572,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "left cap touched"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Left Cap Touched",
@@ -626,12 +586,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "right cap touched"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Right Cap Touched",
@@ -643,12 +600,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "heard unknown"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Heard Unknown",
@@ -659,12 +613,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "heard nothing"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Heard Nothing",
@@ -675,12 +626,9 @@ namespace ConversationBuilder
 					};
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
-				}
 
-				if(!triggers.Any(x => x.Name.ToLower().Trim() == "face seen"))
-				{
-					string triggerGuid = Guid.NewGuid().ToString();
-					TriggerDetail trigger = new TriggerDetail
+					triggerGuid = Guid.NewGuid().ToString();
+					trigger = new TriggerDetail
 					{
 						Id = triggerGuid,
 						Name = "Face Seen",
@@ -693,14 +641,12 @@ namespace ConversationBuilder
 
 					await dbService.ContainerManager.TriggerDetailData.AddAsync(trigger);
 				}
+				
 			}
 			catch
 			{
-
+				//'ello!?				
 			}
-			
-
-			//TODO Add a sample conversation
 		}
 		
 		private IList<Animation> GetAnimationSeeds()
@@ -1385,7 +1331,7 @@ IMAGE:e_Admiration.jpg;"
 			{
 				Id = Guid.NewGuid().ToString(),
 				Name = name,
-				Silence = true,
+				Silence = false,
 				Updated = now,
 				Created = now,
 				CreatedBy = "System",
