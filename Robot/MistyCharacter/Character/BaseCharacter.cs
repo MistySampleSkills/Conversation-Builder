@@ -288,10 +288,7 @@ namespace MistyCharacter
 				
 				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager, HeadManager, CommandManager);
 				await AnimationManager.Initialize();
-
-				//ClearRegistrations();
-
-
+				
 				var eventDetails = Robot.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null);
 				eventDetails = Robot.RegisterUserEvent("ExternalEvent", ExternalEventCallback, 0, true, null);
 				eventDetails = Robot.RegisterUserEvent("SyncEvent", SyncEventCallback, 0, true, null);
@@ -555,7 +552,6 @@ namespace MistyCharacter
 			_allowedTriggers.Add(trigger.Key);
 
 			ListenToEvent(triggerDetail, 0);
-
 		}
 
 		public void RemoveTrigger(object sender, string trigger)
@@ -1102,7 +1098,6 @@ namespace MistyCharacter
 
 			if (CharacterParameters.StartVolume != null && CharacterParameters.StartVolume > 0)
 			{
-				//Robot.SetDefaultVolume((int)CharacterParameters.StartVolume, null);
 				SpeechManager.Volume = (int)CharacterParameters.StartVolume;
 			}
 
@@ -1390,34 +1385,28 @@ namespace MistyCharacter
 				Robot.SkillLogger.Log($"Exception thrown while going to next animation", ex);
 			}
 		}
-
-		private object _locky = new object();
-
+		
 		private void RunNextAnimation()
-		//private void RunNextAnimation(object sender, DateTime e)
 		{
 			
 			try
 			{
-				//lock (_locky)
-				{
-					_latestTriggerMatchData = MistyState.GetCharacterState().LatestTriggerMatched;
-					UniqueAnimationId = Guid.NewGuid();
+				_latestTriggerMatchData = MistyState.GetCharacterState().LatestTriggerMatched;
+				UniqueAnimationId = Guid.NewGuid();
 
-					if (Robot.SkillStatus == NativeSkillStatus.Running)
-					{
-						MistyState.GetCharacterState().Spoke = false;
-						MistyState.GetCharacterState().UnknownFaceSeen = false;
-						MistyState.GetCharacterState().KnownFaceSeen = false;
-						MistyState.GetCharacterState().Listening = false;
-						MistyState.GetCharacterState().Saying = "";
-						_triggerHandled = false;
-						_ = ProcessNextAnimationRequest();
-					}
-					else
-					{
-						StopConversation();
-					}
+				if (Robot.SkillStatus == NativeSkillStatus.Running)
+				{
+					MistyState.GetCharacterState().Spoke = false;
+					MistyState.GetCharacterState().UnknownFaceSeen = false;
+					MistyState.GetCharacterState().KnownFaceSeen = false;
+					MistyState.GetCharacterState().Listening = false;
+					MistyState.GetCharacterState().Saying = "";
+					_triggerHandled = false;
+					_ = ProcessNextAnimationRequest();
+				}
+				else
+				{
+					_ = StopConversation();
 				}
 			}
 			catch (Exception ex)

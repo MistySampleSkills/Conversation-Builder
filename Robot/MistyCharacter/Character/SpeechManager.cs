@@ -619,7 +619,7 @@ namespace MistyCharacter
 						PlaceOnTop = true,
 						Stretch = ImageStretch.None,
 						Visible = false,
-						Height = 50
+						Height = 40
 					});
 				}
 				else
@@ -637,7 +637,7 @@ namespace MistyCharacter
 						Blue = 255,
 						PlaceOnTop = true,
 						FontFamily = "Courier New",
-						Height = 40
+						Height = 25
 					});
 				}
 				
@@ -672,7 +672,7 @@ namespace MistyCharacter
 						Blue = 255,
 						PlaceOnTop = true,
 						FontFamily = "Courier New",
-						Height = 40
+						Height = 25
 					});
 				}
 			}			
@@ -1903,7 +1903,7 @@ namespace MistyCharacter
 					Blue = 255,
 					PlaceOnTop = true,
 					FontFamily = "Courier New",
-					Height = 70
+					Height = 50
 				});
 			}
 			else

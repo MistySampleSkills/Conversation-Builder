@@ -1632,17 +1632,7 @@ namespace MistyCharacter
 									_waitingTimeoutMs = Convert.ToInt32(awaitSyncEvent[1]);
 								}
 								break;
-
-							//TODO
-							case "RETURN":
-								//RETURN; //return to last known waypoint
-								break;
-							//case "WANDER":
-								//WANDER:leftAreaMeters,upAreaMeters,rightAreaMeters,downAreaMeters,velocity;
-								//break;
-							case "GOTO-WAYPOINT":
-								//WAYPOINT:waypoint-name,velocity?;
-								break;
+								
 							case "TRIGGER":
 								//TRIGGER:trigger,triggerFilter,text;
 								string[] triggerEventData = commandData[1].Split(",");
@@ -1793,22 +1783,7 @@ namespace MistyCharacter
 									ManualTrigger?.Invoke(this, new TriggerData(timedText, timedTriggerEventData[2], timedTriggerEventData[1]));
 								});
 								break;
-							//case "TIME":
-							//	TimeObject timeObject = _timeManager.GetTimeObject();
-							//	_speechManager.Speak(timeObject.SpokenTime, false);
-							//	break;
-							//case "DAY":
-							//	TimeObject timeObject2 = _timeManager.GetTimeObject();
-							//	_speechManager.Speak(timeObject2.SpokenDay.ToString(), false);
-							//	break;
-							//case "SEND-EVENT":
-							//	//SEND-EVENT:EventName,yourdata;
-							//	string[] eventData = commandData[1].Split(",");
-							//	IDictionary<string, object> payloadData = new Dictionary<string, object>();
-							//	payloadData.Add("EventData", eventData[1]);
-							//	payloadData.Add("State", Newtonsoft.Json.JsonConvert.SerializeObject(_robotStateSystem.GetRobotStateEvent()));
-							//	await Robot.TriggerEventAsync(eventData[0], "AnimationManager", payloadData, new List<string>());
-							//	break;
+							
 							case "AWAIT-EVENT":
 								//AWAIT-EVENT:EventName1,10000/-1;
 								//TODO Not quite right
