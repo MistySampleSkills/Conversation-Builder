@@ -37,12 +37,11 @@ using System.Threading;
 using Conversation.Common;
 using MistyRobotics.Common.Types;
 using MistyRobotics.SDK.Messengers;
-using MistyRobotics.SDK.Events;
 
 namespace MistyCharacter
 {
 	/// <summary>
-	/// //Deprecated
+	/// Deprecated
 	/// </summary>
 	public class ArmManager : BaseManager, IArmManager
 	{
@@ -245,7 +244,6 @@ namespace MistyCharacter
 					{
 						_armsMovingContinuously = false;
 						_moveArmsTimer?.Dispose();
-						//Robot.UnregisterAllEvents(null);
                     }
 
                     _isDisposed = true;

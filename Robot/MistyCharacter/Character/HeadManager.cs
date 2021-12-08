@@ -42,7 +42,7 @@ using MistyRobotics.SDK.Messengers;
 namespace MistyCharacter
 {
 	/// <summary>
-	/// //Deprecated, should go away!
+	/// //Deprecated
 	/// </summary>
 	public class HeadManager : BaseManager, IHeadManager
 	{
@@ -227,7 +227,7 @@ namespace MistyCharacter
 			}
 		}
 
-		//TODO Lotso cleanup
+		//TODO Move follow face and object out of here
 		private void MoveHeadCallback(object timerData)
 		{
 			try
@@ -536,7 +536,6 @@ namespace MistyCharacter
 				    if (disposing)
 				    {
 						_moveHeadTimer?.Dispose();
-						//Robot.UnregisterAllEvents(null);
 					    _headMovingContinuously = false;                    	
              	    }
 

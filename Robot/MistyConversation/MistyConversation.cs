@@ -136,7 +136,6 @@ namespace MistyConversation
 				if (disposing)
 				{
 					_conversationManager?.Dispose();
-					//_misty.UnregisterAllEvents(null);
 					_misty.SkillCompleted();
 					SkillRunState?.Invoke(this, false);
 				}

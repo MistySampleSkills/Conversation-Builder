@@ -38,22 +38,6 @@ using MistyRobotics.SDK.Messengers;
 
 namespace CommandManager
 {
-
-	//public class SceneCommandAuthorization : CommandAuthorization
-	//{
-	//	public SceneCommandAuthorization(string subscriptionKey, string region, string endpoint)
-	//	{
-	//		SubscriptionKey = subscriptionKey;
-	//		Region = region;
-	//		Endpoint = endpoint;
-	//	}
-
-	//	public string Name { get; set; } = "SceneCommand";
-	//	public string SubscriptionKey { get; set; }
-	//	public string Region { get; set; }
-	//	public string Endpoint { get; set; }
-	//}
-
 	public class UserCommandManager : BaseCommandManager
 	{
 

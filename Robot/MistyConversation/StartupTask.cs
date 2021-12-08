@@ -50,7 +50,7 @@ namespace MistyConversation
         {
 			if (_isRunning)
 			{
-				_robotMessenger.SkillLogger.LogError("Skill was not shut down properly last time. Try stopping again. May require robot reboot.");
+				_robotMessenger.SkillLogger.LogError("Skill was not shut down properly last time. Try stopping again if needed. May require robot reboot.");
 			}
 
 			MistyConversationSkill skill = new MistyConversationSkill();

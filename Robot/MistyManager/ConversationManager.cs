@@ -38,8 +38,7 @@ namespace MistyManager
 
 			_assetWrapper = new AssetWrapper(_misty);
 		}
-
-		//TODO untested!!
+		
 		private async void HandleConversationCleanup(object sender, DateTime when)
 		{
 			if (_character != null)
@@ -104,7 +103,6 @@ namespace MistyManager
 				_misty.ChangeLED(0, 255, 255, null);
 				_misty.MoveArms(65.0, 65.0, 50, 50, null, AngularUnit.Degrees, null);
 				_misty.MoveHead(0, 0, 0, 75, AngularUnit.Degrees, null);
-
 			}
 			catch (Exception ex)
 			{
@@ -241,8 +239,7 @@ namespace MistyManager
 				if (userEvent.TryGetPayload(out IDictionary<string, object> eventPayload))
 				{
 					ISkillStorage database = await EncryptedStorage.GetDatabase("cb-auth-data", "p@ssw0rd"); //TODO
-
-					//TODO Update to read token name so they can be uploaded separately
+					
 					IDictionary<string, object> currentTokens = await database.LoadDataAsync();
 
 					if (eventPayload.TryGetValue("AuthData", out object authInfo))
@@ -250,6 +247,7 @@ namespace MistyManager
 
 						if (authInfo == null)
 						{
+							_misty.SkillLogger.LogError("No AuthData in file.");
 							return;
 						}
 
@@ -277,7 +275,6 @@ namespace MistyManager
 			{
 				_loadAuthSlim.Release();
 			}
-
 		}
 
 		public async void  StopConversationCallback(IUserEvent userEvent)
@@ -288,8 +285,7 @@ namespace MistyManager
 				{
 					_misty.SkillLogger.LogError("Trying to stop conversation when no conversation is running.");
 				}
-
-				//Stop conversation
+				
 				if (_character != null)
 				{
 					await _character?.StopConversation();
@@ -539,12 +535,7 @@ namespace MistyManager
 				_parameterManager.PublishConversationList();
 			}
 		}
-
-		//public async Task<bool> StartConversation()
-		//{
-		//	return await _character.StartConversation();
-		//}
-
+		
 		#region IDisposable Support
 
 		private bool _isDisposed = false;

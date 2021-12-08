@@ -46,19 +46,19 @@ namespace ExampleHandlerSkill
 {	
     /// <summary>
     /// Example trigger handler skill that can be called from conversation to interact with the code in the Conversation Libraries
-    /// Skill is used in the Presentation example to tell jokes and get the weather.
+    /// Skill is used in the Presentation example to tell jokes and get the weather. This functionality can also be added as user animation commands, to be run in the original conversatin skill.
     /// Trigger handler skills can be created to provide more capabilities to conversations.
     /// The conversation skill will start this skill and it should not be started separately by the user.
     /// </summary>
 	internal class ExampleTriggerHandler : IMistySkill
 	{
 		private IRobotMessenger _misty;
+		private IDictionary<string, object> _parameters;
 		private Random _random = new Random();
 		private WeatherManager _weatherManager;
 		private ParameterManager _parameterManager = null;
 		private FunnyBoneAPI _funnyBoneAPI;
 		private TriggerToSend _triggerToSend;
-		private IDictionary<string, object> _parameters;
 
 		public INativeRobotSkill Skill { get; private set; } = 
 			new NativeRobotSkill("Example Trigger Handler", "0e971056-d222-4b64-a289-7fd0c75683bf")
@@ -76,12 +76,8 @@ namespace ExampleHandlerSkill
         {
             //Trigger skills are started by the conversation manager and are started with the same parameters of the conversation skill	
             _parameters = parameters;
-
-            //In case this wasn't shut down properly last time, make sure it's events are all newly registered
-		//	_misty.UnregisterAllEvents(null);
 			
             //Process the startup parameters
-            //TODO Handle more of this in the libraries
 			try
 			{
 				if (!parameters.TryGetValue("Parameters", out object innerParameterObject))

@@ -111,7 +111,6 @@ namespace Conversation.Weather.OpenWeather
 					case "mist":
 						weatherOptions.Add("The weather is misty today. Drive safe!");
 						break;
-
 					case "dust":
 						weatherOptions.Add("Weather report says to expect dust in the air.  Be careful!");
 						break;

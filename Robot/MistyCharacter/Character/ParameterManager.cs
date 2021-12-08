@@ -595,8 +595,6 @@ namespace MistyCharacter
 				//Parse string into prespeech by semicolon
 				try
 				{
-					//TODO 
-
 					string preSpeechString = GetStringField(_parameters, ConversationConstants.PreSpeechPhrases) ?? "";
 					if(string.IsNullOrWhiteSpace(preSpeechString) && CharacterParameters.PreSpeechPhrases != null && CharacterParameters.PreSpeechPhrases.Count() > 0)
 					{
@@ -728,7 +726,7 @@ namespace MistyCharacter
 			}
 		}
 
-
+		//TODO Simplify setup, possibly remove admin tool based auth for only user auth files
 		private void SetSpeechParameters(CharacterParameters updatedCharacterParameters)
 		{
 			try
@@ -754,8 +752,7 @@ namespace MistyCharacter
 						updatedCharacterParameters.GoogleSpeechRecognitionParameters.SpeakingVoice = CharacterParameters.SpeechConfiguration.SpeakingVoice ?? "en-US-Standard-C";
 						updatedCharacterParameters.GoogleSpeechRecognitionParameters.SpokenLanguage = CharacterParameters.SpeechConfiguration.SpokenLanguage ?? "en-US";
 					}
-
-
+					
 					updatedCharacterParameters.SpeechRecognitionService = recService?.ToLower().Trim() ?? "vosk";
 				}
 			

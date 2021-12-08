@@ -31,7 +31,6 @@
 **********************************************************************/
 
 using System.Collections.Generic;
-using Conversation.Common;
 using MistyCharacter;
 using MistyRobotics.SDK.Messengers;
 

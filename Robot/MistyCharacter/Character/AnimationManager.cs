@@ -837,7 +837,7 @@ namespace MistyCharacter
 						//TODO Replace with CommandManager classes
 
 						//split the rest based on action, hacky wacky for now
-						//deal with inconsistencies for arms and head, so all scripting is ms
+						//TODO deal with inconsistencies for arms and head, so all scripting is ms
 						switch (action.ToUpper())
 						{
 							case "ARMS":
@@ -1701,7 +1701,6 @@ namespace MistyCharacter
 								{
 									filterA = triggerDataA[3];
 								}
-								//?? Part of add trigger?  RegisterEvent(triggerDataA[2]);
 								_mistyState.RegisterEvent(triggerDataA[2]);
 								TriggerData newTriggerDataA = new TriggerData(null, filterA, triggerDataA[2]);
 								newTriggerDataA.KeepAlive = true;
@@ -1716,7 +1715,6 @@ namespace MistyCharacter
 								{
 									filter4 = triggerData4[2];
 								}
-								//?? Part of add trigger?  RegisterEvent(triggerData4[1]);
 								_mistyState.RegisterEvent(triggerData4[1]);
 								TriggerData newTriggerData4 = new TriggerData(null, filter4, triggerData4[1]);
 								newTriggerData4.KeepAlive = true;
@@ -1731,12 +1729,12 @@ namespace MistyCharacter
 								_speechManager.SetAudioTrim(Convert.ToInt32(commandData[1]));
 								break;
 							case "SET-MAX-SILENCE":
-								//Seconds
-								_speechManager.SetMaxSilence(Convert.ToDouble(commandData[1]));
+								//command expects seconds
+								_speechManager.SetMaxSilence(Convert.ToDouble(commandData[1]) / 1000.0);
 								break;
 							case "SET-MAX-LISTEN":
-								//Seconds
-								_speechManager.SetMaxListen(Convert.ToDouble(commandData[1]));
+								//command expects seconds
+								_speechManager.SetMaxListen(Convert.ToDouble(commandData[1]) / 1000.0);
 								break;
 							case "SET-SPEECH-PITCH":
 								_speechManager.SetPitch(commandData[1]);
@@ -1772,14 +1770,12 @@ namespace MistyCharacter
 								_ = Task.Run(async () =>
 								{
 									//Use timer instead?
-									int delay = Convert.ToInt32(timedTriggerEventData[0]);// - 200;
+									int delay = Convert.ToInt32(timedTriggerEventData[0]);
 									if(delay > 0)
 									{
 										await Task.Delay(delay);
 									}
-
-									//_mistyState.RegisterEvent(Triggers.Manual);
-									//await Task.Delay(200);
+									
 									ManualTrigger?.Invoke(this, new TriggerData(timedText, timedTriggerEventData[2], timedTriggerEventData[1]));
 								});
 								break;
@@ -1957,6 +1953,7 @@ namespace MistyCharacter
 			}
 		}
 
+		//TODO Move audio/face/object following to separate classes
 		private async void StopFollowAudio()
 		{
 			await Robot.StopRecordingAudioAsync();
