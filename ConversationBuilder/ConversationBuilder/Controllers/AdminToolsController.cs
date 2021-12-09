@@ -387,7 +387,7 @@ namespace ConversationBuilder.Controllers
 						{
 							SpeechHandler speechHandler = new SpeechHandler();
 							speechHandler.Id = utterance.Value.Id;
-							speechHandler.Name = utterance.Value.Name;
+							speechHandler.Name = utterance.Value.Name + " [Imported]";
 							speechHandler.Updated = now;
 							speechHandler.Created = now;
 							speechHandler.ManagementAccess = "Public";

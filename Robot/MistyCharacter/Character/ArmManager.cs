@@ -58,6 +58,7 @@ namespace MistyCharacter
 		public void StopMovement()
 		{
 			_moveArmsTimer?.Dispose();
+			_ = Robot.HaltAsync(new List<MotorMask> { MotorMask.RightArm, MotorMask.LeftArm });
 		}
 
 		private void MoveArmsCallback(object timerData)

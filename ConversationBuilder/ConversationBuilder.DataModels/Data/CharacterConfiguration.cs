@@ -83,7 +83,7 @@ namespace ConversationBuilder.DataModels
 		public bool ShowSpeakingIndicator { get; set; } = true;
 
 		[Display(Name = "Starting volume of Misty")]
-		public int? StartVolume { get; set; }		
+		public int? StartVolume { get; set; } = 20;
 
 		[Display(Name = "Use prespeech for speech intent processing")]
 		public bool UsePreSpeech { get; set; }

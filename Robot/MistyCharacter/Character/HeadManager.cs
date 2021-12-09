@@ -77,6 +77,7 @@ namespace MistyCharacter
 		public void StopMovement()
 		{
 			_moveHeadTimer?.Dispose();
+			HandleHeadAction(null);
 		}
 
 		public void HandleHeadAction(HeadLocation headLocation)

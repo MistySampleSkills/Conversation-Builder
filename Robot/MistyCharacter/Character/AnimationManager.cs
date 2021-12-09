@@ -139,7 +139,7 @@ namespace MistyCharacter
 		private IHeadManager _headManager;
 		private AnimationRequest _currentAnimation;
 		private Interaction _currentInteraction;
-		private bool _repeatScript;
+		//private bool _repeatScript;
 		private WebMessenger _webMessenger;
 
 		private TaskCompletionSource<bool> _receivedSyncEvent;
@@ -480,9 +480,9 @@ namespace MistyCharacter
 		{
 			try
 			{
-				//if(_runningAnimation)
+				//while(_animationsCanceled)
 				//{
-				//	return false;
+				//	await Task.Delay(25);
 				//}
 				_runningAnimation = true;
 				_currentConversationData = currentConversationData;
@@ -490,7 +490,7 @@ namespace MistyCharacter
 				{
 					_animationsCanceled = false;
 					StartedAnimationScript?.Invoke(this, DateTime.Now);
-					_repeatScript = repeatScript;
+				//	_repeatScript = repeatScript;
 					_currentAnimation = currentAnimation;
 					_currentInteraction = currentInteraction;
 					animationScript = animationScript.Trim().Replace(Environment.NewLine, "").Replace("’", "'").Replace("“", "\"").Replace("”", "\"");
@@ -544,12 +544,12 @@ namespace MistyCharacter
 							_interactionCancellationEvent?.TrySetResult(true);
 							return false;
 						}
-						else if (loopCount > 1 && !_repeatScript)
+						else if (loopCount > 1 && !repeatScript)
 						{
 							_interactionCancellationEvent?.TrySetResult(true);
 							return false;
 						}
-						else if (loopCount > 1 && _repeatScript)
+						else if (loopCount > 1 && repeatScript)
 						{
 							RepeatingAnimationScript?.Invoke(this, DateTime.Now);
 						}
@@ -609,7 +609,7 @@ namespace MistyCharacter
 						}
 						AnimationScriptActionsComplete?.Invoke(this, DateTime.Now);
 					}
-					while (_repeatScript && !_animationsCanceled && _runningAnimation);
+					while (repeatScript && !_animationsCanceled && _runningAnimation);
 
 					_runningAnimation = false;
 					CompletedAnimationScript?.Invoke(this, DateTime.Now);

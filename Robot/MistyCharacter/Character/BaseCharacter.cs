@@ -2146,8 +2146,7 @@ namespace MistyCharacter
 				{
 					_ = AnimationManager.RunAnimationScript(newInteraction.AnimationScript, animationRequest.RepeatScript, animationRequest, newInteraction, _currentConversationData);
 				}
-
-				if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
+				else if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
 				{
 					_ = AnimationManager.RunAnimationScript(animationRequest.AnimationScript, animationRequest.RepeatScript, animationRequest, newInteraction, _currentConversationData);
 				}
@@ -2173,7 +2172,7 @@ namespace MistyCharacter
 					}
 				}
 
-				//Move arms
+				//Move arms on top of animation script!
 				if (!string.IsNullOrWhiteSpace(animationRequest.ArmLocation))
 				{
 					_ = Task.Run(async () =>
@@ -2186,7 +2185,7 @@ namespace MistyCharacter
 					});
 				}
 
-				//Move head
+				//Move head on top of animation script!
 				if (!string.IsNullOrWhiteSpace(animationRequest.HeadLocation))
 				{
 					_ = Task.Run(async () =>

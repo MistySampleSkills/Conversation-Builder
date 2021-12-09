@@ -51,7 +51,7 @@ namespace ConversationBuilder.DataModels
 
 		public bool HeardSpeechToScreen { get; set; }
 		public bool DisplaySpoken { get; set; }
-		public int? StartVolume { get; set; }		
+		public int? StartVolume { get; set; } = 20;
 		public bool UsePreSpeech { get; set; }
 		public string PreSpeechPhrases { get; set; }
 		
