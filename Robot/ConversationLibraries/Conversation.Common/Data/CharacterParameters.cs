@@ -35,17 +35,29 @@ using System.Collections.Generic;
 
 namespace Conversation.Common
 {
+	public enum InitializationStatus
+	{
+		Unknown,
+		Warning,
+		Error,
+		Waiting,
+		Success
+	}
+
 	public sealed class CharacterParameters
 	{
-		public AzureSpeechParameters AzureSpeechParameters { get; set; }
-		public GoogleSpeechParameters GoogleSpeechParameters { get; set; }
+		public AzureSpeechParameters AzureSpeechRecognitionParameters { get; set; }
 
-		public bool RetranslateTTS { get; set; }
+		public GoogleSpeechParameters GoogleSpeechRecognitionParameters { get; set; }
 
-		public SpeechConfiguration SpeechService { get; set; }
+		public AzureSpeechParameters AzureTTSParameters { get; set; }
 
-		public string TextToSpeechService { get; set; } = "Misty";
-		public string SpeechRecognitionService { get; set; } = "Azure";
+		public GoogleSpeechParameters GoogleTTSParameters { get; set; }
+		
+		public SpeechConfiguration SpeechConfiguration { get; set; }
+		
+		public string TextToSpeechService { get; set; } = "misty";
+		public string SpeechRecognitionService { get; set; } = "vosk";
 		
 		public int FacePitchOffset { get; set; }
 		public double ObjectDetectionDebounce { get; set; } = 0.333;
@@ -61,11 +73,11 @@ namespace Conversation.Common
 
 		public bool LogInteraction { get; set; }
 		public bool StreamInteraction { get; set; }
-
-		public string Character { get; set; } = "basic";
-		public string RequestedCharacter { get; set; }
-
+		
 		public bool ShowListeningIndicator { get; set; } = true;
+
+		public bool ShowSpeakingIndicator { get; set; } = true;
+		public bool SendInteractionUIEvents { get; set; } = true;
 		public bool HeardSpeechToScreen { get; set; }
 		public bool DisplaySpoken { get; set; }
 		public bool LargePrint { get; set; }
@@ -76,16 +88,50 @@ namespace Conversation.Common
 
 		public string InitializationStatusMessage { get; set; }
 
-		public string InitializationErrorStatus { get; set; }
+		public InitializationStatus InitializationErrorStatus { get; set; }
 
 		public string RobotIp { get; set; }
 
+		public string SpeakingImage { get; set; }
+		public string ListeningImage { get; set; }
+		public string ProcessingImage { get; set; }
+
 		public bool UsePreSpeech { get; set; }
 
-		public IList<string> PreSpeechPhrases { get; set; } = new List<string>();
 
+		public IList<string> PreSpeechList { get; set; }
+
+		private string _phrases;
+		public string PreSpeechPhrases
+		{
+			get
+			{
+				return _phrases;
+			}
+			set
+			{
+				_phrases = value;
+				if(!string.IsNullOrWhiteSpace(_phrases))
+				{
+					PreSpeechList = _phrases.Split(";");
+				}
+				
+			}
+		}
+		
 		public IList<Robot> Robots { get; set; } = new List<Robot>();
 
+		//TODO
 		public IList<Recipe> Recipes { get; set; } = new List<Recipe>();
+
+		public bool AnimationCreationMode { get; set; } = false;
+		public double AnimationCreationDebounceSeconds { get; set; } = .25;
+		public bool IgnoreArmCommands { get; set; } = false;
+		public bool IgnoreHeadCommands { get; set; } = false;
+
+		public bool RetranslateTTS { get; set; }
+		public bool SmoothRecording { get; set; } = false;
+
+		public string PuppetingList { get; set; }
 	}
 }

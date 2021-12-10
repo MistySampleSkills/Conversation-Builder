@@ -9,7 +9,7 @@
 }
 
 
-<h3>Configuration</h3>
+<h3>Characters Configurations</h3>
 <hr />
 <h5 style="color:red">@ViewBag.Message</h5>
 <p>
@@ -26,20 +26,17 @@
 				@Html.DisplayNameFor(model => model.Name)
 			</th>
 			<th>
-				@Html.DisplayNameFor(model => model.Character)
-			</th>
-			<th>
 				@Html.DisplayNameFor(model => model.LogLevel)
 			</th>
-			<td>
+			<th>
 				@Html.DisplayNameFor(model => model.DisplaySpoken)
-			</td>
-			<td>
+			</th>
+			<th>
 				@Html.DisplayNameFor(model => model.HeardSpeechToScreen)
-			</td>
-			<td>
+			</th>
+			<th>
 				@Html.DisplayNameFor(model => model.StartVolume)
-			</td>
+			</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -48,9 +45,6 @@
 		<tr>
 			<td>
 				@Html.DisplayFor(modelItem => item.Name)
-			</td>
-			<td>
-				@Html.DisplayFor(modelItem => item.Character)
 			</td>
 			<td>
 				@Html.DisplayFor(modelItem => item.LogLevel)

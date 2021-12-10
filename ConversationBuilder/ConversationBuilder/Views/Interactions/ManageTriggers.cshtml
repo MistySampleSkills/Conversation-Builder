@@ -28,7 +28,7 @@ Uses Pre-speech: @Model.UsePreSpeech
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="AddTrigger">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -66,7 +66,7 @@ Uses Pre-speech: @Model.UsePreSpeech
 </div>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="RemoveTrigger">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -127,7 +127,13 @@ Uses Pre-speech: @Model.UsePreSpeech
 				Interrupt Audio
 			</th>
 			<th>
-				Animation
+				Main Animation
+			</th>
+			<th>
+				Init Animation
+			</th>
+			<th>
+				Listening Animation
 			</th>
 			<th>
 				PreSpeech Animation
@@ -158,6 +164,8 @@ Uses Pre-speech: @Model.UsePreSpeech
 			<td></td>
 			<td></td>	
 			</td>
+			<td></td>	
+			<td></td>	
 			<td></td>	
 			<td></td>	
 			<td>
@@ -222,13 +230,38 @@ Uses Pre-speech: @Model.UsePreSpeech
 					</td>
 					<td>
 					<div class="form-group">
+						<select asp-for="InitAnimation" class="form-control">
+							@foreach (KeyValuePair<string, string> animation in @ViewBag.Animations)
+							{
+								<option value="@animation.Key">@animation.Value</option>
+							}
+							<option value="None" >None</option>								
+							<option value="Init Default" selected>Init Default</option>							
+						</select>
+					</div>
+					
+					</td>
+					<td>
+					<div class="form-group">
+						<select asp-for="ListeningAnimation" class="form-control">
+							@foreach (KeyValuePair<string, string> animation in @ViewBag.Animations)
+							{
+								<option value="@animation.Key">@animation.Value</option>
+							}
+							<option value="None" >None</option>		
+							<option value="Listening Default" selected>Listening Default</option>
+						</select>
+					</div>
+					</td>
+					<td>
+					<div class="form-group">
 						<select asp-for="PreSpeechAnimation" class="form-control">
 							@foreach (KeyValuePair<string, string> animation in @ViewBag.Animations)
 							{
 								<option value="@animation.Key">@animation.Value</option>
 							}
-							<option value="PreSpeech Default" >PreSpeech Default</option>
-							<option value="None" selected>None</option>								
+							<option value="None" >None</option>		
+							<option value="PreSpeech Default" selected>PreSpeech Default</option>
 						</select>
 					</div>
 					</td>
@@ -240,8 +273,11 @@ Uses Pre-speech: @Model.UsePreSpeech
 					</td>
 					<td>
 					<div class="form-group">
-						<input asp-for="Retrigger" class="form-control" />
-						<span asp-validation-for="Retrigger" class="text-danger"></span>
+						<div class="checkbox">
+							<label>
+								<input asp-for="Retrigger" />
+							</label>
+						</div>
 					</div>
 					</td>
 					
@@ -297,11 +333,47 @@ Uses Pre-speech: @Model.UsePreSpeech
 					{
 						prespeechAnimationName = "PreSpeech Default";
 					}
+
+					string listeningAnimationName = "Listening Default";
+					if(ViewBag.InteractionListeningAnimationList.TryGetValue(intentAction.Id, out string listeningAnimation))
+					{
+						if(listeningAnimation == "None")
+						{
+							listeningAnimationName = "None";
+						}
+						else if(!@ViewBag.Animations.TryGetValue(listeningAnimation, out listeningAnimationName))
+						{
+							listeningAnimationName = "Listening Default";
+						}
+					}
+					else
+					{
+						listeningAnimationName = "Listening Default";
+					}
+
+					string initAnimationName = "Init Default";
+					if(ViewBag.InteractionInitAnimationList.TryGetValue(intentAction.Id, out string initAnimation))
+					{
+						if(initAnimation == "None")
+						{
+							initAnimationName = "None";
+						}
+						else if(!@ViewBag.Animations.TryGetValue(initAnimation, out initAnimationName))
+						{
+							initAnimationName = "Init Default";
+						}
+					}
+					else
+					{
+						initAnimationName = "Init Default";
+					}
 				}
 
 				<td>@goToInteractionName</td>
 				<td>@intentAction.InterruptCurrentAction</td>
 				<td>@animationName</td>
+				<td>@initAnimationName</td>
+				<td>@listeningAnimationName</td>
 				<td>@prespeechAnimationName</td>
 				<td>@intentAction.Weight</td>
 				<td>@intentAction.Retrigger</td>
@@ -333,7 +405,7 @@ Uses Pre-speech: @Model.UsePreSpeech
 else
 {
 	<div class="row">
-		<div class="col-md-4">
+		<div>
 			<form asp-action="AddSkillMessage">
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -375,7 +447,7 @@ else
 @if(Model.SkillMessages != null && Model.SkillMessages.Count() > 0)
 {
 	<div class="row">
-		<div class="col-md-4">
+		<div>
 			<form asp-action="RemoveSkillMessage">
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 

@@ -27,7 +27,7 @@ namespace ConversationBuilder.ViewModels
 		
 		public string NoTriggerInteraction { get; set; }
 
-		public string StartingEmotion { get; set; } = DefaultEmotions.Joy;
+		public string StartingEmotion { get; set; } = DefaultEmotions.None;
 
 		//IList<Interaction>
 		public IList<string> Interactions { get; set; } = new List<string>();
@@ -57,6 +57,17 @@ namespace ConversationBuilder.ViewModels
 		public string RemovedTriggerAction { get; set; }
 		public string Animation { get; set; }		
 		public string PreSpeechAnimation { get; set; }
+		//TODO
+		public string ListeningAnimation { get; set; }
+
+		public string InitAnimation { get; set; }
+
+		public string InitScriptData { get; set; }
+		public string PreSpeechScriptData { get; set; }
+		public string ListeningScriptData { get; set; }
+		public string ScriptData { get; set; }
+
+
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

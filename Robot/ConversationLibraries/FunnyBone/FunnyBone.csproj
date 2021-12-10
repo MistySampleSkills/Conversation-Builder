@@ -131,15 +131,15 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SkillTools\SkillTools.csproj">
-      <Project>{C081F243-3735-4C72-B071-29B751E460B1}</Project>
+      <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
       <Name>SkillTools</Name>
     </ProjectReference>
   </ItemGroup>

@@ -25,7 +25,7 @@
 else
 {
 	<div class="row">
-		<div class="col-md-4">
+		<div>
 			<form asp-action="Add">
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -59,7 +59,7 @@ else
 @if(Model.SpeechHandlers != null && Model.SpeechHandlers.Count() > 0)
 {
 	<div class="row">
-		<div class="col-md-4">
+		<div>
 			<form asp-action="Remove">
 				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 

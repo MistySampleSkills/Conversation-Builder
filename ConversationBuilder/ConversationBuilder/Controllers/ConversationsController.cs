@@ -439,6 +439,8 @@ namespace ConversationBuilder.Controllers
 					ViewBag.InteractionAndOptionList = await FullInteractionAndOptionList(conversationId);
 					ViewBag.InteractionAnimationList = await InteractionAnimationList(conversationId);
 					ViewBag.InteractionPreSpeechAnimationList = await InteractionPreSpeechAnimationList(conversationId);
+					ViewBag.InteractionListeningAnimationList = await InteractionListeningAnimationList(conversationId);
+					ViewBag.InteractionInitAnimationList = await InteractionInitAnimationList(conversationId);
 
 					ConversationViewModel conversationViewModel = new ConversationViewModel();
 					conversationViewModel.Description = conversation.Description;
@@ -567,8 +569,12 @@ namespace ConversationBuilder.Controllers
 				Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(model.Id);	
 				Animation animation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.Animation);		
 				Animation preSpeechAnimation = null;
+				Animation listeningAnimation = null;
+				Animation initAnimation = null;
 
 				string prespeechAnimationId = "";
+				string initAnimationId = "";
+				string listeningAnimationId = "";
 				if(!string.IsNullOrWhiteSpace(model.PreSpeechAnimation))
 				{
 					if(model.PreSpeechAnimation == "PreSpeech Default")
@@ -583,6 +589,40 @@ namespace ConversationBuilder.Controllers
 					{
 						preSpeechAnimation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.PreSpeechAnimation);	
 						prespeechAnimationId = preSpeechAnimation.Id;
+					}
+				}
+
+				if(!string.IsNullOrWhiteSpace(model.ListeningAnimation))
+				{
+					if(model.ListeningAnimation == "Listening Default")
+					{
+						listeningAnimationId = "Listening Default";
+					}
+					else if(model.ListeningAnimation == "None")
+					{
+						listeningAnimationId = "None";
+					}
+					else
+					{
+						listeningAnimation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.ListeningAnimation);	
+						listeningAnimationId = listeningAnimation.Id;
+					}
+				}
+
+				if(!string.IsNullOrWhiteSpace(model.InitAnimation))
+				{
+					if(model.InitAnimation == "Init Default")
+					{
+						initAnimationId = "Init Default";
+					}
+					else if(model.InitAnimation == "None")
+					{
+						initAnimationId = "None";
+					}
+					else
+					{
+						initAnimation = await _cosmosDbService.ContainerManager.AnimationData.GetAsync(model.InitAnimation);	
+						initAnimationId = initAnimation.Id;
 					}
 				}
 				
@@ -605,6 +645,14 @@ namespace ConversationBuilder.Controllers
 						if(prespeechAnimationId != "PreSpeech Default")
 						{
 							departureMap.PreSpeechAnimationId = prespeechAnimationId;
+						}
+						if(listeningAnimationId != "Listening Default")
+						{
+							departureMap.ListeningAnimationId = listeningAnimationId;
+						}
+						if(initAnimationId != "Init Default")
+						{
+							departureMap.InitAnimationId = initAnimationId;
 						}
 						departureMap.TriggerId = model.SelectedTrigger;
 						departureMap.ConversationId = conversation.Id;
@@ -664,6 +712,54 @@ namespace ConversationBuilder.Controllers
 						if(!conversation.Animations.Contains(goToInteraction.PreSpeechAnimation))
 						{
 							conversation.Animations.Add(goToInteraction.PreSpeechAnimation);
+						}
+					}
+
+
+
+
+
+					if(!string.IsNullOrWhiteSpace(initAnimationId))
+					{
+						if(model.InitAnimation != "Init Default")
+						{
+							conversation.InteractionInitAnimations.Remove(triggerActionOption.Id);
+							conversation.InteractionInitAnimations.Add(triggerActionOption.Id, initAnimationId);
+
+
+							if(initAnimationId != "None" && !conversation.Animations.Contains(initAnimationId))
+							{
+								conversation.Animations.Add(initAnimationId);
+							}
+						}
+					}
+					else
+					{
+						if(!conversation.Animations.Contains(goToInteraction.InitAnimation))
+						{
+							conversation.Animations.Add(goToInteraction.InitAnimation);
+						}
+					}
+					
+					if(!string.IsNullOrWhiteSpace(listeningAnimationId))
+					{
+						if(model.ListeningAnimation != "Listening Default")
+						{
+							conversation.InteractionListeningAnimations.Remove(triggerActionOption.Id);
+							conversation.InteractionListeningAnimations.Add(triggerActionOption.Id, listeningAnimationId);
+
+
+							if(listeningAnimationId != "None" && !conversation.Animations.Contains(listeningAnimationId))
+							{
+								conversation.Animations.Add(listeningAnimationId);
+							}
+						}
+					}
+					else
+					{
+						if(!conversation.Animations.Contains(goToInteraction.ListeningAnimation))
+						{
+							conversation.Animations.Add(goToInteraction.ListeningAnimation);
 						}
 					}
 

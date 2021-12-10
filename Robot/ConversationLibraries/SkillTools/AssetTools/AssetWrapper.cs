@@ -50,7 +50,7 @@ namespace SkillTools.AssetTools
 	public sealed class AssetWrapper : IAssetWrapper
 	{
 		private IRobotMessenger _misty;
-		
+
 		/// <summary>
 		/// Misty's image list as per last check
 		/// </summary>
@@ -79,7 +79,7 @@ namespace SkillTools.AssetTools
 				if (audioEnabledResponse == null || audioEnabledResponse.Status != ResponseStatus.Success || !audioEnabledResponse.Data)
 				{
 					IRobotCommandResponse enableResponse = await _misty.EnableAudioServiceAsync();
-					if(enableResponse.Status != ResponseStatus.Success)
+					if (enableResponse.Status != ResponseStatus.Success)
 					{
 						//Cannot get audio status, will still attempt to load assets
 						_misty.SkillLogger.Log($"Unable to determine audio service status. Attempting asset load.");
@@ -94,7 +94,7 @@ namespace SkillTools.AssetTools
 				}
 
 				IGetImageListResponse imageListResponse = await _misty.GetImageListAsync();
-				if (imageListResponse != null  && imageListResponse.Status == ResponseStatus.Success && imageListResponse.Data.Count() > 0)
+				if (imageListResponse != null && imageListResponse.Status == ResponseStatus.Success && imageListResponse.Data.Count() > 0)
 				{
 					ImageList = imageListResponse.Data;
 				}
@@ -138,7 +138,7 @@ namespace SkillTools.AssetTools
 		{
 			_misty.DisplayImage($"e_{systemImage.ToString()}.jpg", layer, false, null);
 		}
-		
+
 		/// <summary>
 		/// Simple method wrapper to help with playing system audio
 		/// </summary>
@@ -168,14 +168,14 @@ namespace SkillTools.AssetTools
 				await RefreshAssetLists();
 
 				StorageFolder skillAssetFolder = null;
-				if(assetFolder == null)
+				if (assetFolder == null)
 				{
 					StorageFolder firstFolder = (await Windows.ApplicationModel.Package.Current.InstalledLocation.GetFoldersAsync()).FirstOrDefault(x => x.DisplayName == "Assets");
 					//Load the assets in the Assets/SkillAssets folder to the robot if they are missing or if ReloadAssets is passed in
 					if (firstFolder != null)
 					{
 						StorageFolder secondFolder = (await firstFolder.GetFoldersAsync()).FirstOrDefault(x => x.DisplayName == "SkillAssets");
-						if(secondFolder == null)
+						if (secondFolder == null)
 						{
 							_misty.SkillLogger.Log($"No asset data to upload in Assets/SkillAssets.");
 							return;
@@ -190,7 +190,7 @@ namespace SkillTools.AssetTools
 				{
 					skillAssetFolder = assetFolder;
 				}
-				
+
 				IList<StorageFile> assetFileList = (await skillAssetFolder?.GetFilesAsync()).ToList() ?? new List<StorageFile>();
 				foreach (StorageFile storageFile in assetFileList)
 				{
@@ -254,7 +254,7 @@ namespace SkillTools.AssetTools
 					}
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				_misty.SkillLogger.Log("Error loading assets.", ex);
 

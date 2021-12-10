@@ -1,0 +1,15 @@
+@{
+	ViewData["Title"] = "Admin Home";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<div style="padding-top:70px;">
+	<dl>
+		<dt><label title="Contains the details of your conversation and interactions."><a class="nav-item" asp-action="index" asp-controller="conversations">Conversations</a></label></dt>
+		<dt><label title="Conversation groups are where you start your conversation and can contain one or more linked conversations and their conversation entry and departure mappings."><a class="nav-item" asp-action="index" asp-controller="conversationGroups">Conversation Groups</a></label></dt>
+		<dt><label title="Characters use speech configurations to indicate how to speak and listen."><a class="nav-item" asp-action="index" asp-controller="speechconfigurations">Speech Configurations</a></label></dt>
+		<dt><label title="Character configurations that can be used in a conversation and contains core details about how things are presented."><a class="nav-item" asp-action="index" asp-controller="characterconfigurations">Character Configurations</a></label></dt>
+  	</dl>	
+</div>

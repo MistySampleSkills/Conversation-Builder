@@ -15,12 +15,12 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="Edit">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
 				<label asp-for="Name" class="control-label"></label>
-				<label title="Try to keep your names descriptive and unique as you will use them in animation creation.">ℹ️</label>
+				<label title="Try to keep your names descriptive and unique as you will use them in animation creation.">💡</label>
 				<input asp-for="Name" class="form-control" />
 				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
@@ -28,13 +28,13 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="FollowFace" /> @Html.DisplayNameFor(model => model.FollowFace)
-						<label title="Select to follow faces.">ℹ️</label>
+						<label title="Select to follow faces.">💡</label>
 					</label>
 				</div>
 			</div>
 			<div class="form-group">
 				<label asp-for="FollowObject" class="control-label"></label>
-				<label title="Choose an object to follow.  Make sure Follow face is not selected.">ℹ️</label>
+				<label title="Choose an object to follow.  Make sure Follow face is not selected.">💡</label>
 				<select asp-for="FollowObject" class="form-control">					
 					<option value="" selected></option>
 					@foreach (KeyValuePair<string, string> item in @ViewBag.ObjectList)
@@ -45,20 +45,20 @@
 			</div>
 			<div class="form-group">
 				<label asp-for="StartLookAroundOnLostObject" class="control-label"></label>
-				<label title="The amount of time to wait in seconds of not seeing an expected face or object, before looking around in the specified range for the face or object.">ℹ️</label>
+				<label title="The amount of time to wait in seconds of not seeing an expected face or object, before looking around in the specified range for the face or object.">💡</label>
 				<input asp-for="StartLookAroundOnLostObject" class="form-control" />
 				<span asp-validation-for="StartLookAroundOnLostObject" class="text-danger"></span>
 			</div>
 			<div class="row">
 				<div class="form-group col-md-4">				
 					<label asp-for="MinPitch" class="control-label"></label>
-					<label title="The minimum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<label title="The minimum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">💡</label>
 					<input asp-for="MinPitch" class="form-control" />
 					<span asp-validation-for="MinPitch" class="text-danger"></span>
 				</div>
 				<div class="form-group col-md-4">
 					<label asp-for="MaxPitch" class="control-label"></label>
-					<label title="The maximum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<label title="The maximum pitch, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">💡</label>
 					<input asp-for="MaxPitch" class="form-control" />
 					<span asp-validation-for="MaxPitch" class="text-danger"></span>
 				</div>
@@ -67,13 +67,13 @@
 			<div class="row">
 				<div class="form-group col-md-4">				
 					<label asp-for="MinRoll " class="control-label"></label>
-					<label title="The minimum roll, in degrees, where the head will attempt to move.">ℹ️</label>
+					<label title="The minimum roll, in degrees, where the head will attempt to move.">💡</label>
 					<input asp-for="MinRoll" class="form-control" />
 					<span asp-validation-for="MinRoll" class="text-danger"></span>
 				</div>
 				<div class="form-group col-md-4">
 					<label asp-for="MaxRoll " class="control-label"></label>
-					<label title="The maximum roll, in degrees, where the head will attempt to move.">ℹ️</label>
+					<label title="The maximum roll, in degrees, where the head will attempt to move.">💡</label>
 					<input asp-for="MaxRoll" class="form-control" />
 					<span asp-validation-for="MaxRoll" class="text-danger"></span>
 				</div>
@@ -82,39 +82,39 @@
 			<div class="row">
 				<div class="form-group col-md-4">				
 					<label asp-for="MinYaw" class="control-label"></label>
-					<label title="The minimum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<label title="The minimum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">💡</label>
 					<input asp-for="MinYaw" class="form-control" />
 					<span asp-validation-for="MinYaw" class="text-danger"></span>
 				</div>
 				<div class="form-group col-md-4">
 					<label asp-for="MaxYaw" class="control-label"></label>
-					<label title="The maximum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">ℹ️</label>
+					<label title="The maximum yaw, in degrees, where the head will attempt to move if the robot is not following a face or object, or if it cannot find one.">💡</label>
 					<input asp-for="MaxYaw" class="form-control" />
 					<span asp-validation-for="MaxYaw" class="text-danger"></span>
 				</div>
 			</div>
 			<div class="form-group">
 				<label asp-for="DelayBetweenMovements " class="control-label"></label>
-				<label title="The delay in seconds between starting movements if different max and minimum ranges are selected. If you are following, this is the length of time before head corrections to follow, so make sure it is very fast.">ℹ️</label>
+				<label title="The delay in seconds between starting movements if different max and minimum ranges are selected. If you are following, this is the length of time before head corrections to follow, so make sure it is very fast.">💡</label>
 				<input asp-for="DelayBetweenMovements" class="form-control" />
 				<span asp-validation-for="DelayBetweenMovements" class="text-danger"></span>
 			</div>
 
 			<div class="form-group">
 				<label asp-for="MovementDuration " class="control-label"></label>
-				<label title="How long the movement should take to reach it's goal. Use this OR Velocity.">ℹ️</label>
+				<label title="How long the movement should take to reach it's goal. Use this OR Velocity.">💡</label>
 				<input asp-for="MovementDuration" class="form-control" />
 				<span asp-validation-for="MovementDuration" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="MovementVelocity" class="control-label"></label>
-				<label title="How fast the movement should be performed, from 1 to 100. Use this OR Duration.">ℹ️</label>
+				<label title="How fast the movement should be performed, from 1 to 100. Use this OR Duration.">💡</label>
 				<input asp-for="MovementVelocity" class="form-control" />
 				<span asp-validation-for="MovementVelocity" class="text-danger"></span>
 			</div>
 			<div class="form-group">
 				<label asp-for="FollowRefresh " class="control-label"></label>
-				<label title="How often to change direction for face and object following.">ℹ️</label>
+				<label title="How often to change direction for face and object following.">💡</label>
 				<input asp-for="FollowRefresh" class="form-control" />
 				<span asp-validation-for="FollowRefresh" class="text-danger"></span>
 			</div>
@@ -123,7 +123,7 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="RandomRange" /> @Html.DisplayNameFor(model => model.RandomRange)
-						<label title="If selected, will pick a random location with the range.  If not selected, will attempt to move to the specific ranges specified.">ℹ️</label>
+						<label title="If selected, will pick a random location with the range.  If not selected, will attempt to move to the specific ranges specified.">💡</label>
 					</label>
 				</div>
 			</div>

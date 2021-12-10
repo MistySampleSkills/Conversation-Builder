@@ -121,11 +121,11 @@
 <div>
 	@if(ViewBag.ShowBetaItems)
 	{
-		<h5>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id }) | @Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id })</h5>
+		<p>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id }) | @Html.ActionLink("Manage Access", "ManageAccess", new { id =Model.Id })</p>
 	}
 	else
 	{
-		<h5>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id })</h5>
+		<p>@Html.ActionLink("Manage Conversations", "Manage", new { id =Model.Id })</p>
 	}
 </div>
 
@@ -139,56 +139,99 @@
 	<h4>Start from the Skill Runner with the following fields.</h4>
 	<h4>ConversationGroupId : @Model.Id</h4>
 	<h4>Endpoint : @ViewBag.Endpoint</h4>
-	
-	@if(ViewBag.ShowBetaItems)
-	{
-		<h5>Include authorization data as needed for non-public items.</h5>		
-		<br />
-		<hr />
-		<h4>If you are running the conversation builder service locally on your computer, you can start and stop from this page by entering in the robot's local IP.</h4>
 
-		<div>
-			<form asp-action="StartSkill">
-				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+	<h5>Include authorization data as needed for non-public items.</h5>		
+	<br />
+	<hr />
+	<h4>If you are running the conversation builder service locally on your computer, you can start and stop from this page by entering in the robot's local IP.</h4>
 
-				<div class="form-group">
-					Start Skill
-					<div class="form-group">
-					Robot IP
-					<input asp-for="RobotIp" class="form-control" />
-					<span asp-validation-for="RobotIp" class="text-danger"></span>
-				</div>
-				<div class="form-group">
-					<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
-				</div>
-				<div class="form-group">
-					<input type="submit" value="Start Skill" class="btn btn-default" />
-				</div>
-			</form>
-		</div>
+	<div>
+		<form asp-action="StartSkill">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-		<hr />
-		<br />
-		<div>
-			<form asp-action="StopSkill">
-				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
+			<div class="form-group">
+				Start Skill
 				<div class="form-group">
-					Stop Skill
-					<div class="form-group">
-					Robot IP
-					<input asp-for="RobotIp" class="form-control" />
-					<span asp-validation-for="RobotIp" class="text-danger"></span>
-				</div>
-				<div class="form-group">
-					<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
-				</div>
-				<div class="form-group">
-					<input type="submit" value="Stop Skill" class="btn btn-default" />
-				</div>
-			</form>
+				Robot IP
+				<input asp-for="RobotIp" class="form-control" />
+				<span asp-validation-for="RobotIp" class="text-danger"></span>
 			</div>
-	}
+			
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="AnimationCreationMode" /> @Html.DisplayNameFor(model => model.AnimationCreationMode)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="AnimationCreationDebounceSeconds" class="control-label"></label>
+				<input asp-for="AnimationCreationDebounceSeconds" class="form-control" />
+				<span asp-validation-for="AnimationCreationDebounceSeconds" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IgnoreArmCommands" /> @Html.DisplayNameFor(model => model.IgnoreArmCommands)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IgnoreHeadCommands" /> @Html.DisplayNameFor(model => model.IgnoreHeadCommands)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SmoothRecording" /> @Html.DisplayNameFor(model => model.SmoothRecording)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="RetranslateTTS" /> @Html.DisplayNameFor(model => model.RetranslateTTS)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label asp-for="PuppetingList" class="control-label"></label>
+				<input asp-for="PuppetingList" class="form-control" />
+				<span asp-validation-for="PuppetingList" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Start Skill" class="btn btn-default" />
+			</div>
+		</form>
+	</div>
+
+	<hr />
+	<br />
+	<div>
+		<form asp-action="StopSkill">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+			<div class="form-group">
+				Stop Skill
+				<div class="form-group">
+				Robot IP
+				<input asp-for="RobotIp" class="form-control" />
+				<span asp-validation-for="RobotIp" class="text-danger"></span>
+			</div>
+			<div class="form-group">
+				<input asp-for="Id" class="form-control" value="@Model.Id" type="hidden"> </input>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Stop Skill" class="btn btn-default" />
+			</div>
+		</form>
+		</div>
 }
 else
 {

@@ -37,13 +37,13 @@ namespace FunnyBone
 {
 	public class FunnyBoneAPI
 	{
+		private WebMessenger _webMessenger = new WebMessenger();
+
 		public async Task<SingleJokeFormat> GetDeveloperJoke()
 		{
 			try
 			{
-				WebMessenger request = new WebMessenger();
-				WebMessengerData data = await request.GetRequestAsync("https://v2.jokeapi.dev/joke/Programming,Pun?blacklistFlags=nsfw,religious,political,racist,sexist,explicit&type=single");
-
+				WebMessengerData data = await _webMessenger.GetRequestAsync("https://v2.jokeapi.dev/joke/Programming,Pun?blacklistFlags=nsfw,religious,political,racist,sexist,explicit&type=single");
 				SingleJokeFormat singleJokeFormat = Newtonsoft.Json.JsonConvert.DeserializeObject<SingleJokeFormat>(data.Response);
 				return singleJokeFormat;
 			}
@@ -68,10 +68,8 @@ namespace FunnyBone
 
 				if (toExclude) url += string.Format("&exclude=[{0}]", string.Join(",", exclude));
 				if (toInclude) url += string.Format("&limitTo=[{0}]", string.Join(",", limitTo));
-
-				WebMessenger request = new WebMessenger();
-				WebMessengerData data = await request.GetRequestAsync(url);
-
+				
+				WebMessengerData data = await _webMessenger.GetRequestAsync(url);
 				ChuckNorrisJokeFormat chuckNorrisJokeFormat = Newtonsoft.Json.JsonConvert.DeserializeObject<ChuckNorrisJokeFormat>(data.Response);
 				return chuckNorrisJokeFormat;
 			}

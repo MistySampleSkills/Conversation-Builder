@@ -1,0 +1,9 @@
+{ 
+	"Name" : "describe-scene", 
+	"AuthFields":
+	{
+		"SubscriptionKey":"subkeyHere",
+		"Region":"region",
+		"Endpoint":"endpoint"
+	}
+}

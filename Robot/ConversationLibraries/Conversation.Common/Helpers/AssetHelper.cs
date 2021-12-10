@@ -73,33 +73,7 @@ namespace Conversation.Common
 			}
 			return $"{audioFilename}.wav";
 		}
-
-		/// <summary>
-		/// Make a unique filename based upon the text of the message
-		/// </summary>
-		/// <param name="text"></param>
-		/// <returns></returns>
-		public static string MakeFileName(string text)
-		{
-			if(string.IsNullOrWhiteSpace(text))
-			{
-				return null;
-			}
-
-			using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-			{
-				byte[] inputBytes = Encoding.ASCII.GetBytes(text);
-				byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-				StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < hashBytes.Length; i++)
-				{
-					sb.Append(hashBytes[i].ToString("X2"));
-				}
-				return sb.ToString();
-			}
-		}
-
+		
 		public static string GetFileNameFromAsset(SystemImage image)
 		{
 			return $"e_{image}.jpg";

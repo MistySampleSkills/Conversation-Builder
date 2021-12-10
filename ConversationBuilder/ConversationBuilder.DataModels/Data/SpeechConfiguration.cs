@@ -118,6 +118,7 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Profanity Setting (Azure)")]
 		public string ProfanitySetting { get; set; }
 		
+
 		public DateTimeOffset Created { get; set; }
 		
 		public DateTimeOffset Updated { get; set; }

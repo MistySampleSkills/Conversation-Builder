@@ -135,10 +135,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
     <PackageReference Include="System.Diagnostics.Debug">
       <Version>4.3.0</Version>
@@ -160,13 +160,13 @@
       <Project>{88cbf86e-a6eb-4e4d-8834-6b64ce686ebd}</Project>
       <Name>Conversation.Weather.OpenWeather</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\ConversationLibraries\SkillTools\SkillTools.csproj">
-      <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
-      <Name>SkillTools</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\MistyCharacter\MistyCharacter.csproj">
       <Project>{B3665F59-B772-4058-B522-EAEFE3980F7C}</Project>
       <Name>MistyCharacter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\MistyConversation\MistyConversation.csproj">
+      <Project>{2c224b33-2acc-4a91-8447-f317f09bc1e8}</Project>
+      <Name>MistyConversation</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '15.0' ">

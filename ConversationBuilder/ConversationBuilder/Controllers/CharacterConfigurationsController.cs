@@ -224,6 +224,7 @@ namespace ConversationBuilder.Controllers
 					loadedCharacterConfiguration.HeardSpeechToScreen = characterConfiguration.HeardSpeechToScreen;
 					loadedCharacterConfiguration.LargePrint = characterConfiguration.LargePrint;
 					loadedCharacterConfiguration.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
+					loadedCharacterConfiguration.ShowSpeakingIndicator = characterConfiguration.ShowSpeakingIndicator;
 					loadedCharacterConfiguration.DisplaySpoken = characterConfiguration.DisplaySpoken;					
 					loadedCharacterConfiguration.StartVolume = characterConfiguration.StartVolume;
 					loadedCharacterConfiguration.PreSpeechPhrases = characterConfiguration.PreSpeechPhrases;
@@ -232,8 +233,10 @@ namespace ConversationBuilder.Controllers
 					loadedCharacterConfiguration.ManagementAccess = characterConfiguration.ManagementAccess;
 					loadedCharacterConfiguration.StreamInteraction = characterConfiguration.StreamInteraction;
 					loadedCharacterConfiguration.SpeechConfiguration = characterConfiguration.SpeechConfiguration;
+					loadedCharacterConfiguration.SpeakingImage= characterConfiguration.SpeakingImage;
+					loadedCharacterConfiguration.ListeningImage= characterConfiguration.ListeningImage;
+					loadedCharacterConfiguration.ProcessingImage= characterConfiguration.ProcessingImage;
 					loadedCharacterConfiguration.Name = characterConfiguration.Name;
-					loadedCharacterConfiguration.Character = characterConfiguration.Character;
 					loadedCharacterConfiguration.Skill = characterConfiguration.Skill;
 					loadedCharacterConfiguration.Updated = DateTimeOffset.UtcNow;
 					

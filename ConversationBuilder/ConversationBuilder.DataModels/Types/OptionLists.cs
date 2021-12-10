@@ -38,6 +38,7 @@ namespace ConversationBuilder.DataModels
 			AllItems.TryAdd(Sympathy, Sympathy);
 			AllItems.TryAdd(Triumph, Triumph);
 			AllItems.TryAdd(Avoidance, Avoidance);
+			AllItems.TryAdd(None, None);
 		}
 
 		public const string Admiration = "Admiration";
@@ -68,6 +69,7 @@ namespace ConversationBuilder.DataModels
 		public const string Sympathy = "Sympathy";
 		public const string Triumph = "Triumph";
 		public const string Avoidance = "Avoidance";
+		public const string None = "None";
 	}
 
 	public class Themes
@@ -159,21 +161,6 @@ namespace ConversationBuilder.DataModels
 		public const string Masked = "Masked";
 	}
 
-	public class SpeechServices
-	{
-		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();
-		public SpeechServices()
-		{
-			AllItems.TryAdd(Misty, Misty);
-			AllItems.TryAdd(Azure, Azure);
-			AllItems.TryAdd(Google, Google);
-		}
-
-		public const string Misty = "Misty";
-		public const string Azure = "Azure";
-		public const string Google = "Google";
-	}
-
 	public class Triggers
 	{
 		public ConcurrentDictionary<string, string> AllItems { get; private set; }= new ConcurrentDictionary<string, string>();
@@ -196,6 +183,7 @@ namespace ConversationBuilder.DataModels
 			AllItems.TryAdd(SyncEvent, SyncEvent);
 			AllItems.TryAdd(TimeOfFlightRange, TimeOfFlightRange);
 			AllItems.TryAdd(AudioCompleted, AudioCompleted);
+			AllItems.TryAdd(Manual, Manual);			
 		}
 
 		public const string None = "None"; //only used for end trigger
@@ -230,6 +218,7 @@ namespace ConversationBuilder.DataModels
 		//To immediately trigger a start or stop trigger or go to next animation after Misty speaks plays audio
 		public const string AudioCompleted = "AudioCompleted";
 		
+		public const string Manual = "Manual";
 		//TODO
 		//MoodChanged
 	}

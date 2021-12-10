@@ -118,7 +118,7 @@ namespace ConversationBuilder.Data.Cosmos
 			{
 				if(string.IsNullOrWhiteSpace(conversationId))
 				{
-					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND (t.createdBy = null OR t.createdBy = @creatorFilter) ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND (t.createdBy = null OR t.createdBy = 'System' OR t.createdBy = @creatorFilter) ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
 						.WithParameter("@itemType", _rootPartition.ToString())
 						.WithParameter("@creatorFilter", creatorFilter)
 						.WithParameter("@start", startItem-1)
@@ -126,7 +126,7 @@ namespace ConversationBuilder.Data.Cosmos
 				}
 				else
 				{
-					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND (t.createdBy = null OR t.createdBy = @creatorFilter) ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND (t.createdBy = null OR t.createdBy = 'System' OR t.createdBy = @creatorFilter) ORDER BY t.{_defaultOrderItem} DESC OFFSET @start LIMIT @total")
 						.WithParameter("@itemType", _rootPartition.ToString())
 						.WithParameter("@conversationId", conversationId)
 						.WithParameter("@creatorFilter", creatorFilter)
@@ -181,7 +181,7 @@ namespace ConversationBuilder.Data.Cosmos
 			{
 				if(string.IsNullOrWhiteSpace(conversationId))
 				{
-					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND (t.createdBy = null OR t.createdBy = @creatorFilter) AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND (t.createdBy = null OR t.createdBy = 'System' OR t.createdBy = @creatorFilter) AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
 						.WithParameter("@itemType", _rootPartition.ToString())		
 						.WithParameter("@creatorFilter", creatorFilter)
 						.WithParameter("@startDate", startDtAs24)
@@ -189,7 +189,7 @@ namespace ConversationBuilder.Data.Cosmos
 				}
 				else
 				{
-					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND (t.createdBy = null OR t.createdBy = @creatorFilter) AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
+					query = _container.GetItemQueryIterator<TDataItem>(new QueryDefinition($"SELECT * FROM t WHERE t.itemType = @itemType AND t.conversationId = @conversationId AND (t.createdBy = null OR t.createdBy = 'System' OR t.createdBy = @creatorFilter) AND t.{_defaultTimeStampItem} >= @startDate AND t.{_defaultTimeStampItem} <= @endDate ORDER BY t.{_defaultTimeStampItem} DESC")
 						.WithParameter("@itemType", _rootPartition.ToString())			
 						.WithParameter("@conversationId", conversationId)		
 						.WithParameter("@creatorFilter", creatorFilter)
@@ -230,13 +230,13 @@ namespace ConversationBuilder.Data.Cosmos
 			{			
 				if(string.IsNullOrEmpty(conversationId))
 				{
-					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND (t.createdBy = null OR t.createdBy = @creatorFilter)") 
+					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND (c.createdBy = null OR c.createdBy = 'System' OR c.createdBy = @creatorFilter)") 
 						.WithParameter("@itemType", _rootPartition.ToString())
 						.WithParameter("@creatorFilter", creatorFilter));
 				}
 				else
 				{
-					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND c.conversationId = @conversationId AND (c.createdBy = null OR c.createdBy = @creatorFilter)") 
+					screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND c.conversationId = @conversationId AND (c.createdBy = null OR c.createdBy = 'System' OR c.createdBy = @creatorFilter)") 
 						.WithParameter("@itemType", _rootPartition.ToString())
 						.WithParameter("@conversationId", conversationId)
 						.WithParameter("@creatorFilter", creatorFilter));	
@@ -262,7 +262,7 @@ namespace ConversationBuilder.Data.Cosmos
 			}
 			else
 			{
-				screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND (c.createdBy = null OR c.createdBy = @creatorFilter)") 
+				screenIdIterator = _container.GetItemQueryIterator<int>(new QueryDefinition(@"SELECT VALUE COUNT(1) FROM c WHERE c.itemType = @itemType AND (c.createdBy = null OR c.createdBy = 'System' OR c.createdBy = @creatorFilter)") 
 						.WithParameter("@itemType", _rootPartition.ToString())
 						.WithParameter("@creatorFilter", creatorFilter));	
 			}

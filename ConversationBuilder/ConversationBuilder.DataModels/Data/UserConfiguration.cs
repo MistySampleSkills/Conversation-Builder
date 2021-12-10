@@ -48,7 +48,7 @@ namespace ConversationBuilder.DataModels
 
 
 		[Display(Name = "Show Beta Items")]	
-		public bool ShowBetaItems { get; set; }
+		public bool ShowBetaItems { get; set; } = true;
 
 		[Display(Name = "Show All Conversations")]	
 		public bool ShowAllConversations { get; set; } = true;

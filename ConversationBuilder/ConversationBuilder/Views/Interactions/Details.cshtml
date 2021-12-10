@@ -41,12 +41,38 @@
 			{
 				preSpeechName = prespeechNameKvp.Value;
 			}
+
+			KeyValuePair<string, string> initNameKvp = ((IDictionary<string, string>)ViewBag.Animations).FirstOrDefault(x => x.Key == @Model.InitAnimation);
+			string initName = @Model.InitAnimation;
+			if(initNameKvp.Value != null)
+			{
+				initName = initNameKvp.Value;
+			}
+
+			KeyValuePair<string, string> listeningNameKvp = ((IDictionary<string, string>)ViewBag.Animations).FirstOrDefault(x => x.Key == @Model.ListeningAnimation);
+			string listeningName = @Model.ListeningAnimation;
+			if(listeningNameKvp.Value != null)
+			{
+				listeningName = listeningNameKvp.Value;
+			}
 		}
 		<dt>
 			@Html.DisplayNameFor(model => model.Animation)
 		</dt>
 		<dd>
 			@name
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.InitAnimation)
+		</dt>
+		<dd>
+			@initName
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ListeningAnimation)
+		</dt>
+		<dd>
+			@listeningName
 		</dd>
 		<dt>
 			@Html.DisplayNameFor(model => model.PreSpeechAnimation)
@@ -67,7 +93,30 @@
 		<dd>
 			@Html.DisplayFor(model => model.StartListening)
 		</dd>
-
+		<dt>
+			@Html.DisplayNameFor(model => model.AnimationScript)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.AnimationScript)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.InitScript)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.InitScript)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.ListeningScript)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.ListeningScript)
+		</dd>
+		<dt>
+			@Html.DisplayNameFor(model => model.PreSpeechScript)
+		</dt>
+		<dd>
+			@Html.DisplayFor(model => model.PreSpeechScript)
+		</dd>
 		<dt>
 			@Html.DisplayNameFor(model => model.AllowKeyPhraseRecognition)
 		</dt>

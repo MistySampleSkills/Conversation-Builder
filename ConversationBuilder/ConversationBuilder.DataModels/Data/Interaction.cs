@@ -49,7 +49,7 @@ namespace ConversationBuilder.DataModels
 		[Required]
 		public string Name { get; set; }
 
-		[Display(Name = "Default Animation")]
+		[Display(Name = "Main Animation")]
 		public string Animation { get; set; }
 
 		[Display(Name = "Use prespeech for speech intent processing")]
@@ -60,6 +60,16 @@ namespace ConversationBuilder.DataModels
 
 		[Display(Name = "Default PreSpeech Animation")]
 		public string PreSpeechAnimation { get; set; }
+
+
+
+		public string InitAnimation { get; set; }
+		public string ListeningAnimation { get; set; }
+		public string InitScript { get; set; }
+		public string AnimationScript { get; set; }
+		public string PreSpeechScript { get; set; }
+		public string ListeningScript { get; set; }
+
 
 		public IList<string> SkillMessages { get; set; } = new List<string>();
 		public IDictionary<string, IList<TriggerActionOption>> TriggerMap { get; set; } = new Dictionary<string, IList<TriggerActionOption>>();

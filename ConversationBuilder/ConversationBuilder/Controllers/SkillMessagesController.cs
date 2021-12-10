@@ -214,6 +214,7 @@ namespace ConversationBuilder.Controllers
 					loadedSkillMessage.IncludeCharacterState = skillMessage.IncludeCharacterState;
 					loadedSkillMessage.StreamTriggerCheck = skillMessage.StreamTriggerCheck;
 					loadedSkillMessage.IncludeLatestTriggerMatch = skillMessage.IncludeLatestTriggerMatch;
+					loadedSkillMessage.IncludeInteractionInformation = skillMessage.IncludeInteractionInformation;
 					loadedSkillMessage.Payload = skillMessage.Payload;	
 					loadedSkillMessage.Skill = skillMessage.Skill;	
 					loadedSkillMessage.StartIfStopped = skillMessage.StartIfStopped;	

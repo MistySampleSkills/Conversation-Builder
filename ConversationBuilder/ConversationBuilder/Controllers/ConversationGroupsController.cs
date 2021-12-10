@@ -158,7 +158,7 @@ namespace ConversationBuilder.Controllers
 				}
 				else
 				{				
-					SkillParameters skillParameters = await GenerateSkillConfiguration(model.Id);					
+					SkillParameters skillParameters = await GenerateSkillConfiguration(model.Id, model.AnimationCreationMode, model.AnimationCreationDebounceSeconds, model.IgnoreArmCommands, model.IgnoreHeadCommands, model.SmoothRecording, model.PuppetingList, model.RetranslateTTS);					
 					string skillConfiguration = Newtonsoft.Json.JsonConvert.SerializeObject(skillParameters);
 				
 					//Call and start the skill with the generated config

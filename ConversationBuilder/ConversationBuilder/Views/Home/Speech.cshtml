@@ -1,0 +1,17 @@
+@{
+	ViewData["Title"] = "Admin Home";
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/themes/@ViewBag.CssFile" />	
+}
+
+<div class="text-center">	
+		
+	<h4>TTS and ASR</h4>
+	<hr/>	
+	
+	<h6><a class="nav-link" asp-action="index" asp-controller="speechconfigurations">Speech Configurations</a></h6>
+
+	<h6><a class="nav-link" asp-action="index" asp-controller="speechHandlers">Speech Handlers</a></h6>
+	
+</div>

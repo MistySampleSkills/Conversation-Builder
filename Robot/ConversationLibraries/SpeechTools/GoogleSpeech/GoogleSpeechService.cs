@@ -78,11 +78,13 @@ namespace SpeechTools.GoogleSpeech
 	public sealed class GoogleSpeechService : ISpeechService
 	{
 		private IRobotMessenger _robot;
-		private WebMessenger _googleEndpoint = new WebMessenger();
+		private WebMessenger _googleRecognitionEndpoint = new WebMessenger();
+		private WebMessenger _googleTTSEndpoint = new WebMessenger();
 
 		private SemaphoreSlim _speechSemaphore = new SemaphoreSlim(1, 1);
-		private GoogleServiceAuthorization _servicesAuthorization;
-		
+		private GoogleServiceAuthorization _recognitionServicesAuthorization;
+		private GoogleServiceAuthorization _ttsServicesAuthorization;
+
 		/// <summary>
 		/// Is the service authorized
 		/// </summary>
@@ -113,15 +115,30 @@ namespace SpeechTools.GoogleSpeech
 		/// </summary>
 		public string ProfanitySetting { get; set; } = "Raw";
  
-		public GoogleSpeechService(GoogleServiceAuthorization servicesAuthorization, IRobotMessenger robot)
+		public GoogleSpeechService(GoogleServiceAuthorization ttsServicesAuthorization, GoogleServiceAuthorization recognitionServicesAuthorization, IRobotMessenger robot)
 		{
+			Authorized = false;
 			_robot = robot;
-			_servicesAuthorization = servicesAuthorization;
-            
-			if (_servicesAuthorization != null && _servicesAuthorization.SubscriptionKey != null)
+			_recognitionServicesAuthorization = recognitionServicesAuthorization;
+			_ttsServicesAuthorization = ttsServicesAuthorization;
+		}
+
+		public bool Initialize()
+		{
+			try
 			{
-				Authorized = true;
+				if ((_recognitionServicesAuthorization != null && _recognitionServicesAuthorization.SubscriptionKey != null) ||
+				((_ttsServicesAuthorization != null && _ttsServicesAuthorization.SubscriptionKey != null)))
+				{
+					Authorized = true;
+				}
+				
 			}
+			catch (Exception ex)
+			{
+				Authorized = false;
+			}
+			return Authorized;
 		}
 
 		/// <summary>
@@ -155,7 +172,7 @@ namespace SpeechTools.GoogleSpeech
 					'content': '" + Convert.ToBase64String(audioData) + @"'
 				}}";
 
-				WebMessengerData googleResponse = await _googleEndpoint.PostRequest(_servicesAuthorization.STTEndpoint + _servicesAuthorization.SubscriptionKey, arguments, "application/json");
+				WebMessengerData googleResponse = await _googleRecognitionEndpoint.PostRequest(_recognitionServicesAuthorization.Endpoint + _recognitionServicesAuthorization.SubscriptionKey, arguments, "application/json");
 
 				//if fails, possibly due to settings of skill, so try through robot
 				if (googleResponse.HttpCode == 200)
@@ -180,7 +197,7 @@ namespace SpeechTools.GoogleSpeech
 				}
 				else
 				{
-					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _servicesAuthorization.STTEndpoint + _servicesAuthorization.SubscriptionKey, "BEARER", _servicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
+					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _recognitionServicesAuthorization.Endpoint + _recognitionServicesAuthorization.SubscriptionKey, "BEARER", _recognitionServicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
 					GoogleSpeechRecognitionResults results = Newtonsoft.Json.JsonConvert.DeserializeObject<GoogleSpeechRecognitionResults>(sdata.Data.Data.ToString());
 					try
 					{
@@ -272,7 +289,7 @@ namespace SpeechTools.GoogleSpeech
 					'content': '" + base64String + @"'
 				}}";
 
-				WebMessengerData googleResponse = await _googleEndpoint.PostRequest(_servicesAuthorization.STTEndpoint + _servicesAuthorization.SubscriptionKey, arguments, "application /json");
+				WebMessengerData googleResponse = await _googleRecognitionEndpoint.PostRequest(_recognitionServicesAuthorization.Endpoint + _recognitionServicesAuthorization.SubscriptionKey, arguments, "application /json");
 
 				if (googleResponse.HttpCode == 200)
 				{
@@ -295,7 +312,7 @@ namespace SpeechTools.GoogleSpeech
 				}
 				else
 				{
-					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _servicesAuthorization.STTEndpoint + _servicesAuthorization.SubscriptionKey, "BEARER", _servicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
+					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _recognitionServicesAuthorization.Endpoint + _recognitionServicesAuthorization.SubscriptionKey, "BEARER", _recognitionServicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
 					GoogleSpeechRecognitionResults results = Newtonsoft.Json.JsonConvert.DeserializeObject<GoogleSpeechRecognitionResults>(sdata.Data.Data.ToString());
 
 					try
@@ -371,7 +388,7 @@ namespace SpeechTools.GoogleSpeech
 					}
 				}";
 
-				WebMessengerData googleResponse = await _googleEndpoint.PostRequest(_servicesAuthorization.TTSEndpoint + _servicesAuthorization.SubscriptionKey, arguments, "application/json");
+				WebMessengerData googleResponse = await _googleTTSEndpoint.PostRequest(_ttsServicesAuthorization.Endpoint + _ttsServicesAuthorization.SubscriptionKey, arguments, "application/json");
 
 				//if fails, possibly due to settings of skill, so try through robot
 				if (googleResponse.HttpCode == 200)
@@ -396,7 +413,7 @@ namespace SpeechTools.GoogleSpeech
 				}
 				else
 				{
-					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _servicesAuthorization.TTSEndpoint + _servicesAuthorization.SubscriptionKey, "BEARER", _servicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
+					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _ttsServicesAuthorization.Endpoint + _ttsServicesAuthorization.SubscriptionKey, "BEARER", _ttsServicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
 					GoogleTextToSpeechResults results = Newtonsoft.Json.JsonConvert.DeserializeObject<GoogleTextToSpeechResults>(sdata.Data.Data.ToString());
 					try
 					{
@@ -472,7 +489,7 @@ namespace SpeechTools.GoogleSpeech
 					}
 				}";
 				
-				WebMessengerData googleResponse = await _googleEndpoint.PostRequest(_servicesAuthorization.TTSEndpoint + _servicesAuthorization.SubscriptionKey, arguments, "application/json");
+				WebMessengerData googleResponse = await _googleTTSEndpoint.PostRequest(_ttsServicesAuthorization.Endpoint + _ttsServicesAuthorization.SubscriptionKey, arguments, "application/json");
 
 				if (googleResponse.HttpCode == 200)
 				{
@@ -493,7 +510,7 @@ namespace SpeechTools.GoogleSpeech
 				}
 				else
 				{
-					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _servicesAuthorization.TTSEndpoint + _servicesAuthorization.SubscriptionKey, "BEARER", _servicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
+					ISendExternalRequestResponse sdata = await _robot.SendExternalRequestAsync("POST", _ttsServicesAuthorization.Endpoint + _ttsServicesAuthorization.SubscriptionKey, "BEARER", _ttsServicesAuthorization.SubscriptionKey, arguments, false, false, null, "application/json");
 					GoogleTextToSpeechResults results = Newtonsoft.Json.JsonConvert.DeserializeObject<GoogleTextToSpeechResults>(sdata.Data.Data.ToString());
 					try
 					{
@@ -515,9 +532,7 @@ namespace SpeechTools.GoogleSpeech
 					if (response?.AudioData != null)
 					{
 						string fullName = AssetHelper.AddMissingWavExtension(fileName);
-
-						//TODO Figure out trimming for google
-
+						
 						if (trimAudioSilenceMs > 0)
 						{
 							byte[] trimmedFile = GetTrimmedWavFile(response.AudioData, new TimeSpan(0, 0, 0, 0, trimAudioSilenceMs));

@@ -22,11 +22,24 @@ namespace ConversationBuilder.ViewModels
 
 		public string Animation { get; set; }
 		public string PreSpeechAnimation { get; set; }
+		public string ListeningAnimation { get; set; }
+		public string InitAnimation { get; set; }
 
 		public Animation AnimationData { get; set; }
 		
 		public Animation PreSpeechAnimationData { get; set; }
+
 		
+//TODO
+		public Animation ListeningAnimationData { get; set; }
+
+		public Animation InitAnimationData { get; set; }
+
+		public string InitScript { get; set; }
+		public string PreSpeechScript { get; set; }
+		public string ListeningScript { get; set; }
+		public string AnimationScript { get; set; }
+
 		public double InteractionFailedTimeout { get; set; } = 120; //2 minutes with no trigger response
 
 		public DateTimeOffset Created { get; set; }

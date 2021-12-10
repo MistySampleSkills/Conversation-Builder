@@ -14,7 +14,7 @@
 <h5 style="color:red">@ViewBag.Message</h5>
 
 <div class="row">
-	<div class="col-md-4">
+	<div>
 		<form asp-action="Create">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="form-group">
@@ -85,6 +85,13 @@
 				<div class="checkbox">
 					<label>
 						<input asp-for="StreamTriggerCheck" /> @Html.DisplayNameFor(model => model.StreamTriggerCheck)
+					</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IncludeInteractionInformation" /> @Html.DisplayNameFor(model => model.IncludeInteractionInformation)
 					</label>
 				</div>
 			</div>

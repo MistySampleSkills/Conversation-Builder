@@ -1,0 +1,9 @@
+{ 
+	"Name" : "send-twilio", 
+	"AuthFields":
+	{
+		"AccountId":"123",
+		"AuthToken":"abc",
+		"SenderNumber":"+13038675309"
+	}
+}

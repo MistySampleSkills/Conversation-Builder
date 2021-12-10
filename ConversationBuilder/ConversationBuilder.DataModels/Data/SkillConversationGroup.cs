@@ -53,6 +53,7 @@ namespace ConversationBuilder.DataModels
 
 		public string CharacterConfiguration { get; set; }
 
+		public IList<SkillAuthorization> SkillAuthorizations { get; set; } = new List<SkillAuthorization>();
 		public IList<SkillMessage> SkillMessages { get; set; } = new List<SkillMessage>();
 		public IList<GenericDataStore> GenericDataStores { get; set; } = new List<GenericDataStore> ();
 			
@@ -61,6 +62,14 @@ namespace ConversationBuilder.DataModels
 		public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
 		
 		public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
+
+		public bool AnimationCreationMode { get; set; }
+		public double AnimationCreationDebounceSeconds { get; set; } = .25;
+		public bool IgnoreArmCommands { get; set; }
+		public bool IgnoreHeadCommands { get; set; }
+		public bool RetranslateTTS { get; set; }
+		public bool SmoothRecording { get; set; }
+		public string PuppetingList { get; set; }
 	}
 
 }

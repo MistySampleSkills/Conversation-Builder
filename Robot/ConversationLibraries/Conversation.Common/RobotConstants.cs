@@ -34,12 +34,19 @@ namespace Conversation.Common
 {
 	public class RobotConstants
 	{
+		//Arm max and mins
 		public readonly static int MinimumArmDegreesInclusive = -90;
 		public readonly static int MaximumArmDegreesExclusive = 91;
+
+		//Head pitch max and mins
 		public readonly static int MinimumPitchDegreesInclusive = -40;
 		public readonly static int MaximumPitchDegreesExclusive = 16;
+
+		//Head roll max and mins
 		public readonly static int MinimumRollDegreesInclusive = -30;
 		public readonly static int MaximumRollDegreesExclusive = 31;
+
+		//Head yaw max and mins
 		public readonly static int MinimumYawDegreesInclusive = -70;
 		public readonly static int MaximumYawDegreesExclusive = 71;
 	}

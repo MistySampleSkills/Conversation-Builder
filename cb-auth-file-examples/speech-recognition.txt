@@ -1,0 +1,14 @@
+{ 
+	"Name" : "speech-recognition", 
+	"AuthFields":
+	{
+		"Service":"Vosk",
+		"SubscriptionKey":"",
+		"Region":"",
+		"Endpoint":"",
+		"TranslatedLanguage":"en-US",
+		"SpokenLanguage":"en-US",
+		"ProfanitySetting":"",
+		"IsServiceAccount":false
+	}
+}

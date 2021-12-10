@@ -121,36 +121,51 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConversationConstants.cs" />
-    <Compile Include="Conversations\ConversationMappingDetail.cs" />
-    <Compile Include="Conversations\DepartureMap.cs" />
-    <Compile Include="Conversations\EntryMap.cs" />
-    <Compile Include="Conversations\GenericDataStore.cs" />
-    <Compile Include="Conversations\Interaction.cs" />
-    <Compile Include="Conversations\ConversationData.cs" />
-    <Compile Include="Conversations\Recipe.cs" />
-    <Compile Include="Conversations\Robot.cs" />
-    <Compile Include="Conversations\TriggerActionOption.cs" />
-    <Compile Include="Conversations\SkillMessage.cs" />
-    <Compile Include="Conversations\TriggerDetail.cs" />
-    <Compile Include="Conversations\UtteranceData.cs" />
+    <Compile Include="Data\AnimationRecorder.cs" />
+    <Compile Include="Data\ICommandAuthorization.cs" />
+    <Compile Include="Data\BaseCommandManager.cs" />
+    <Compile Include="Data\ConversationMappingDetail.cs" />
+    <Compile Include="Data\DepartureMap.cs" />
+    <Compile Include="Data\EntryMap.cs" />
+    <Compile Include="Data\GenericDataStore.cs" />
+    <Compile Include="Data\IAnimationManager.cs" />
+    <Compile Include="Data\IArmManager.cs" />
+    <Compile Include="Data\IBaseCharacter.cs" />
+    <Compile Include="Data\IBaseCommand.cs" />
+    <Compile Include="Data\ICommandManager.cs" />
+    <Compile Include="Data\IHeadManager.cs" />
+    <Compile Include="Data\IMistyState.cs" />
+    <Compile Include="Data\Interaction.cs" />
+    <Compile Include="Data\ConversationData.cs" />
+    <Compile Include="Data\ISpeechManager.cs" />
+    <Compile Include="Data\Recipe.cs" />
+    <Compile Include="Data\Robot.cs" />
+    <Compile Include="Data\TriggerActionOption.cs" />
+    <Compile Include="Data\SkillMessage.cs" />
+    <Compile Include="Data\TriggerDetail.cs" />
+    <Compile Include="Data\UtteranceData.cs" />
+    <Compile Include="Data\LocomotionAction.cs" />
+    <Compile Include="Data\ConversationCommand.cs" />
+    <Compile Include="Data\LocomotionState.cs" />
     <Compile Include="Data\SpeechConfiguration.cs" />
     <Compile Include="Data\AzureSpeechParameters.cs" />
     <Compile Include="Data\CharacterParameters.cs" />
     <Compile Include="Data\CharacterState.cs" />
     <Compile Include="Data\CharacterStateEvent.cs" />
     <Compile Include="Data\GoogleSpeechParameters.cs" />
-    <Compile Include="Conversations\ArmLocation.cs" />
-    <Compile Include="Conversations\HeadLocation.cs" />
-    <Compile Include="Conversations\LEDTransitionAction.cs" />
-    <Compile Include="Data\TimeDescription.cs" />
-    <Compile Include="Data\TimeObject.cs" />
+    <Compile Include="Data\ArmLocation.cs" />
+    <Compile Include="Data\HeadLocation.cs" />
+    <Compile Include="Data\LEDTransitionAction.cs" />
     <Compile Include="Data\TriggerEvent.cs" />
-    <Compile Include="Conversations\ConversationGroup.cs" />
+    <Compile Include="Data\ConversationGroup.cs" />
     <Compile Include="Helpers\AssetHelper.cs" />
-    <Compile Include="Conversations\AnimationRequest.cs" />
-    <Compile Include="Conversations\TriggerData.cs" />
+    <Compile Include="Data\AnimationRequest.cs" />
+    <Compile Include="Data\TriggerData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RobotConstants.cs" />
+    <Compile Include="Types\ListeningState.cs" />
+    <Compile Include="Types\LocomotionCommand.cs" />
+    <Compile Include="Types\LocomotionStatus.cs" />
     <Compile Include="Types\Emotions.cs" />
     <Compile Include="Types\Triggers.cs" />
     <EmbeddedResource Include="Properties\Conversation.Common.rd.xml" />
@@ -160,10 +175,10 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
     <PackageReference Include="System.IO">
       <Version>4.3.0</Version>
@@ -176,8 +191,13 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ConversationLibraries\SkillTools\SkillTools.csproj">
-      <Project>{C081F243-3735-4C72-B071-29B751E460B1}</Project>
+    <Reference Include="MistyCharacter">
+      <HintPath>..\..\MistyInteraction\bin\ARM\Debug\MistyCharacter.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SkillTools\SkillTools.csproj">
+      <Project>{c081f243-3735-4c72-b071-29b751e460b1}</Project>
       <Name>SkillTools</Name>
     </ProjectReference>
   </ItemGroup>

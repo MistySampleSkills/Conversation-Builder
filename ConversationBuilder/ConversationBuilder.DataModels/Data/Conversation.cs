@@ -54,9 +54,8 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "No Trigger Interaction - called if an interaction timeout happens.")]		
 		public string NoTriggerInteraction { get; set; }
 
-		[Required]
 		[Display(Name = "Starting emotion (beta)")]		
-		public string StartingEmotion { get; set; } = DefaultEmotions.Joy;
+		public string StartingEmotion { get; set; } = DefaultEmotions.None;
 
 		public IList<string> Interactions { get; set; } = new List<string>();
 
@@ -77,6 +76,20 @@ namespace ConversationBuilder.DataModels
 		public IDictionary<string,string> InteractionAnimations { get; set; } = new Dictionary<string, string>();
 
 		public IDictionary<string,string> InteractionPreSpeechAnimations { get; set; } = new Dictionary<string, string>();
+
+
+
+//TODO
+		public IDictionary<string,string> InteractionListeningAnimations { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionInitAnimations { get; set; } = new Dictionary<string, string>();
+
+		
+		public IDictionary<string,string> InteractionInitScripts { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionPreSpeechScripts { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionListeningScripts { get; set; } = new Dictionary<string, string>();
+		public IDictionary<string,string> InteractionScripts { get; set; } = new Dictionary<string, string>();
+		
+
 
 		//key is interaction id
 		public IDictionary<string, EntryMap> ConversationEntryPoints { get; set; } = new Dictionary<string, EntryMap>();

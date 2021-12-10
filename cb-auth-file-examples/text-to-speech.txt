@@ -1,0 +1,16 @@
+{ 
+	"Name" : "text-to-speech", 
+	"AuthFields":
+	{
+		"Service":"Skill",
+		"SubscriptionKey":"",
+		"Region":"",
+		"Endpoint":"",
+		"SpeakingVoice":"Zira",
+		"TranslatedLanguage":"en-US",
+		"SpokenLanguage":"en-US",
+		"ProfanitySetting":"",
+		"SpeakingGender":"",
+		"IsServiceAccount":false
+	}
+}

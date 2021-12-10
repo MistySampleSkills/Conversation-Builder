@@ -9,6 +9,7 @@
 	@RenderSection("Styles", false)
 	<script src="~/js/dynamic-dictionary.js"></script>
 	<script src="~/js/dynamic-list.js"></script>
+
 </head>
 <body>
 	<header>
@@ -23,7 +24,7 @@
 					<partial name="_LoginPartial" />
 					<ul class="navbar-nav flex-grow-1">
 						<li class="nav-item">
-							<a class="nav-link" href= "https://community.mistyrobotics.com/">Community</a>
+							<a class="nav-link" target="_blank" href= "https://community.mistyrobotics.com/">Community</a>
 						</li>
 					</ul>
 				</div>
@@ -31,63 +32,41 @@
 		</nav>
 		<hr />	
 	</header>
-	<div class="container">
-		<main role="main" class="pb-3">
-			@RenderBody()
-		</main>
-	</div>
-	<div class="container">
-		@if(User.IsInRole(ConversationBuilder.Roles.SiteAdministrator) || User.IsInRole(ConversationBuilder.Roles.Customer))
-		{
-			<div class="container" style = "text-align: center;">
-				<nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
-				<div class="container">				
-					<div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
-						<ul class="navbar-nav flex-grow-1">
-							<li class="nav-item">							
-								<a class="nav-link"asp-action="index" asp-controller="armlocations">Arms</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="headlocations">Head</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="lEDTransitionActions">LEDs</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="animations">Animations</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="triggers">Triggers</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="speechHandlers">Speech Handlers</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="conversations">Conversations</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="conversationGroups">Conversation Groups</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="genericDataStores">Data</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link"asp-action="index" asp-controller="skillMessages">Skills</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" asp-area="" asp-controller="Home" asp-action="Administrative">Administrative</a>
-							</li>
-						</ul>
-					</div>
-				</div>
-				</nav>
-			</div>
-		}
-	</div>
+	<div class="row">
+		<div class="column" style="column-width: 100px; padding:50px;">
+			@if(User.IsInRole(ConversationBuilder.Roles.SiteAdministrator) || User.IsInRole(ConversationBuilder.Roles.Customer))
+			{
+				<dl>
+					<dt>
+						<a class="nav-link" asp-area="" asp-controller="Home" asp-action="Conversations">Conversations</a>
+					</dt>
 
+					<dt>
+						<a class="nav-link" asp-area="" asp-controller="Home" asp-action="ActionLibrary">Action Library</a>
+					</dt>
+
+					<dt>
+						<a class="nav-link" asp-area="" asp-controller="Home" asp-action="TriggerConstruction">Triggers</a>
+					</dt>
+
+					<dt>
+						<a class="nav-link" asp-area="" asp-controller="Home" asp-action="Advanced">Advanced</a>
+					</dt>
+				</dl>
+			}
+		</div>
+		<div class="column mx-auto">
+			<div class="container center">
+					<main role="main" class="pb-3">
+						@RenderBody()
+					</main>
+				</div>
+			</div>
+		</div>
+	</div>
 	<footer class="border-top footer text-muted">		
 		<div class="container text-center">
-			&copy; 2021 - <a href= "https://www.mistyrobotics.com">Misty Robotics</a> - <a href= "https://www.mistyrobotics.com/legal">Legal</a> - <a href= "https://github.com/MistySampleSkills/Conversation-Builder">Code</a> - Version 0.9.0			
+			&copy; 2021 - <a href= "https://www.mistyrobotics.com">Misty Robotics</a> - <a href= "https://www.mistyrobotics.com/legal">Legal</a> - <a href= "https://github.com/MistySampleSkills/Conversation-Builder">Code</a> - Version 1.0.0			
 		</div>
 
 	</footer>

@@ -83,7 +83,7 @@ namespace ConversationBuilder.Controllers
 			_userManager = userManager;
 		}
 
-		public async Task<SkillParameters> GenerateSkillConfiguration(string id)
+		public async Task<SkillParameters> GenerateSkillConfiguration(string id, bool animationCreationMode = false, double animationCreationDebounceSeconds = 0.25, bool ignoreArmCommands = false, bool ignoreHeadCommands = false, bool smoothRecording = false, string puppetingList = "", bool retranslateTTS = false)
 		{
 			SkillParameters skillParameters = new SkillParameters();
 			SkillConversationGroup skillConversationGroup = new SkillConversationGroup();
@@ -103,7 +103,16 @@ namespace ConversationBuilder.Controllers
 				skillConversationGroup.CharacterConfiguration = conversationGroup.CharacterConfiguration;
 				skillConversationGroup.StartupConversation = conversationGroup.StartupConversation;
 				skillConversationGroup.ConversationMappings = conversationGroup.ConversationMappings;
+				skillConversationGroup.SkillAuthorizations = conversationGroup.SkillAuthorizations;
 
+				skillConversationGroup.AnimationCreationMode = animationCreationMode;
+				skillConversationGroup.AnimationCreationDebounceSeconds = animationCreationDebounceSeconds;
+				skillConversationGroup.PuppetingList = puppetingList;
+				skillConversationGroup.IgnoreArmCommands = ignoreArmCommands;
+				skillConversationGroup.IgnoreHeadCommands = ignoreHeadCommands;
+				skillConversationGroup.RetranslateTTS = retranslateTTS;
+				skillConversationGroup.SmoothRecording = smoothRecording;
+				
 				IList<SpeechHandler> allSpeechHandlers = null;
 				foreach (string conversationId in conversationGroup.Conversations)
 				{
@@ -244,6 +253,13 @@ namespace ConversationBuilder.Controllers
 								skillInteraction.ListenTimeout = interaction.ListenTimeout;
 								skillInteraction.Animation = interaction.Animation;
 								skillInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
+								skillInteraction.InitAnimation = interaction.InitAnimation;
+								skillInteraction.ListeningAnimation = interaction.ListeningAnimation;
+								
+								skillInteraction.AnimationScript = interaction.AnimationScript;
+								skillInteraction.InitScript = interaction.InitScript;
+								skillInteraction.ListeningScript = interaction.ListeningScript;
+								skillInteraction.PreSpeechScript = interaction.PreSpeechScript;
 
 								skillConversation.Interactions.Remove(skillInteraction);
 								skillConversation.Interactions.Add(skillInteraction);
@@ -272,6 +288,14 @@ namespace ConversationBuilder.Controllers
 					skillConversation.ConversationEntryPoints = conversation.ConversationEntryPoints;
 					skillConversation.InteractionAnimations = conversation.InteractionAnimations;
 					skillConversation.InteractionPreSpeechAnimations = conversation.InteractionPreSpeechAnimations;
+					skillConversation.InteractionInitAnimations = conversation.InteractionInitAnimations;
+					skillConversation.InteractionListeningAnimations = conversation.InteractionListeningAnimations;
+
+					skillConversation.InteractionInitScripts = conversation.InteractionInitScripts;
+					skillConversation.InteractionPreSpeechScripts = conversation.InteractionPreSpeechScripts;
+					skillConversation.InteractionListeningScripts = conversation.InteractionListeningScripts;
+					skillConversation.InteractionScripts = conversation.InteractionScripts;
+
 					skillConversation.Description = conversation.Description;
 					skillConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
 					skillConversation.Name = conversation.Name;
@@ -295,6 +319,10 @@ namespace ConversationBuilder.Controllers
 						skillParameters.HeardSpeechToScreen = characterConfiguration.HeardSpeechToScreen;
 						skillParameters.LargePrint = characterConfiguration.LargePrint;
 						skillParameters.ShowListeningIndicator = characterConfiguration.ShowListeningIndicator;
+						skillParameters.ProcessingImage = characterConfiguration.ProcessingImage;
+						skillParameters.ListeningImage	 = characterConfiguration.ListeningImage;
+						skillParameters.SpeakingImage = characterConfiguration.SpeakingImage;
+						skillParameters.ShowSpeakingIndicator = characterConfiguration.ShowSpeakingIndicator;
 						skillParameters.DisplaySpoken = characterConfiguration.DisplaySpoken;
 						skillParameters.StartVolume = characterConfiguration.StartVolume;
 						skillParameters.UsePreSpeech = characterConfiguration.UsePreSpeech;
@@ -305,7 +333,6 @@ namespace ConversationBuilder.Controllers
 						skillParameters.PersonConfidence = characterConfiguration.PersonConfidence;
 						skillParameters.StreamInteraction = characterConfiguration.StreamInteraction;
 						skillParameters.Skill = characterConfiguration.Skill ?? "8be20a90-1150-44ac-a756-ebe4de30689e";
-						skillParameters.Character = characterConfiguration.Character ?? "basic";
 
 						if (!string.IsNullOrEmpty(characterConfiguration.SpeechConfiguration))
 						{
@@ -319,7 +346,6 @@ namespace ConversationBuilder.Controllers
 					else
 					{
 						skillParameters.Skill = "8be20a90-1150-44ac-a756-ebe4de30689e";
-						skillParameters.Character = "basic";
 					}
 				}
 
@@ -361,7 +387,7 @@ namespace ConversationBuilder.Controllers
 						{
 							SpeechHandler speechHandler = new SpeechHandler();
 							speechHandler.Id = utterance.Value.Id;
-							speechHandler.Name = utterance.Value.Name;
+							speechHandler.Name = utterance.Value.Name + " [Imported]";
 							speechHandler.Updated = now;
 							speechHandler.Created = now;
 							speechHandler.ManagementAccess = "Public";
@@ -398,6 +424,10 @@ namespace ConversationBuilder.Controllers
 					newConversation.ManagementAccess = "Public";
 					newConversation.StartingEmotion = conversation.StartingEmotion;
 					newConversation.InitiateSkillsAtConversationStart = conversation.InitiateSkillsAtConversationStart;
+					newConversation.InteractionListeningScripts = conversation.InteractionListeningScripts;
+					newConversation.InteractionInitScripts = conversation.InteractionInitScripts;
+					newConversation.InteractionPreSpeechScripts = conversation.InteractionPreSpeechScripts;
+					newConversation.InteractionScripts = conversation.InteractionScripts;
 					newConversation.CreatedBy = _userInformation?.AccessId;
 					//go through top level items and add them if needed (id doesn't exist)
 
@@ -511,9 +541,17 @@ namespace ConversationBuilder.Controllers
 						newInteraction.Name = interaction.Name;
 						newInteraction.Animation = interaction.Animation;
 						newInteraction.PreSpeechAnimation = interaction.PreSpeechAnimation;
+						newInteraction.InitAnimation = interaction.InitAnimation;
+						newInteraction.ListeningAnimation = interaction.ListeningAnimation;
+						newInteraction.Updated = now;
 						newInteraction.PreSpeechPhrases = interaction.PreSpeechPhrases;
 						newInteraction.SkillMessages = interaction.SkillMessages;
 						newInteraction.ConversationId = newConversation.Id;
+						newInteraction.InitScript = interaction.InitScript;
+						newInteraction.AnimationScript = interaction.AnimationScript;
+						newInteraction.PreSpeechScript = interaction.PreSpeechScript;
+						newInteraction.ListeningScript = interaction.ListeningScript;
+						newInteraction.UsePreSpeech = interaction.UsePreSpeech;
 						newInteraction.Updated = now;
 						newInteraction.Created = now;
 						newInteraction.CreatedBy = _userInformation?.AccessId;
@@ -533,8 +571,14 @@ namespace ConversationBuilder.Controllers
 								}
 								else
 								{
-									newTriggerActionOption.GoToConversation = conversationGuidMap[triggerActionOption.GoToConversation];
-									newTriggerActionOption.GoToInteraction = interactionGuidMap[triggerActionOption.GoToInteraction];
+									if(conversationGuidMap.TryGetValue(triggerActionOption.GoToConversation, out string convo))
+									{
+										newTriggerActionOption.GoToConversation = convo;
+									}
+									if(interactionGuidMap.TryGetValue(triggerActionOption.GoToInteraction, out string inter))
+									{
+										newTriggerActionOption.GoToInteraction = inter;
+									}
 								}
 								newTriggerActionOption.Retrigger = triggerActionOption.Retrigger;
 								newTriggerActionOption.Weight = triggerActionOption.Weight;
@@ -549,6 +593,16 @@ namespace ConversationBuilder.Controllers
 								if (conversation.InteractionPreSpeechAnimations.ContainsKey(triggerActionOption.Id))
 								{
 									newConversation.InteractionPreSpeechAnimations.Add(newTriggerActionOption.Id, conversation.InteractionPreSpeechAnimations[triggerActionOption.Id]);
+								}
+
+								if (conversation.InteractionInitAnimations.ContainsKey(triggerActionOption.Id))
+								{
+									newConversation.InteractionInitAnimations.Add(newTriggerActionOption.Id, conversation.InteractionInitAnimations[triggerActionOption.Id]);
+								}
+
+								if (conversation.InteractionListeningAnimations.ContainsKey(triggerActionOption.Id))
+								{
+									newConversation.InteractionListeningAnimations.Add(newTriggerActionOption.Id, conversation.InteractionListeningAnimations[triggerActionOption.Id]);
 								}
 							}
 							newInteraction.TriggerMap.Add(triggerOption.Key, newTriggerOptions);
@@ -611,8 +665,12 @@ namespace ConversationBuilder.Controllers
 					}
 				}
 			}
-			knownFilters.TryGetValue(triggerFilter, out string foundValue);
-			return foundValue ?? triggerFilter;
+			string foundValue = "";
+			if(!string.IsNullOrWhiteSpace(triggerFilter) && knownFilters.TryGetValue(triggerFilter, out foundValue))
+			{
+				return foundValue;
+			}
+			return triggerFilter;
 		}
 
 		protected async Task<UserConfiguration> SetViewBagData(string message = null)
@@ -640,7 +698,7 @@ namespace ConversationBuilder.Controllers
 				_userConfiguration = await _cosmosDbService.ContainerManager.UserConfigurationData.GetAsync(_userInformation.AccessId);
 			}
 
-			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? false;
+			ViewBag.ShowBetaItems = _userConfiguration?.ShowBetaItems ?? true;
 			if (!string.IsNullOrWhiteSpace(_userConfiguration?.OverrideCssFile))
 			{
 				ViewBag.CssFile = _userConfiguration.OverrideCssFile + (_userConfiguration.OverrideCssFile.EndsWith(".css") ? "" : ".css");
@@ -959,6 +1017,36 @@ namespace ConversationBuilder.Controllers
 			return interactionAnimations ?? new Dictionary<string, string>();
 		}
 
+		protected async Task<Dictionary<string, string>> InteractionInitAnimationList(string conversationId)
+		{
+			//TODO Deal with performance reloading and paging
+			Dictionary<string, string> interactionAnimations = new Dictionary<string, string>();
+			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+
+			foreach (KeyValuePair<string, string> interactionAnimation in conversation.InteractionInitAnimations)
+			{
+				if (interactionAnimation.Value == null) continue;
+
+				interactionAnimations.TryAdd(interactionAnimation.Key, interactionAnimation.Value);
+			}
+			return interactionAnimations ?? new Dictionary<string, string>();
+		}
+
+		protected async Task<Dictionary<string, string>> InteractionListeningAnimationList(string conversationId)
+		{
+			//TODO Deal with performance reloading and paging
+			Dictionary<string, string> interactionAnimations = new Dictionary<string, string>();
+			Conversation conversation = await _cosmosDbService.ContainerManager.ConversationData.GetAsync(conversationId);
+
+			foreach (KeyValuePair<string, string> interactionAnimation in conversation.InteractionListeningAnimations)
+			{
+				if (interactionAnimation.Value == null) continue;
+
+				interactionAnimations.TryAdd(interactionAnimation.Key, interactionAnimation.Value);
+			}
+			return interactionAnimations ?? new Dictionary<string, string>();
+		}
+
 		protected async Task<IDictionary<string, Dictionary<string, string>>> FullInteractionAndOptionList(string conversationId)
 		{
 			//Get conversations from this group
@@ -1004,6 +1092,13 @@ namespace ConversationBuilder.Controllers
 						interactionViewModel.Name = interaction.Name;
 						interactionViewModel.Animation = interaction.Animation;
 						interactionViewModel.PreSpeechAnimation = interaction.PreSpeechAnimation;
+						interactionViewModel.InitAnimation = interaction.InitAnimation;
+						interactionViewModel.ListeningAnimation = interaction.ListeningAnimation;
+
+						interactionViewModel.AnimationScript = interaction.AnimationScript;
+						interactionViewModel.ListeningScript = interaction.ListeningScript;
+						interactionViewModel.PreSpeechScript = interaction.PreSpeechScript;
+						interactionViewModel.InitScript = interaction.InitScript;
 
 						interactionViewModel.StartListening = interaction.StartListening;
 						interactionViewModel.AllowConversationTriggers = interaction.AllowConversationTriggers;

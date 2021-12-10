@@ -38,20 +38,20 @@ namespace Conversation.Common
 
 		public string Name { get; set; }
 
-		public string SpeechRecognitionService { get; set; } = "Azure";
+		public string SpeechRecognitionService { get; set; } = "vosk";
 
-		public string TextToSpeechService { get; set; } = "Misty";
+		public string TextToSpeechService { get; set; } = "misty";
 
 		public string SpeechRecognitionSubscriptionKey { get; set; }
 
 		public string TextToSpeechSubscriptionKey { get; set; }
 
 		public string SpokenLanguage { get; set; }
-		
+
 		public string SpeakingVoice { get; set; }
 
 		public string TextToSpeechEndpoint { get; set; }
-		
+
 		public string SpeechRecognitionEndpoint { get; set; }
 
 		public string SpeakingGender { get; set; }
@@ -60,7 +60,12 @@ namespace Conversation.Common
 		public string SpeechRecognitionRegion { get; set; }
 
 		public string TranslatedLanguage { get; set; }
-		
+
 		public string ProfanitySetting { get; set; }
+
+		public int SpeechSilenceTimeoutMs { get; set; } = 10000;
+		public int SpeechListenTimeoutMs { get; set; } = 10000;
+		public int TrimSilenceMs { get; set; } = 0;
+
 	}
 }

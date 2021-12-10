@@ -335,7 +335,7 @@ namespace ConversationBuilder.Controllers
 					genericData.Id = Guid.NewGuid().ToString();
 					genericData.Key = model.Key;
 					genericData.Value = model.Value;
-					genericData.DataAnimationScript = model.DataAnimationScript;
+					//genericData.DataAnimationScript = model.DataAnimationScript;
 					genericData.ScreenText = model.ScreenText;
 					genericData.Priority = model.Priority;
 					genericDataStore.Data.Remove(genericData.Id);
@@ -380,7 +380,7 @@ namespace ConversationBuilder.Controllers
 						genericDataViewModel.DataId = genericData.Value.Id;
 						genericDataViewModel.Key = genericData.Value.Key;
 						genericDataViewModel.Value = genericData.Value.Value;
-						genericDataViewModel.DataAnimationScript = genericData.Value.DataAnimationScript;
+						//genericDataViewModel.DataAnimationScript = genericData.Value.DataAnimationScript;
 						genericDataViewModel.ScreenText = genericData.Value.ScreenText;
 						genericDataViewModel.Priority = genericData.Value.Priority;
 
@@ -417,7 +417,7 @@ namespace ConversationBuilder.Controllers
 					{
 						genericData.Value.Key = model.Key;
 						genericData.Value.Value = model.Value;
-						genericData.Value.DataAnimationScript = model.DataAnimationScript;
+						//genericData.Value.DataAnimationScript = model.DataAnimationScript;
 						genericData.Value.ScreenText = model.ScreenText;
 						genericData.Value.Priority = model.Priority;
 						genericDataStore.Data.Remove(model.DataId);

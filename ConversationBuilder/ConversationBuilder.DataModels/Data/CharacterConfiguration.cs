@@ -75,11 +75,15 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Large Print, check to show the words Misty says in large print (beta)")]
 		public bool LargePrint { get; set; }
 		
-		[Display(Name = "Show Listening Indicator, check to show the listening/speaking indicator on the screen")]
+		[Display(Name = "Show Listening Indicator, check to show the listening/processing indicator on the screen")]
 		public bool ShowListeningIndicator { get; set; } = true;
 
+		
+		[Display(Name = "Show Speaking Indicator, check to show the speaking indicator on the screen")]
+		public bool ShowSpeakingIndicator { get; set; } = true;
+
 		[Display(Name = "Starting volume of Misty")]
-		public int? StartVolume { get; set; }		
+		public int? StartVolume { get; set; } = 20;
 
 		[Display(Name = "Use prespeech for speech intent processing")]
 		public bool UsePreSpeech { get; set; }
@@ -87,14 +91,24 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "PreSpeech Phrases")]
 		public string PreSpeechPhrases { get; set; }
 
-		[Display(Name = "Only change if using a different, home-made Misty Conversation Skill")]
+		[Display(Name = "Skill Id - Only change if using a different conversation skill")]
 		public string Skill { get; set; }
 		
-		[Display(Name = "Character template to use (beta)")]
-		public string Character { get; set; }
 		
 		[Display(Name = "Optional Character Payload to send to trigger skills")]
 		public string Payload { get; set; }
+
+		
+		[Display(Name = "Speaking Image")]
+		public string SpeakingImage { get; set; }
+		
+		
+		[Display(Name = "Listening Image")]
+		public string ListeningImage { get; set; }
+
+
+		[Display(Name = "Processing Image")]
+		public string ProcessingImage { get; set; }
 		
 		public DateTimeOffset Created { get; set; }
 		

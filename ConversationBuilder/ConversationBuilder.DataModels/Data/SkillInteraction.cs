@@ -71,6 +71,15 @@ namespace ConversationBuilder.DataModels
 		public string PreSpeechPhrases { get; set; }
 
 		public string PreSpeechAnimation { get; set; }
+
+
+
+		public string InitAnimation { get; set; }
+		public string ListeningAnimation { get; set; }
+		public string InitScript { get; set; }
+		public string AnimationScript { get; set; }
+		public string PreSpeechScript { get; set; }
+		public string ListeningScript { get; set; }
 		
 	}
 }

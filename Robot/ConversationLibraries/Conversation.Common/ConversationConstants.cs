@@ -35,8 +35,6 @@ namespace Conversation.Common
 	public class ConversationConstants
 	{
 		//Speech data keys
-		public readonly static string AzureSpeechKey = "AzureSpeechKey";
-		public readonly static string GoogleSpeechKey = "GoogleSpeechKey";
 		public readonly static string SpeechRegion = "SpeechRegion";
 		public readonly static string SpeechEndpoint = "SpeechEndpoint";
 		public readonly static string SpeakingVoice = "SpeakingVoice";
@@ -45,27 +43,15 @@ namespace Conversation.Common
 		public readonly static string ProfanitySetting = "ProfanitySetting";
 		public readonly static string SpeechRecognitionService = "SpeechRecognitionService";
 		public readonly static string TextToSpeechService = "TextToSpeechService";
-		public readonly static string TTSEndpoint = "TTSEndpoint";
-		public readonly static string STTEndpoint = "STTEndpoint";
 		public readonly static string SpeakingGender = "SpeakingGender";
 		public readonly static string RetranslateTTS = "RetranslateTTS";
 		public readonly static string RecognizeKeyPhrase = "RecognizeKeyPhrase";
 		public readonly static string AzureSpeechSettings = "AzureSpeechSettings";
 		public readonly static string GoogleSpeechSettings = "GoogleSpeechSettings";
 		public readonly static string SpeechConfiguration = "SpeechConfiguration";
-
-		//Sms Keys
-		public readonly static string SmsAccount = "SmsAccount";
-		public readonly static string SmsAuth = "SmsAuth";
-		public readonly static string SmsNumber = "SmsNumber";
-		public readonly static string ContactNumber = "ContactNumber";
 		
 		//Follow Face Keys
-		public readonly static string MaxLostPitch = "MaxLostPitch";
-		public readonly static string MinLostPitch = "MinLostPitch";
 		public readonly static string FollowFaceDebounce = "FollowFaceDebounce";
-		public readonly static string MaxLostYaw = "MaxLostYaw";
-		public readonly static string MinLostYaw = "MinLostYaw";
 		public readonly static string FacePitchOffset = "FacePitchOffset";
 		
 		//TODO Face or OD here?
@@ -81,14 +67,7 @@ namespace Conversation.Common
 		public readonly static string BackCapTouchTrigger = "BackCap";
 		public readonly static string FrontCapTouchTrigger = "FrontCap";
 		public readonly static string AnyCapTouched = "";
-
-		//Bumper triggers
-		public readonly static string FrontRightBumperTrigger = "FrontRightBumperPressed";
-		public readonly static string FrontLeftBumperTrigger = "FrontLeftBumperPressed";
-		public readonly static string BackLeftBumperTrigger = "BackLeftBumperPressed";
-		public readonly static string BackRightBumperTrigger = "BackRightBumperPressed";
-		public readonly static string AnyBumperPressedTrigger = "";
-
+		
 		//Face triggers
 		public readonly static string SeeKnownFaceTrigger = "SeenKnownFace";
 		public readonly static string SeeUnknownFaceTrigger = "SeenUnknownFace";
@@ -123,8 +102,13 @@ namespace Conversation.Common
 		public readonly static string StartVolume = "StartVolume";
 		public readonly static string LargePrint = "LargePrint";
 		public readonly static string ShowListeningIndicator = "ShowListeningIndicator";
+		public readonly static string ShowSpeakingIndicator = "ShowSpeakingIndicator";
+		public readonly static string SendInteractionUIEvents = "SendInteractionUIEvents";
 		public readonly static string UsePreSpeech = "UsePreSpeech";
 		public readonly static string PreSpeechPhrases = "PreSpeechPhrases";
 		public readonly static string PreSpeechAnimation = "PreSpeechAnimation";
+		public readonly static string SpeakingImage = "SpeakingImage";
+		public readonly static string ProcessingImage = "ProcessingImage";
+		public readonly static string ListeningImage = "ListeningImage";		
 	}
 }

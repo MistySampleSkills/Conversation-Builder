@@ -21,6 +21,12 @@
     <PackageCertificateKeyFile>MistyConversation_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxPackage>true</AppxPackage>
     <ContainsStartupTask>true</ContainsStartupTask>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>arm</AppxBundlePlatforms>
+    <AppInstallerUpdateFrequency>1</AppInstallerUpdateFrequency>
+    <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
     <DebugSymbols>true</DebugSymbols>
@@ -134,24 +140,40 @@
       <Version>6.2.11</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.Common">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
     <PackageReference Include="MistyRobotics.SDK">
-      <Version>0.9.239-beta</Version>
+      <Version>0.9.242-beta</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Characters\Character.Templates\Character.Templates.csproj">
-      <Project>{8680ECBB-ABB7-4A93-91A9-5C6DCE12C196}</Project>
-      <Name>Character.Templates</Name>
+    <ProjectReference Include="..\Characters\CharacterTemplates\CharacterTemplates.csproj">
+      <Project>{d04ef102-275c-4ce0-a718-eedfcd670b50}</Project>
+      <Name>CharacterTemplates</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Commands\EndPointCommandManager\CommandManager.csproj">
+      <Project>{8b645000-9cf5-497e-9718-b97dbeff7c85}</Project>
+      <Name>CommandManager</Name>
     </ProjectReference>
     <ProjectReference Include="..\ConversationLibraries\Conversation.Common\Conversation.Common.csproj">
       <Project>{f6db04a8-fa28-4096-ab01-94a5f1badff4}</Project>
       <Name>Conversation.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ConversationLibraries\SpeechTools\SpeechTools.csproj">
+      <Project>{8a67aa55-d289-41d3-8afe-54960b21a5b4}</Project>
+      <Name>SpeechTools</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ConversationLibraries\TimeManager\TimeManager.csproj">
+      <Project>{A1B74B3E-050D-423E-B00D-51A6BE475150}</Project>
+      <Name>TimeManager</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MistyCharacter\MistyCharacter.csproj">
       <Project>{b3665f59-b772-4058-b522-eaefe3980f7c}</Project>
       <Name>MistyCharacter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MistyManager\MistyManager.csproj">
+      <Project>{4B051DD6-90C2-4F93-8509-50D3B0341225}</Project>
+      <Name>MistyManager</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '15.0' ">
