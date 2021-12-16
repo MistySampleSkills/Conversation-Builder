@@ -96,6 +96,9 @@ namespace ConversationBuilder.DataModels
 		[Display(Name = "Halt arms during Animation Creation")]	
 		public bool IgnoreArmCommands { get; set; } = false;
 
+		[Display(Name = "Create a JavaScript animation template")]			
+		public bool CreateJavaScriptTemplate { get; set; } = false;
+
 		[Display(Name = "Halt head during Animation Creation")]	
 		public bool IgnoreHeadCommands { get; set; } = false;
 

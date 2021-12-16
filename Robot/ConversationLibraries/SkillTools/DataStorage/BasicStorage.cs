@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -87,14 +88,14 @@ namespace SkillTools.DataStorage
 		/// Method used to load the data from data storage
 		/// </summary>
 		/// <returns></returns>
-		public IAsyncOperation<IDictionary<string, object>> LoadDataAsync()
+		public IAsyncOperation<ConcurrentDictionary<string, object>> LoadDataAsync()
 		{
 			return LoadDataInternalAsync().AsAsyncOperation();
 		}
 
-		private async Task<IDictionary<string, object>> LoadDataInternalAsync()
+		private async Task<ConcurrentDictionary<string, object>> LoadDataInternalAsync()
 		{
-			IDictionary<string, object> data = new Dictionary<string, object>();
+			ConcurrentDictionary<string, object> data = new ConcurrentDictionary<string, object>();
 			try
 			{
 				await _semaphoreSlim.WaitAsync();
@@ -111,7 +112,7 @@ namespace SkillTools.DataStorage
 					if (string.IsNullOrWhiteSpace(dataString))
 					{
 						//This indicates new file or no data in existing db, grant access
-						return new Dictionary<string, object>();
+						return new ConcurrentDictionary<string, object>();
 					}
 
 					if (!string.IsNullOrWhiteSpace(_password))
@@ -124,7 +125,7 @@ namespace SkillTools.DataStorage
 						}
 					}
 
-					data = JsonConvert.DeserializeObject<Dictionary<string, object>>(dataString, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+					data = JsonConvert.DeserializeObject<ConcurrentDictionary<string, object>>(dataString, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 				}
 			}
 			catch

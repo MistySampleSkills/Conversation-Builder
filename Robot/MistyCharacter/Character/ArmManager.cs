@@ -51,9 +51,21 @@ namespace MistyCharacter
 		private ArmLocation _currentArmRequest = new ArmLocation();
 		private bool _tick = false;
         private object _timerLock = new object();
+		private JavaScriptRecorder _javaScriptRecorder;
 
-        public ArmManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
-		: base(misty, parameters, characterParameters) {}
+		public ArmManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, JavaScriptRecorder javaScriptRecorder = null)
+		: base(misty, parameters, characterParameters)
+		{
+			_javaScriptRecorder = javaScriptRecorder;
+		}
+		
+		private void ManageJavaScriptRecording(string command)
+		{
+			if (!string.IsNullOrWhiteSpace(command) && _javaScriptRecorder != null && CharacterParameters.CreateJavaScriptTemplate)
+			{
+				_ = _javaScriptRecorder.SaveRecording(command);
+			}
+		}
 
 		public void StopMovement()
 		{
@@ -137,10 +149,17 @@ namespace MistyCharacter
 					if (_currentArmRequest.MovementDuration != null && _currentArmRequest.MovementDuration > 0)
 					{
 						Robot.MoveArms(newLeft ?? 90, newRight ?? 90, null, null, (int)Math.Abs((double)_currentArmRequest.MovementDuration), AngularUnit.Degrees, null);
+
+						ManageJavaScriptRecording($"misty.MoveArmsDegrees({newLeft ?? 90}, " +
+							$"{newRight ?? 90}, null, null, {(int)Math.Abs((double)_currentArmRequest.MovementDuration)});");
+
 					}
 					else if (_currentArmRequest.MovementVelocity != null && _currentArmRequest.MovementVelocity > 0)
 					{
 						Robot.MoveArms(newLeft ?? 90, newRight ?? 90, (int)Math.Abs((int)_currentArmRequest.MovementVelocity), (int)Math.Abs((int)_currentArmRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+
+						ManageJavaScriptRecording($"misty.MoveArmsDegrees({newLeft ?? 90}, " +
+							$"{newRight ?? 90}, {(int)Math.Abs((double)_currentArmRequest.MovementVelocity)}, {(int)Math.Abs((double)_currentArmRequest.MovementVelocity)}, null);");
 					}
 				}
 				else
@@ -198,10 +217,16 @@ namespace MistyCharacter
 							if (_currentArmRequest.MovementDuration != null && _currentArmRequest.MovementDuration > 0)
 							{
 								Robot.MoveArms((double)_currentArmRequest.MaxLeftArm, (double)_currentArmRequest.MaxRightArm, null, null, (int)Math.Abs((double)_currentArmRequest.MovementDuration), AngularUnit.Degrees, null);
+
+								ManageJavaScriptRecording($"misty.MoveArmsDegrees({(double)_currentArmRequest.MaxLeftArm}, " +
+									$"{(double)_currentArmRequest.MaxRightArm}, null, null, {(int)Math.Abs((double)_currentArmRequest.MovementDuration)});");
 							}
 							else if (_currentArmRequest.MovementVelocity != null && _currentArmRequest.MovementVelocity > 0)
 							{
 								Robot.MoveArms((double)_currentArmRequest.MaxLeftArm, (double)_currentArmRequest.MaxRightArm, (int)Math.Abs((int)_currentArmRequest.MovementVelocity), (int)Math.Abs((int)_currentArmRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+
+								ManageJavaScriptRecording($"misty.MoveArmsDegrees({(double)_currentArmRequest.MaxLeftArm}, " +
+									$"{(double)_currentArmRequest.MaxRightArm}, {(int)Math.Abs((double)_currentArmRequest.MovementDuration)}, {(int)Math.Abs((double)_currentArmRequest.MovementDuration)}, null);");
 							}
 						}
 						else

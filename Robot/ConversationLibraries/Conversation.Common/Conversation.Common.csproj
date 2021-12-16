@@ -121,6 +121,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConversationConstants.cs" />
+    <Compile Include="Data\JavaScriptRecorder.cs" />
     <Compile Include="Data\AnimationRecorder.cs" />
     <Compile Include="Data\ICommandAuthorization.cs" />
     <Compile Include="Data\BaseCommandManager.cs" />

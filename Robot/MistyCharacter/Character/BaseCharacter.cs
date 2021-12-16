@@ -164,6 +164,7 @@ namespace MistyCharacter
 		private IList<ICommandAuthorization> _listOfAuthorizations;
 		private bool _sendStateThrottle = false;
 		private bool _sendInteractionThrottle = false;
+		private JavaScriptRecorder _javaScriptRecorder;
 
 		protected BaseCharacter(IRobotMessenger misty, 
 			IDictionary<string, object> originalParameters,
@@ -266,21 +267,33 @@ namespace MistyCharacter
 				AssetWrapper = new AssetWrapper(Robot);
 				_ = RefreshAssetLists();
 
-				MistyState = new MistyState(Robot, OriginalParameters, CharacterParameters);
+				if (CharacterParameters.CreateJavaScriptTemplate)
+				{
+					_javaScriptRecorder = new JavaScriptRecorder(Robot);
+					string name = $"javascript_{CharacterParameters.ConversationGroup.Name}_{DateTime.Now.ToString()}";
+					if (await _javaScriptRecorder.CreateDataStore(name))
+					{
+						Robot.SkillLogger.LogError($"Created javascript recording file with name {name}.");
+					}
+					else
+					{
+						Robot.SkillLogger.LogError($"Failed to create javascript recording file with name {name}.");
+						return false;
+					}
+				}
+
+				MistyState = new MistyState(Robot, OriginalParameters, CharacterParameters, _javaScriptRecorder);
 				await MistyState.Initialize();
 
 				TimeManager = _managerConfiguration?.TimeManager ?? new EnglishTimeManager(Robot, OriginalParameters, CharacterParameters);
 				await TimeManager.Initialize();
 
-				ArmManager = _managerConfiguration?.ArmManager ?? new ArmManager(Robot, OriginalParameters, CharacterParameters);
+				ArmManager = _managerConfiguration?.ArmManager ?? new ArmManager(Robot, OriginalParameters, CharacterParameters, _javaScriptRecorder);
 				await ArmManager.Initialize();
 
-				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters);
+				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters, _javaScriptRecorder);
 				await HeadManager.Initialize();
-
-				HeadManager = _managerConfiguration?.HeadManager ?? new HeadManager(Robot, OriginalParameters, CharacterParameters);
-				await HeadManager.Initialize();
-
+				
 				CommandManager = _managerConfiguration?.CommandManager ?? new DefaultCommandManager(Robot, OriginalParameters);
 				await CommandManager.Initialize(CharacterParameters, MistyState, _listOfAuthorizations);
 				
@@ -291,7 +304,7 @@ namespace MistyCharacter
 
 				Robot.GetVolume(GetVolumeCallback);
 				
-				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager, HeadManager, CommandManager);
+				AnimationManager = _managerConfiguration?.AnimationManager ?? new AnimationManager(Robot, OriginalParameters, CharacterParameters, SpeechManager, MistyState, TimeManager, HeadManager, CommandManager, _javaScriptRecorder);
 				await AnimationManager.Initialize();
 				
 				var eventDetails = Robot.RegisterBatteryChargeEvent(BatteryChargeCallback, 1000 * 60, true, null, "Battery", null);
@@ -368,7 +381,7 @@ namespace MistyCharacter
 
 				//TODO make configurable
 				_stateEventTimer = new Timer(SendStateEvent, null, 500, 500);
-
+		
 				_ = Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
 				{
 					PlaceOnTop = false
@@ -431,6 +444,7 @@ namespace MistyCharacter
 		public void ChangeVolume(int volume)
 		{
 			SpeechManager.Volume = volume;
+			_ = ManageJavaScriptRecording($"misty.SetDefaultVolume({SpeechManager.Volume});");
 		}
 
 		public async Task RefreshAssetLists()
@@ -1103,6 +1117,7 @@ namespace MistyCharacter
 			if (CharacterParameters.StartVolume != null && CharacterParameters.StartVolume >= 0)
 			{
 				SpeechManager.Volume = (int)CharacterParameters.StartVolume;
+				await ManageJavaScriptRecording($"misty.SetDefaultVolume({SpeechManager.Volume});");
 			}
 
 			string startConversation = conversationId ?? _conversationGroup.StartupConversation;
@@ -1111,7 +1126,7 @@ namespace MistyCharacter
 			EmotionManager = _managerConfiguration?.EmotionManager ?? new EmotionManager(_currentConversationData.StartingEmotion);
 
 			string startInteraction = interactionId ?? _currentConversationData.StartupInteraction;
-			CurrentInteraction = _currentConversationData.Interactions.FirstOrDefault(x => x.Id == startInteraction);
+			CurrentInteraction = new Interaction(_currentConversationData.Interactions.FirstOrDefault(x => x.Id == startInteraction));
 
 			if (CurrentInteraction != null)
 			{
@@ -1158,6 +1173,7 @@ namespace MistyCharacter
 			if (!string.IsNullOrWhiteSpace(speak))
 			{
 				Robot.Speak(speak, true, "InteractionTimeout", null);
+				await ManageJavaScriptRecording($"misty.Speak(\"{speak}\");");
 			}
 			ConversationEnded?.Invoke(this, DateTime.Now);
 		}
@@ -1488,7 +1504,7 @@ namespace MistyCharacter
 				}
 
 				AnimationRequest animationRequest = _currentConversationData.Animations.FirstOrDefault(x => x.Id == currentAnimationId);
-				_currentAnimation = animationRequest;
+				_currentAnimation = new AnimationRequest(animationRequest);
 
 				if (interaction == null)
 				{
@@ -1684,74 +1700,85 @@ namespace MistyCharacter
 			}
 		}
 
-		
+		//Duped
+		private async Task ManageJavaScriptRecording(string command)
+		{
+			if (!string.IsNullOrWhiteSpace(command) && _javaScriptRecorder != null && CharacterParameters.CreateJavaScriptTemplate)
+			{
+				await _javaScriptRecorder.SaveRecording(command);
+			}
+		}
+
 		private async Task IntermediateAnimationRequestProcessor(AnimationRequest intermediateAnimation, Interaction interaction, string actionType)
 		{
 			try
 			{
 				//TODO- interaction and animations are kind of out of sync and overlap too much, clean up
+
+				
 				Interaction newInteraction = new Interaction(interaction);
-				AnimationRequest finalAnimation = new AnimationRequest(intermediateAnimation);
+				AnimationRequest animation = new AnimationRequest(intermediateAnimation);
+				AnimationRequest interactionAnimation;
 				string script = "";
 				bool backgroundSpeech = false;
-				if(actionType == "init")
-				{
-					AnimationRequest aReq = _currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.InitAnimation);
-					if (aReq != null)
-					{
-						finalAnimation = aReq;
-					}
-					finalAnimation.SpeakFileName = "";
-					script = newInteraction.InitScript;
-					newInteraction.StartListening = interaction.StartListening;
-				}
-				else if (actionType == "prespeech")
-				{
-					AnimationRequest aReq = _currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.PreSpeechAnimation);
-					if (aReq != null)
-					{
-						finalAnimation = aReq;
-					}
-					script = newInteraction.PreSpeechScript;
-					backgroundSpeech = true;
-					newInteraction.StartListening = false;
 
-					if(!_processingVoice)
-					{
-						return;
-					}
-				}
-				else if (actionType == "listening")
+				switch(actionType)
 				{
-					AnimationRequest aReq = _currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.ListeningAnimation);
-					if (aReq != null)
-					{
-						finalAnimation = aReq;
-					}
-					backgroundSpeech = true;
-					script = newInteraction.ListeningScript;
-					newInteraction.StartListening = true;
-				}
-				else
-				{
-					newInteraction.StartListening = interaction.StartListening;
-				}
+					case "init":
+						interactionAnimation = new AnimationRequest(_currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.InitAnimation));
+						script = newInteraction.InitScript;
+						if (interactionAnimation != null)
+						{
+							_ = AnimationManager.RunAnimationScript(script, false, interactionAnimation, newInteraction, _currentConversationData);
+						}
+						_ = AnimationManager.RunAnimationScript(script, false, animation, newInteraction, _currentConversationData);
+						break;
+					case "prespeech":
+						interactionAnimation = new AnimationRequest(_currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.PreSpeechAnimation));
+						backgroundSpeech = true;
+						newInteraction.StartListening = false;
+						script = newInteraction.PreSpeechScript;
 
+						if (!_processingVoice)
+						{
+							return;
+						}
+						if (interactionAnimation != null)
+						{
+							_ = AnimationManager.RunAnimationScript(script, false, interactionAnimation, newInteraction, _currentConversationData);
+						}
+						_ = AnimationManager.RunAnimationScript(script, false, animation, newInteraction, _currentConversationData);
+						break;
+					case "listening":
+						interactionAnimation = new AnimationRequest(_currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.ListeningAnimation));
+						backgroundSpeech = true;
+						script = newInteraction.ListeningScript;
+						newInteraction.StartListening = true;
+						if (interactionAnimation != null)
+						{
+							_ = AnimationManager.RunAnimationScript(script, false, interactionAnimation, newInteraction, _currentConversationData);
+						}
+						_ = AnimationManager.RunAnimationScript(script, false, animation, newInteraction, _currentConversationData);
+						break;
+					default:
+						break;
+				}
+				
 				
 				bool hasAudio = false;
 				//Set values based upon defaults and passed in
-				if (!EmotionAnimations.TryGetValue(finalAnimation.Emotion, out AnimationRequest defaultAnimation))
+				if (!EmotionAnimations.TryGetValue(intermediateAnimation.Emotion, out AnimationRequest defaultAnimation))
 				{
 					defaultAnimation = new AnimationRequest();
 				}
 
-				if (finalAnimation.Silence)
+				if (intermediateAnimation.Silence)
 				{
 					hasAudio = false;
-					finalAnimation.AudioFile = null;
-					finalAnimation.Speak = "";
+					intermediateAnimation.AudioFile = null;
+					intermediateAnimation.Speak = "";
 				}
-				else if (!string.IsNullOrWhiteSpace(finalAnimation.AudioFile) || !string.IsNullOrWhiteSpace(finalAnimation.Speak))
+				else if (!string.IsNullOrWhiteSpace(intermediateAnimation.AudioFile) || !string.IsNullOrWhiteSpace(intermediateAnimation.Speak))
 				{
 					hasAudio = true;
 				}
@@ -1759,24 +1786,26 @@ namespace MistyCharacter
 				await SpeechManager.UpdateKeyPhraseRecognition(newInteraction, hasAudio);
 
 				//Use image default if NULL , if EMPTY (just whitespace), no new image
-				if (finalAnimation.ImageFile == null)
+				if (intermediateAnimation.ImageFile == null)
 				{
-					finalAnimation.ImageFile = defaultAnimation.ImageFile;
+					intermediateAnimation.ImageFile = defaultAnimation.ImageFile;
 				}
 
 				//Set default LED for emotion if not already set
-				if (finalAnimation.LEDTransitionAction == null)
+				if (intermediateAnimation.LEDTransitionAction == null)
 				{
-					finalAnimation.LEDTransitionAction = defaultAnimation.LEDTransitionAction;
+					intermediateAnimation.LEDTransitionAction = defaultAnimation.LEDTransitionAction;
 				}
 
-				if (finalAnimation.Volume != null && finalAnimation.Volume > 0)
+				if (intermediateAnimation.Volume != null && intermediateAnimation.Volume > 0)
 				{
-					SpeechManager.Volume = (int)finalAnimation.Volume;
+					SpeechManager.Volume = (int)intermediateAnimation.Volume;
+					await ManageJavaScriptRecording($"misty.SetDefaultVolume({SpeechManager.Volume});");
 				}
 				else if (defaultAnimation.Volume != null && defaultAnimation.Volume > 0)
 				{
 					SpeechManager.Volume = (int)defaultAnimation.Volume;
+					await ManageJavaScriptRecording($"misty.SetDefaultVolume({SpeechManager.Volume});");
 				}
 
 				if (!_processingVoice && actionType == "prespeech")
@@ -1785,60 +1814,59 @@ namespace MistyCharacter
 				}
 
 				//Start speech or audio playing
-				if (!string.IsNullOrWhiteSpace(finalAnimation.Speak))
+				if (!string.IsNullOrWhiteSpace(intermediateAnimation.Speak))
 				{
 					hasAudio = true;
 
-					SpeechManager.TryToPersonalizeData(finalAnimation.Speak, finalAnimation, newInteraction, out string newText);
-					finalAnimation.Speak = newText;
+					SpeechManager.TryToPersonalizeData(intermediateAnimation.Speak, intermediateAnimation, newInteraction, out string newText);
+					intermediateAnimation.Speak = newText;
 					newInteraction.StartListening = false;
-					_ = SpeechManager.Speak(finalAnimation, newInteraction, backgroundSpeech);
-					Robot.SkillLogger.Log($"Saying '{ finalAnimation.Speak}' for intermediate animation '{ finalAnimation.Name}'.");
+					_ = SpeechManager.Speak(intermediateAnimation, newInteraction, backgroundSpeech);
+					Robot.SkillLogger.Log($"Saying '{ intermediateAnimation.Speak}' for intermediate animation '{ intermediateAnimation.Name}'.");
 				}
-				else if (!string.IsNullOrWhiteSpace(finalAnimation.AudioFile))
+				else if (!string.IsNullOrWhiteSpace(intermediateAnimation.AudioFile))
 				{
 					hasAudio = true;
-					MistyState.GetCharacterState().Audio = finalAnimation.AudioFile;
-					Robot.PlayAudio(finalAnimation.AudioFile, null, null);
-					Robot.SkillLogger.Log($"Playing audio '{ finalAnimation.AudioFile}' for intermediate animation '{ finalAnimation.Name}'.");
+					MistyState.GetCharacterState().Audio = intermediateAnimation.AudioFile;
+					Robot.PlayAudio(intermediateAnimation.AudioFile, null, null);
+					await ManageJavaScriptRecording($"misty.PlayAudio(\"{intermediateAnimation.AudioFile}\");");
+					Robot.SkillLogger.Log($"Playing audio '{ intermediateAnimation.AudioFile}' for intermediate animation '{ intermediateAnimation.Name}'.");
 				}
 				
 				//Display image
-				if (!string.IsNullOrWhiteSpace(finalAnimation.ImageFile))
+				if (!string.IsNullOrWhiteSpace(intermediateAnimation.ImageFile))
 				{
-					MistyState.GetCharacterState().Image = finalAnimation.ImageFile;
+					MistyState.GetCharacterState().Image = intermediateAnimation.ImageFile;
 
-					if (!finalAnimation.ImageFile.Contains("."))
+					if (!intermediateAnimation.ImageFile.Contains("."))
 					{
-						finalAnimation.ImageFile = finalAnimation.ImageFile + ".jpg";
+						intermediateAnimation.ImageFile = intermediateAnimation.ImageFile + ".jpg";
 					}
-					StreamAndLogInteraction($"Animation: { finalAnimation.Name} | Displaying image {finalAnimation.ImageFile}");
-					Robot.DisplayImage(finalAnimation.ImageFile, null, false, null);
+					StreamAndLogInteraction($"Animation: { intermediateAnimation.Name} | Displaying image {intermediateAnimation.ImageFile}");
+					Robot.DisplayImage(intermediateAnimation.ImageFile, null, false, null);
+					
+					await ManageJavaScriptRecording($"misty.DisplayImage(\"{intermediateAnimation.ImageFile}\");");
 				}
 
-				if (finalAnimation.SetFlashlight != MistyState.GetCharacterState().FlashLightOn)
+				if (intermediateAnimation.SetFlashlight != MistyState.GetCharacterState().FlashLightOn)
 				{
-					Robot.SetFlashlight(finalAnimation.SetFlashlight, null);
-					MistyState.GetCharacterState().FlashLightOn = finalAnimation.SetFlashlight;
+					Robot.SetFlashlight(intermediateAnimation.SetFlashlight, null);
+					MistyState.GetCharacterState().FlashLightOn = intermediateAnimation.SetFlashlight;
 				}
+				
 
-				if (!string.IsNullOrWhiteSpace(finalAnimation.AnimationScript))
+				if (!string.IsNullOrWhiteSpace(intermediateAnimation.LEDTransitionAction))
 				{
-					_ = AnimationManager.RunAnimationScript(finalAnimation.AnimationScript, false, _currentAnimation, newInteraction, _currentConversationData);
-				}
-
-				if (!string.IsNullOrWhiteSpace(finalAnimation.LEDTransitionAction))
-				{
-					LEDTransitionAction ledTransitionAction = _currentConversationData.LEDTransitionActions.FirstOrDefault(x => x.Id == finalAnimation.LEDTransitionAction);
+					LEDTransitionAction ledTransitionAction = _currentConversationData.LEDTransitionActions.FirstOrDefault(x => x.Id == intermediateAnimation.LEDTransitionAction);
 					if (ledTransitionAction != null)
 					{
 						if (TryGetPatternToTransition(ledTransitionAction.Pattern, out LEDTransition ledTransition) && ledTransitionAction.PatternTime > 0.1)
 						{
 							_ = Task.Run(async () =>
 							{
-								if (finalAnimation.LEDActionDelay > 0)
+								if (intermediateAnimation.LEDActionDelay > 0)
 								{
-									await Task.Delay((int)(finalAnimation.LEDActionDelay * 1000));
+									await Task.Delay((int)(intermediateAnimation.LEDActionDelay * 1000));
 								}
 								Robot.TransitionLED(ledTransitionAction.Red, ledTransitionAction.Green, ledTransitionAction.Blue, ledTransitionAction.Red2, ledTransitionAction.Green2, ledTransitionAction.Blue2, ledTransition, ledTransitionAction.PatternTime * 1000, null);
 							});
@@ -1848,31 +1876,30 @@ namespace MistyCharacter
 					}
 				}
 
-				if (!string.IsNullOrWhiteSpace(finalAnimation.ArmLocation))
+				if (!string.IsNullOrWhiteSpace(intermediateAnimation.ArmLocation))
 				{
 					_ = Task.Run(async () =>
 					{
-						if (finalAnimation.ArmActionDelay > 0)
+						if (intermediateAnimation.ArmActionDelay > 0)
 						{
-							await Task.Delay((int)(finalAnimation.ArmActionDelay * 1000));
+							await Task.Delay((int)(intermediateAnimation.ArmActionDelay * 1000));
 						}
-						ArmManager.HandleArmAction(finalAnimation, _currentConversationData);
+						ArmManager.HandleArmAction(intermediateAnimation, _currentConversationData);
 					});
 				}
 
-				if (!string.IsNullOrWhiteSpace(finalAnimation.HeadLocation))
+				if (!string.IsNullOrWhiteSpace(intermediateAnimation.HeadLocation))
 				{
 					_ = Task.Run(async () =>
 					{
 						MistyState.RegisterEvent(Triggers.ObjectSeen);
-						if (finalAnimation.HeadActionDelay > 0)
+						if (intermediateAnimation.HeadActionDelay > 0)
 						{
-							await Task.Delay((int)(finalAnimation.HeadActionDelay * 1000));
+							await Task.Delay((int)(intermediateAnimation.HeadActionDelay * 1000));
 						}
-						HeadManager.HandleHeadAction(finalAnimation, _currentConversationData);
+						HeadManager.HandleHeadAction(intermediateAnimation, _currentConversationData);
 					});
 				}
-
 			}
 			catch (Exception ex)
 			{
@@ -1890,7 +1917,7 @@ namespace MistyCharacter
 					return;
 				}
 				
-				AnimationRequest originalAnimationRequest = _currentConversationData.Animations.FirstOrDefault(x => x.Id == interaction.Animation);
+				AnimationRequest originalAnimationRequest = new AnimationRequest(_currentConversationData.Animations.FirstOrDefault(x => x.Id == interaction.Animation));
 				if (originalAnimationRequest == null)
 				{
 					Robot.SkillLogger.Log($"Could not find animation for interaction {interaction?.Name ?? interaction?.Id}.");
@@ -2052,10 +2079,12 @@ namespace MistyCharacter
 				if (animationRequest.Volume != null && animationRequest.Volume >= 0)
 				{
 					SpeechManager.Volume = (int)animationRequest.Volume > 100 ? 100 : (int)animationRequest.Volume;
+					await ManageJavaScriptRecording($"misty.SetDefaultVolume({SpeechManager.Volume});");
 				}
 				else if (defaultAnimation.Volume != null && defaultAnimation.Volume >= 0)
 				{
 					SpeechManager.Volume = (int)defaultAnimation.Volume > 100 ? 100 : (int)defaultAnimation.Volume;
+					await ManageJavaScriptRecording($"misty.SetDefaultVolume({SpeechManager.Volume});");
 				}
 
 				if (newInteraction.Retrigger &&
@@ -2101,7 +2130,8 @@ namespace MistyCharacter
 				{
 					if ((initAnimation = _currentConversationData.Animations.FirstOrDefault(x => x.Id == newInteraction.InitAnimation)) != null)
 					{
-						await IntermediateAnimationRequestProcessor(initAnimation, newInteraction, "init");						
+						AnimationRequest initCopy = new AnimationRequest(initAnimation);
+						await IntermediateAnimationRequestProcessor(initCopy, newInteraction, "init");						
 					}
 				}
 
@@ -2113,6 +2143,9 @@ namespace MistyCharacter
 					SpeechManager.TryToPersonalizeData(animationRequest.Speak, animationRequest, newInteraction, out string newText);
 					animationRequest.Speak = newText;
 					_ = SpeechManager.Speak(animationRequest, newInteraction, false);
+
+					await ManageJavaScriptRecording($"misty.Speak(\"{animationRequest.Speak}\");");
+
 					Robot.SkillLogger.Log($"Saying '{ animationRequest.Speak}' for animation '{ animationRequest.Name}'.");
 				}
 				else if (!string.IsNullOrWhiteSpace(animationRequest.AudioFile))
@@ -2120,6 +2153,7 @@ namespace MistyCharacter
 					hasAudio = true;
 					MistyState.GetCharacterState().Audio = animationRequest.AudioFile;
 					Robot.PlayAudio(animationRequest.AudioFile, null, null);
+					await ManageJavaScriptRecording($"misty.PlayAudio(\"{animationRequest.AudioFile}\");");
 					Robot.SkillLogger.Log($"Playing audio '{ animationRequest.AudioFile}' for animation '{ animationRequest.Name}'.");
 				}
 
@@ -2134,6 +2168,7 @@ namespace MistyCharacter
 					}
 					StreamAndLogInteraction($"Animation: { animationRequest.Name} | Displaying image {animationRequest.ImageFile}");
 					Robot.DisplayImage(animationRequest.ImageFile, null, false, null);
+					await ManageJavaScriptRecording($"misty.DisplayImage(\"{animationRequest.ImageFile}\");");
 				}
 
 				if (animationRequest.SetFlashlight != MistyState.GetCharacterState().FlashLightOn)
@@ -2146,7 +2181,8 @@ namespace MistyCharacter
 				{
 					_ = AnimationManager.RunAnimationScript(newInteraction.AnimationScript, animationRequest.RepeatScript, animationRequest, newInteraction, _currentConversationData);
 				}
-				else if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
+
+				if (!string.IsNullOrWhiteSpace(animationRequest.AnimationScript))
 				{
 					_ = AnimationManager.RunAnimationScript(animationRequest.AnimationScript, animationRequest.RepeatScript, animationRequest, newInteraction, _currentConversationData);
 				}
@@ -2315,7 +2351,7 @@ namespace MistyCharacter
 						if ((preSpeechAnimation = _currentConversationData.Animations.FirstOrDefault(x => x.Id == CurrentInteraction.PreSpeechAnimation)) != null)
 						{
 							changeAnimationMovements = true;
-							animation = preSpeechAnimation;
+							animation = new AnimationRequest(preSpeechAnimation);
 						}
 					}
 					
@@ -2373,6 +2409,7 @@ namespace MistyCharacter
 						{
 							_waitingOnPrespeech = true;
 							_ = SpeechManager.Speak(animation, interaction, true);
+							await ManageJavaScriptRecording($"misty.Speak(\"{animation.Speak}\");");
 						}
 					}
 				}
@@ -2410,7 +2447,8 @@ namespace MistyCharacter
 			{
 				if ((listeningAnimation = _currentConversationData.Animations.FirstOrDefault(x => x.Id == CurrentInteraction.ListeningAnimation)) != null)
 				{
-					_ = IntermediateAnimationRequestProcessor(listeningAnimation, CurrentInteraction, "listening");
+					AnimationRequest listeningCopy = new AnimationRequest(listeningAnimation);
+					_ = IntermediateAnimationRequestProcessor(listeningCopy, CurrentInteraction, "listening");
 				}
 			}
 		}

@@ -31,36 +31,17 @@
 **********************************************************************/
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MistyRobotics.SDK.Messengers;
-using Newtonsoft.Json;
 using SkillTools.Web;
-using Windows.Foundation;
 using Windows.Storage;
 
 namespace Conversation.Common
 {
-	public class ArmPayload
-	{
-		public int? LeftArmPosition { get; set; }
-		public int? RightArmPosition { get; set; }
-		public int? Duration { get; set; }
-
-	}
-
-	public class HeadPayload
-	{
-		public int? Pitch { get; set; }
-		public int? Roll { get; set; }
-		public int? Yaw { get; set; }
-		public int? Duration { get; set; }
-	}
-
-	public class AnimationRecorder
+	public class JavaScriptRecorder
 	{
 		/// <summary>
 		/// Folder containing data
@@ -92,29 +73,13 @@ namespace Conversation.Common
 		/// </summary>
 		private string _fileSafeDBName;
 
-		private string _puppetingList;
-
-		private string[] _puppetingBots;
-
 		private WebMessenger _webMessenger = new WebMessenger();
 
 		private IRobotMessenger _misty;
 
-		public AnimationRecorder(IRobotMessenger misty, string puppetingList)
+		public JavaScriptRecorder(IRobotMessenger misty)
 		{
 			_misty = misty;
-			_puppetingList = puppetingList;
-			if (!string.IsNullOrWhiteSpace(_puppetingList))
-			{
-				if (_puppetingList.Contains(";"))
-				{
-					_puppetingBots = _puppetingList.Split(";");
-				}
-				else
-				{
-					_puppetingBots = _puppetingList.Split(",");
-				}
-			}
 		}
 
 		/// <summary>
@@ -123,75 +88,18 @@ namespace Conversation.Common
 		/// </summary>
 		/// <param name="data"></param>
 		/// <returns></returns>
-		public async Task<bool> SaveRecording(string text)
+		public async Task<bool> SaveRecording(string text, bool addNewline = true)
 		{
 			try
 			{
 				await _semaphoreSlim.WaitAsync();
 
-				if(_puppetingBots != null && _puppetingBots.Length > 0)
-				{	
-					foreach(string bot in _puppetingBots)
-					{
-						//Send command to other bots in the puppeting list
-						string[] commands = text.Split(";");
-						foreach (string command in commands)
-						{
-							string newCommand = command.ToLower().Trim();
-							if (newCommand.StartsWith("arm"))
-							{
-								try
-								{
-									string[] fieldList = newCommand.Split(":");
-									string[] fields = fieldList[1].Split(",");
-									if (fields.Length >= 3)
-									{
-										var payload = new ArmPayload
-										{
-											LeftArmPosition = Convert.ToInt32(fields[0]),
-											RightArmPosition = Convert.ToInt32(fields[1]),
-											Duration = Convert.ToInt32(fields[2]) / 1000
-										};
-
-										_ = _webMessenger.PostRequest($@"http://{bot}/api/arms/set", JsonConvert.SerializeObject(payload), "application/json");
-									}
-								}
-								catch (Exception ex)
-								{
-									_misty.SkillLogger.LogError($"Failed to puppet arm command on {bot}.", ex);
-								}
-								
-							}
-							else if (newCommand.StartsWith("head"))
-							{
-								try
-								{
-									string[] fieldList = newCommand.Split(":");
-									string[] fields = fieldList[1].Split(",");
-									if (fields.Length >= 4)
-									{
-										var payload = new HeadPayload
-										{
-											Pitch = Convert.ToInt32(fields[0]),
-											Roll = Convert.ToInt32(fields[1]),
-											Yaw = Convert.ToInt32(fields[2]),
-											Duration = Convert.ToInt32(fields[3])/1000
-										};
-										_ = _webMessenger.PostRequest($@"http://{bot}/api/head", JsonConvert.SerializeObject(payload), "application/json");
-									}
-								}
-								catch (Exception ex)
-								{
-									_misty.SkillLogger.LogError($"Failed to puppet head command on {bot}.", ex);
-								}
-							}
-
-						}
-					}
-				}
-
 				if (_dbFile != null)
 				{
+					if(addNewline)
+					{
+						text += Environment.NewLine;
+					}
 					File.AppendAllText(GetDbPath(), text);
 					return true;
 				}

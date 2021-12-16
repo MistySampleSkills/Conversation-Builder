@@ -108,6 +108,7 @@ namespace MistyCharacter
 			{
 				_ = _animationRecorder.SaveRecording($"--> Conversation Started at {DateTime.Now}.{Environment.NewLine}");
 			}
+			ManageJavaScriptRecording($"{Environment.NewLine}//--> Conversation Started at {DateTime.Now}.");
 		}
 
 		public void HandleConversationEnded(object sender, DateTime datetime)
@@ -123,6 +124,8 @@ namespace MistyCharacter
 			{
 				_ = _animationRecorder.SaveRecording($"--> Interaction change to '{interactionName}' at {DateTime.Now}.{Environment.NewLine}");
 			}
+			ManageJavaScriptRecording($"{Environment.NewLine}//--> Interaction change to '{interactionName}' at {DateTime.Now}.");
+			ManageJavaScriptRecording($"misty.Pause(1000);");
 		}
 
 		public void HandleInteractionEnded(object sender, string interactionName)
@@ -172,6 +175,7 @@ namespace MistyCharacter
 			{
 				_ = _animationRecorder.SaveRecording($"--> Started Saying '{text}' at {DateTime.Now}.{Environment.NewLine}");
 			}
+			ManageJavaScriptRecording($"{Environment.NewLine}//--> Started Saying '{text}' at {DateTime.Now}.");
 		}
 
 		public void HandleStoppedSpeakingReceived(object sender, IAudioPlayCompleteEvent audioEvent)
@@ -189,6 +193,7 @@ namespace MistyCharacter
 			{
 				_ = _animationRecorder.SaveRecording($"--> Stopped speaking.{Environment.NewLine}");
 			}
+			ManageJavaScriptRecording($"{Environment.NewLine}//--> Stopped speaking.");
 		}
 		public void HandleStartedListeningReceived(object sender, DateTime datetime)
 		{
@@ -203,6 +208,7 @@ namespace MistyCharacter
 			{
 				_ = _animationRecorder.SaveRecording($"--> Started listening.{Environment.NewLine}");
 			}
+			ManageJavaScriptRecording($"{Environment.NewLine}//--> Started listening.");
 		}
 
 		public void HandleStoppedListeningReceived(object sender, IVoiceRecordEvent voiceEvent)
@@ -218,6 +224,7 @@ namespace MistyCharacter
 			{
 				_ = _animationRecorder.SaveRecording($"--> Stopped listening.{Environment.NewLine}");
 			}
+			ManageJavaScriptRecording($"{Environment.NewLine}//--> Stopped listening.");
 		}
 		public void HandleKeyPhraseRecognizedReceived(object sender, IKeyPhraseRecognizedEvent kpRecEvent)
 		{
@@ -238,6 +245,7 @@ namespace MistyCharacter
 			{
 				_ = _animationRecorder.SaveRecording($"--> Started processing voice.{Environment.NewLine}");
 			}
+			ManageJavaScriptRecording($"{Environment.NewLine}//--> Started processing voice.");
 		}
 
 		public void HandleKeyPhraseRecognitionOn(object sender, bool e)
@@ -273,16 +281,17 @@ namespace MistyCharacter
 		private int _lastHeadRollValue = 0;
 		private AnimationRecorder _animationRecorder;
 		private SemaphoreSlim animationRecordingSlim = new SemaphoreSlim(1, 1);
+		private JavaScriptRecorder _javaScriptRecorder;
 		private int _pauseCount = 0;
 		private int MinDegreeChange = 1;
 
-		public MistyState(IRobotMessenger misty, IDictionary<string, object> parameters,  CharacterParameters characterParameters)
+		public MistyState(IRobotMessenger misty, IDictionary<string, object> parameters,  CharacterParameters characterParameters, JavaScriptRecorder javaScriptRecorder)
 		{
 			_misty = misty;
+			_javaScriptRecorder = javaScriptRecorder;
 			_parameters = parameters;
 			_characterParameters = characterParameters;
 		}
-
 		
 		private async void SendRecordEvent(object timerData)
 		{
@@ -358,8 +367,9 @@ namespace MistyCharacter
 			{
 				if (_animationRecorder != null)
 				{
-					await _animationRecorder.SaveRecording($"-- EXCEPTION : {ex}{Environment.NewLine}");
+					await _animationRecorder.SaveRecording($"-- EXCEPTION : {ex}{Environment.NewLine}");					
 				}
+				ManageJavaScriptRecording($"{Environment.NewLine}//-- EXCEPTION : {ex}");
 				_misty.SkillLogger.LogError("Failed to record motion.", ex);
 			}
 			finally
@@ -368,20 +378,34 @@ namespace MistyCharacter
 			}
 		}
 
+		//Duped
+		private void ManageJavaScriptRecording(string command)
+		{
+			if (!string.IsNullOrWhiteSpace(command) && _javaScriptRecorder != null && _characterParameters.CreateJavaScriptTemplate)
+			{
+				_ = _javaScriptRecorder.SaveRecording(command);
+			}
+		}
+
 		public async Task<bool> Initialize()
 		{
 			try
 			{
 				await RegisterStartingEvents();
-
+				
 				if (_characterParameters.AnimationCreationMode)
 				{
 					_animationRecorder = new AnimationRecorder(_misty, _characterParameters.PuppetingList);
 					string name = $"recorded_{_characterParameters.ConversationGroup.Name}_{DateTime.Now.ToString()}";
 					if (await _animationRecorder.CreateDataStore(name))
 					{
-						_misty.SkillLogger.LogError("Failed to create animation recording file with name {name}.");
+						_misty.SkillLogger.LogError($"Created animation recording file with name {name}.");
 						_animationCreationTimer = new Timer(SendRecordEvent, null, Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000)), Convert.ToInt32(Math.Abs(_characterParameters.AnimationCreationDebounceSeconds * 1000)));
+					}
+					else
+					{
+						_misty.SkillLogger.LogError($"Failed to create animation recording file with name {name}.");
+						return false;
 					}
 				}
 				return true;

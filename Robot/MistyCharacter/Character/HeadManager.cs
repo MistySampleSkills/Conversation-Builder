@@ -68,12 +68,15 @@ namespace MistyCharacter
 		private bool _finding = false;
 		private bool _findingPersonObject = false;
 		bool _handlingMove = false;
+		private JavaScriptRecorder _javaScriptRecorder;
 
-		public HeadManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters)
-			: base(misty, parameters, characterParameters)
+		public HeadManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, JavaScriptRecorder javaScriptRecorder = null)
+		: base(misty, parameters, characterParameters)
 		{
+			_javaScriptRecorder = javaScriptRecorder;
 			_currentHeadRequest = new HeadLocation(null, null, null);
 		}
+
 		public void StopMovement()
 		{
 			_moveHeadTimer?.Dispose();
@@ -145,11 +148,18 @@ namespace MistyCharacter
 					{
 						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
+
+						ManageJavaScriptRecording($"misty.MoveHeadDegrees({_currentHeadRequest.MaxPitch}, " +
+							$"{_currentHeadRequest.MaxRoll}, {_currentHeadRequest.MaxYaw}, null, {(int)Math.Abs(_currentHeadRequest.MovementDuration ?? 250)});");
+
 					}
 					else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
 					{
 						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(_currentHeadRequest.MaxPitch, _currentHeadRequest.MaxRoll, _currentHeadRequest.MaxYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+						
+						ManageJavaScriptRecording($"misty.MoveHeadDegrees({_currentHeadRequest.MaxPitch}, " +
+							$"{_currentHeadRequest.MaxRoll}, {_currentHeadRequest.MaxYaw}, {(int)Math.Abs(_currentHeadRequest.MovementVelocity ?? 250)}, null);");
 					}
 				}
 				else
@@ -228,6 +238,14 @@ namespace MistyCharacter
 			}
 		}
 
+		private void ManageJavaScriptRecording(string command)
+		{
+			if (!string.IsNullOrWhiteSpace(command) && _javaScriptRecorder != null && CharacterParameters.CreateJavaScriptTemplate)
+			{
+				_ = _javaScriptRecorder.SaveRecording(command);
+			}
+		}
+
 		//TODO Move follow face and object out of here
 		private void MoveHeadCallback(object timerData)
 		{
@@ -261,6 +279,10 @@ namespace MistyCharacter
 						{
 							
 							Robot.MoveHead(_currentElevation + CharacterParameters.FacePitchOffset, _random.Next(0, 5), _currentBearing, null, (int)Math.Abs(CharacterParameters.ObjectDetectionDebounce), AngularUnit.Degrees, null);
+
+							ManageJavaScriptRecording($"misty.MoveHeadDegrees({_currentElevation + CharacterParameters.FacePitchOffset}, " +
+								$"{_random.Next(0, 5)}, {_currentBearing}, null, {(int)Math.Abs(CharacterParameters.ObjectDetectionDebounce)});");
+
 							_currentElevation = null;
 							_currentBearing = null;
 						}
@@ -393,11 +415,18 @@ namespace MistyCharacter
 						{
 							_lastMovementCommand = DateTime.Now;
 							Robot.MoveHead(newPitch, newRoll, newYaw, null, (int)Math.Abs((double)_currentHeadRequest.MovementDuration), AngularUnit.Degrees, null);
+
+							ManageJavaScriptRecording($"misty.MoveHeadDegrees({newPitch}, " +
+								$"{newRoll}, {newYaw}, null, {(int)Math.Abs((double)_currentHeadRequest.MovementDuration)});");
+
 						}
 						else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
 						{
 							_lastMovementCommand = DateTime.Now;
 							Robot.MoveHead(newPitch, newRoll, newYaw, (int)Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+
+							ManageJavaScriptRecording($"misty.MoveHeadDegrees({newPitch}, " +
+								$"{newRoll}, {newYaw}, {(int)Math.Abs((double)_currentHeadRequest.MovementVelocity)}, null);");
 						}
 					}
 				}
@@ -463,6 +492,9 @@ namespace MistyCharacter
 				_lastMovementCommand = DateTime.Now;
 				Robot.MoveHead(pitch, null, yaw, null, _currentHeadRequest.MovementDuration, AngularUnit.Degrees, null);
 
+				ManageJavaScriptRecording($"misty.MoveHeadDegrees({pitch}, " +
+					$"null, {yaw}, null, {(int)Math.Abs(_currentHeadRequest.MovementDuration ?? 250)});");
+
 				_lastYaw = yaw;
 				_lastPitch = pitch;
 
@@ -504,11 +536,17 @@ namespace MistyCharacter
 					{
 						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(pitch, null, yaw, null, _currentHeadRequest.MovementDuration, AngularUnit.Degrees, null);
+
+						ManageJavaScriptRecording($"misty.MoveHeadDegrees({pitch}, " +
+							$"null, {yaw}, null, {(int)Math.Abs(_currentHeadRequest.MovementDuration ?? 250)});");
 					}
 					else if (_currentHeadRequest.MovementVelocity != null && _currentHeadRequest.MovementVelocity > 0)
 					{
 						_lastMovementCommand = DateTime.Now;
 						Robot.MoveHead(pitch, null, yaw, Math.Abs((int)_currentHeadRequest.MovementVelocity), null, AngularUnit.Degrees, null);
+
+						ManageJavaScriptRecording($"misty.MoveHeadDegrees({pitch}, " +
+							$"null, {yaw}, {(int)Math.Abs(_currentHeadRequest.MovementVelocity ?? 250)}, null);");
 					}
 				}
 					

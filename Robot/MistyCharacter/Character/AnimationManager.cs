@@ -171,8 +171,9 @@ namespace MistyCharacter
 		public event EventHandler<string> RemoveTrigger;
 		public event EventHandler<TriggerData> ManualTrigger;
 		public ConversationData _currentConversationData;
+		private JavaScriptRecorder _javaScriptRecorder;
 
-		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState, ITimeManager timeManager = null, IHeadManager headManager = null, ICommandManager commandManager = null)
+		public AnimationManager(IRobotMessenger misty, IDictionary<string, object> parameters, CharacterParameters characterParameters, ISpeechManager speechManager, IMistyState mistyState, ITimeManager timeManager = null, IHeadManager headManager = null, ICommandManager commandManager = null, JavaScriptRecorder javaScriptRecorder = null)
 		: base(misty, parameters, characterParameters)
 		{
 			_speechManager = speechManager;
@@ -183,6 +184,7 @@ namespace MistyCharacter
 			_webMessenger = new WebMessenger();
 			CurrentLocomotionState.LocomotionStatus = LocomotionStatus.Unknown;
 
+			_javaScriptRecorder = javaScriptRecorder;
 			_speechManager.StoppedSpeaking += _speechManager_StoppedSpeaking;
 			//_speechManager.UserDataAnimationScript += _speechManager_UserDataAnimationScript;
 			_mistyState = mistyState;
@@ -691,14 +693,20 @@ namespace MistyCharacter
 
 		private double? GetNullableObject(string [] array, int index)
 		{
-			if (array == null || array.Length < index || array.ElementAtOrDefault(index) == null || array.ElementAtOrDefault(index).Trim() == "null")
+			if (array == null || array.Length < index || array.ElementAtOrDefault(index) == null || array.ElementAtOrDefault(index).Trim().ToLower() == "null")
 			{
 				return null;
 			}
 			return Convert.ToDouble(array[index]);
 		}
 
-
+		private async Task ManageJavaScriptRecording(string command)
+		{
+			if (!string.IsNullOrWhiteSpace(command) && _javaScriptRecorder != null && CharacterParameters.CreateJavaScriptTemplate)
+			{
+				await _javaScriptRecorder.SaveRecording(command);
+			}
+		}
 
 		private async Task<CommandResult> ProcessCommand(string command, bool guaranteedCommand, int loop)
 		{
@@ -846,6 +854,7 @@ namespace MistyCharacter
 								{
 									string[] data = commandData[1].Split(",");
 									_ = Robot.MoveArmsAsync(Convert.ToDouble(data[0]), Convert.ToDouble(data[1]), null, null, Convert.ToDouble(data[2]) / 1000, AngularUnit.Degrees);
+									await ManageJavaScriptRecording($"misty.MoveArmsDegrees({Convert.ToDouble(data[0])}, {Convert.ToDouble(data[1])}, null, null, {Convert.ToDouble(data[2]) / 1000});");
 								}
 								else
 								{
@@ -859,6 +868,7 @@ namespace MistyCharacter
 									string[] data1 = commandData[1].Split(",");
 
 									_ = Robot.MoveArmsAsync(Convert.ToDouble(data1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(data1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, null, Convert.ToDouble(data1[2]) / 1000, AngularUnit.Degrees);
+									await ManageJavaScriptRecording($"misty.MoveArmsDegrees({Convert.ToDouble(data1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue},{Convert.ToDouble(data1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue}, null, null, {Convert.ToDouble(data1[2]) / 1000});");
 								}
 								else
 								{
@@ -871,6 +881,7 @@ namespace MistyCharacter
 								{
 									string[] datav1 = commandData[1].Split(",");
 									_ = Robot.MoveArmsAsync(Convert.ToDouble(datav1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue, Convert.ToDouble(datav1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue, null, Convert.ToDouble(datav1[2]), null, AngularUnit.Degrees);
+									await ManageJavaScriptRecording($"misty.MoveArmsDegrees({Convert.ToDouble(datav1[0]) + _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue},{Convert.ToDouble(datav1[1]) + _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue}, {Convert.ToDouble(datav1[2])}, {Convert.ToDouble(datav1[2])}, null);");
 								}
 								else
 								{
@@ -884,6 +895,7 @@ namespace MistyCharacter
 									string[] armVData = commandData[1].Split(",");
 									RobotArm selectedVArm = armVData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
 									_ = Robot.MoveArmAsync(Convert.ToDouble(armVData[1]), selectedVArm, Convert.ToDouble(armVData[2]), null, AngularUnit.Degrees);
+									await ManageJavaScriptRecording($"misty.MoveArmDegrees({Convert.ToString(selectedVArm)}, {Convert.ToDouble(armVData[1])}, {Convert.ToDouble(armVData[2])}, null);");
 								}
 								else
 								{
@@ -897,6 +909,7 @@ namespace MistyCharacter
 									string[] armData = commandData[1].Split(",");
 									RobotArm selectedArm = armData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
 									_ = Robot.MoveArmAsync(Convert.ToDouble(armData[1]), selectedArm, null, Convert.ToDouble(armData[2]) / 1000, AngularUnit.Degrees);
+									await ManageJavaScriptRecording($"misty.MoveArmDegrees({Convert.ToString(selectedArm)}, {Convert.ToDouble(armData[1])}, null, {Convert.ToDouble(armData[2])});");
 								}
 								else
 								{
@@ -911,6 +924,7 @@ namespace MistyCharacter
 									RobotArm selectedArm2 = armOData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
 									double armDegrees = armOData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
 									_ = Robot.MoveArmAsync(Convert.ToDouble(armOData[1]) + armDegrees, selectedArm2, null, Convert.ToDouble(armOData[2]) / 1000, AngularUnit.Degrees);
+									await ManageJavaScriptRecording($"misty.MoveArmDegrees({Convert.ToString(selectedArm2)}, {Convert.ToDouble(armOData[1]) + armDegrees}, null, {Convert.ToDouble(armOData[2])});");
 								}
 								else
 								{
@@ -925,6 +939,7 @@ namespace MistyCharacter
 									RobotArm selectedArm3 = armOvData[0].ToLower().StartsWith("r") ? RobotArm.Right : RobotArm.Left;
 									double armDegrees2 = armOvData[0].ToLower().StartsWith("r") ? _mistyState.GetCharacterState().RightArmActuatorEvent.ActuatorValue : _mistyState.GetCharacterState().LeftArmActuatorEvent.ActuatorValue;
 									_ = Robot.MoveArmAsync(Convert.ToDouble(armOvData[1]) + armDegrees2, selectedArm3, Convert.ToDouble(armOvData[2]), null, AngularUnit.Degrees);
+									await ManageJavaScriptRecording($"misty.MoveArmDegrees({Convert.ToString(selectedArm3)}, {Convert.ToDouble(armOvData[1]) + armDegrees2}, {Convert.ToDouble(armOvData[2])}, null);");
 								}
 								else
 								{
@@ -938,7 +953,7 @@ namespace MistyCharacter
 									_headManager.StopMovement();
 									string[] headData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headData, 0), GetNullableObject(headData, 1), GetNullableObject(headData, 2), null, Convert.ToDouble(headData[3]) / 1000, AngularUnit.Degrees);
-									
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headData, 0)) ?? "null"}, {Convert.ToString(GetNullableObject(headData, 1)) ?? "null"}, {Convert.ToString(GetNullableObject(headData, 2)) ?? "null"}, null, {Convert.ToDouble(headData[3]) / 1000});");
 								}
 								else
 								{
@@ -946,7 +961,7 @@ namespace MistyCharacter
 								}
 								break;
 							case "HEAD-OFFSET":
-								//HEAD:pitch,roll,yaw,velocity;
+								//HEAD:pitch,roll,yaw,duration;
 								if (!CharacterParameters.IgnoreHeadCommands)
 								{
 									_headManager.StopMovement();
@@ -955,6 +970,11 @@ namespace MistyCharacter
 											GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
 											GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
 											null, Convert.ToDouble(headOData[3]) / 1000, AngularUnit.Degrees);
+
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headOData, 0) == null ? null : GetNullableObject(headOData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue) ?? "null"}, " +
+										$"{Convert.ToString(GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue) ?? "null"}, " +
+										$"{Convert.ToString(GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue) ?? "null"}, " +
+										$"null, {Convert.ToDouble(headOData[3]) / 1000});");
 								}
 								else
 								{
@@ -971,6 +991,11 @@ namespace MistyCharacter
 											GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue,
 											GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
 											Convert.ToDouble(headOvData[3]), null, AngularUnit.Degrees);
+
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headOvData, 0) == null ? null : GetNullableObject(headOvData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue) ?? "null"}, " +
+										$"{Convert.ToString(GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue) ?? "null"}, " +
+										$"{Convert.ToString(GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue) ?? "null"}, " +
+										$"{Convert.ToDouble(headOvData[3])} / 1000, null);");
 								}
 								else
 								{
@@ -984,6 +1009,11 @@ namespace MistyCharacter
 									_headManager.StopMovement();
 									string[] headVData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headVData, 0), GetNullableObject(headVData, 1), GetNullableObject(headVData, 2), Convert.ToDouble(headVData[3]), null, AngularUnit.Degrees);
+
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headVData, 0) == null ? null : GetNullableObject(headVData, 0)) ?? "null"}, " +
+										$"{Convert.ToString(GetNullableObject(headVData, 1) == null ? null : GetNullableObject(headVData, 1)) ?? "null"}, " +
+										$"{Convert.ToString(GetNullableObject(headVData, 2) == null ? null : GetNullableObject(headVData, 2)) ?? "null"}, " +
+										$"{Convert.ToDouble(headVData[3])} / 1000, null);");
 								}
 								else
 								{
@@ -993,17 +1023,19 @@ namespace MistyCharacter
 							case "PAUSE":
 								//PAUSE:timeMs;
 								await Task.Delay(Convert.ToInt32(commandData[1]));
-
+								await ManageJavaScriptRecording($"misty.Pause({Convert.ToInt32(commandData[1].Trim())});");
 								//await WaitOnCompletionEvent(Convert.ToInt32(commandData[1]));
 
 								break;
 							case "VOLUME":
 								//VOLUME:newVolume;
 								_speechManager.Volume = Convert.ToInt32(commandData[1]);
+								await ManageJavaScriptRecording($"misty.SetDefaultVolume({_speechManager.Volume});");
 								break;
 							case "VOLUME-OFFSET":
 								//VOLUME:volumeOffset;
 								_speechManager.Volume = Convert.ToInt32(commandData[1]) + _speechManager.Volume;
+								await ManageJavaScriptRecording($"misty.SetDefaultVolume({_speechManager.Volume});");
 								break;
 							case "DEBUG":
 								//DEBUG: User websocket message to send if skill is debug level;
@@ -1094,7 +1126,8 @@ namespace MistyCharacter
 									_userImageLayerVisible = true;
 								}
 								//_ = Robot.DisplayImageAsync(commandData[1], "UserImageLayer", false);
-								_ = Robot.DisplayImageAsync(Convert.ToString(commandData[1]), null, false);
+								_ = Robot.DisplayImageAsync(Convert.ToString(commandData[1]).Trim(), null, false);
+								await ManageJavaScriptRecording($"misty.DisplayImage(\"{Convert.ToString(commandData[1].Trim())}\");");
 								break;
 							case "CLEAR-IMAGE":
 								//CLEAR-IMAGE;
@@ -1140,7 +1173,7 @@ namespace MistyCharacter
 							case "FOLLOW-OBJECT":
 								//FOLLOW-OBJECT:objectName;
 								HeadLocation _objectHeadRequest = new HeadLocation(-40, -2, -45, 10, 2, 45, 0.5, null);
-								_objectHeadRequest.FollowObject = Convert.ToString(commandData[1]);
+								_objectHeadRequest.FollowObject = Convert.ToString(commandData[1].Trim());
 								_objectHeadRequest.FollowFace = false;
 								_mistyState.RegisterEvent(Triggers.ObjectSeen);
 								_headManager.HandleHeadAction(_objectHeadRequest);
@@ -1157,7 +1190,7 @@ namespace MistyCharacter
 									_userImageLayerVisible = true;
 								}*/
 								//_ = Robot.DisplayImageAsync(commandData[1], "UserImageLayer", true);
-								_ = Robot.DisplayImageAsync(commandData[1], null, true);
+								_ = Robot.DisplayImageAsync(commandData[1].Trim(), null, true);
 								break;
 							case "TEXT":
 								//TEXT:text to display;
@@ -1270,6 +1303,17 @@ namespace MistyCharacter
 							case "AUDIO":
 								//AUDIO:audio-file-name.wav;
 								_ = Robot.PlayAudioAsync(Convert.ToString(commandData[1]), null);
+								await ManageJavaScriptRecording($"misty.PlayAudio(\"{Convert.ToString(commandData[1])}\");");
+								break;
+							case "STOP-SPEAKING":
+								//STOP-AUDIO;
+								Robot.StopSpeaking(null);
+								await ManageJavaScriptRecording($"misty.StopSpeaking();");
+								break;
+							case "STOP-AUDIO":
+								//STOP-AUDIO;
+								Robot.StopAudio(null);
+								await ManageJavaScriptRecording($"misty.StopAudio();");
 								break;
 							case "VIDEO":
 								//VIDEO:videoName.mp4;
@@ -1331,7 +1375,11 @@ namespace MistyCharacter
 							case "LED":
 								//LED:red,green,blue;
 								string[] ledData = commandData[1].Split(",");
-								_ = Robot.ChangeLEDAsync(Convert.ToUInt32(ledData[0]), Convert.ToUInt32(ledData[1]), Convert.ToUInt32(ledData[2]));
+								_ = Robot.ChangeLEDAsync(Convert.ToUInt32(ledData[0].Trim()), Convert.ToUInt32(ledData[1].Trim()), Convert.ToUInt32(ledData[2].Trim()));
+								
+								await ManageJavaScriptRecording($"misty.ChangeLED({Convert.ToUInt32(ledData[0])}, " +
+									$"{Convert.ToUInt32(ledData[1].Trim())}, " +
+									$"{Convert.ToUInt32(ledData[2].Trim())});");
 								break;
 
 							case "LED-PATTERN":
@@ -1355,26 +1403,38 @@ namespace MistyCharacter
 
 								if (transType != LEDTransition.None)
 								{
-									_ = Robot.TransitionLEDAsync(Convert.ToUInt32(transitLedData[0]), Convert.ToUInt32(transitLedData[1]), Convert.ToUInt32(transitLedData[2]),
-										Convert.ToUInt32(transitLedData[3]), Convert.ToUInt32(transitLedData[4]), Convert.ToUInt32(transitLedData[5]),
-										transType, Convert.ToUInt32(transitLedData[6]));
+									_ = Robot.TransitionLEDAsync(Convert.ToUInt32(transitLedData[0]), Convert.ToUInt32(transitLedData[1].Trim()), Convert.ToUInt32(transitLedData[2].Trim()),
+										Convert.ToUInt32(transitLedData[3].Trim()), Convert.ToUInt32(transitLedData[4].Trim()), Convert.ToUInt32(transitLedData[5].Trim()),
+										transType, Convert.ToDouble(transitLedData[6]));
+
+									await ManageJavaScriptRecording($"misty.TransitionLED({Convert.ToUInt32(transitLedData[0].Trim())}, " +
+										$"{Convert.ToUInt32(transitLedData[1].Trim())}, " +
+										$"{Convert.ToUInt32(transitLedData[2].Trim())}," +
+										$"{Convert.ToUInt32(transitLedData[3].Trim())}," +
+										$"{Convert.ToUInt32(transitLedData[4].Trim())}," +
+										$"{Convert.ToUInt32(transitLedData[5].Trim())}," +
+										$"\"{Convert.ToString(transType)}\"," +
+										$"{Convert.ToDouble(transitLedData[6].Trim())});");
+										break;
 								}
 								break;
 
 							case "SPEAK":
 								//SPEAK:What to say;
-								if (_speechManager.TryToPersonalizeData(commandData[1], _currentAnimation, _currentInteraction, out string newText))
+								string[] speech = commandData[1].SmartSplit(",");
+								if (_speechManager.TryToPersonalizeData(speech[0], _currentAnimation, _currentInteraction, out string newText))
 								{
 									_currentAnimation.Speak = newText;
 								}
 								else
 								{
-									_currentAnimation.Speak = commandData[1];
+									_currentAnimation.Speak = speech[0];
 								}
 
 								_currentInteraction.StartListening = false;
 								_currentAnimation.SpeakFileName = "";
 								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
+								await ManageJavaScriptRecording($"misty.Speak(\"{_currentAnimation.Speak}\");");
 								break;
 
 							case "SPEAK-AND-WAIT":
@@ -1392,6 +1452,7 @@ namespace MistyCharacter
 								_currentInteraction.StartListening = false;
 								_currentAnimation.SpeakFileName = "";
 								_ = _speechManager.Speak(_currentAnimation, _currentInteraction, false);
+								await ManageJavaScriptRecording($"misty.Speak(\"{_currentAnimation.Speak}\");");
 								await WaitOnSpeechCompletionEvent(Convert.ToInt32(sawData[1]));
 								break;
 
@@ -1413,6 +1474,7 @@ namespace MistyCharacter
 
 
 								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
+								await ManageJavaScriptRecording($"misty.Speak(\"{_currentAnimation.Speak}\");");
 								//await Task.Delay(100);
 								_awaitingSyncToSend = new AwaitingSync
 								{
@@ -1437,6 +1499,7 @@ namespace MistyCharacter
 								_currentAnimation.SpeakFileName = "";
 
 								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
+								await ManageJavaScriptRecording($"misty.Speak(\"{_currentAnimation.Speak}\");");
 								//await Task.Delay(100);
 								_awaitingEventToSend = new AwaitingEvent
 								{
@@ -1462,6 +1525,7 @@ namespace MistyCharacter
 								_currentInteraction.StartListening = true;
 								_currentAnimation.SpeakFileName = "";
 								await _speechManager.Speak(_currentAnimation, _currentInteraction, false);
+								await ManageJavaScriptRecording($"misty.Speak(\"{_currentAnimation.Speak}\");");
 								break;
 							case "START-LISTEN":
 								//START-LISTEN;
@@ -1495,15 +1559,21 @@ namespace MistyCharacter
 								_ = await _speechManager.UpdateKeyPhraseRecognition(_currentInteraction, true);
 								break;
 
+							case "DRIVE-TIME":
+								//DRIVE-TIME:linearVelocity,angularVelocity,timeMs;
+								string[] driveTimeData = commandData[1].Split(",");
+								Robot.DriveTime(Convert.ToDouble(driveTimeData[0].Trim()), Convert.ToDouble(driveTimeData[1].Trim()), Convert.ToInt32(driveTimeData[2].Trim()), null);
+								break;
+
 							case "DRIVE":
 								//DRIVE:distanceMeters,timeMs,true/false(reverse);
 								string[] driveData = commandData[1].Split(",");
 								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Drive,
-									DistanceMeters = Convert.ToDouble(driveData[0]),
-									TimeMs = Convert.ToInt32(driveData[1]),
-									Reverse = Convert.ToBoolean(driveData[2].Trim())
+									DistanceMeters = Convert.ToDouble(driveData[0].Trim()),
+									TimeMs = Convert.ToInt32(driveData[1].Trim()),
+									Reverse = Convert.ToBoolean(driveData[2].Trim().ToLower())
 								});
 								break;
 
@@ -1513,11 +1583,16 @@ namespace MistyCharacter
 								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Heading,
-									Heading = Convert.ToDouble(headingData[0]),
-									DistanceMeters = Convert.ToDouble(headingData[1]),
-									TimeMs = Convert.ToInt32(headingData[2]),
+									Heading = Convert.ToDouble(headingData[0].Trim()),
+									DistanceMeters = Convert.ToDouble(headingData[1].Trim()),
+									TimeMs = Convert.ToInt32(headingData[2].Trim()),
 									Reverse = Convert.ToBoolean(headingData[3].Trim())
 								});
+
+								await ManageJavaScriptRecording($"misty.DriveHeading({Convert.ToDouble(headingData[0].Trim())}, " +
+									$"{Convert.ToDouble(headingData[1].Trim())}, " +
+									$"{Convert.ToInt32(headingData[2].Trim())}, " +
+									$"{(Convert.ToBoolean(headingData[3].Trim().ToLower()) ? "true" : "false")});");
 								break;
 
 							case "TURN":
@@ -1525,25 +1600,41 @@ namespace MistyCharacter
 								string[] turnData = commandData[1].Split(",");
 								string direction = Convert.ToString(turnData[2]);
 								direction = direction.ToLower().Trim();
+
+								double currentYaw = _mistyState.GetCharacterState().LocomotionState.RobotYaw;
+
 								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Turn,
-									Degrees = direction.StartsWith("r") ? -Math.Abs(Convert.ToDouble(turnData[0])) : Math.Abs(Convert.ToDouble(turnData[0])),
+									Degrees = direction.StartsWith("r") ? currentYaw - Math.Abs(Convert.ToDouble(turnData[0].Trim())) : currentYaw + Math.Abs(Convert.ToDouble(turnData[0].Trim())),
 									TimeMs = Convert.ToInt32(turnData[1].Trim()),
-									Reverse = direction.StartsWith("r") ? true : false
+									Reverse = false
 								});
+
+								await ManageJavaScriptRecording($"misty.DriveArc({(direction.StartsWith("r") ? currentYaw - Math.Abs(Convert.ToDouble(turnData[0].Trim())) : currentYaw + Math.Abs(Convert.ToDouble(turnData[0].Trim())))}, " +
+									$"0, " +
+									$"{Convert.ToInt32(turnData[1].Trim())}, " +
+									$"false);");
 								break;
 
 							case "TURN-HEADING":
 								//TURN-HEADING:heading,timeMs,right/left;
 								string[] turnHData = commandData[1].Split(",");
+								string directionH = Convert.ToString(turnHData[2]);
+								direction = directionH.ToLower().Trim();
 								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.TurnHeading,
-									Heading = Math.Abs(Convert.ToDouble(turnHData[0])),
+									Heading = Convert.ToDouble(turnHData[0].Trim()),
+									//Heading = Math.Abs(Convert.ToDouble(turnHData[0].Trim())),
 									TimeMs = Convert.ToInt32(turnHData[1].Trim()),
-									Reverse = turnHData[2].Trim().ToLower().StartsWith("r") ? true : false
+									Reverse = directionH.StartsWith("r") ? true : false
 								});
+
+								await ManageJavaScriptRecording($"misty.DriveArc({Convert.ToDouble(turnHData[0].Trim())}, " +
+									$"0, " +
+									$"{Convert.ToInt32(turnHData[1].Trim())}, " +
+									$"{(directionH.StartsWith("r") ? "true" : "false")});");
 								break;
 
 							case "ARC":
@@ -1552,14 +1643,20 @@ namespace MistyCharacter
 								_ = HandleLocomotionAction(new LocomotionAction
 								{
 									Action = LocomotionCommand.Arc,
-									Heading = Convert.ToDouble(arcData[0]),
-									Radius = Convert.ToInt32(arcData[1]),
-									TimeMs = Convert.ToInt32(arcData[2]),
+									Heading = Convert.ToDouble(arcData[0].Trim()),
+									Radius = Convert.ToInt32(arcData[1].Trim()),
+									TimeMs = Convert.ToInt32(arcData[2].Trim()),
 									Reverse = Convert.ToBoolean(arcData[3].Trim())
 								});
+
+								await ManageJavaScriptRecording($"misty.DriveArc({Math.Abs(Convert.ToDouble(arcData[0].Trim()))}, " +
+									$"{Convert.ToInt32(arcData[1].Trim())}, " +
+									$"{Convert.ToInt32(arcData[2].Trim())}, " +
+									$"{(arcData[3].Trim().ToLower().StartsWith("r") ? "true" : "false")});");
 								break;
+								
 							case "RECORD":
-								_ = Robot.StartRecordingAudioAsync(commandData[1]);
+								_ = Robot.StartRecordingAudioAsync(commandData[1].Trim());
 								break;
 							case "STOP-RECORDING":
 								_ = Robot.StopRecordingAudioAsync();
@@ -1589,9 +1686,12 @@ namespace MistyCharacter
 
 							case "HAZARDS-OFF":
 								_ = Robot.UpdateHazardSettingsAsync(new MistyRobotics.Common.Data.HazardSettings { DisableTimeOfFlights = true });
+								await ManageJavaScriptRecording($"misty.UpdateHazardSettings(false, true);");
 								break;
 							case "HAZARDS-ON":
 								_ = Robot.UpdateHazardSettingsAsync(new MistyRobotics.Common.Data.HazardSettings { RevertToDefault = true });
+
+								await ManageJavaScriptRecording($"misty.UpdateHazardSettings(true);");								
 								break;
 							case "START-SKILL":
 								//START-SKILL: skillId,?? and the params in robot config if cross skill
@@ -1641,7 +1741,7 @@ namespace MistyCharacter
 								{
 									text = triggerEventData[2];
 								}
-								ManualTrigger?.Invoke(this, new TriggerData(text, triggerEventData[1], triggerEventData[0]));
+								ManualTrigger?.Invoke(this, new TriggerData(text, triggerEventData[1].Trim(), triggerEventData[0].Trim()));
 								break;
 							case "GOTO-ACTION":
 								//GOTO-ACTION:Action;
@@ -1726,27 +1826,27 @@ namespace MistyCharacter
 								break;
 
 							case "SET-AUDIO-TRIM":
-								_speechManager.SetAudioTrim(Convert.ToInt32(commandData[1]));
+								_speechManager.SetAudioTrim(Convert.ToInt32(commandData[1].Trim()));
 								break;
 							case "SET-MAX-SILENCE":
 								//command expects seconds
-								_speechManager.SetMaxSilence(Convert.ToDouble(commandData[1]) / 1000.0);
+								_speechManager.SetMaxSilence(Convert.ToDouble(commandData[1].Trim()) / 1000.0);
 								break;
 							case "SET-MAX-LISTEN":
 								//command expects seconds
-								_speechManager.SetMaxListen(Convert.ToDouble(commandData[1]) / 1000.0);
+								_speechManager.SetMaxListen(Convert.ToDouble(commandData[1].Trim()) / 1000.0);
 								break;
 							case "SET-SPEECH-PITCH":
-								_speechManager.SetPitch(commandData[1]);
+								_speechManager.SetPitch(commandData[1].Trim());
 								break;
 							case "SET-VOICE":
-								_speechManager.SetVoice(commandData[1]);
+								_speechManager.SetVoice(commandData[1].Trim());
 								break;
 							case "SET-SPEECH-STYLE":
-								_speechManager.SetSpeakingStyle(commandData[1]);
+								_speechManager.SetSpeakingStyle(commandData[1].Trim());
 								break;
 							case "SET-LANGUAGE":
-								_speechManager.SetLanguage(commandData[1]);
+								_speechManager.SetLanguage(commandData[1].Trim());
 								break;
 							case "SET-SPEECH-RATE":
 								_speechManager.SetSpeechRate(Convert.ToDouble(commandData[1]));
@@ -1770,7 +1870,7 @@ namespace MistyCharacter
 								_ = Task.Run(async () =>
 								{
 									//Use timer instead?
-									int delay = Convert.ToInt32(timedTriggerEventData[0]);
+									int delay = Convert.ToInt32(timedTriggerEventData[0].Trim());
 									if(delay > 0)
 									{
 										await Task.Delay(delay);
@@ -1788,7 +1888,7 @@ namespace MistyCharacter
 								{
 									_waitingEvent = awaitSyncEventData[0].Trim();
 									Robot.RegisterUserEvent(_waitingEvent, UserEventCallback, 0, false, null);
-									_waitingTimeoutMs = Convert.ToInt32(awaitSyncEventData[1]);
+									_waitingTimeoutMs = Convert.ToInt32(awaitSyncEventData[1].Trim());
 								}
 								break;
 
@@ -2137,6 +2237,12 @@ namespace MistyCharacter
 
 		private async Task Turn(double degrees, int timeMs, bool reverse = false)
 		{
+			//double turnDegrees = CurrentLocomotionState.RobotYaw + degrees;
+			//if (turnDegrees < 0)
+			//{
+			//	turnDegrees = 360 - (degrees - CurrentLocomotionState.RobotYaw);
+			//	reverse = true;
+			//}
 			await Robot.DriveArcAsync(CurrentLocomotionState.RobotYaw + degrees, 0, timeMs, reverse);
 		}
 
