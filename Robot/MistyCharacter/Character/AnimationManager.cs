@@ -691,9 +691,10 @@ namespace MistyCharacter
 			return response;
 		}
 
-		private double? GetNullableObject(string [] array, int index)
+		private double? GetNullableObject(string [] array, int index, bool treatEmptyAsNull = false)
 		{
-			if (array == null || array.Length < index || array.ElementAtOrDefault(index) == null || array.ElementAtOrDefault(index).Trim().ToLower() == "null")
+			if (array == null || array.Length < index || array.ElementAtOrDefault(index) == null || array.ElementAtOrDefault(index).Trim().ToLower() == "null" ||
+				(treatEmptyAsNull && string.IsNullOrWhiteSpace(array.ElementAtOrDefault(index))))
 			{
 				return null;
 			}
@@ -953,7 +954,7 @@ namespace MistyCharacter
 									_headManager.StopMovement();
 									string[] headData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headData, 0), GetNullableObject(headData, 1), GetNullableObject(headData, 2), null, Convert.ToDouble(headData[3]) / 1000, AngularUnit.Degrees);
-									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headData, 0)) ?? "null"}, {Convert.ToString(GetNullableObject(headData, 1)) ?? "null"}, {Convert.ToString(GetNullableObject(headData, 2)) ?? "null"}, null, {Convert.ToDouble(headData[3]) / 1000});");
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({(GetNullableObject(headData, 0, true) == null ? "null" : Convert.ToString(GetNullableObject(headData, 0, true)))}, {(GetNullableObject(headData, 1, true) == null ? "null" : Convert.ToString(GetNullableObject(headData, 1, true)))}, {(GetNullableObject(headData, 2, true) == null ? "null" : Convert.ToString(GetNullableObject(headData, 2, true)))}, null, {Convert.ToDouble(headData[3]) / 1000});");
 								}
 								else
 								{
@@ -971,9 +972,9 @@ namespace MistyCharacter
 											GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
 											null, Convert.ToDouble(headOData[3]) / 1000, AngularUnit.Degrees);
 
-									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headOData, 0) == null ? null : GetNullableObject(headOData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue) ?? "null"}, " +
-										$"{Convert.ToString(GetNullableObject(headOData, 1) == null ? null : GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue) ?? "null"}, " +
-										$"{Convert.ToString(GetNullableObject(headOData, 2) == null ? null : GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue) ?? "null"}, " +
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({(GetNullableObject(headOData, 0) == null ? "null" : Convert.ToString(GetNullableObject(headOData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue))}, " +
+										$"{(GetNullableObject(headOData, 1) == null ? "null" : Convert.ToString(GetNullableObject(headOData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue))}, " +
+										$"{(GetNullableObject(headOData, 2) == null ? "null" : Convert.ToString(GetNullableObject(headOData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue))}, " +
 										$"null, {Convert.ToDouble(headOData[3]) / 1000});");
 								}
 								else
@@ -992,9 +993,9 @@ namespace MistyCharacter
 											GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue,
 											Convert.ToDouble(headOvData[3]), null, AngularUnit.Degrees);
 
-									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headOvData, 0) == null ? null : GetNullableObject(headOvData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue) ?? "null"}, " +
-										$"{Convert.ToString(GetNullableObject(headOvData, 1) == null ? null : GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue) ?? "null"}, " +
-										$"{Convert.ToString(GetNullableObject(headOvData, 2) == null ? null : GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue) ?? "null"}, " +
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({(GetNullableObject(headOvData, 0) == null ? "null" : Convert.ToString(GetNullableObject(headOvData, 0) + _mistyState.GetCharacterState().HeadPitchActuatorEvent.ActuatorValue))}, " +
+										$"{(GetNullableObject(headOvData, 1) == null ? "null" : Convert.ToString(GetNullableObject(headOvData, 1) + _mistyState.GetCharacterState().HeadRollActuatorEvent.ActuatorValue))}, " +
+										$"{(GetNullableObject(headOvData, 2) == null ? "null" : Convert.ToString(GetNullableObject(headOvData, 2) + _mistyState.GetCharacterState().HeadYawActuatorEvent.ActuatorValue))}, " +
 										$"{Convert.ToDouble(headOvData[3])} / 1000, null);");
 								}
 								else
@@ -1010,10 +1011,8 @@ namespace MistyCharacter
 									string[] headVData = commandData[1].Split(",");
 									_ = Robot.MoveHeadAsync(GetNullableObject(headVData, 0), GetNullableObject(headVData, 1), GetNullableObject(headVData, 2), Convert.ToDouble(headVData[3]), null, AngularUnit.Degrees);
 
-									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({Convert.ToString(GetNullableObject(headVData, 0) == null ? null : GetNullableObject(headVData, 0)) ?? "null"}, " +
-										$"{Convert.ToString(GetNullableObject(headVData, 1) == null ? null : GetNullableObject(headVData, 1)) ?? "null"}, " +
-										$"{Convert.ToString(GetNullableObject(headVData, 2) == null ? null : GetNullableObject(headVData, 2)) ?? "null"}, " +
-										$"{Convert.ToDouble(headVData[3])} / 1000, null);");
+									await ManageJavaScriptRecording($"misty.MoveHeadDegrees({(GetNullableObject(headVData, 0, true) == null ? "null" : Convert.ToString(GetNullableObject(headVData, 0, true)))}, {(GetNullableObject(headVData, 1, true) == null ? "null" : Convert.ToString(GetNullableObject(headVData, 1, true)))}, {(GetNullableObject(headVData, 2, true) == null ? "null" : Convert.ToString(GetNullableObject(headVData, 2, true)))}, null, {Convert.ToDouble(headVData[3])} / 1000, null);");
+									
 								}
 								else
 								{
@@ -1040,10 +1039,12 @@ namespace MistyCharacter
 							case "DEBUG":
 								//DEBUG: User websocket message to send if skill is debug level;
 								_ = await Robot.SendDebugMessageAsync(Convert.ToString(commandData[1]));
+								await ManageJavaScriptRecording($"misty.Debug(\"{Convert.ToString(commandData[1])}\");");
 								break;
 							case "PUBLISH":
 								//PUBLISH: User websocket message to send;
 								_ = await Robot.PublishMessageAsync(Convert.ToString(commandData[1]));
+								await ManageJavaScriptRecording($"misty.Publish(\"{Convert.ToString(commandData[1])}\");");
 								break;
 							case "LIGHT":
 								//LIGHT:true/false;
@@ -1052,10 +1053,12 @@ namespace MistyCharacter
 								if (lightValue.StartsWith("t") || lightValue == "on")
 								{
 									_ = await Robot.SetFlashlightAsync(true);
+									await ManageJavaScriptRecording($"misty.SetFlashlight(true);");
 								}
 								else
 								{
 									_ = await Robot.SetFlashlightAsync(false);
+									await ManageJavaScriptRecording($"misty.SetFlashlight(false);");
 								}
 								break;
 							case "PICTURE":
@@ -1074,10 +1077,12 @@ namespace MistyCharacter
 									height = Convert.ToDouble(pictureData[3].Trim());
 								}
 								_ = await Robot.TakePictureAsync(Convert.ToString(pictureData[0].Trim()), false, Convert.ToBoolean(pictureData[1]), true, width, height);
+								await ManageJavaScriptRecording($"misty.TakePicture(\"{Convert.ToString(pictureData[0].Trim())}\", {width}, {height}, {Convert.ToBoolean(pictureData[1])}, true);");
 								break;
 							case "SERIAL":
 								//SERIAL:write to the serial stream;
 								_ = await Robot.WriteToSerialStreamAsync(Convert.ToString(commandData[1]));
+								await ManageJavaScriptRecording($"misty.WriteSerial(\"{Convert.ToString(commandData[1])}\");");
 								break;
 							case "STOP":
 								//STOP;
@@ -1086,6 +1091,7 @@ namespace MistyCharacter
 								{
 									Action = LocomotionCommand.Stop
 								});
+								await ManageJavaScriptRecording($"misty.Stop();");
 								break;
 							case "HALT":
 								//HALT;
@@ -1093,6 +1099,7 @@ namespace MistyCharacter
 								{
 									Action = LocomotionCommand.Halt
 								});
+								await ManageJavaScriptRecording($"misty.Halt();");
 								break;
 							case "RESET-LAYERS":
 								//RESET-LAYERS;								
@@ -1107,6 +1114,7 @@ namespace MistyCharacter
 								//RESET-EYES;			
 								ClearAnimationDisplayLayers();
 								_ = Robot.SetBlinkSettingsAsync(true, null, null, null, null, null);
+								await ManageJavaScriptRecording($"misty.SetBlinkSettings(true);");
 								await Robot.SetImageDisplaySettingsAsync(null, new ImageSettings
 								{
 									Visible = true,
@@ -1260,6 +1268,7 @@ namespace MistyCharacter
 									_userTextLayerVisible = true;
 								}
 								_ = Robot.DisplayTextAsync(Convert.ToString(commandData[1]), "AnimationText");
+								
 								_mistyState.GetCharacterState().DisplayedScreenText = Convert.ToString(commandData[1]);
 								break;
 							case "CLEAR-TEXT":
@@ -1314,6 +1323,11 @@ namespace MistyCharacter
 								//STOP-AUDIO;
 								Robot.StopAudio(null);
 								await ManageJavaScriptRecording($"misty.StopAudio();");
+								break;
+							case "PAUSE-AUDIO":
+								//PAUSE-AUDIO;
+								Robot.PauseAudio(null);
+								await ManageJavaScriptRecording($"misty.PauseAudio();");
 								break;
 							case "VIDEO":
 								//VIDEO:videoName.mp4;
@@ -1563,7 +1577,12 @@ namespace MistyCharacter
 								//DRIVE-TIME:linearVelocity,angularVelocity,timeMs;
 								string[] driveTimeData = commandData[1].Split(",");
 								Robot.DriveTime(Convert.ToDouble(driveTimeData[0].Trim()), Convert.ToDouble(driveTimeData[1].Trim()), Convert.ToInt32(driveTimeData[2].Trim()), null);
+
+								await ManageJavaScriptRecording($"misty.DriveTime({Convert.ToDouble(driveTimeData[0].Trim())}, " +
+									$"{Convert.ToDouble(driveTimeData[1].Trim())}, " +
+									$"{Convert.ToInt32(driveTimeData[2].Trim())});");
 								break;
+								
 
 							case "DRIVE":
 								//DRIVE:distanceMeters,timeMs,true/false(reverse);
@@ -1657,9 +1676,11 @@ namespace MistyCharacter
 								
 							case "RECORD":
 								_ = Robot.StartRecordingAudioAsync(commandData[1].Trim());
+								await ManageJavaScriptRecording($"misty.StartRecordingAudio(\"{commandData[1].Trim()}\");");
 								break;
 							case "STOP-RECORDING":
 								_ = Robot.StopRecordingAudioAsync();
+								await ManageJavaScriptRecording($"misty.StopRecordingAudio();");								
 								break;
 							case "RESPONSIVE-STATE":
 								//RESPONSIVE-STATE:true/on/false/off;
@@ -1705,10 +1726,12 @@ namespace MistyCharacter
 								//TODO also add in whatever they give ya or info from bots/skills
 
 								_ = Robot.RunSkillAsync(startSkillData[0], parameters);
+								await ManageJavaScriptRecording($"misty.RunSkill(\"{startSkillData[0]}\");");
 								break;
 							case "STOP-SKILL":
 								string[] stopSkillData = commandData[1].Split(",");
 								_ = Robot.CancelRunningSkillAsync(stopSkillData[0]);
+								await ManageJavaScriptRecording($"misty.CancelSkill(\"{stopSkillData[0]}\");");
 								break;
 							
 							case "AWAIT-ANY":

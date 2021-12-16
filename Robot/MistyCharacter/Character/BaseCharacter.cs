@@ -1114,14 +1114,23 @@ namespace MistyCharacter
 			Robot.StopKeyPhraseRecognition(null);
 			Robot.SetFlashlight(false, null);
 
+			string startConversation = conversationId ?? _conversationGroup.StartupConversation;
+			_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == startConversation);
+
+			await ManageJavaScriptRecording($"misty.Publish(\"Starting generated conversation '{_currentConversationData.Name}'\");");
+			await ManageJavaScriptRecording($"misty.MoveHeadDegrees(0,0,0, null, 2);");
+			await ManageJavaScriptRecording($"misty.MoveArmsDegrees(90, 90, null, null, 2);");
+			await ManageJavaScriptRecording($"misty.SetFlashlight(false);");
+			await ManageJavaScriptRecording($"misty.DisplayImage(\"e_Joy.jpg\");");
+			await ManageJavaScriptRecording($"misty.SetBlinkSettings(true);");
+			
 			if (CharacterParameters.StartVolume != null && CharacterParameters.StartVolume >= 0)
 			{
 				SpeechManager.Volume = (int)CharacterParameters.StartVolume;
 				await ManageJavaScriptRecording($"misty.SetDefaultVolume({SpeechManager.Volume});");
 			}
 
-			string startConversation = conversationId ?? _conversationGroup.StartupConversation;
-			_currentConversationData = _conversationGroup.Conversations.FirstOrDefault(x => x.Id == startConversation);
+			await ManageJavaScriptRecording($"misty.Pause(2000);");
 
 			EmotionManager = _managerConfiguration?.EmotionManager ?? new EmotionManager(_currentConversationData.StartingEmotion);
 
