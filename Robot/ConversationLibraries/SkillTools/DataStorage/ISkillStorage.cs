@@ -30,6 +30,7 @@
 		https://www.mistyrobotics.com/legal/end-user-license-agreement/
 **********************************************************************/
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Windows.Foundation;
 
@@ -45,7 +46,7 @@ namespace SkillTools.DataStorage
 		/// Method used to load the data from file
 		/// </summary>
 		/// <returns></returns>
-		IAsyncOperation<IDictionary<string, object>> LoadDataAsync();
+		IAsyncOperation<ConcurrentDictionary<string, object>> LoadDataAsync();
 
 		/// <summary>
 		/// Method used to store the data into a file

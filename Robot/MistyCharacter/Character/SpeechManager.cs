@@ -105,6 +105,9 @@ namespace MistyCharacter
 		private string _voice = "";
 		private string _pitch = "medium";
 		private SkillSpeech _skillSpeech;
+		private bool _speakingIndictorShowing = false;
+		private bool _listeningIndictorShowing = false;
+		private bool _textIndictorShowing = false;
 
 		private ListeningState _listeningState = ListeningState.Waiting;
 
@@ -735,11 +738,7 @@ namespace MistyCharacter
 
 			_misty.StopRecordingAudio(null);
 		}
-
-		private bool _speakingIndictorShowing = false;
-		private bool _listeningIndictorShowing = false;
-		private bool _textIndictorShowing = false;
-
+		
 		private async Task ManageListeningDisplay(ListeningState listeningState)
 		{
 			try
@@ -1117,10 +1116,7 @@ namespace MistyCharacter
 			}
 			finally
 			{
-				//Don't hate me
-				//There is a possibility, even with my skill locks, that 2 audio files can be sent so close together that they process out of order, even if sent in order
-				//assuming any speech is at least 250
-				await Task.Delay(250);
+				_ = ManageListeningDisplay(ListeningState.Speaking);//deal with overlapping speech start and stop events
 				_speakingSlim.Release();
 			}
 		}

@@ -128,6 +128,7 @@ namespace Conversation.Common
 		public double AnimationCreationDebounceSeconds { get; set; } = .25;
 		public bool IgnoreArmCommands { get; set; } = false;
 		public bool IgnoreHeadCommands { get; set; } = false;
+		public bool CreateJavaScriptTemplate { get; set; } = false;
 
 		public bool RetranslateTTS { get; set; }
 		public bool SmoothRecording { get; set; } = false;

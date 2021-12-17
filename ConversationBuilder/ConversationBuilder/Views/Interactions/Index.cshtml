@@ -12,7 +12,10 @@
 <hr />
 <h5 style="color:red">@ViewBag.Message</h5>
 <p>
-	@Html.ActionLink("Create New", "Create",  "Interactions", new {conversationId = @ViewBag.ConversationId})
+	@Html.ActionLink("Create Interaction", "Create",  "Interactions", new {conversationId = @ViewBag.ConversationId}) | 
+	@Html.ActionLink("Back to Conversation", "Details", "Conversations", new { id = @ViewBag.ConversationId})
+</p>
+<p>
 </p>
 
 @if(!ViewBag.ShowAllConversations)

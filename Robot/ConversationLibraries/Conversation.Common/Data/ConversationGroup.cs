@@ -57,12 +57,12 @@ namespace Conversation.Common
 
         public IDictionary<string, UtteranceData> IntentUtterances = new Dictionary<string, UtteranceData>();
         public IDictionary<string, ConversationMappingDetail> ConversationMappings { get; set; } = new Dictionary<string, ConversationMappingDetail>();
-
-		//TODO In progress 
+		
 		public bool AnimationCreationMode { get; set; } = false;
 		public double AnimationCreationDebounceSeconds { get; set; } = .25;
 		public bool IgnoreArmCommands { get; set; } = false;
 		public bool IgnoreHeadCommands { get; set; } = false;
+		public bool CreateJavaScriptTemplate { get; set; } = false;
 
 		public bool RetranslateTTS { get; set; }
 		public bool SmoothRecording { get; set; } = false; //only records changes in direction or stops

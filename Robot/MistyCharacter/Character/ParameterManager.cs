@@ -31,6 +31,7 @@
 **********************************************************************/
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -63,7 +64,7 @@ namespace MistyCharacter
 		
 		//private IDictionary<string, object> _parameters = new Dictionary<string, object>();
 		private ISkillStorage _database;
-		private IDictionary<string, object> _conversationGroupList = new Dictionary<string, object>();
+		private ConcurrentDictionary<string, object> _conversationGroupList = new ConcurrentDictionary<string, object>();
 		private IDictionary<string, object> _parameters = new Dictionary<string, object>();		
 	
 		private IDictionary<string, IDictionary<string, object>> _skillParameters = new Dictionary<string, IDictionary<string, object>>();
@@ -242,7 +243,7 @@ namespace MistyCharacter
 		{
 			try
 			{
-				_conversationGroupList = await _database.LoadDataAsync() ?? new Dictionary<string, object>();
+				_conversationGroupList = await _database.LoadDataAsync() ?? new ConcurrentDictionary<string, object>();
 				if (_conversationGroupList.Count() == 0)
 				{
 					return false;
@@ -319,14 +320,14 @@ namespace MistyCharacter
 			{
 				if(cp != null)
 				{
-					_conversationGroupList = await _database.LoadDataAsync() ?? new Dictionary<string, object>();
+					_conversationGroupList = await _database.LoadDataAsync() ?? new ConcurrentDictionary<string, object>();
 					
 					KeyValuePair<string, object> onBoardConversationGroup = _conversationGroupList.FirstOrDefault(x => x.Key == cp.ConversationGroup.Id);
 					if (onBoardConversationGroup.Value != null)
 					{
-						_conversationGroupList.Remove(cp.ConversationGroup.Id);
+						_conversationGroupList.TryRemove(cp.ConversationGroup.Id, out object oldVale);
 					}
-					_conversationGroupList.Add(cp.ConversationGroup.Id, JsonConvert.SerializeObject(cp));
+					_conversationGroupList.TryAdd(cp.ConversationGroup.Id, JsonConvert.SerializeObject(cp));
 					await _database.SaveDataAsync(_conversationGroupList);
 					return true;
 				}
@@ -349,11 +350,11 @@ namespace MistyCharacter
 			await _dbSlim.WaitAsync();
 			try
 			{
-				_conversationGroupList = await _database.LoadDataAsync() ?? new Dictionary<string, object>();
+				_conversationGroupList = await _database.LoadDataAsync() ?? new ConcurrentDictionary<string, object>();
 				KeyValuePair<string, object> onBoardConversationGroup = _conversationGroupList.FirstOrDefault(x => x.Key == conversationGroupId);
 				if (onBoardConversationGroup.Value != null)
 				{
-					_conversationGroupList.Remove(conversationGroupId);
+					_conversationGroupList.TryRemove(conversationGroupId, out object oldData);
 					await _database.SaveDataAsync(_conversationGroupList);
 				}
 				return true;
@@ -375,7 +376,7 @@ namespace MistyCharacter
 			try
 			{
 				_parameters = data;
-				_conversationGroupList = await _database.LoadDataAsync() ?? new Dictionary<string, object>();
+				_conversationGroupList = await _database.LoadDataAsync() ?? new ConcurrentDictionary<string, object>();
 				
 				//TODO Refactor for new startup procedure!!
 				if (string.IsNullOrWhiteSpace(_runningConversationGroup) && string.IsNullOrWhiteSpace(conversationGroupId))
@@ -490,6 +491,7 @@ namespace MistyCharacter
 
 
 				updatedCharacterParameters.AnimationCreationMode = conversationGroup.AnimationCreationMode;
+				updatedCharacterParameters.CreateJavaScriptTemplate = conversationGroup.CreateJavaScriptTemplate;
 				updatedCharacterParameters.AnimationCreationDebounceSeconds = conversationGroup.AnimationCreationDebounceSeconds;
 				updatedCharacterParameters.IgnoreArmCommands = conversationGroup.IgnoreArmCommands;
 				updatedCharacterParameters.IgnoreHeadCommands = conversationGroup.IgnoreHeadCommands;
@@ -677,8 +679,8 @@ namespace MistyCharacter
 					updatedCharacterParameters.InitializationErrorStatus != InitializationStatus.Warning && 
 					updatedCharacterParameters.InitializationErrorStatus != InitializationStatus.Error)
 				{
-					_conversationGroupList.Remove(updatedCharacterParameters.ConversationGroup.Id);					
-					_conversationGroupList.Add(updatedCharacterParameters.ConversationGroup.Id, JsonConvert.SerializeObject(updatedCharacterParameters));					
+					_conversationGroupList.TryRemove(updatedCharacterParameters.ConversationGroup.Id, out object oldData);
+					_conversationGroupList.TryAdd(updatedCharacterParameters.ConversationGroup.Id, JsonConvert.SerializeObject(updatedCharacterParameters));					
 					await _database.SaveDataAsync(_conversationGroupList);
 				}
 			}
