@@ -99,8 +99,6 @@ Create a character and attach your speech configuration to the character. The sy
 
 Make a Conversation Group and attach this conversation and character. Once everything is saved and the skill is loaded on the robot, you should be able to start it from the Conversation Group after entering in your robot's IP.
 
-See the Readme and github account for more information. To see the github account, click the Code link at the bottom of the page.
-
 ------------
 
 ## Action Library
